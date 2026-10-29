@@ -111,12 +111,8 @@ fun SpatialAudioSettings(navController: NavController) {
                 item {
                     SwitchPreference(
                         title = { Text("Enable Spatial Audio") },
-                        description = {
-                            Text(
-                                if (enabled) "Spatial soundstage processing is active"
-                                else "Audio passes through unprocessed"
-                            )
-                        },
+                        description = if (enabled) "Spatial soundstage processing is active"
+                        else "Audio passes through unprocessed",
                         icon = { Icon(painterResource(R.drawable.waves), null) },
                         checked = enabled,
                         onCheckedChange = {

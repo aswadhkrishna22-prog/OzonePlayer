@@ -54,7 +54,7 @@ internal fun PlayerAudioSection(
         item {
             PreferenceEntry(
                 title = { Text("Spatial Audio") },
-                description = { Text("Soundstage, crossfeed, and acoustic balance") },
+                description = "Soundstage, crossfeed, and acoustic balance",
                 icon = { Icon(painterResource(R.drawable.waves), null) },
                 onClick = actions.onSpatialAudioClick,
                 showChevron = true,

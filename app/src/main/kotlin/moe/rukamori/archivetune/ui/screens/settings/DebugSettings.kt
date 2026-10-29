@@ -201,7 +201,7 @@ fun DebugSettings(navController: NavController) {
                 item {
                     PreferenceEntry(
                         title = { Text("Spatial Audio") },
-                        description = { Text("Soundstage, crossfeed, and acoustic balance") },
+                        description = "Soundstage, crossfeed, and acoustic balance",
                         icon = { Icon(painterResource(R.drawable.waves), null) },
                         onClick = { navController.navigate("settings/spatial_audio") },
                         showChevron = true,
