@@ -50,8 +50,12 @@ import moe.rukamori.archivetune.constants.LyricsProviderOrderKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeChineseKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeHindiKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeJapaneseKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeKannadaKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeKoreanKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeMalayalamKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeOtherLanguagesKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeTamilKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeTeluguKey
 import moe.rukamori.archivetune.constants.LyricsScrollKey
 import moe.rukamori.archivetune.constants.LyricsTextSizeKey
 import moe.rukamori.archivetune.constants.PreloadQueueLyricsEnabledKey
@@ -106,6 +110,14 @@ fun LyricsSettings(
         rememberPreference(LyricsRomanizeChineseKey, defaultValue = true)
     val (lyricsRomanizeHindi, onLyricsRomanizeHindiChange) =
         rememberPreference(LyricsRomanizeHindiKey, defaultValue = true)
+    val (lyricsRomanizeMalayalam, onLyricsRomanizeMalayalamChange) =
+        rememberPreference(LyricsRomanizeMalayalamKey, defaultValue = true)
+    val (lyricsRomanizeTamil, onLyricsRomanizeTamilChange) =
+        rememberPreference(LyricsRomanizeTamilKey, defaultValue = true)
+    val (lyricsRomanizeTelugu, onLyricsRomanizeTeluguChange) =
+        rememberPreference(LyricsRomanizeTeluguKey, defaultValue = true)
+    val (lyricsRomanizeKannada, onLyricsRomanizeKannadaChange) =
+        rememberPreference(LyricsRomanizeKannadaKey, defaultValue = true)
     val (lyricsRomanizeOtherLanguages, onLyricsRomanizeOtherLanguagesChange) =
         rememberPreference(
             LyricsRomanizeOtherLanguagesKey,
@@ -183,6 +195,10 @@ fun LyricsSettings(
             lyricsRomanizeKorean = lyricsRomanizeKorean,
             lyricsRomanizeChinese = lyricsRomanizeChinese,
             lyricsRomanizeHindi = lyricsRomanizeHindi,
+            lyricsRomanizeMalayalam = lyricsRomanizeMalayalam,
+            lyricsRomanizeTamil = lyricsRomanizeTamil,
+            lyricsRomanizeTelugu = lyricsRomanizeTelugu,
+            lyricsRomanizeKannada = lyricsRomanizeKannada,
             lyricsRomanizeOtherLanguages = lyricsRomanizeOtherLanguages,
             preloadQueueLyricsEnabled = preloadQueueLyricsEnabled,
             queueLyricsPreloadCount = queueLyricsPreloadCount,
@@ -210,6 +226,10 @@ fun LyricsSettings(
             onLyricsRomanizeKoreanChange = onLyricsRomanizeKoreanChange,
             onLyricsRomanizeChineseChange = onLyricsRomanizeChineseChange,
             onLyricsRomanizeHindiChange = onLyricsRomanizeHindiChange,
+            onLyricsRomanizeMalayalamChange = onLyricsRomanizeMalayalamChange,
+            onLyricsRomanizeTamilChange = onLyricsRomanizeTamilChange,
+            onLyricsRomanizeTeluguChange = onLyricsRomanizeTeluguChange,
+            onLyricsRomanizeKannadaChange = onLyricsRomanizeKannadaChange,
             onLyricsRomanizeOtherLanguagesChange = onLyricsRomanizeOtherLanguagesChange,
             onPreloadQueueLyricsEnabledChange = onPreloadQueueLyricsEnabledChange,
             onQueueLyricsPreloadCountChange = onQueueLyricsPreloadCountChange,

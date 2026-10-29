@@ -10,4 +10,8 @@
     <string name="last_week">கடந்த வாரம்</string>
     <string name="most_played_songs">அதிகம் கேட்கப்பட்ட பாடல்கள்</string>
     <string name="search">தேடு</string>
+    <string name="lyrics_romanize_malayalam">மலையாள பாடல் வரிகளை ரோமானியமாக்குங்கள்</string>
+    <string name="lyrics_romanize_tamil">தமிழ் பாடல் வரிகளை ரோமானியமாக்குங்கள் (Tanglish)</string>
+    <string name="lyrics_romanize_telugu">தெலுங்கு பாடல் வரிகளை ரோமானியமாக்குங்கள்</string>
+    <string name="lyrics_romanize_kannada">கன்னட பாடல் வரிகளை ரோமானியமாக்குங்கள்</string>
 </resources>

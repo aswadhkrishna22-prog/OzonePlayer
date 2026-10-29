@@ -18,10 +18,15 @@ data class LyricsRomanizationPreferences(
     val romanizeKorean: Boolean = true,
     val romanizeChinese: Boolean = true,
     val romanizeHindi: Boolean = true,
+    val romanizeMalayalam: Boolean = true,
+    val romanizeTamil: Boolean = true,
+    val romanizeTelugu: Boolean = true,
+    val romanizeKannada: Boolean = true,
     val romanizeOther: Boolean = true,
 ) {
     val isEnabled: Boolean
-        get() = romanizeJapanese || romanizeKorean || romanizeChinese || romanizeHindi || romanizeOther
+        get() = romanizeJapanese || romanizeKorean || romanizeChinese || romanizeHindi ||
+            romanizeMalayalam || romanizeTamil || romanizeTelugu || romanizeKannada || romanizeOther
 }
 
 @Suppress("RegExpRedundantEscape")
@@ -38,6 +43,10 @@ object Romanizer {
             UnicodeScript.KATAKANA,
             UnicodeScript.HANGUL,
             UnicodeScript.DEVANAGARI,
+            UnicodeScript.MALAYALAM,
+            UnicodeScript.TAMIL,
+            UnicodeScript.TELUGU,
+            UnicodeScript.KANNADA,
         )
     private val genericRomanizationTransliterator =
         ThreadLocal.withInitial {
@@ -601,6 +610,14 @@ object Romanizer {
 
     fun isHindi(text: String): Boolean = text.any { hasScript(it, UnicodeScript.DEVANAGARI) }
 
+    fun isMalayalam(text: String): Boolean = text.any { hasScript(it, UnicodeScript.MALAYALAM) }
+
+    fun isTamil(text: String): Boolean = text.any { hasScript(it, UnicodeScript.TAMIL) }
+
+    fun isTelugu(text: String): Boolean = text.any { hasScript(it, UnicodeScript.TELUGU) }
+
+    fun isKannada(text: String): Boolean = text.any { hasScript(it, UnicodeScript.KANNADA) }
+
     fun hasOtherRomanizableScript(text: String): Boolean {
         return text.any { char ->
             if (!char.isLetter()) return@any false
@@ -620,6 +637,10 @@ object Romanizer {
             preferences.romanizeKorean && isKorean(text) -> true
             preferences.romanizeHindi && isHindi(text) -> true
             preferences.romanizeChinese && isChinese(text) -> true
+            preferences.romanizeMalayalam && isMalayalam(text) -> true
+            preferences.romanizeTamil && isTamil(text) -> true
+            preferences.romanizeTelugu && isTelugu(text) -> true
+            preferences.romanizeKannada && isKannada(text) -> true
             preferences.romanizeOther && hasOtherRomanizableScript(text) -> true
             else -> false
         }
@@ -650,7 +671,11 @@ object Romanizer {
             "ja" -> preferences.romanizeJapanese
             "ko" -> preferences.romanizeKorean
             "zh", "cmn", "yue" -> preferences.romanizeChinese
-            "hi", "sa", "mr", "ne" -> preferences.romanizeHindi
+            "hi", "sa", "mr", "ne", "hin" -> preferences.romanizeHindi
+            "ml", "mal" -> preferences.romanizeMalayalam
+            "ta", "tam" -> preferences.romanizeTamil
+            "te", "tel" -> preferences.romanizeTelugu
+            "kn", "kan" -> preferences.romanizeKannada
             null, "" -> shouldRomanizeLyricsLine(originalText, preferences)
             else -> preferences.romanizeOther || shouldRomanizeLyricsLine(originalText, preferences)
         }
@@ -716,6 +741,10 @@ object Romanizer {
                 preferences.romanizeKorean && isKorean(text) -> romanizeKorean(text)
                 preferences.romanizeHindi && isHindi(text) -> romanizeWithIcu(text)
                 preferences.romanizeChinese && isChinese(text) -> romanizeWithIcu(text)
+                preferences.romanizeMalayalam && isMalayalam(text) -> romanizeWithIcu(text)
+                preferences.romanizeTamil && isTamil(text) -> romanizeWithIcu(text)
+                preferences.romanizeTelugu && isTelugu(text) -> romanizeWithIcu(text)
+                preferences.romanizeKannada && isKannada(text) -> romanizeWithIcu(text)
                 preferences.romanizeOther && hasOtherRomanizableScript(text) -> romanizeWithIcu(text)
                 else -> null
             }
@@ -750,6 +779,10 @@ object Romanizer {
                 preferences.romanizeKorean && isKorean(lineText) -> romanizeKorean(word)
                 preferences.romanizeHindi && isHindi(lineText) -> romanizeWithIcu(word)
                 preferences.romanizeChinese && isChinese(lineText) -> romanizeWithIcu(word)
+                preferences.romanizeMalayalam && isMalayalam(lineText) -> romanizeWithIcu(word)
+                preferences.romanizeTamil && isTamil(lineText) -> romanizeWithIcu(word)
+                preferences.romanizeTelugu && isTelugu(lineText) -> romanizeWithIcu(word)
+                preferences.romanizeKannada && isKannada(lineText) -> romanizeWithIcu(word)
                 preferences.romanizeOther && hasOtherRomanizableScript(lineText) -> romanizeWithIcu(word)
                 else -> null
             }

@@ -21,8 +21,12 @@ import moe.rukamori.archivetune.constants.LyricsLineSpacingKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeChineseKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeHindiKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeJapaneseKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeKannadaKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeKoreanKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeMalayalamKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeOtherLanguagesKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeTamilKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeTeluguKey
 import moe.rukamori.archivetune.constants.LyricsTextSizeKey
 import moe.rukamori.archivetune.constants.PlayerBackgroundStyle
 import moe.rukamori.archivetune.constants.PlayerBackgroundStyleKey
@@ -57,6 +61,10 @@ internal fun rememberLyricsStyleState(
     val (romanizeHindi) = rememberPreference(LyricsRomanizeHindiKey, defaultValue = true)
     val (romanizeJapanese) = rememberPreference(LyricsRomanizeJapaneseKey, defaultValue = true)
     val (romanizeKorean) = rememberPreference(LyricsRomanizeKoreanKey, defaultValue = true)
+    val (romanizeMalayalam) = rememberPreference(LyricsRomanizeMalayalamKey, defaultValue = true)
+    val (romanizeTamil) = rememberPreference(LyricsRomanizeTamilKey, defaultValue = true)
+    val (romanizeTelugu) = rememberPreference(LyricsRomanizeTeluguKey, defaultValue = true)
+    val (romanizeKannada) = rememberPreference(LyricsRomanizeKannadaKey, defaultValue = true)
     val (romanizeOtherLanguages) = rememberPreference(LyricsRomanizeOtherLanguagesKey, defaultValue = true)
 
     val romanizationPreferences =
@@ -65,6 +73,10 @@ internal fun rememberLyricsStyleState(
             romanizeKorean,
             romanizeChinese,
             romanizeHindi,
+            romanizeMalayalam,
+            romanizeTamil,
+            romanizeTelugu,
+            romanizeKannada,
             romanizeOtherLanguages,
         ) {
             LyricsRomanizationPreferences(
@@ -72,6 +84,10 @@ internal fun rememberLyricsStyleState(
                 romanizeKorean = romanizeKorean,
                 romanizeChinese = romanizeChinese,
                 romanizeHindi = romanizeHindi,
+                romanizeMalayalam = romanizeMalayalam,
+                romanizeTamil = romanizeTamil,
+                romanizeTelugu = romanizeTelugu,
+                romanizeKannada = romanizeKannada,
                 romanizeOther = romanizeOtherLanguages,
             )
         }

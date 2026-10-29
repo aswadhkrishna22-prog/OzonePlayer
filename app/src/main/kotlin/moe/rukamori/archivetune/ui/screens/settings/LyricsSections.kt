@@ -49,6 +49,14 @@ internal fun LyricsRomanizationSection(
     onLyricsRomanizeChineseChange: (Boolean) -> Unit,
     lyricsRomanizeHindi: Boolean,
     onLyricsRomanizeHindiChange: (Boolean) -> Unit,
+    lyricsRomanizeMalayalam: Boolean,
+    onLyricsRomanizeMalayalamChange: (Boolean) -> Unit,
+    lyricsRomanizeTamil: Boolean,
+    onLyricsRomanizeTamilChange: (Boolean) -> Unit,
+    lyricsRomanizeTelugu: Boolean,
+    onLyricsRomanizeTeluguChange: (Boolean) -> Unit,
+    lyricsRomanizeKannada: Boolean,
+    onLyricsRomanizeKannadaChange: (Boolean) -> Unit,
     lyricsRomanizeOtherLanguages: Boolean,
     onLyricsRomanizeOtherLanguagesChange: (Boolean) -> Unit,
 ) {
@@ -86,6 +94,42 @@ internal fun LyricsRomanizationSection(
                 icon = { Icon(painterResource(R.drawable.lyrics), null) },
                 checked = lyricsRomanizeHindi,
                 onCheckedChange = onLyricsRomanizeHindiChange,
+            )
+        }
+
+        item {
+            SwitchPreference(
+                title = { Text(stringResource(R.string.lyrics_romanize_malayalam)) },
+                icon = { Icon(painterResource(R.drawable.lyrics), null) },
+                checked = lyricsRomanizeMalayalam,
+                onCheckedChange = onLyricsRomanizeMalayalamChange,
+            )
+        }
+
+        item {
+            SwitchPreference(
+                title = { Text(stringResource(R.string.lyrics_romanize_tamil)) },
+                icon = { Icon(painterResource(R.drawable.lyrics), null) },
+                checked = lyricsRomanizeTamil,
+                onCheckedChange = onLyricsRomanizeTamilChange,
+            )
+        }
+
+        item {
+            SwitchPreference(
+                title = { Text(stringResource(R.string.lyrics_romanize_telugu)) },
+                icon = { Icon(painterResource(R.drawable.lyrics), null) },
+                checked = lyricsRomanizeTelugu,
+                onCheckedChange = onLyricsRomanizeTeluguChange,
+            )
+        }
+
+        item {
+            SwitchPreference(
+                title = { Text(stringResource(R.string.lyrics_romanize_kannada)) },
+                icon = { Icon(painterResource(R.drawable.lyrics), null) },
+                checked = lyricsRomanizeKannada,
+                onCheckedChange = onLyricsRomanizeKannadaChange,
             )
         }
 
@@ -192,6 +236,14 @@ internal fun LyricsSettingsContent(
             onLyricsRomanizeChineseChange = actions.onLyricsRomanizeChineseChange,
             lyricsRomanizeHindi = state.lyricsRomanizeHindi,
             onLyricsRomanizeHindiChange = actions.onLyricsRomanizeHindiChange,
+            lyricsRomanizeMalayalam = state.lyricsRomanizeMalayalam,
+            onLyricsRomanizeMalayalamChange = actions.onLyricsRomanizeMalayalamChange,
+            lyricsRomanizeTamil = state.lyricsRomanizeTamil,
+            onLyricsRomanizeTamilChange = actions.onLyricsRomanizeTamilChange,
+            lyricsRomanizeTelugu = state.lyricsRomanizeTelugu,
+            onLyricsRomanizeTeluguChange = actions.onLyricsRomanizeTeluguChange,
+            lyricsRomanizeKannada = state.lyricsRomanizeKannada,
+            onLyricsRomanizeKannadaChange = actions.onLyricsRomanizeKannadaChange,
             lyricsRomanizeOtherLanguages = state.lyricsRomanizeOtherLanguages,
             onLyricsRomanizeOtherLanguagesChange = actions.onLyricsRomanizeOtherLanguagesChange,
         )

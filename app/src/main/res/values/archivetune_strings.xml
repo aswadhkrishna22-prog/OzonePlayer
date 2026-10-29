@@ -280,6 +280,10 @@
     <string name="lyrics_romanize_korean">Romanize korean lyrics</string>
     <string name="lyrics_romanize_chinese">Romanize chinese lyrics</string>
     <string name="lyrics_romanize_hindi">Romanize hindi lyrics</string>
+    <string name="lyrics_romanize_malayalam">Romanize Malayalam lyrics (മലയാളം)</string>
+    <string name="lyrics_romanize_tamil">Romanize Tamil lyrics (தமிழ்)</string>
+    <string name="lyrics_romanize_telugu">Romanize Telugu lyrics (తెలుగు)</string>
+    <string name="lyrics_romanize_kannada">Romanize Kannada lyrics (ಕನ್ನಡ)</string>
     <string name="lyrics_romanize_other_languages">Romanize other non-latin lyrics</string>
     <string name="quick_picks_display_mode">Quick Picks display mode</string>
     <string name="quick_picks_display_mode_hero">Carousel</string>

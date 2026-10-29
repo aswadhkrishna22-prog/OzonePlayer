@@ -20,8 +20,12 @@ import moe.rukamori.archivetune.constants.LyricsProviderOrderKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeChineseKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeHindiKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeJapaneseKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeKannadaKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeKoreanKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeMalayalamKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeOtherLanguagesKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeTamilKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeTeluguKey
 import moe.rukamori.archivetune.constants.LyricsScrollKey
 import moe.rukamori.archivetune.constants.LyricsTextSizeKey
 import moe.rukamori.archivetune.constants.PreferredLyricsProvider
@@ -51,6 +55,10 @@ internal object LyricsContract {
     val RomanizeKoreanKey = LyricsRomanizeKoreanKey
     val RomanizeChineseKey = LyricsRomanizeChineseKey
     val RomanizeHindiKey = LyricsRomanizeHindiKey
+    val RomanizeMalayalamKey = LyricsRomanizeMalayalamKey
+    val RomanizeTamilKey = LyricsRomanizeTamilKey
+    val RomanizeTeluguKey = LyricsRomanizeTeluguKey
+    val RomanizeKannadaKey = LyricsRomanizeKannadaKey
     val RomanizeOtherLanguagesKey = LyricsRomanizeOtherLanguagesKey
     val PreloadQueueKey = PreloadQueueLyricsEnabledKey
     val QueueLyricsPreloadCount = QueueLyricsPreloadCountKey
@@ -84,6 +92,10 @@ data class LyricsSettingsUiState(
     val lyricsRomanizeKorean: Boolean = true,
     val lyricsRomanizeChinese: Boolean = true,
     val lyricsRomanizeHindi: Boolean = true,
+    val lyricsRomanizeMalayalam: Boolean = true,
+    val lyricsRomanizeTamil: Boolean = true,
+    val lyricsRomanizeTelugu: Boolean = true,
+    val lyricsRomanizeKannada: Boolean = true,
     val lyricsRomanizeOtherLanguages: Boolean = true,
     val preloadQueueLyricsEnabled: Boolean = true,
     val queueLyricsPreloadCount: Int = LyricsContract.DEFAULT_QUEUE_PRELOAD_COUNT,
@@ -113,6 +125,10 @@ data class LyricsSettingsUiActions(
     val onLyricsRomanizeKoreanChange: (Boolean) -> Unit = {},
     val onLyricsRomanizeChineseChange: (Boolean) -> Unit = {},
     val onLyricsRomanizeHindiChange: (Boolean) -> Unit = {},
+    val onLyricsRomanizeMalayalamChange: (Boolean) -> Unit = {},
+    val onLyricsRomanizeTamilChange: (Boolean) -> Unit = {},
+    val onLyricsRomanizeTeluguChange: (Boolean) -> Unit = {},
+    val onLyricsRomanizeKannadaChange: (Boolean) -> Unit = {},
     val onLyricsRomanizeOtherLanguagesChange: (Boolean) -> Unit = {},
     val onPreloadQueueLyricsEnabledChange: (Boolean) -> Unit = {},
     val onQueueLyricsPreloadCountChange: (Int) -> Unit = {},

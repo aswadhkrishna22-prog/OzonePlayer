@@ -10,8 +10,12 @@ import kotlinx.coroutines.runBlocking
 import moe.rukamori.archivetune.constants.LyricsRomanizeChineseKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeHindiKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeJapaneseKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeKannadaKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeKoreanKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeMalayalamKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeOtherLanguagesKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeTamilKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeTeluguKey
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -40,6 +44,10 @@ class LyricsPrefsTest {
                 romanizeKorean = preferences[LyricsRomanizeKoreanKey] ?: true,
                 romanizeChinese = preferences[LyricsRomanizeChineseKey] ?: true,
                 romanizeHindi = preferences[LyricsRomanizeHindiKey] ?: true,
+                romanizeMalayalam = preferences[LyricsRomanizeMalayalamKey] ?: true,
+                romanizeTamil = preferences[LyricsRomanizeTamilKey] ?: true,
+                romanizeTelugu = preferences[LyricsRomanizeTeluguKey] ?: true,
+                romanizeKannada = preferences[LyricsRomanizeKannadaKey] ?: true,
                 romanizeOther = preferences[LyricsRomanizeOtherLanguagesKey] ?: true
             )
         }
@@ -49,6 +57,10 @@ class LyricsPrefsTest {
         assertTrue(prefs.romanizeKorean)
         assertTrue(prefs.romanizeChinese)
         assertTrue(prefs.romanizeHindi)
+        assertTrue(prefs.romanizeMalayalam)
+        assertTrue(prefs.romanizeTamil)
+        assertTrue(prefs.romanizeTelugu)
+        assertTrue(prefs.romanizeKannada)
         assertTrue(prefs.romanizeOther)
         assertTrue(prefs.isEnabled)
     }
@@ -61,6 +73,10 @@ class LyricsPrefsTest {
                 romanizeKorean = preferences[LyricsRomanizeKoreanKey] ?: true,
                 romanizeChinese = preferences[LyricsRomanizeChineseKey] ?: true,
                 romanizeHindi = preferences[LyricsRomanizeHindiKey] ?: true,
+                romanizeMalayalam = preferences[LyricsRomanizeMalayalamKey] ?: true,
+                romanizeTamil = preferences[LyricsRomanizeTamilKey] ?: true,
+                romanizeTelugu = preferences[LyricsRomanizeTeluguKey] ?: true,
+                romanizeKannada = preferences[LyricsRomanizeKannadaKey] ?: true,
                 romanizeOther = preferences[LyricsRomanizeOtherLanguagesKey] ?: true
             )
         }
@@ -68,6 +84,7 @@ class LyricsPrefsTest {
         dataStore.edit { preferences ->
             preferences[LyricsRomanizeJapaneseKey] = false
             preferences[LyricsRomanizeKoreanKey] = false
+            preferences[LyricsRomanizeMalayalamKey] = false
         }
 
         val prefs = flow.first()
@@ -75,6 +92,10 @@ class LyricsPrefsTest {
         assertFalse(prefs.romanizeKorean)
         assertTrue(prefs.romanizeChinese)
         assertTrue(prefs.romanizeHindi)
+        assertFalse(prefs.romanizeMalayalam)
+        assertTrue(prefs.romanizeTamil)
+        assertTrue(prefs.romanizeTelugu)
+        assertTrue(prefs.romanizeKannada)
         assertTrue(prefs.romanizeOther)
         assertTrue(prefs.isEnabled)
     }

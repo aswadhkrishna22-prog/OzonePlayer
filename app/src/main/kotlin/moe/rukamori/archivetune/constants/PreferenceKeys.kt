@@ -656,6 +656,10 @@ val LyricsRomanizeJapaneseKey = booleanPreferencesKey("lyricsRomanizeJapanese")
 val LyricsRomanizeKoreanKey = booleanPreferencesKey("lyricsRomanizeKorean")
 val LyricsRomanizeChineseKey = booleanPreferencesKey("lyricsRomanizeChinese")
 val LyricsRomanizeHindiKey = booleanPreferencesKey("lyricsRomanizeHindi")
+val LyricsRomanizeMalayalamKey = booleanPreferencesKey("lyricsRomanizeMalayalam")
+val LyricsRomanizeTamilKey = booleanPreferencesKey("lyricsRomanizeTamil")
+val LyricsRomanizeTeluguKey = booleanPreferencesKey("lyricsRomanizeTelugu")
+val LyricsRomanizeKannadaKey = booleanPreferencesKey("lyricsRomanizeKannada")
 val LyricsRomanizeOtherLanguagesKey = booleanPreferencesKey("lyricsRomanizeOtherLanguages")
 val TranslateLyricsKey = booleanPreferencesKey("translateLyrics")
 
@@ -745,6 +749,10 @@ val LanguageCodeToName =
         "tr" to "Türkçe",
         "ar" to "العربية",
         "hi" to "हिन्दी",
+        "ml" to "മലയാളം",
+        "ta" to "தமிழ்",
+        "te" to "తెలుగు",
+        "kn" to "ಕನ್ನಡ",
         "th" to "ไทย",
         "id" to "Bahasa Indonesia",
         "ms" to "Bahasa Melayu",

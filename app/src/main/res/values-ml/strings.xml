@@ -84,4 +84,8 @@
     <string name="see_all">എല്ലാം കാണുക</string>
     <string name="your_artists">നിങ്ങളുടെ ആർട്ടിസ്റ്റുകൾ</string>
     <string name="all_songs">എല്ലാ പാട്ടുകളും</string>
+    <string name="lyrics_romanize_malayalam">മലയാളം വരികൾ റോമനൈസ് ചെയ്യുക (Manglish)</string>
+    <string name="lyrics_romanize_tamil">തമിഴ് വരികൾ റോമനൈസ് ചെയ്യുക (Tanglish)</string>
+    <string name="lyrics_romanize_telugu">തെലുങ്ക് വരികൾ റോമനൈസ് ചെയ്യുക</string>
+    <string name="lyrics_romanize_kannada">കന്നഡ വരികൾ റോമനൈസ് ചെയ്യുക</string>
 </resources>

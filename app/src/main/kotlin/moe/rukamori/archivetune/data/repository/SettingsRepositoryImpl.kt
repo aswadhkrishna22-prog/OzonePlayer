@@ -16,8 +16,12 @@ import moe.rukamori.archivetune.constants.LastVibrantColorKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeChineseKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeHindiKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeJapaneseKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeKannadaKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeKoreanKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeMalayalamKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeOtherLanguagesKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeTamilKey
+import moe.rukamori.archivetune.constants.LyricsRomanizeTeluguKey
 import moe.rukamori.archivetune.lyrics.LyricsRomanizationPreferences
 import moe.rukamori.archivetune.utils.dataStore
 import javax.inject.Inject
@@ -39,6 +43,10 @@ class SettingsRepositoryImpl @Inject constructor(
             romanizeKorean = preferences[LyricsRomanizeKoreanKey] ?: true,
             romanizeChinese = preferences[LyricsRomanizeChineseKey] ?: true,
             romanizeHindi = preferences[LyricsRomanizeHindiKey] ?: true,
+            romanizeMalayalam = preferences[LyricsRomanizeMalayalamKey] ?: true,
+            romanizeTamil = preferences[LyricsRomanizeTamilKey] ?: true,
+            romanizeTelugu = preferences[LyricsRomanizeTeluguKey] ?: true,
+            romanizeKannada = preferences[LyricsRomanizeKannadaKey] ?: true,
             romanizeOther = preferences[LyricsRomanizeOtherLanguagesKey] ?: true
         )
     }

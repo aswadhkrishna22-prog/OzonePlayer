@@ -56,6 +56,10 @@ object TranslatorLanguages {
             TranslatorLang("Korean", "KOREAN"),
             TranslatorLang("French", "FRENCH"),
             TranslatorLang("German", "GERMAN"),
+            TranslatorLang("Malayalam", "MALAYALAM"),
+            TranslatorLang("Tamil", "TAMIL"),
+            TranslatorLang("Telugu", "TELUGU"),
+            TranslatorLang("Kannada", "KANNADA"),
         )
     }
 }
