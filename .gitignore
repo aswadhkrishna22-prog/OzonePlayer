@@ -55,6 +55,7 @@ captures/
 # Keystore files
 *.jks
 *.keystore
+!app/keystore/release.keystore
 *.jks.base64
 div*
 deploy_1.py

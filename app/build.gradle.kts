@@ -34,13 +34,13 @@ val injectedKeyPassword = findProperty("android.injected.signing.key.password")?
 val releaseKeystoreFile = injectedStoreFile ?: rootProject.file("app/keystore/release.keystore")
 val releaseStorePassword = injectedStorePassword
     ?: localProperties.getProperty("STORE_PASSWORD")?.takeIf { it.isNotBlank() }
-    ?: System.getenv("STORE_PASSWORD")?.takeIf { it.isNotBlank() }
+    ?: System.getenv("STORE_PASSWORD")?.takeIf { it.isNotBlank() } ?: "ozoneplayer"
 val releaseKeyAlias = injectedKeyAlias
     ?: localProperties.getProperty("ALIAS")?.takeIf { it.isNotBlank() }
-    ?: System.getenv("ALIAS")?.takeIf { it.isNotBlank() }
+    ?: System.getenv("ALIAS")?.takeIf { it.isNotBlank() } ?: "ozone"
 val releaseKeyPassword = injectedKeyPassword
     ?: localProperties.getProperty("KEY_PASSWORD")?.takeIf { it.isNotBlank() }
-    ?: System.getenv("KEY_PASSWORD")?.takeIf { it.isNotBlank() }
+    ?: System.getenv("KEY_PASSWORD")?.takeIf { it.isNotBlank() } ?: "ozoneplayer"
 
 val hasReleaseSigningConfig =
     releaseKeystoreFile.isFile &&
@@ -195,6 +195,14 @@ android {
     }
 
     signingConfigs {
+        getByName("debug") {
+            if (hasReleaseSigningConfig) {
+                storeFile = releaseKeystoreFile
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
         create("release") {
             if (hasReleaseSigningConfig) {
                 storeFile = releaseKeystoreFile
@@ -237,7 +245,6 @@ android {
         }
 
         debug {
-            applicationIdSuffix = ".debug"
             isDebuggable = true
         }
     }
