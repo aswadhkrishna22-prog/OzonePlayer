@@ -37,7 +37,7 @@ internal class NavigationBarGestureState(
     val barTranslationXAnimatable get() = repulsionState.barTranslationXAnimatable
     val barTranslationYAnimatable get() = repulsionState.barTranslationYAnimatable
 
-    fun onDragStart(offsetX: Float, offsetY: Float, maxRepulsionXPx: Float, maxRepulsionYPx: Float) {
+    suspend fun onDragStart(offsetX: Float, offsetY: Float, maxRepulsionXPx: Float, maxRepulsionYPx: Float) {
         if (selectorState.items.isEmpty() || selectorState.tabWidthPx <= 0f) return
         settlingJob?.cancel()
         settlingJob = null
@@ -45,18 +45,16 @@ internal class NavigationBarGestureState(
         isDragging = true
         selectorState.isDragging = true
 
-        coroutineScope.launch {
-            selectorState.onDragStart(offsetX)
-            repulsionState.onDragStart(
-                offsetX = offsetX,
-                offsetY = offsetY,
-                maxRepulsionXPx = maxRepulsionXPx,
-                maxRepulsionYPx = maxRepulsionYPx,
-            )
-        }
+        selectorState.onDragStart(offsetX)
+        repulsionState.onDragStart(
+            offsetX = offsetX,
+            offsetY = offsetY,
+            maxRepulsionXPx = maxRepulsionXPx,
+            maxRepulsionYPx = maxRepulsionYPx,
+        )
     }
 
-    fun onDrag(
+    suspend fun onDrag(
         dragAmountX: Float,
         currentTouchX: Float,
         currentTouchY: Float,
@@ -65,15 +63,13 @@ internal class NavigationBarGestureState(
     ) {
         if (selectorState.items.isEmpty() || selectorState.tabWidthPx <= 0f) return
 
-        coroutineScope.launch {
-            selectorState.onDrag(dragAmountX, currentTouchX)
-            repulsionState.onDrag(
-                currentTouchX = currentTouchX,
-                currentTouchY = currentTouchY,
-                maxRepulsionXPx = maxRepulsionXPx,
-                maxRepulsionYPx = maxRepulsionYPx,
-            )
-        }
+        selectorState.onDrag(dragAmountX, currentTouchX)
+        repulsionState.onDrag(
+            currentTouchX = currentTouchX,
+            currentTouchY = currentTouchY,
+            maxRepulsionXPx = maxRepulsionXPx,
+            maxRepulsionYPx = maxRepulsionYPx,
+        )
     }
 
     fun onDragEnd(velocityX: Float = 0f) {

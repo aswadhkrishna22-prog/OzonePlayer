@@ -246,82 +246,16 @@ internal fun FullPlayerControlsGroup(
 
                 Spacer(modifier = Modifier.height(FullPlayerControlsDefaults.MetadataToSeekbarGap))
 
-                val currentProgress by playbackProgress.collectAsStateWithLifecycle()
-
-                val isShuffleActive = state.shuffleState != "off"
-                val shuffleColor = if (isShuffleActive) Color(state.vibrantColor) else Color.White.copy(alpha = 0.5f)
-                val shuffleIcon = when (state.shuffleState) {
-                    "smart" -> R.drawable.ic_shuffle_mix
-                    else -> R.drawable.ic_shuffle
-                }
-
-                val isRepeatActive = state.repeatState != "off"
-                val repeatColor = if (isRepeatActive) Color(state.vibrantColor) else Color.White.copy(alpha = 0.5f)
-                val repeatIcon = when (state.repeatState) {
-                    "one" -> R.drawable.ic_repeat_one
-                    "all", "on" -> R.drawable.ic_repeat_on
-                    else -> R.drawable.ic_repeat
-                }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .graphicsLayer {
-                            val q = queueFractionProvider().coerceIn(0f, 1f)
-                            val p = (q / 0.45f).coerceIn(0f, 1f)
-                            translationY = -p * transportLiftPx
-                        }
-                ) {
-                    PlayerControls(
-                        isPlaying = state.isPlaying,
-                        position = currentProgress,
-                        duration = state.durationMs,
-                        onSeek = { targetPositionMs ->
-                            onSeek(targetPositionMs.toFloat())
-                        },
-                        onPlayPause = { onAction(PlayerAction.PlayPause) },
-                        onPrev = { onAction(PlayerAction.Previous) },
-                        onNext = { onAction(PlayerAction.Next) },
-                        modifier = Modifier.fillMaxWidth(),
-                        onSeekStarted = onSeekStarted,
-                        shuffleContent = {
-                            Box(
-                                modifier = Modifier
-                                    .bounceClick(pressedScale = 0.86f, enabled = isMainControlsInteractive) {
-                                        onAction(PlayerAction.Shuffle)
-                                    }
-                                    .size(44.dp)
-                                    .clip(CircleShape),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Image(
-                                    painter = painterResource(id = shuffleIcon),
-                                    contentDescription = stringResource(R.string.shuffle),
-                                    modifier = Modifier.size(24.dp),
-                                    colorFilter = ColorFilter.tint(shuffleColor),
-                                )
-                            }
-                        },
-                        repeatContent = {
-                            Box(
-                                modifier = Modifier
-                                    .bounceClick(pressedScale = 0.86f, enabled = isMainControlsInteractive) {
-                                        onAction(PlayerAction.Repeat)
-                                    }
-                                    .size(44.dp)
-                                    .clip(CircleShape),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Image(
-                                    painter = painterResource(id = repeatIcon),
-                                    contentDescription = stringResource(R.string.repeat),
-                                    modifier = Modifier.size(24.dp),
-                                    colorFilter = ColorFilter.tint(repeatColor),
-                                )
-                            }
-                        }
-                    )
-                }
+                BoundPlayerControls(
+                    state = state,
+                    playbackProgress = playbackProgress,
+                    onAction = onAction,
+                    onSeek = onSeek,
+                    onSeekStarted = onSeekStarted,
+                    isMainControlsInteractive = isMainControlsInteractive,
+                    transportLiftPx = transportLiftPx,
+                    queueFractionProvider = queueFractionProvider,
+                )
             }
         }
 
@@ -345,5 +279,94 @@ internal fun FullPlayerControlsGroup(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun BoundPlayerControls(
+    state: PlayerUiState,
+    playbackProgress: StateFlow<Long>,
+    onAction: (PlayerAction) -> Unit,
+    onSeek: (Float) -> Unit,
+    onSeekStarted: () -> Unit,
+    isMainControlsInteractive: Boolean,
+    transportLiftPx: Float,
+    queueFractionProvider: () -> Float,
+) {
+    val currentProgress by playbackProgress.collectAsStateWithLifecycle()
+
+    val isShuffleActive = state.shuffleState != "off"
+    val shuffleColor = if (isShuffleActive) Color(state.vibrantColor) else Color.White.copy(alpha = 0.5f)
+    val shuffleIcon = when (state.shuffleState) {
+        "smart" -> R.drawable.ic_shuffle_mix
+        else -> R.drawable.ic_shuffle
+    }
+
+    val isRepeatActive = state.repeatState != "off"
+    val repeatColor = if (isRepeatActive) Color(state.vibrantColor) else Color.White.copy(alpha = 0.5f)
+    val repeatIcon = when (state.repeatState) {
+        "one" -> R.drawable.ic_repeat_one
+        "all", "on" -> R.drawable.ic_repeat_on
+        else -> R.drawable.ic_repeat
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                val q = queueFractionProvider().coerceIn(0f, 1f)
+                val p = (q / 0.45f).coerceIn(0f, 1f)
+                translationY = -p * transportLiftPx
+            }
+    ) {
+        PlayerControls(
+            isPlaying = state.isPlaying,
+            position = currentProgress,
+            duration = state.durationMs,
+            onSeek = { targetPositionMs ->
+                onSeek(targetPositionMs.toFloat())
+            },
+            onPlayPause = { onAction(PlayerAction.PlayPause) },
+            onPrev = { onAction(PlayerAction.Previous) },
+            onNext = { onAction(PlayerAction.Next) },
+            modifier = Modifier.fillMaxWidth(),
+            onSeekStarted = onSeekStarted,
+            shuffleContent = {
+                Box(
+                    modifier = Modifier
+                        .bounceClick(pressedScale = 0.86f, enabled = isMainControlsInteractive) {
+                            onAction(PlayerAction.Shuffle)
+                        }
+                        .size(44.dp)
+                        .clip(CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Image(
+                        painter = painterResource(id = shuffleIcon),
+                        contentDescription = stringResource(R.string.shuffle),
+                        modifier = Modifier.size(24.dp),
+                        colorFilter = ColorFilter.tint(shuffleColor),
+                    )
+                }
+            },
+            repeatContent = {
+                Box(
+                    modifier = Modifier
+                        .bounceClick(pressedScale = 0.86f, enabled = isMainControlsInteractive) {
+                            onAction(PlayerAction.Repeat)
+                        }
+                        .size(44.dp)
+                        .clip(CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Image(
+                        painter = painterResource(id = repeatIcon),
+                        contentDescription = stringResource(R.string.repeat),
+                        modifier = Modifier.size(24.dp),
+                        colorFilter = ColorFilter.tint(repeatColor),
+                    )
+                }
+            }
+        )
     }
 }

@@ -1,19 +1,13 @@
 package moe.rukamori.archivetune.ui.player.player_0
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -33,11 +27,13 @@ import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -82,9 +78,9 @@ fun PlayerControls(
     } else {
         safePosition
     }
-    val remaining = (safeDuration - displayPosition).coerceAtLeast(0L)
+    val remaining = if (safeDuration > 0L) (safeDuration - displayPosition).coerceAtLeast(0L) else 0L
 
-    Column(modifier.padding(horizontal = 28.dp)) {
+    Column(modifier = modifier) {
         SeekBar(
             position = safePosition,
             duration = safeDuration,
@@ -134,9 +130,9 @@ fun PressIcon(icon: ImageVector, size: Dp, onClick: () -> Unit) {
     val src = remember { MutableInteractionSource() }
     val pressed by src.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        if (pressed) 0.86f else 1f,
-        spring(dampingRatio = 0.55f, stiffness = 500f),
-        label = "s"
+        targetValue = if (pressed) 0.86f else 1f,
+        animationSpec = spring(dampingRatio = 0.55f, stiffness = 500f),
+        label = "PressIconScale"
     )
     val haptic = LocalHapticFeedback.current
     Icon(
@@ -149,14 +145,19 @@ fun PressIcon(icon: ImageVector, size: Dp, onClick: () -> Unit) {
                 scaleX = scale
                 scaleY = scale
             }
-            .clickable(src, indication = null) {
-                try {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                } catch (_: Throwable) {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            .clip(CircleShape)
+            .clickable(
+                interactionSource = src,
+                indication = null,
+                onClick = {
+                    try {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    } catch (_: Throwable) {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    }
+                    onClick()
                 }
-                onClick()
-            }
+            )
     )
 }
 
@@ -165,6 +166,7 @@ fun SeekBar(
     position: Long,
     duration: Long,
     onSeek: (Long) -> Unit,
+    modifier: Modifier = Modifier,
     onSeekStarted: (() -> Unit)? = null,
     dragFraction: Float? = null,
     onDragFractionChange: ((Float?) -> Unit)? = null,
@@ -180,7 +182,7 @@ fun SeekBar(
     val targetAmplitude = if (isPlaying && !active) 4.5.dp else if (isPlaying) 2.dp else 0.dp
     val animatedAmplitude by animateDpAsState(
         targetValue = targetAmplitude,
-        animationSpec = spring(dampingRatio = 0.65f, stiffness = Spring.StiffnessMediumLow),
+        animationSpec = spring(dampingRatio = 0.75f, stiffness = Spring.StiffnessMediumLow),
         label = "WaveAmplitude"
     )
 
@@ -196,84 +198,67 @@ fun SeekBar(
         label = "ThumbRadius"
     )
 
-    val infiniteTransition = rememberInfiniteTransition(label = "SquigglyPhase")
-    val phase by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = (2 * Math.PI).toFloat(),
-        animationSpec = infiniteRepeatable(
-            animation = tween(1300, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "PhaseAnimation"
-    )
+    // Only run phase animation when actively playing
+    var phase by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(isPlaying) {
+        if (!isPlaying) return@LaunchedEffect
+        var lastTime = 0L
+        val speed = 3.6f
+        while (true) {
+            withFrameNanos { time ->
+                if (lastTime != 0L) {
+                    val dt = (time - lastTime) / 1_000_000_000f
+                    phase = (phase + dt * speed) % (2f * Math.PI.toFloat())
+                }
+                lastTime = time
+            }
+        }
+    }
 
     var widthPx by remember { mutableFloatStateOf(1f) }
+    val wavePath = remember { Path() }
 
     Box(
-        Modifier
+        modifier
             .fillMaxWidth()
             .height(36.dp)
             .onSizeChanged { widthPx = it.width.toFloat().coerceAtLeast(1f) }
             .pointerInput(safeDuration) {
-                detectTapGestures(
-                    onPress = { offset ->
-                        onSeekStarted?.invoke()
-                        val start = (offset.x / widthPx).coerceIn(0f, 1f)
-                        if (onDragFractionChange != null) {
-                            onDragFractionChange(start)
-                        } else {
-                            internalDrag = start
-                        }
-                        val released = tryAwaitRelease()
-                        if (released) {
-                            val finalFrac = dragFraction ?: internalDrag ?: start
-                            onSeek((finalFrac * safeDuration).toLong())
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    val width = size.width.toFloat().coerceAtLeast(1f)
+                    onSeekStarted?.invoke()
+                    var currentFrac = (down.position.x / width).coerceIn(0f, 1f)
+                    if (onDragFractionChange != null) {
+                        onDragFractionChange(currentFrac)
+                    } else {
+                        internalDrag = currentFrac
+                    }
+                    down.consume()
+
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                        if (!change.pressed) {
+                            change.consume()
+                            onSeek((currentFrac * safeDuration).toLong())
                             if (onDragFractionChange != null) {
                                 onDragFractionChange(null)
                             } else {
                                 internalDrag = null
                             }
+                            break
+                        } else {
+                            change.consume()
+                            currentFrac = (change.position.x / width).coerceIn(0f, 1f)
+                            if (onDragFractionChange != null) {
+                                onDragFractionChange(currentFrac)
+                            } else {
+                                internalDrag = currentFrac
+                            }
                         }
                     }
-                )
-            }
-            .pointerInput(safeDuration) {
-                detectHorizontalDragGestures(
-                    onDragStart = { offset ->
-                        onSeekStarted?.invoke()
-                        val start = (offset.x / widthPx).coerceIn(0f, 1f)
-                        if (onDragFractionChange != null) {
-                            onDragFractionChange(start)
-                        } else {
-                            internalDrag = start
-                        }
-                    },
-                    onHorizontalDrag = { change, _ ->
-                        change.consume()
-                        val current = (change.position.x / widthPx).coerceIn(0f, 1f)
-                        if (onDragFractionChange != null) {
-                            onDragFractionChange(current)
-                        } else {
-                            internalDrag = current
-                        }
-                    },
-                    onDragEnd = {
-                        val finalFrac = dragFraction ?: internalDrag ?: 0f
-                        onSeek((finalFrac * safeDuration).toLong())
-                        if (onDragFractionChange != null) {
-                            onDragFractionChange(null)
-                        } else {
-                            internalDrag = null
-                        }
-                    },
-                    onDragCancel = {
-                        if (onDragFractionChange != null) {
-                            onDragFractionChange(null)
-                        } else {
-                            internalDrag = null
-                        }
-                    }
-                )
+                }
             },
         contentAlignment = Alignment.Center
     ) {
@@ -305,28 +290,38 @@ fun SeekBar(
                         cap = StrokeCap.Round
                     )
                 } else {
-                    // Wavy / Squiggly line when playing
-                    val waveLengthPx = 26.dp.toPx()
-                    val wavePath = Path()
+                    // Wavy / Squiggly line when playing with zero allocations & smooth curves
+                    val waveLengthPx = 28.dp.toPx()
+                    val k = (2.0 * Math.PI / waveLengthPx).toFloat()
+                    val taperDistance = 22.dp.toPx()
+
+                    wavePath.reset()
                     wavePath.moveTo(0f, centerY)
 
-                    val stepPx = 3f
+                    val stepPx = 6.dp.toPx().coerceAtLeast(10f)
+                    var prevX = 0f
+                    var prevY = centerY
                     var currentX = 0f
-                    val taperDistance = 20.dp.toPx()
 
                     while (currentX < playedW) {
                         currentX += stepPx
                         if (currentX > playedW) currentX = playedW
 
-                        // Taper ends so wave starts and finishes smoothly on baseline
                         val startTaper = (currentX / taperDistance).coerceIn(0f, 1f)
                         val endTaper = ((playedW - currentX) / taperDistance).coerceIn(0f, 1f)
                         val envelope = minOf(startTaper, endTaper)
 
-                        val angle = (currentX / waveLengthPx) * 2f * Math.PI.toFloat() - phase
+                        val angle = currentX * k - phase
                         val y = centerY + (ampPx * envelope * sin(angle))
-                        wavePath.lineTo(currentX, y)
+
+                        val midX = (prevX + currentX) / 2f
+                        val midY = (prevY + y) / 2f
+                        wavePath.quadraticBezierTo(prevX, prevY, midX, midY)
+
+                        prevX = currentX
+                        prevY = y
                     }
+                    wavePath.lineTo(playedW, prevY)
 
                     drawPath(
                         path = wavePath,
@@ -354,6 +349,8 @@ fun SeekBar(
 }
 
 fun fmt(ms: Long): String {
-    val s = (ms / 1000).coerceAtLeast(0)
-    return "%d:%02d".format(s / 60, s % 60)
+    val totalSeconds = (ms / 1000).coerceAtLeast(0)
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return "%d:%02d".format(minutes, seconds)
 }
