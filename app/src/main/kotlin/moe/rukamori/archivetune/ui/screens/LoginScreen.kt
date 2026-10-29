@@ -147,6 +147,10 @@ fun LoginScreen(
                                     }
                                 }
                             }
+                        val defaultUa = android.webkit.WebSettings.getDefaultUserAgent(context)
+                        val cleanUa = defaultUa
+                            .replace("; wv", "")
+                            .replace(Regex("Version/\d+\.\d+\s?"), "")
                         settings.apply {
                             javaScriptEnabled = true
                             domStorageEnabled = true
@@ -154,6 +158,7 @@ fun LoginScreen(
                             setSupportZoom(true)
                             builtInZoomControls = true
                             displayZoomControls = false
+                            userAgentString = cleanUa
                         }
                         addJavascriptInterface(
                             object {
