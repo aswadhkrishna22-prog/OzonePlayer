@@ -54,7 +54,7 @@ object Updater {
     private val client = HttpClient()
     private const val ReleaseCacheCheckIntervalMs: Long = 6 * 60 * 60 * 1000L
     private const val StableReleaseBaseUrl = "https://github.com/aswadhkrishna22-prog/OzonePlayer/releases"
-    private const val CanaryReleaseBaseUrl = "https://github.com/MuwMx/YumaCanary/releases"
+    private const val CanaryReleaseBaseUrl = "https://github.com/aswadhkrishna22-prog/OzonePlayer/releases"
     private val GitHubCanaryReleasesEtagKey = stringPreferencesKey("github_canary_releases_etag")
     private val GitHubCanaryReleasesJsonKey = stringPreferencesKey("github_canary_releases_json")
     private val GitHubCanaryReleasesLastCheckedAtKey = longPreferencesKey("github_canary_releases_last_checked_at")
@@ -400,7 +400,7 @@ object Updater {
         cachedEtag: String?,
         isCanary: Boolean = false,
     ): ReleasesNetworkResult {
-        val repo = if (isCanary) "MuwMx/YumaCanary" else "MuwMx/YumaPlayer"
+        val repo = "aswadhkrishna22-prog/OzonePlayer"
         val response: HttpResponse =
             client.get("https://api.github.com/repos/$repo/releases?per_page=$perPage") {
                 headers {
@@ -608,9 +608,9 @@ object Updater {
     ): Result<List<GitCommit>> =
         runCatching {
             val url = if (branch.isNotBlank()) {
-                "https://api.github.com/repos/MuwMx/YumaPlayer/commits?sha=$branch&per_page=$count"
+                "https://api.github.com/repos/aswadhkrishna22-prog/OzonePlayer/commits?sha=$branch&per_page=$count"
             } else {
-                "https://api.github.com/repos/MuwMx/YumaPlayer/commits?per_page=$count"
+                "https://api.github.com/repos/aswadhkrishna22-prog/OzonePlayer/commits?per_page=$count"
             }
             val response = client.get(url) {
                 headers {

@@ -175,7 +175,7 @@ fun BoxScope.GlobalDialogsHost(
                     val releaseUrl =
                         if (latestUpdateChannel == UpdateChannel.DAILY_NIGHTLY) {
                             Updater.getLatestCanaryDownloadUrl().ifBlank {
-                                "https://github.com/MuwMx/YumaCanary/releases/latest"
+                                "https://github.com/aswadhkrishna22-prog/OzonePlayer/releases/latest"
                             }
                         } else {
                             Updater.getLatestDownloadUrl().ifBlank {

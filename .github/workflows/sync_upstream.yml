@@ -1,0 +1,52 @@
+name: Sync Upstream (YumaPlayer)
+
+on:
+  schedule:
+    # Run twice daily at 00:00 and 12:00 UTC
+    - cron: '0 0,12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    name: Sync with Upstream YumaPlayer
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add and fetch upstream repository
+        run: |
+          git remote add upstream https://github.com/MuwMx/YumaPlayer.git || git remote set-url upstream https://github.com/MuwMx/YumaPlayer.git
+          git fetch upstream main
+
+      - name: Check and merge upstream changes
+        run: |
+          NEW_COMMITS=$(git rev-list --count HEAD..upstream/main)
+          echo "Upstream is $NEW_COMMITS commit(s) ahead."
+          
+          if [ "$NEW_COMMITS" -eq 0 ]; then
+            echo "Already up-to-date with upstream. Nothing to merge."
+            exit 0
+          fi
+
+          echo "Attempting to merge upstream/main into main..."
+          if git merge --no-edit -m "chore(upstream): sync updates from MuwMx/YumaPlayer" upstream/main; then
+            echo "Merge successful. Pushing to origin main..."
+            git push origin main
+          else
+            echo "Merge conflict detected! Aborting automatic merge to preserve custom Ozone code."
+            git merge --abort
+            exit 1
+          fi
