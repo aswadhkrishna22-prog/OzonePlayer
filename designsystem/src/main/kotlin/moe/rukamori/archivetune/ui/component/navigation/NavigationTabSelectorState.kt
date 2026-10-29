@@ -133,12 +133,12 @@ internal class NavigationTabSelectorState(
         val visualCenterX: Float
         val visualWidth: Float
 
-        if (accumulatedDragX < 0f) {
-            // Swiping LEFT -> Intended target is NEXT tab (startDragIndex + 1)
+        if (accumulatedDragX > 0f) {
+            // Swiping / dragging RIGHT -> Intended target is NEXT tab on the right (startDragIndex + 1)
             val nextIndex = startDragIndex + 1
             if (nextIndex < items.size) {
                 val nextCenter = (nextIndex + 0.5f) * tabWidthPx
-                val progress = (-accumulatedDragX / tabWidthPx).coerceIn(0f, 1.25f)
+                val progress = (accumulatedDragX / tabWidthPx).coerceIn(0f, 1.25f)
 
                 targetIndex = if (progress >= 0.28f) nextIndex else startDragIndex
 
@@ -149,19 +149,18 @@ internal class NavigationTabSelectorState(
                 val stretch = 4f * interp * (1f - interp)
                 visualWidth = tabWidthPx * (1f + 0.32f * stretch + progress * 0.06f)
             } else {
-                // At rightmost tab (Library): rubber band overscroll resistance
+                // At rightmost tab (Library): rubber band overscroll resistance to the right
                 targetIndex = startDragIndex
                 val rubberBand = accumulatedDragX * 0.2f
                 visualCenterX = startCenter + rubberBand
-                visualWidth = tabWidthPx * (1f + kotlin.math.abs(rubberBand) / tabWidthPx * 0.45f)
+                visualWidth = tabWidthPx * (1f + rubberBand / tabWidthPx * 0.45f)
             }
         } else {
-            // Swiping / dragging RIGHT
-            if (startDragIndex > 0) {
-                // Swiping towards PREVIOUS tab (startDragIndex - 1)
-                val prevIndex = startDragIndex - 1
+            // Swiping / dragging LEFT -> Intended target is PREVIOUS tab on the left (startDragIndex - 1)
+            val prevIndex = startDragIndex - 1
+            if (prevIndex >= 0) {
                 val prevCenter = (prevIndex + 0.5f) * tabWidthPx
-                val progress = (accumulatedDragX / tabWidthPx).coerceIn(0f, 1.25f)
+                val progress = (-accumulatedDragX / tabWidthPx).coerceIn(0f, 1.25f)
 
                 targetIndex = if (progress >= 0.28f) prevIndex else startDragIndex
 
@@ -170,26 +169,12 @@ internal class NavigationTabSelectorState(
 
                 val stretch = 4f * interp * (1f - interp)
                 visualWidth = tabWidthPx * (1f + 0.32f * stretch + progress * 0.06f)
-            } else if (directTouchIndex > 0 || accumulatedDragX > 15f) {
-                // Dragging from Home towards Search/Library
-                val candidateTarget = if (directTouchIndex > 0) directTouchIndex else (startDragIndex + 1).coerceAtMost(items.size - 1)
-                val targetCenter = (candidateTarget + 0.5f) * tabWidthPx
-                val maxDist = kotlin.math.max(1f, targetCenter - startCenter)
-                val progress = (accumulatedDragX / maxDist).coerceIn(0f, 1.25f)
-
-                targetIndex = if (progress >= 0.28f) candidateTarget else startDragIndex
-
-                val interp = progress.coerceIn(0f, 1f)
-                visualCenterX = startCenter + (targetCenter - startCenter) * interp
-
-                val stretch = 4f * interp * (1f - interp)
-                visualWidth = tabWidthPx * (1f + 0.32f * stretch + progress * 0.06f)
             } else {
-                // At leftmost tab (Home): rubber band overscroll resistance
+                // At leftmost tab (Home): rubber band overscroll resistance to the left
                 targetIndex = startDragIndex
                 val rubberBand = accumulatedDragX * 0.2f
                 visualCenterX = startCenter + rubberBand
-                visualWidth = tabWidthPx * (1f + rubberBand / tabWidthPx * 0.45f)
+                visualWidth = tabWidthPx * (1f + kotlin.math.abs(rubberBand) / tabWidthPx * 0.45f)
             }
         }
 
@@ -213,33 +198,21 @@ internal class NavigationTabSelectorState(
         val distanceThreshold = tabWidthPx * 0.28f
 
         val resolvedIndex = when {
-            // Flick left -> Next tab
-            velocityX < -flingThreshold && startDragIndex < items.size - 1 -> {
+            // Flick right -> Next tab on the right
+            velocityX > flingThreshold && startDragIndex < items.size - 1 -> {
                 startDragIndex + 1
             }
-            // Flick right -> Prev tab (or if from 0, Search)
-            velocityX > flingThreshold -> {
-                if (startDragIndex > 0) {
-                    startDragIndex - 1
-                } else if (items.size > 1) {
-                    1
-                } else {
-                    0
-                }
+            // Flick left -> Prev tab on the left
+            velocityX < -flingThreshold && startDragIndex > 0 -> {
+                startDragIndex - 1
             }
-            // Swiped left past distance threshold -> Next tab
-            accumulatedDragX < -distanceThreshold && startDragIndex < items.size - 1 -> {
+            // Swiped right past distance threshold -> Next tab on the right
+            accumulatedDragX > distanceThreshold && startDragIndex < items.size - 1 -> {
                 startDragIndex + 1
             }
-            // Swiped right past distance threshold
-            accumulatedDragX > distanceThreshold -> {
-                if (startDragIndex > 0) {
-                    startDragIndex - 1
-                } else if (candidateIndex > 0) {
-                    candidateIndex
-                } else {
-                    startDragIndex
-                }
+            // Swiped left past distance threshold -> Prev tab on the left
+            accumulatedDragX < -distanceThreshold && startDragIndex > 0 -> {
+                startDragIndex - 1
             }
             candidateIndex in items.indices && candidateIndex != startDragIndex -> {
                 candidateIndex
