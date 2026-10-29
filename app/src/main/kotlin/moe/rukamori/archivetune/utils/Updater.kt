@@ -311,6 +311,8 @@ object Updater {
             name.startsWith(universalPrefix) &&
                 name.contains(targetType, ignoreCase = true) &&
                 name.endsWith(".apk", ignoreCase = true)
+        } ?: assetList.firstOrNull { asset ->
+            asset.optString("name", "").endsWith(".apk", ignoreCase = true)
         }
 
         return preferred?.optString("browser_download_url")?.takeIf { it.isNotBlank() }
