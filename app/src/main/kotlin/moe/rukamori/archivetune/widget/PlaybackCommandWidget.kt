@@ -269,7 +269,7 @@ private fun PlaybackCommandPanel(
                     modifier = GlanceModifier.size(42.dp),
                     action = openArchiveTuneAction(context),
                     icon = R.drawable.ic_heart_outline,
-                    contentDescription = context.getString(R.string.favourite),
+                    contentDescription = context.getString(R.string.action_like),
                     backgroundColor = ColorProvider(Color.Transparent),
                     contentColor = ColorProvider(Color.White),
                     cornerRadius = 21.dp,
