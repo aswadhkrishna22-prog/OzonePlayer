@@ -34,7 +34,7 @@ fun setupMainActivity(
     onOnboardingCompleted: (Boolean) -> Unit,
 ) {
     splashScreen.setKeepOnScreenCondition {
-        isOnboardingCompleted() == null || !isReady()
+        false
     }
     activity.lifecycleScope.launch {
         activity.dataStore.data

@@ -61,9 +61,9 @@ fun rememberAppSplashState(
         }
         onReadyChange(true)
     }
-    var coldSplash by remember(isReady) { mutableStateOf(splashEnabled) }
-    var contentVisible by remember(isReady) { mutableStateOf(!coldSplash || disableAnimations) }
-    var splashDone by remember(isReady) { mutableStateOf(!splashEnabled || disableAnimations) }
+    var coldSplash by remember(isReady) { mutableStateOf(false) }
+    var contentVisible by remember(isReady) { mutableStateOf(true) }
+    var splashDone by remember(isReady) { mutableStateOf(true) }
     LaunchedEffect(contentVisible) {
         if (contentVisible && (!splashEnabled || disableAnimations)) {
             splashDone = true

@@ -45,8 +45,8 @@ import moe.rukamori.archivetune.ui.component.LocalBottomSheetPageState
 import moe.rukamori.archivetune.ui.component.LocalMenuState
 import moe.rukamori.archivetune.ui.component.MenuState
 import moe.rukamori.archivetune.ui.component.shimmer.ShimmerTheme
+import moe.rukamori.archivetune.ui.component.splash.OzoneLaunchAnimation
 import moe.rukamori.archivetune.ui.component.splash.SplashConfig
-import moe.rukamori.archivetune.ui.component.splash.SplashOverlay
 import moe.rukamori.archivetune.ui.haptics.LocalYumaHaptics
 import moe.rukamori.archivetune.ui.scaffold.ScaffoldNavigationRail
 import moe.rukamori.archivetune.ui.scaffold.ScaffoldSearchBarHost
@@ -98,23 +98,8 @@ fun ScaffoldShell(
             LocalPlayerIsExpanded provides appState.playerBottomSheetState.isExpanded,
         ) {
             ScreenBackground(isVisible = LocalGlobalVisibility.current, modifier = Modifier.fillMaxSize())
-            if (splashEnabled) {
-                SplashOverlay(isDark = useDarkTheme, onBurstStart = onBurstStart, onDismiss = onSplashDismiss)
-            }
             Row(
-                modifier = Modifier
-                    .graphicsLayer {
-                        alpha = contentAlpha
-                        translationY = (1f - contentAlpha) * SplashConfig.Reveal.RISE_DP.dp.toPx()
-                        compositingStrategy = CompositingStrategy.ModulateAlpha
-                    }
-                    .pointerInput(contentVisible) {
-                        if (!contentVisible) {
-                            awaitPointerEventScope {
-                                while (true) awaitPointerEvent().changes.forEach { it.consume() }
-                            }
-                        }
-                    },
+                modifier = Modifier.fillMaxSize(),
             ) {
                 ScaffoldNavigationRail(
                     visible = appState.useRail && appState.shouldShowNavigationBar, isTvDevice = appState.isTvDevice,
@@ -222,6 +207,8 @@ fun ScaffoldShell(
                     )
                 }
             }
+
+            OzoneLaunchAnimation()
         }
     }
 }
