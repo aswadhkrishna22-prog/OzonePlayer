@@ -26,16 +26,21 @@ val discordApplicationId =
         ).trim()
 val discordApplicationIdLong = discordApplicationId.toLongOrNull() ?: 1165706613961789445L
 val discordRedirectScheme = "discord-$discordApplicationId"
-val releaseKeystoreFile = rootProject.file("app/keystore/release.keystore")
-val releaseStorePassword =
-    localProperties.getProperty("STORE_PASSWORD")?.takeIf { it.isNotBlank() }
-        ?: System.getenv("STORE_PASSWORD")?.takeIf { it.isNotBlank() }
-val releaseKeyAlias =
-    localProperties.getProperty("ALIAS")?.takeIf { it.isNotBlank() }
-        ?: System.getenv("ALIAS")?.takeIf { it.isNotBlank() }
-val releaseKeyPassword =
-    localProperties.getProperty("KEY_PASSWORD")?.takeIf { it.isNotBlank() }
-        ?: System.getenv("KEY_PASSWORD")?.takeIf { it.isNotBlank() }
+val injectedStoreFile = findProperty("android.injected.signing.store.file")?.toString()?.takeIf { it.isNotBlank() }?.let { file(it) }
+val injectedStorePassword = findProperty("android.injected.signing.store.password")?.toString()?.takeIf { it.isNotBlank() }
+val injectedKeyAlias = findProperty("android.injected.signing.key.alias")?.toString()?.takeIf { it.isNotBlank() }
+val injectedKeyPassword = findProperty("android.injected.signing.key.password")?.toString()?.takeIf { it.isNotBlank() }
+
+val releaseKeystoreFile = injectedStoreFile ?: rootProject.file("app/keystore/release.keystore")
+val releaseStorePassword = injectedStorePassword
+    ?: localProperties.getProperty("STORE_PASSWORD")?.takeIf { it.isNotBlank() }
+    ?: System.getenv("STORE_PASSWORD")?.takeIf { it.isNotBlank() }
+val releaseKeyAlias = injectedKeyAlias
+    ?: localProperties.getProperty("ALIAS")?.takeIf { it.isNotBlank() }
+    ?: System.getenv("ALIAS")?.takeIf { it.isNotBlank() }
+val releaseKeyPassword = injectedKeyPassword
+    ?: localProperties.getProperty("KEY_PASSWORD")?.takeIf { it.isNotBlank() }
+    ?: System.getenv("KEY_PASSWORD")?.takeIf { it.isNotBlank() }
 
 val hasReleaseSigningConfig =
     releaseKeystoreFile.isFile &&

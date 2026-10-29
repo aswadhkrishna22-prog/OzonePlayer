@@ -116,6 +116,7 @@ data class PlayerSettingsUiActions(
     val onQobuzAppSecretChange: (String) -> Unit = {},
     val onQobuzUserAuthTokenChange: (String) -> Unit = {},
     val onEqualizerClick: () -> Unit = {},
+    val onSpatialAudioClick: () -> Unit = {},
 )
 
 typealias PlayerSettingsActions = PlayerSettingsUiActions

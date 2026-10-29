@@ -842,3 +842,11 @@ enum class UpdateChannel {
 val SponsorBlockEnabledKey = booleanPreferencesKey("sponsorBlockEnabled")
 val SponsorBlockCategoriesKey = stringSetPreferencesKey("sponsorBlockCategories")
 val SponsorBlockApiUrlKey = stringPreferencesKey("sponsorBlockApiUrl")
+
+// Spatial Audio settings
+val SpatialAudioEnabledKey = booleanPreferencesKey("spatial_audio_enabled")
+val SpatialAudioCrossfeedKey = floatPreferencesKey("spatial_audio_crossfeed")
+val SpatialAudioDelayMsKey = floatPreferencesKey("spatial_audio_delay_ms")
+val SpatialAudioBassDbKey = floatPreferencesKey("spatial_audio_bass_db")
+val SpatialAudioMidDbKey = floatPreferencesKey("spatial_audio_mid_db")
+val SpatialAudioTrebleDbKey = floatPreferencesKey("spatial_audio_treble_db")

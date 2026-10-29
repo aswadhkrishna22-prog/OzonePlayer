@@ -72,6 +72,13 @@ import moe.rukamori.archivetune.constants.ScrobbleDelaySecondsKey
 import moe.rukamori.archivetune.constants.ScrobbleMinSongDurationKey
 import moe.rukamori.archivetune.constants.ShowLyricsKey
 import moe.rukamori.archivetune.constants.SkipSilenceKey
+import moe.rukamori.archivetune.constants.SpatialAudioBassDbKey
+import moe.rukamori.archivetune.constants.SpatialAudioCrossfeedKey
+import moe.rukamori.archivetune.constants.SpatialAudioDelayMsKey
+import moe.rukamori.archivetune.constants.SpatialAudioEnabledKey
+import moe.rukamori.archivetune.constants.SpatialAudioMidDbKey
+import moe.rukamori.archivetune.constants.SpatialAudioTrebleDbKey
+import moe.rukamori.archivetune.playback.processor.SpatialProcessor
 import moe.rukamori.archivetune.constants.SmartTrimmerKey
 import moe.rukamori.archivetune.constants.StopMusicOnTaskClearKey
 import moe.rukamori.archivetune.constants.WakelockKey
@@ -450,6 +457,36 @@ class MusicServiceLifecycle(
                 delegate.localPlayer.skipSilenceEnabled = requestedSkip
                 delegate.secondaryCrossfadePlayer?.skipSilenceEnabled = requestedSkip
             }
+
+        delegate.dataStore.data
+            .map { it[SpatialAudioEnabledKey] ?: false }
+            .distinctUntilChanged()
+            .collectLatest(scope) { SpatialProcessor.instance.enabled = it }
+
+        delegate.dataStore.data
+            .map { it[SpatialAudioCrossfeedKey] ?: 0.3f }
+            .distinctUntilChanged()
+            .collectLatest(scope) { SpatialProcessor.instance.crossfeed = it }
+
+        delegate.dataStore.data
+            .map { it[SpatialAudioDelayMsKey] ?: 0.25f }
+            .distinctUntilChanged()
+            .collectLatest(scope) { SpatialProcessor.instance.delayMs = it }
+
+        delegate.dataStore.data
+            .map { it[SpatialAudioBassDbKey] ?: 0f }
+            .distinctUntilChanged()
+            .collectLatest(scope) { SpatialProcessor.instance.bassDb = it }
+
+        delegate.dataStore.data
+            .map { it[SpatialAudioMidDbKey] ?: 0f }
+            .distinctUntilChanged()
+            .collectLatest(scope) { SpatialProcessor.instance.midDb = it }
+
+        delegate.dataStore.data
+            .map { it[SpatialAudioTrebleDbKey] ?: 0f }
+            .distinctUntilChanged()
+            .collectLatest(scope) { SpatialProcessor.instance.trebleDb = it }
 
         delegate.dataStore.data
             .map { it[PauseOnDeviceMuteKey] ?: false }

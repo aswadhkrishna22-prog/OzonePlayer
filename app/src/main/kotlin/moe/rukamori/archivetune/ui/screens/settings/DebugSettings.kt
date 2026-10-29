@@ -121,6 +121,7 @@ import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.component.IconButton
+import moe.rukamori.archivetune.ui.component.PreferenceEntry
 import moe.rukamori.archivetune.ui.component.PreferenceGroup
 import moe.rukamori.archivetune.ui.component.SwitchPreference
 import moe.rukamori.archivetune.ui.utils.backToMain
@@ -197,6 +198,15 @@ fun DebugSettings(navController: NavController) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             PreferenceGroup(title = stringResource(R.string.experimental_features)) {
+                item {
+                    PreferenceEntry(
+                        title = { Text("Spatial Audio") },
+                        description = { Text("Soundstage, crossfeed, and acoustic balance") },
+                        icon = { Icon(painterResource(R.drawable.waves), null) },
+                        onClick = { navController.navigate("settings/spatial_audio") },
+                        showChevron = true,
+                    )
+                }
                 item {
                     SwitchPreference(
                         title = { Text(stringResource(R.string.show_discord_debug_ui)) },

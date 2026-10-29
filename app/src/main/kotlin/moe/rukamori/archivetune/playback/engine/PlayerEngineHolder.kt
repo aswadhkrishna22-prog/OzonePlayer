@@ -23,6 +23,7 @@ import moe.rukamori.archivetune.audiodsp.DeckController
 import moe.rukamori.archivetune.audiodsp.DjFilterAudioProcessor
 import moe.rukamori.archivetune.audiodsp.DualForwardingPlayer
 import moe.rukamori.archivetune.audiodsp.DualPlayerRoleHolder
+import moe.rukamori.archivetune.playback.processor.SpatialProcessor
 import moe.rukamori.archivetune.extensions.setOffloadEnabled
 import moe.rukamori.archivetune.innertube.YouTube
 import moe.rukamori.archivetune.playback.ExoDeckController
@@ -224,9 +225,8 @@ class PlayerEngineHolder {
                 .Builder(context)
                 .setEnableFloatOutput(false)
                 .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
-                .setAudioProcessorChain(
-                    DefaultAudioSink.DefaultAudioProcessorChain(djFilter),
-                ).build()
+                .setAudioProcessors(arrayOf(SpatialProcessor.instance, djFilter))
+                .build()
         }
 
     fun releaseReserveAndTransitionDecks() {

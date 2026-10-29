@@ -35,6 +35,7 @@ import moe.rukamori.archivetune.ui.screens.settings.PalettePickerScreen
 import moe.rukamori.archivetune.ui.screens.settings.player.PlayerSettings
 import moe.rukamori.archivetune.ui.screens.settings.PoTokenScreen
 import moe.rukamori.archivetune.ui.screens.settings.PrivacySettings
+import moe.rukamori.archivetune.ui.screens.settings.SpatialAudioSettings
 import moe.rukamori.archivetune.ui.screens.settings.StorageSettings
 import moe.rukamori.archivetune.ui.screens.settings.ThemeCreatorScreen
 import moe.rukamori.archivetune.ui.state.UpdateState
@@ -106,6 +107,9 @@ internal fun NavGraphBuilder.settingsNavigationRoutes(
     }
     composable("settings/misc") {
         DebugSettings(navController)
+    }
+    composable("settings/spatial_audio") {
+        SpatialAudioSettings(navController)
     }
     composable(
         route = "settings/changelog?channel={channel}",
