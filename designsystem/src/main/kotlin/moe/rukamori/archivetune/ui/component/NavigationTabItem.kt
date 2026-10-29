@@ -75,6 +75,15 @@ internal fun RowScope.NavigationTabItem(
         label = "ContentColor",
     )
 
+    val iconScale by animateFloatAsState(
+        targetValue = if (selected) 1.06f else 0.94f,
+        animationSpec = androidx.compose.animation.core.spring(
+            dampingRatio = 0.52f,
+            stiffness = 380f,
+        ),
+        label = "IconScale",
+    )
+
     Box(
         modifier = modifier
             .weight(1f)
@@ -117,7 +126,12 @@ internal fun RowScope.NavigationTabItem(
                 painter = painterResource(if (selected) screen.iconIdActive else screen.iconIdInactive),
                 contentDescription = null,
                 tint = contentColor,
-                modifier = Modifier.size(NavigationTabIconSize),
+                modifier = Modifier
+                    .size(NavigationTabIconSize)
+                    .graphicsLayer {
+                        scaleX = iconScale
+                        scaleY = iconScale
+                    },
             )
             Text(
                 text = stringResource(screen.titleId),

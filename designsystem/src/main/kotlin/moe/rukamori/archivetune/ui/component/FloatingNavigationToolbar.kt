@@ -171,15 +171,14 @@ fun FloatingNavigationToolbar(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = NavigationBarInnerPaddingHorizontal),
+                .padding(horizontal = NavigationBarInnerPaddingHorizontal)
+                .navigationTabDragGestures(gestureState),
             contentAlignment = Alignment.CenterStart,
         ) {
             NavigationDragSelectorOverlay(gestureState.selectorState)
 
             Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .navigationTabDragGestures(gestureState),
+                modifier = Modifier.fillMaxSize(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 items.forEach { screen ->

@@ -1,6 +1,7 @@
 package moe.rukamori.archivetune.ui.component
 
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -9,7 +10,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.input.pointer.util.addPointerInputChange
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
@@ -62,7 +66,7 @@ internal class NavigationBarGestureState(
         if (selectorState.items.isEmpty() || selectorState.tabWidthPx <= 0f) return
 
         coroutineScope.launch {
-            selectorState.onDrag(dragAmountX)
+            selectorState.onDrag(dragAmountX, currentTouchX)
             repulsionState.onDrag(
                 currentTouchX = currentTouchX,
                 currentTouchY = currentTouchY,
@@ -72,7 +76,7 @@ internal class NavigationBarGestureState(
         }
     }
 
-    fun onDragEnd() {
+    fun onDragEnd(velocityX: Float = 0f) {
         if (selectorState.items.isEmpty() || selectorState.tabWidthPx <= 0f) {
             isDragging = false
             selectorState.isDragging = false
@@ -80,7 +84,7 @@ internal class NavigationBarGestureState(
             return
         }
 
-        selectorState.onRelease()
+        selectorState.onRelease(velocityX)
 
         settlingJob?.cancel()
         settlingJob = coroutineScope.launch {
@@ -170,31 +174,68 @@ internal fun Modifier.navigationTabDragGestures(
         gestureState.repulsionState.rowHeightPx = height
     }
     .pointerInput(gestureState) {
-        val maxRepulsionXPx = 7.dp.toPx()
-        val maxRepulsionYPx = 4.dp.toPx()
+        val maxRepulsionXPx = 6.dp.toPx()
+        val maxRepulsionYPx = 3.dp.toPx()
+        val touchSlop = viewConfiguration.touchSlop
+        val velocityTracker = VelocityTracker()
 
-        detectDragGesturesAfterLongPress(
-            onDragStart = { offset ->
-                gestureState.onDragStart(
-                    offsetX = offset.x,
-                    offsetY = offset.y,
-                    maxRepulsionXPx = maxRepulsionXPx,
-                    maxRepulsionYPx = maxRepulsionYPx,
-                )
-            },
-            onDrag = { change, dragAmount ->
-                change.consume()
-                gestureState.onDrag(
-                    dragAmountX = dragAmount.x,
-                    currentTouchX = change.position.x,
-                    currentTouchY = change.position.y,
-                    maxRepulsionXPx = maxRepulsionXPx,
-                    maxRepulsionYPx = maxRepulsionYPx,
-                )
-            },
-            onDragEnd = { gestureState.onDragEnd() },
-            onDragCancel = { gestureState.onDragCancel() },
-        )
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            velocityTracker.resetTracking()
+            velocityTracker.addPointerInputChange(down)
+
+            var isDragActive = false
+            val startX = down.position.x
+            val startY = down.position.y
+            var lastX = down.position.x
+            var lastY = down.position.y
+
+            while (true) {
+                val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+                val change = event.changes.firstOrNull { it.id == down.id } ?: break
+
+                if (!change.pressed) {
+                    if (isDragActive) {
+                        change.consume()
+                        val velocity = velocityTracker.calculateVelocity().x
+                        gestureState.onDragEnd(velocity)
+                    }
+                    break
+                }
+
+                velocityTracker.addPointerInputChange(change)
+                val currentX = change.position.x
+                val currentY = change.position.y
+                val totalDeltaX = currentX - startX
+                val totalDeltaY = currentY - startY
+                val stepDeltaX = currentX - lastX
+                val stepDeltaY = currentY - lastY
+                lastX = currentX
+                lastY = currentY
+
+                if (!isDragActive) {
+                    if (kotlin.math.abs(totalDeltaX) > touchSlop && kotlin.math.abs(totalDeltaX) > kotlin.math.abs(totalDeltaY) * 1.1f) {
+                        isDragActive = true
+                        change.consume()
+                        gestureState.onDragStart(
+                            offsetX = currentX,
+                            offsetY = currentY,
+                            maxRepulsionXPx = maxRepulsionXPx,
+                            maxRepulsionYPx = maxRepulsionYPx,
+                        )
+                    }
+                } else {
+                    change.consume()
+                    gestureState.onDrag(
+                        dragAmountX = stepDeltaX,
+                        currentTouchX = currentX,
+                        currentTouchY = currentY,
+                        maxRepulsionXPx = maxRepulsionXPx,
+                        maxRepulsionYPx = maxRepulsionYPx,
+                    )
+                }
+            }
+        }
     }
 
 @Deprecated(
