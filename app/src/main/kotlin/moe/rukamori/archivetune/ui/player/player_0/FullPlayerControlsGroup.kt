@@ -7,6 +7,7 @@
 package moe.rukamori.archivetune.ui.player.player_0
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,8 +15,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,22 +27,30 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.StateFlow
+import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerBottomBar
 import moe.rukamori.archivetune.ui.player.player_0.sett.PlayerMenuScreen
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.state.PlayerUiState
+import moe.rukamori.archivetune.ui.utils.bounceClick
 import timber.log.Timber
 
 internal object FullPlayerControlsDefaults {
@@ -235,28 +246,22 @@ internal fun FullPlayerControlsGroup(
 
                 Spacer(modifier = Modifier.height(FullPlayerControlsDefaults.MetadataToSeekbarGap))
 
-                Box(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    PlayerSeekBar(
-                        state = state,
-                        playbackProgress = playbackProgress,
-                        durationMs = state.durationMs,
-                        vibrantColor = Color(state.vibrantColor),
-                        slideOffset = slideOffset,
-                        showCodecInfo = state.showCodecInfo,
-                        codecInfo = state.codecInfo,
-                        sleepTimerRemainingSeconds = state.sleepTimerRemainingSeconds,
-                        onOpenSleepTimer = { onOpenSettingsMenu(PlayerMenuScreen.SLEEP_TIMER) },
-                        onSeek = onSeek,
-                        onSeekStarted = onSeekStarted,
-                        isVisible = isVisible,
-                        enabled = isMainControlsInteractive,
-                        codecFractionProvider = queueFractionProvider,
-                    )
+                val currentProgress by playbackProgress.collectAsStateWithLifecycle()
+
+                val isShuffleActive = state.shuffleState != "off"
+                val shuffleColor = if (isShuffleActive) Color(state.vibrantColor) else Color.White.copy(alpha = 0.5f)
+                val shuffleIcon = when (state.shuffleState) {
+                    "smart" -> R.drawable.ic_shuffle_mix
+                    else -> R.drawable.ic_shuffle
                 }
 
-                Spacer(modifier = Modifier.height(FullPlayerControlsDefaults.SeekbarToTransportGap))
+                val isRepeatActive = state.repeatState != "off"
+                val repeatColor = if (isRepeatActive) Color(state.vibrantColor) else Color.White.copy(alpha = 0.5f)
+                val repeatIcon = when (state.repeatState) {
+                    "one" -> R.drawable.ic_repeat_one
+                    "all", "on" -> R.drawable.ic_repeat_on
+                    else -> R.drawable.ic_repeat
+                }
 
                 Box(
                     modifier = Modifier
@@ -267,14 +272,54 @@ internal fun FullPlayerControlsGroup(
                             translationY = -p * transportLiftPx
                         }
                 ) {
-                    PlayerTransportControls(
+                    PlayerControls(
                         isPlaying = state.isPlaying,
-                        vibrantColor = Color(state.vibrantColor),
-                        slideOffset = slideOffset,
-                        onAction = onAction,
-                        isLarge = true,
-                        state = state,
-                        enabled = isMainControlsInteractive,
+                        position = currentProgress,
+                        duration = state.durationMs,
+                        onSeek = { targetPositionMs ->
+                            onSeek(targetPositionMs.toFloat())
+                        },
+                        onPlayPause = { onAction(PlayerAction.PlayPause) },
+                        onPrev = { onAction(PlayerAction.Previous) },
+                        onNext = { onAction(PlayerAction.Next) },
+                        modifier = Modifier.fillMaxWidth(),
+                        onSeekStarted = onSeekStarted,
+                        shuffleContent = {
+                            Box(
+                                modifier = Modifier
+                                    .bounceClick(pressedScale = 0.86f, enabled = isMainControlsInteractive) {
+                                        onAction(PlayerAction.Shuffle)
+                                    }
+                                    .size(44.dp)
+                                    .clip(CircleShape),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Image(
+                                    painter = painterResource(id = shuffleIcon),
+                                    contentDescription = stringResource(R.string.shuffle),
+                                    modifier = Modifier.size(24.dp),
+                                    colorFilter = ColorFilter.tint(shuffleColor),
+                                )
+                            }
+                        },
+                        repeatContent = {
+                            Box(
+                                modifier = Modifier
+                                    .bounceClick(pressedScale = 0.86f, enabled = isMainControlsInteractive) {
+                                        onAction(PlayerAction.Repeat)
+                                    }
+                                    .size(44.dp)
+                                    .clip(CircleShape),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Image(
+                                    painter = painterResource(id = repeatIcon),
+                                    contentDescription = stringResource(R.string.repeat),
+                                    modifier = Modifier.size(24.dp),
+                                    colorFilter = ColorFilter.tint(repeatColor),
+                                )
+                            }
+                        }
                     )
                 }
             }
