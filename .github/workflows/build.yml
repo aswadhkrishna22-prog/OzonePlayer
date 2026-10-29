@@ -25,7 +25,7 @@ jobs:
 
       - name: Build
         run: >
-          ./gradlew assembleRelease
+          ./gradlew assembleGmsMobileUniversalRelease
           -Pandroid.injected.signing.store.file=$RUNNER_TEMP/release.jks
           -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }}
           -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }}
