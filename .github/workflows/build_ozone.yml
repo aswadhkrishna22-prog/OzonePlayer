@@ -1,4 +1,4 @@
-name: Build Ozone Player APK
+name: Build Ozone Player APK & Release
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -31,10 +31,25 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleGmsMobileUniversalDebug --stacktrace
+        run: ./gradlew assembleGmsMobileUniversalDebug -PnightlyVersionName="1.2.${{ github.run_number }}" --stacktrace
 
-      - name: Upload Ozone Player APK
+      - name: Prepare Release Asset
+        run: |
+          mkdir -p release_assets
+          APK_FILE=$(find app/build/outputs/apk/gmsMobileUniversal/debug -name "*.apk" | head -n 1)
+          cp "$APK_FILE" "release_assets/OzonePlayer-v1.2.${{ github.run_number }}.apk"
+          cp "$APK_FILE" "release_assets/app-gms-mobile-universal-release.apk"
+
+      - name: Upload Ozone Player Artifact
         uses: actions/upload-artifact@v4
         with:
           name: OzonePlayer-APK
-          path: app/build/outputs/apk/**/app-*.apk
+          path: release_assets/*.apk
+
+      - name: Publish GitHub Release for In-App Auto-Update
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v1.2.${{ github.run_number }}" release_assets/*.apk \
+            --title "Ozone Player v1.2.${{ github.run_number }}" \
+            --generate-notes
