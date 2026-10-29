@@ -83,7 +83,7 @@
     <string name="library_top_mixes_refresh">Refresh mixes</string>
     <string name="library_top_mixes_configure_ai">Configure AI</string>
     <string name="library_top_mixes_ai_not_configured_title">Configure AI to build mixes</string>
-    <string name="library_top_mixes_ai_not_configured_desc">AI integration is required before Yuma can build personal top mixes.</string>
+    <string name="library_top_mixes_ai_not_configured_desc">AI integration is required before Ozone Player can build personal top mixes.</string>
     <string name="library_top_mixes_no_recent_history_title">No recent listening mix yet</string>
     <string name="library_top_mixes_no_recent_history">Listen to more songs, then refresh to build AI mixes from your recent history.</string>
     <string name="library_top_mixes_no_valid_mixes">AI did not return any playable mixes from your recent history.</string>
