@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.Build
 import android.util.LruCache
 import androidx.annotation.DrawableRes
 import androidx.compose.material3.darkColorScheme
@@ -364,9 +365,32 @@ private object WidgetArtworkCache {
             BitmapFactory.Options().apply {
                 inSampleSize = calculateInSampleSize(bounds, targetPx, targetPx)
             }
-        return BitmapFactory.decodeFile(file.absolutePath, options)?.also {
+        val decoded = BitmapFactory.decodeFile(file.absolutePath, options) ?: return null
+        val finalBitmap =
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                val radiusPx = 16f * context.resources.displayMetrics.density
+                roundBitmap(decoded, radiusPx)
+            } else {
+                decoded
+            }
+        return finalBitmap.also {
             cache.put(cacheKey, it)
         }
+    }
+}
+
+private fun roundBitmap(src: Bitmap, cornerRadiusPx: Float): Bitmap {
+    return try {
+        val output = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(output)
+        val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+        val rect = android.graphics.RectF(0f, 0f, src.width.toFloat(), src.height.toFloat())
+        canvas.drawRoundRect(rect, cornerRadiusPx, cornerRadiusPx, paint)
+        paint.xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.SRC_IN)
+        canvas.drawBitmap(src, 0f, 0f, paint)
+        output
+    } catch (_: Throwable) {
+        src
     }
 }
 
