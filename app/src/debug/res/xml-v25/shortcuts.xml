@@ -8,7 +8,7 @@
         <intent
             android:action="re.muwmix.yumaplayer.action.SEARCH"
             android:targetClass="moe.rukamori.archivetune.MainActivity"
-            android:targetPackage="re.muwmix.yumaplayer.debug" />
+            android:targetPackage="com.ozone.player" />
     </shortcut>
     <shortcut
         android:enabled="true"
@@ -18,6 +18,6 @@
         <intent
             android:action="re.muwmix.yumaplayer.action.LIBRARY"
             android:targetClass="moe.rukamori.archivetune.MainActivity"
-            android:targetPackage="re.muwmix.yumaplayer.debug" />
+            android:targetPackage="com.ozone.player" />
     </shortcut>
 </shortcuts>

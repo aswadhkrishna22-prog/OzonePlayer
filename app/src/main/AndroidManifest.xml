@@ -85,6 +85,9 @@
                 <data
                     android:host="together"
                     android:scheme="yumaplayer" />
+                <data
+                    android:host="together"
+                    android:scheme="ozoneplayer" />
             </intent-filter>
 
             <!-- Youtube filter -->
