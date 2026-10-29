@@ -1,11 +1,19 @@
 package moe.rukamori.archivetune.ui.player.player_0
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -33,7 +41,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -45,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.sin
 
 @Composable
 fun PlayerControls(
@@ -77,7 +91,8 @@ fun PlayerControls(
             onSeek = onSeek,
             onSeekStarted = onSeekStarted,
             dragFraction = dragFraction,
-            onDragFractionChange = { dragFraction = it }
+            onDragFractionChange = { dragFraction = it },
+            isPlaying = isPlaying,
         )
         Row(
             Modifier.fillMaxWidth().padding(top = 6.dp),
@@ -153,6 +168,7 @@ fun SeekBar(
     onSeekStarted: (() -> Unit)? = null,
     dragFraction: Float? = null,
     onDragFractionChange: ((Float?) -> Unit)? = null,
+    isPlaying: Boolean = false,
 ) {
     var internalDrag by remember { mutableStateOf<Float?>(null) }
     val drag = dragFraction ?: internalDrag
@@ -160,19 +176,72 @@ fun SeekBar(
     val safePosition = position.coerceIn(0L, safeDuration.coerceAtLeast(1L))
     val frac = drag ?: if (safeDuration > 0L) (safePosition.toFloat() / safeDuration.toFloat()).coerceIn(0f, 1f) else 0f
     val active = drag != null
-    val h by animateDpAsState(if (active) 10.dp else 5.dp, spring(), label = "h")
-    var w by remember { mutableFloatStateOf(1f) }
+
+    val targetAmplitude = if (isPlaying && !active) 4.5.dp else if (isPlaying) 2.dp else 0.dp
+    val animatedAmplitude by animateDpAsState(
+        targetValue = targetAmplitude,
+        animationSpec = spring(dampingRatio = 0.65f, stiffness = Spring.StiffnessMediumLow),
+        label = "WaveAmplitude"
+    )
+
+    val strokeWidth by animateDpAsState(
+        targetValue = if (active) 6.dp else 4.5.dp,
+        animationSpec = spring(dampingRatio = 0.7f, stiffness = Spring.StiffnessMedium),
+        label = "StrokeWidth"
+    )
+
+    val thumbRadius by animateDpAsState(
+        targetValue = if (active) 7.dp else 0.dp,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium),
+        label = "ThumbRadius"
+    )
+
+    val infiniteTransition = rememberInfiniteTransition(label = "SquigglyPhase")
+    val phase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = (2 * Math.PI).toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(1300, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "PhaseAnimation"
+    )
+
+    var widthPx by remember { mutableFloatStateOf(1f) }
 
     Box(
         Modifier
             .fillMaxWidth()
-            .height(32.dp)
-            .onSizeChanged { w = it.width.toFloat().coerceAtLeast(1f) }
+            .height(36.dp)
+            .onSizeChanged { widthPx = it.width.toFloat().coerceAtLeast(1f) }
+            .pointerInput(safeDuration) {
+                detectTapGestures(
+                    onPress = { offset ->
+                        onSeekStarted?.invoke()
+                        val start = (offset.x / widthPx).coerceIn(0f, 1f)
+                        if (onDragFractionChange != null) {
+                            onDragFractionChange(start)
+                        } else {
+                            internalDrag = start
+                        }
+                        val released = tryAwaitRelease()
+                        if (released) {
+                            val finalFrac = dragFraction ?: internalDrag ?: start
+                            onSeek((finalFrac * safeDuration).toLong())
+                            if (onDragFractionChange != null) {
+                                onDragFractionChange(null)
+                            } else {
+                                internalDrag = null
+                            }
+                        }
+                    }
+                )
+            }
             .pointerInput(safeDuration) {
                 detectHorizontalDragGestures(
                     onDragStart = { offset ->
                         onSeekStarted?.invoke()
-                        val start = (offset.x / w).coerceIn(0f, 1f)
+                        val start = (offset.x / widthPx).coerceIn(0f, 1f)
                         if (onDragFractionChange != null) {
                             onDragFractionChange(start)
                         } else {
@@ -181,7 +250,7 @@ fun SeekBar(
                     },
                     onHorizontalDrag = { change, _ ->
                         change.consume()
-                        val current = (change.position.x / w).coerceIn(0f, 1f)
+                        val current = (change.position.x / widthPx).coerceIn(0f, 1f)
                         if (onDragFractionChange != null) {
                             onDragFractionChange(current)
                         } else {
@@ -189,7 +258,7 @@ fun SeekBar(
                         }
                     },
                     onDragEnd = {
-                        val finalFrac = drag ?: 0f
+                        val finalFrac = dragFraction ?: internalDrag ?: 0f
                         onSeek((finalFrac * safeDuration).toLong())
                         if (onDragFractionChange != null) {
                             onDragFractionChange(null)
@@ -206,22 +275,81 @@ fun SeekBar(
                     }
                 )
             },
-        contentAlignment = Alignment.CenterStart
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(h)
-                .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.25f))
-        )
-        Box(
-            Modifier
-                .fillMaxWidth(frac.coerceIn(0f, 1f))
-                .height(h)
-                .clip(CircleShape)
-                .background(Color.White)
-        )
+        Canvas(modifier = Modifier.fillMaxWidth().height(36.dp)) {
+            val w = size.width
+            val centerY = size.height / 2f
+            val currentStrokeWidth = strokeWidth.toPx()
+            val ampPx = animatedAmplitude.toPx()
+            val playedW = (frac.coerceIn(0f, 1f) * w).coerceIn(0f, w)
+
+            // 1. Unplayed background track (straight 25% alpha line)
+            drawLine(
+                color = Color.White.copy(alpha = 0.25f),
+                start = Offset(0f, centerY),
+                end = Offset(w, centerY),
+                strokeWidth = currentStrokeWidth,
+                cap = StrokeCap.Round
+            )
+
+            // 2. Played progress track
+            if (playedW > 0.5f) {
+                if (ampPx <= 0.05f) {
+                    // Straight solid line when paused or flattened
+                    drawLine(
+                        color = Color.White,
+                        start = Offset(0f, centerY),
+                        end = Offset(playedW, centerY),
+                        strokeWidth = currentStrokeWidth,
+                        cap = StrokeCap.Round
+                    )
+                } else {
+                    // Wavy / Squiggly line when playing
+                    val waveLengthPx = 26.dp.toPx()
+                    val wavePath = Path()
+                    wavePath.moveTo(0f, centerY)
+
+                    val stepPx = 3f
+                    var currentX = 0f
+                    val taperDistance = 20.dp.toPx()
+
+                    while (currentX < playedW) {
+                        currentX += stepPx
+                        if (currentX > playedW) currentX = playedW
+
+                        // Taper ends so wave starts and finishes smoothly on baseline
+                        val startTaper = (currentX / taperDistance).coerceIn(0f, 1f)
+                        val endTaper = ((playedW - currentX) / taperDistance).coerceIn(0f, 1f)
+                        val envelope = minOf(startTaper, endTaper)
+
+                        val angle = (currentX / waveLengthPx) * 2f * Math.PI.toFloat() - phase
+                        val y = centerY + (ampPx * envelope * sin(angle))
+                        wavePath.lineTo(currentX, y)
+                    }
+
+                    drawPath(
+                        path = wavePath,
+                        color = Color.White,
+                        style = Stroke(
+                            width = currentStrokeWidth,
+                            cap = StrokeCap.Round,
+                            join = StrokeJoin.Round
+                        )
+                    )
+                }
+
+                // 3. Thumb glow circle when scrubbing
+                val thumbR = thumbRadius.toPx()
+                if (thumbR > 0.5f) {
+                    drawCircle(
+                        color = Color.White,
+                        radius = thumbR,
+                        center = Offset(playedW, centerY)
+                    )
+                }
+            }
+        }
     }
 }
 
