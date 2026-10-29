@@ -37,24 +37,30 @@ internal class NavigationBarGestureState(
     val barTranslationXAnimatable get() = repulsionState.barTranslationXAnimatable
     val barTranslationYAnimatable get() = repulsionState.barTranslationYAnimatable
 
-    suspend fun onDragStart(offsetX: Float, offsetY: Float, maxRepulsionXPx: Float, maxRepulsionYPx: Float) {
+    private var dragJob: Job? = null
+
+    fun onDragStart(offsetX: Float, offsetY: Float, maxRepulsionXPx: Float, maxRepulsionYPx: Float) {
         if (selectorState.items.isEmpty() || selectorState.tabWidthPx <= 0f) return
         settlingJob?.cancel()
         settlingJob = null
+        dragJob?.cancel()
+        dragJob = null
 
         isDragging = true
         selectorState.isDragging = true
 
-        selectorState.onDragStart(offsetX)
-        repulsionState.onDragStart(
-            offsetX = offsetX,
-            offsetY = offsetY,
-            maxRepulsionXPx = maxRepulsionXPx,
-            maxRepulsionYPx = maxRepulsionYPx,
-        )
+        coroutineScope.launch {
+            selectorState.onDragStart(offsetX)
+            repulsionState.onDragStart(
+                offsetX = offsetX,
+                offsetY = offsetY,
+                maxRepulsionXPx = maxRepulsionXPx,
+                maxRepulsionYPx = maxRepulsionYPx,
+            )
+        }
     }
 
-    suspend fun onDrag(
+    fun onDrag(
         dragAmountX: Float,
         currentTouchX: Float,
         currentTouchY: Float,
@@ -63,16 +69,21 @@ internal class NavigationBarGestureState(
     ) {
         if (selectorState.items.isEmpty() || selectorState.tabWidthPx <= 0f) return
 
-        selectorState.onDrag(dragAmountX, currentTouchX)
-        repulsionState.onDrag(
-            currentTouchX = currentTouchX,
-            currentTouchY = currentTouchY,
-            maxRepulsionXPx = maxRepulsionXPx,
-            maxRepulsionYPx = maxRepulsionYPx,
-        )
+        dragJob?.cancel()
+        dragJob = coroutineScope.launch {
+            selectorState.onDrag(dragAmountX, currentTouchX)
+            repulsionState.onDrag(
+                currentTouchX = currentTouchX,
+                currentTouchY = currentTouchY,
+                maxRepulsionXPx = maxRepulsionXPx,
+                maxRepulsionYPx = maxRepulsionYPx,
+            )
+        }
     }
 
     fun onDragEnd(velocityX: Float = 0f) {
+        dragJob?.cancel()
+        dragJob = null
         if (selectorState.items.isEmpty() || selectorState.tabWidthPx <= 0f) {
             isDragging = false
             selectorState.isDragging = false
@@ -97,6 +108,8 @@ internal class NavigationBarGestureState(
     }
 
     fun onDragCancel() {
+        dragJob?.cancel()
+        dragJob = null
         if (selectorState.items.isEmpty() || selectorState.tabWidthPx <= 0f) {
             isDragging = false
             selectorState.isDragging = false
