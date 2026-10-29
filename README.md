@@ -4,6 +4,10 @@
 
   <h1>Ozone player (Ozone)</h1>
 
+  <p>
+    <em>Personalized fork of <a href="https://github.com/MuwMx/YumaPlayer">YumaPlayer</a> by MuwMix, licensed under GNU GPL v3.0</em>
+  </p>
+
    <p align="center">
     <a href="README.md">
       <img src="https://img.shields.io/badge/🇺🇸%20English-6366f1?style=for-the-badge&labelColor=1e1e2e" alt="English" />

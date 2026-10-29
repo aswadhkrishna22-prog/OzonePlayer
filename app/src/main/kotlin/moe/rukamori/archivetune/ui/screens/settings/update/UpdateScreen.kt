@@ -167,7 +167,7 @@ fun UpdateScreen(
         onDownloadApk = { if (!useInAppUpdateInstaller) openUpdateUrl(downloadUrl) else installUpdate(downloadUrl) },
         onCheckForUpdate = handleCheckForUpdate,
         onOpenChangelog = { navController.navigate("settings/changelog?channel=$updateChannel") },
-        onOpenAllReleases = { openUpdateUrl("https://github.com/MuwMx/YumaPlayer/releases") },
+        onOpenAllReleases = { openUpdateUrl("https://github.com/aswadhkrishna22-prog/OzonePlayer/releases") },
         latestCommit = latestCommit, onInstallNightly = { installUpdate(Updater.getLatestDownloadUrl()) },
         commits = commits, isLoadingCommits = isLoadingCommits, isExpanded = isExpanded, rotationAngle = rotationAngle,
         onToggleExpanded = { isExpanded = !isExpanded }, onCommitClick = { commit -> uriHandler.openUri(commit.url) },

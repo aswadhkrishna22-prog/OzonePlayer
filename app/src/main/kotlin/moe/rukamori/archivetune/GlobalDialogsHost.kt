@@ -179,7 +179,7 @@ fun BoxScope.GlobalDialogsHost(
                             }
                         } else {
                             Updater.getLatestDownloadUrl().ifBlank {
-                                "https://github.com/MuwMx/YumaPlayer/releases/latest"
+                                "https://github.com/aswadhkrishna22-prog/OzonePlayer/releases/latest"
                             }
                         }
                     try {

@@ -14,7 +14,7 @@ import moe.rukamori.archivetune.defaultUpdateChannel
 import moe.rukamori.archivetune.utils.GitCommit
 
 internal object UpdateContract {
-    const val GITHUB_RELEASES_URL = "https://github.com/MuwMx/YumaPlayer/releases"
+    const val GITHUB_RELEASES_URL = "https://github.com/aswadhkrishna22-prog/OzonePlayer/releases"
     const val CHANGELOG_ROUTE_PREFIX = "settings/changelog?channel="
     const val AUTOSTART_ARG_KEY = "autostart"
     const val DOWNLOAD_ARG_KEY = "download"
