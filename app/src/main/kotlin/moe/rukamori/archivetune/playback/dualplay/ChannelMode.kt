@@ -5,40 +5,51 @@
 package moe.rukamori.archivetune.playback.dualplay
 
 /**
- * Shared-state flag for the channel-split processors.
- *
- * Both processors are ALWAYS active in the sink chain simultaneously.
- * When [mode] is [OFF] they pass audio through unchanged.
- *
- * [ACTIVE]  → Normal assignment: LEFT processor → left ear only; RIGHT processor → right ear only.
- * [SWAPPED] → Swapped assignment: LEFT processor → right ear only; RIGHT processor → left ear only.
- * [OFF]     → Both processors passthrough unchanged (Dual Play disabled).
- *
- * The [assignedSide] field on each [ChannelSplitProcessor] determines which side it handles.
- * This enum only controls whether splitting is on and which assignment direction.
+ * High-level Dual Play on/off flag (legacy, kept for compatibility).
+ * Actual per-ear routing is controlled by [DualPlayChannelState.modeA] / [DualPlayChannelState.modeB].
  */
 enum class ChannelMode { OFF, ACTIVE, SWAPPED }
 
 /** Identifies which physical channel a [ChannelSplitProcessor] instance manages. */
 enum class ProcessorSide { LEFT, RIGHT }
 
+/**
+ * Per-processor ear routing mode.
+ *  LEFT_ONLY  → output mono-mix in L channel only; R = 0
+ *  RIGHT_ONLY → output mono-mix in R channel only; L = 0
+ *  STEREO     → passthrough (both channels unchanged)
+ */
+enum class EarMode { LEFT_ONLY, RIGHT_ONLY, STEREO }
+
+/**
+ * UI-facing ear selection for each pane.
+ *  Pane A shows: R, M   (L is the default / no-button-selected state)
+ *  Pane B shows: L, M   (R is the default / no-button-selected state)
+ */
+enum class EarSelection { L, R, M }
+
 object DualPlayChannelState {
-    /** Written on the main thread; read on the audio thread. @Volatile is sufficient. */
-    @Volatile
-    var mode: ChannelMode = ChannelMode.OFF
+    /** Master on/off. When OFF both processors passthrough. */
+    @Volatile var mode: ChannelMode = ChannelMode.OFF
 
     /**
-     * True if Android system-level "Mono Audio" is ON (Accessibility setting).
-     * When true, the OS merges L+R before output — channel separation WON'T work.
+     * Per-processor ear modes, read on the audio thread.
+     * Written on the main thread — @Volatile is sufficient.
+     *
+     * modeA → Player A (ProcessorSide.LEFT)
+     * modeB → Player B (ProcessorSide.RIGHT)
      */
-    @Volatile
-    var isSystemMonoAudioEnabled: Boolean = false
+    @Volatile var modeA: EarMode = EarMode.STEREO
+    @Volatile var modeB: EarMode = EarMode.STEREO
 
     /**
-     * Human-readable description of the last format that was configured on
-     * either processor, for the debug screen's "channel split not applied" banner.
-     * null = applied; non-null = reason it was not applied.
+     * True if Android system-level "Mono Audio" is ON.
+     * When true the OS merges L+R — channel separation won't work.
      */
-    @Volatile
-    var unsupportedFormatDescription: String? = null
+    @Volatile var isSystemMonoAudioEnabled: Boolean = false
+
+    /**
+     * Non-null = unsupported audio format message for the debug screen banner.
+     */
+    @Volatile var unsupportedFormatDescription: String? = null
 }

@@ -5,9 +5,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import kotlinx.coroutines.flow.flowOf
+import moe.rukamori.archivetune.LocalPlayerConnection
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -131,11 +134,40 @@ fun SettingsMenuContent(
         val castAction = rememberCastPlayerMenuAction()
         val hasCast = castAction != null
 
-        val totalRowCount = 8 +
+        val playerConnection = LocalPlayerConnection.current
+        val dualPlayEngine = playerConnection?.dualPlayEngine
+        val dualPlayState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)
+        val isDualPlayEnabled = dualPlayState?.enabled == true
+        val canEnableDualPlay = dualPlayEngine?.canEnable() == true
+
+        val totalRowCount = 9 +
             (if (hasCast) 1 else 0) +
             (if (hasArtistId) 1 else 0) +
             (if (hasAlbumId) 1 else 0)
         var currentRow = 0
+
+        Spacer(modifier = Modifier.height(SettingsDimensions.SegmentedItemGap))
+
+        CompactMenuRow(
+            title = "Dual Play",
+            subtitle = when {
+                isDualPlayEnabled -> "Dual Play is active (split ears)"
+                canEnableDualPlay -> "Play two songs in Left / Right ears"
+                else -> "Stereo headphones required"
+            },
+            iconResId = R.drawable.equalizer,
+            isActive = isDualPlayEnabled,
+            activeIconTint = Color(state.vibrantColor),
+            onClick = {
+                if (isDualPlayEnabled) {
+                    dualPlayEngine?.disable()
+                } else if (canEnableDualPlay) {
+                    dualPlayEngine?.enable()
+                }
+            },
+            index = currentRow++,
+            count = totalRowCount,
+        )
 
         Spacer(modifier = Modifier.height(SettingsDimensions.SegmentedItemGap))
 

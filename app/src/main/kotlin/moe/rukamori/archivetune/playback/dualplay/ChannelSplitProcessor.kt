@@ -13,37 +13,30 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 /**
- * One instance per ExoPlayer audio sink.  NEVER share this instance between
- * two sinks — it holds per-sink format state.
+ * One instance per ExoPlayer audio sink.  NEVER share between two sinks.
  *
- * [assignedSide] tells this processor which output channel it physically controls:
- *   [ProcessorSide.LEFT]  → Player A's sink; outputs mono-mix to LEFT ear, zeros RIGHT.
- *   [ProcessorSide.RIGHT] → Player B's sink; outputs mono-mix to RIGHT ear, zeros LEFT.
+ * [assignedSide] identifies which Player this processor belongs to:
+ *   [ProcessorSide.LEFT]  → Player A: reads [DualPlayChannelState.modeA]
+ *   [ProcessorSide.RIGHT] → Player B: reads [DualPlayChannelState.modeB]
  *
- * When [DualPlayChannelState.mode] is [ChannelMode.SWAPPED], the LEFT processor routes
- * audio to the RIGHT ear and vice-versa (user can swap ears with a toggle).
+ * [EarMode] controls per-processor routing:
+ *   LEFT_ONLY  → L = mono-mix (L+R)/2, R = 0
+ *   RIGHT_ONLY → L = 0, R = mono-mix (L+R)/2
+ *   STEREO     → passthrough (Dual Play off or "M" selected)
  *
- * The processor is ALWAYS in the sink chain and always accepts audio.
- * When [DualPlayChannelState.mode] == [ChannelMode.OFF] it copies input → output unchanged,
- * with no seek/re-prepare required for a mode change.
+ * Always in the sink chain; mode changes are instant (no seek/re-prepare needed).
  *
- * Supported encodings:
- *   PCM_16BIT  — 2 bytes per sample, little-endian signed short
- *   PCM_FLOAT  — 4 bytes per sample, IEEE 754 float in [-1, 1]
- * Any other encoding (e.g. 24-bit int) → [AudioFormat.NOT_SET] returned from
- * [onConfigure] so Media3 skips the processor entirely (transparent passthrough),
- * a warning is logged and [DualPlayChannelState.unsupportedFormatDescription]
- * is set for the debug screen.
+ * Supported encodings: PCM_16BIT and PCM_FLOAT. Others → [AudioFormat.NOT_SET]
+ * (Media3 bypasses the processor transparently; debug banner is set).
  */
 @UnstableApi
 class ChannelSplitProcessor(
     private val assignedSide: ProcessorSide,
 ) : BaseAudioProcessor() {
 
-    /** Encoding decided at configure time; only valid when processor is active. */
     private var encoding = C.ENCODING_PCM_16BIT
 
-    // ── BaseAudioProcessor callbacks ──────────────────────────────────────────
+    // ── BaseAudioProcessor ────────────────────────────────────────────────────
 
     override fun onConfigure(inputAudioFormat: AudioFormat): AudioFormat {
         val enc = inputAudioFormat.encoding
@@ -52,21 +45,18 @@ class ChannelSplitProcessor(
             (enc == C.ENCODING_PCM_16BIT || enc == C.ENCODING_PCM_FLOAT) && ch == 2
         return if (supported) {
             encoding = enc
-            // Clear any previous "unsupported" notice from this processor's side.
-            // (The other processor may set it independently.)
-            inputAudioFormat          // output format == input format: same bytes, same channels
+            inputAudioFormat
         } else {
             val desc = "encoding=$enc channelCount=$ch (assignedSide=$assignedSide)"
             Timber.tag(TAG).w(
-                "ChannelSplitProcessor[%s]: unsupported audio format %s — processor bypassed",
+                "ChannelSplitProcessor[%s]: unsupported format %s — bypassed",
                 assignedSide, desc,
             )
             DualPlayChannelState.unsupportedFormatDescription = desc
-            AudioFormat.NOT_SET       // processor skipped; Media3 routes audio past us unchanged
+            AudioFormat.NOT_SET
         }
     }
 
-    /** No internal ring-buffer state; nothing to reset. */
     override fun onFlush() = Unit
     override fun onReset() = Unit
 
@@ -74,22 +64,24 @@ class ChannelSplitProcessor(
         val n = input.remaining()
         if (n == 0) return
 
-        val mode = DualPlayChannelState.mode
-
-        // When Dual Play is OFF, both processors passthrough unchanged.
-        if (mode == ChannelMode.OFF) {
+        // Global kill-switch: when Dual Play is OFF → passthrough for both processors.
+        if (DualPlayChannelState.mode == ChannelMode.OFF) {
             passThrough(input)
             return
         }
 
-        // Determine whether THIS processor should keep the LEFT or RIGHT channel.
-        //   ACTIVE:  LEFT processor → keepLeft=true;  RIGHT processor → keepLeft=false
-        //   SWAPPED: LEFT processor → keepLeft=false; RIGHT processor → keepLeft=true
-        val keepLeft = when (mode) {
-            ChannelMode.ACTIVE  -> assignedSide == ProcessorSide.LEFT
-            ChannelMode.SWAPPED -> assignedSide == ProcessorSide.RIGHT
-            ChannelMode.OFF     -> true   // unreachable — handled above
+        // Read THIS processor's individual ear mode.
+        val earMode = when (assignedSide) {
+            ProcessorSide.LEFT  -> DualPlayChannelState.modeA
+            ProcessorSide.RIGHT -> DualPlayChannelState.modeB
         }
+
+        if (earMode == EarMode.STEREO) {
+            passThrough(input)
+            return
+        }
+
+        val keepLeft = earMode == EarMode.LEFT_ONLY
 
         when (encoding) {
             C.ENCODING_PCM_16BIT -> processShort(input, keepLeft = keepLeft)
@@ -105,13 +97,11 @@ class ChannelSplitProcessor(
         if (n == 0) return
         val out = replaceOutputBuffer(n)
         out.order(ByteOrder.nativeOrder())
-        if (input !== out) {
-            out.put(input)
-        }
+        if (input !== out) out.put(input)
         out.flip()
     }
 
-    /** PCM 16-bit stereo interleaved: [L0_lo, L0_hi, R0_lo, R0_hi, L1_lo, …] */
+    /** PCM 16-bit stereo interleaved: [L0_lo, L0_hi, R0_lo, R0_hi, …] */
     private fun processShort(input: ByteBuffer, keepLeft: Boolean) {
         val count = input.remaining()
         if (count < 4) return
@@ -121,20 +111,14 @@ class ChannelSplitProcessor(
         while (input.remaining() >= 4) {
             val l = input.short
             val r = input.short
-            // Arithmetic mean in int to avoid overflow, then clamp back to short range.
             val mono = ((l.toInt() + r.toInt()) shr 1).toShort()
-            if (keepLeft) {
-                out.putShort(mono)
-                out.putShort(0)
-            } else {
-                out.putShort(0)
-                out.putShort(mono)
-            }
+            if (keepLeft) { out.putShort(mono); out.putShort(0) }
+            else          { out.putShort(0);    out.putShort(mono) }
         }
         out.flip()
     }
 
-    /** PCM float stereo interleaved: [L0_f32, R0_f32, L1_f32, …] range [-1, 1] */
+    /** PCM float stereo interleaved: [L0_f32, R0_f32, …] range [-1, 1] */
     private fun processFloat(input: ByteBuffer, keepLeft: Boolean) {
         val count = input.remaining()
         if (count < 8) return
@@ -145,13 +129,8 @@ class ChannelSplitProcessor(
             val l = input.float
             val r = input.float
             val mono = (l + r) * 0.5f
-            if (keepLeft) {
-                out.putFloat(mono)
-                out.putFloat(0f)
-            } else {
-                out.putFloat(0f)
-                out.putFloat(mono)
-            }
+            if (keepLeft) { out.putFloat(mono); out.putFloat(0f) }
+            else          { out.putFloat(0f);   out.putFloat(mono) }
         }
         out.flip()
     }

@@ -7,11 +7,13 @@
 package moe.rukamori.archivetune.ui.player.player_0
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -24,7 +26,10 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOf
+import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
+import moe.rukamori.archivetune.ui.player.player_0.dualplay.DualPlaySplitView
 import moe.rukamori.archivetune.ui.player.player_0.full.FullPlayerCoverSlot
 import moe.rukamori.archivetune.ui.player.player_0.full.FullPlayerToolbarSlot
 import moe.rukamori.archivetune.ui.player.player_0.sett.PlayerMenuScreen
@@ -77,15 +82,15 @@ fun FullPlayer(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing)
         ) {
-            PlayerLayout(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .onSizeChanged { safeWidthPx = it.width.toFloat() }
-                    .graphicsLayer {
-                        val lyricsFraction = lyricsFractionProvider()
-                        alpha = (1f - lyricsFraction).coerceIn(0f, 1f)
-                    },
-                toolbar = {
+            val playerConnection = LocalPlayerConnection.current
+            val dualPlayEngine = playerConnection?.dualPlayEngine
+            val dualPlayState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)
+            val isSplitActive = dualPlayState?.enabled == true &&
+                dualPlayState?.splitViewActive == true &&
+                dualPlayState?.playerBMediaItem != null
+
+            if (isSplitActive) {
+                Column(modifier = Modifier.fillMaxSize()) {
                     FullPlayerToolbarSlot(
                         state = state,
                         updateState = updateState,
@@ -99,42 +104,74 @@ fun FullPlayer(
                             toolbarBottomInRoot = bottom
                         },
                     )
-                },
-                cover = {
-                    FullPlayerCoverSlot(
-                        state = state,
-                        canvasState = canvasState,
-                        motionState = motionState,
-                        rootCoordinates = rootCoordinates,
-                        rootHeightPx = rootHeightPx,
-                        safeWidthPx = safeWidthPx,
-                        capsuleHeaderHeightPx = capsuleHeaderHeightPx,
-                        toolbarTopInRoot = toolbarTopInRoot,
-                        slideOffset = slideOffset,
-                        queueFractionProvider = queueFractionProvider,
-                        onAction = onAction,
-                    )
-                },
-                controls = {
-                    FullPlayerControlsGroup(
+                    DualPlaySplitView(
                         state = state,
                         playbackProgress = playbackProgress,
-                        slideOffset = slideOffset,
-                        controlsOffsetY = { motionState.controlsOffsetY },
-                        queueFractionProvider = queueFractionProvider,
                         onAction = onAction,
-                        onSeek = onSeek,
-                        onSeekStarted = onSeekStarted,
-                        onOpenSettingsMenu = onOpenSettingsMenu,
-                        onOpenQueue = onOpenQueue,
-                        isVisible = isVisible,
-                        rootHeightPx = rootHeightPx,
-                        capsuleHeaderHeightPx = capsuleHeaderHeightPx,
-                        toolbarBottomInRootPx = toolbarBottomInRoot,
-                        rootCoordinates = rootCoordinates,
+                        onSeekA = onSeek,
+                        modifier = Modifier.weight(1f),
                     )
                 }
-            )
+            } else {
+                PlayerLayout(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .onSizeChanged { safeWidthPx = it.width.toFloat() }
+                        .graphicsLayer {
+                            val lyricsFraction = lyricsFractionProvider()
+                            alpha = (1f - lyricsFraction).coerceIn(0f, 1f)
+                        },
+                    toolbar = {
+                        FullPlayerToolbarSlot(
+                            state = state,
+                            updateState = updateState,
+                            rootCoordinates = rootCoordinates,
+                            queueFractionProvider = queueFractionProvider,
+                            onCollapseClick = onCollapseClick,
+                            onBackgroundStyleChanged = onBackgroundStyleChanged,
+                            onOpenSettingsMenu = onOpenSettingsMenu,
+                            onPositionedInRoot = { top, bottom ->
+                                toolbarTopInRoot = top
+                                toolbarBottomInRoot = bottom
+                            },
+                        )
+                    },
+                    cover = {
+                        FullPlayerCoverSlot(
+                            state = state,
+                            canvasState = canvasState,
+                            motionState = motionState,
+                            rootCoordinates = rootCoordinates,
+                            rootHeightPx = rootHeightPx,
+                            safeWidthPx = safeWidthPx,
+                            capsuleHeaderHeightPx = capsuleHeaderHeightPx,
+                            toolbarTopInRoot = toolbarTopInRoot,
+                            slideOffset = slideOffset,
+                            queueFractionProvider = queueFractionProvider,
+                            onAction = onAction,
+                        )
+                    },
+                    controls = {
+                        FullPlayerControlsGroup(
+                            state = state,
+                            playbackProgress = playbackProgress,
+                            slideOffset = slideOffset,
+                            controlsOffsetY = { motionState.controlsOffsetY },
+                            queueFractionProvider = queueFractionProvider,
+                            onAction = onAction,
+                            onSeek = onSeek,
+                            onSeekStarted = onSeekStarted,
+                            onOpenSettingsMenu = onOpenSettingsMenu,
+                            onOpenQueue = onOpenQueue,
+                            isVisible = isVisible,
+                            rootHeightPx = rootHeightPx,
+                            capsuleHeaderHeightPx = capsuleHeaderHeightPx,
+                            toolbarBottomInRootPx = toolbarBottomInRoot,
+                            rootCoordinates = rootCoordinates,
+                        )
+                    }
+                )
+            }
         }
     }
 }

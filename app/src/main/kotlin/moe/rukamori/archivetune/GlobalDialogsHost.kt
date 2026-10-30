@@ -29,6 +29,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,6 +37,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.flow.flowOf
+import moe.rukamori.archivetune.ui.player.player_0.dualplay.DualPlayInterceptDialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -532,6 +535,20 @@ fun BoxScope.GlobalDialogsHost(
         BackupRestoreFromIntentDialog(
             uri = uri,
             onDismiss = onDismissBackupRestore,
+        )
+    }
+
+    // ── Dual Play Intercept Dialog ─────────────────────────────────────────
+    val dualPlayEngine = playerConnection?.dualPlayEngine
+    val dualPlayState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)
+    val pendingDualQueue = dualPlayState?.pendingInterceptQueue
+    if (pendingDualQueue != null) {
+        DualPlayInterceptDialog(
+            pending = pendingDualQueue,
+            hasSongB = dualPlayState?.playerBMediaItem != null,
+            onAddToDualPlay = { dualPlayEngine?.acceptInterceptAsDualPlay() },
+            onPlayInstead = { dualPlayEngine?.rejectInterceptAndPlay() },
+            onCancel = { dualPlayEngine?.cancelIntercept() },
         )
     }
 }
