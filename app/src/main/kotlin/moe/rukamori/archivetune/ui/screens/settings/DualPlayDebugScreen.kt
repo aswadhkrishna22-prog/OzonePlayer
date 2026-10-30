@@ -62,6 +62,8 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.db.entities.Song
 import moe.rukamori.archivetune.extensions.toMediaItem
 import moe.rukamori.archivetune.playback.dualplay.DualPlayState
+import moe.rukamori.archivetune.playback.dualplay.ChannelMode
+import moe.rukamori.archivetune.playback.dualplay.DualPlayChannelState
 import moe.rukamori.archivetune.ui.component.GlassDefaults
 import moe.rukamori.archivetune.ui.component.GlassScaffold
 import moe.rukamori.archivetune.ui.component.IconButton
@@ -106,6 +108,31 @@ fun DualPlayDebugScreen(navController: NavController) {
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Spacer(modifier = Modifier.height(4.dp))
+
+            // ── Mono Audio warning (Android Accessibility) ────────────────────
+            val isMonoOn = DualPlayChannelState.isSystemMonoAudioEnabled
+            if (isMonoOn) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = "⚠️ Android 'Mono Audio' is ON",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Go to Android Settings → Accessibility → Audio & On-screen text → turn OFF 'Mono Audio'. " +
+                                "While mono is on, your phone merges L+R into one channel — left/right separation won't work.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    }
+                }
+            }
 
             // Warning banner if unsupported audio format (Amendment 3)
             if (dualState.channelSplitUnsupportedFormat != null) {
@@ -170,6 +197,44 @@ fun DualPlayDebugScreen(navController: NavController) {
                             }
                         },
                     )
+                }
+            }
+
+            // Swap Ears toggle (only visible when Dual Play is enabled)
+            if (dualState.enabled) {
+                val isSwapped = DualPlayChannelState.mode == ChannelMode.SWAPPED
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (isSwapped) "🔁 Ears Swapped" else "Normal Ear Assignment",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                text = if (isSwapped) "Song A → RIGHT ear | Song B → LEFT ear"
+                                       else "Song A → LEFT ear | Song B → RIGHT ear",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Switch(
+                            checked = isSwapped,
+                            onCheckedChange = { swap ->
+                                DualPlayChannelState.mode =
+                                    if (swap) ChannelMode.SWAPPED else ChannelMode.ACTIVE
+                            },
+                        )
+                    }
                 }
             }
 

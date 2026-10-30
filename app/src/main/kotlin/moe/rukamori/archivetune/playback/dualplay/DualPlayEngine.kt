@@ -92,7 +92,7 @@ class DualPlayEngine(
      * RIGHT-channel processor owned by Player B's sink.
      * Created once and reused for the lifetime of this engine.
      */
-    private val rightProcessor = ChannelSplitProcessor(ChannelMode.RIGHT)
+    private val rightProcessor = ChannelSplitProcessor(ProcessorSide.RIGHT)
 
     // ── Saved settings (restored on disable) ──────────────────────────────────
 
@@ -153,7 +153,7 @@ class DualPlayEngine(
         service.virtualizer?.let { runCatching { it.enabled = false } }
 
         // ── 4. Activate channel-split mode ────────────────────────────────────
-        DualPlayChannelState.mode = ChannelMode.LEFT   // Player A → left ear
+        DualPlayChannelState.mode = ChannelMode.ACTIVE   // Player A → left ear; Player B → right ear
 
         // ── 5. Build Player B ─────────────────────────────────────────────────
         createAndConfigurePlayerB()
@@ -400,7 +400,9 @@ class DualPlayEngine(
             service.contentResolver,
             "master_mono",
         )
-        if (mono == "1") {
+        val isMonoOn = (mono == "1")
+        DualPlayChannelState.isSystemMonoAudioEnabled = isMonoOn
+        if (isMonoOn) {
             Timber.tag(TAG).w(
                 "Dual Play: Android 'mono audio' accessibility setting is ON — " +
                 "both channels will be merged by the OS; left/right separation will NOT work on this device.",

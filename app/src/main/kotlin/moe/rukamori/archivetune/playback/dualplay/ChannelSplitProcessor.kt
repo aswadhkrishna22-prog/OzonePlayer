@@ -16,13 +16,15 @@ import java.nio.ByteOrder
  * One instance per ExoPlayer audio sink.  NEVER share this instance between
  * two sinks — it holds per-sink format state.
  *
- * [assignedChannel] tells this processor which output to produce when
- * [DualPlayChannelState.mode] is active:
- *   LEFT  → L = mono-mix (L+R)/2, R = 0
- *   RIGHT → L = 0, R = mono-mix (L+R)/2
+ * [assignedSide] tells this processor which output channel it physically controls:
+ *   [ProcessorSide.LEFT]  → Player A's sink; outputs mono-mix to LEFT ear, zeros RIGHT.
+ *   [ProcessorSide.RIGHT] → Player B's sink; outputs mono-mix to RIGHT ear, zeros LEFT.
+ *
+ * When [DualPlayChannelState.mode] is [ChannelMode.SWAPPED], the LEFT processor routes
+ * audio to the RIGHT ear and vice-versa (user can swap ears with a toggle).
  *
  * The processor is ALWAYS in the sink chain and always accepts audio.
- * When [DualPlayChannelState.mode] == OFF it copies input → output unchanged,
+ * When [DualPlayChannelState.mode] == [ChannelMode.OFF] it copies input → output unchanged,
  * with no seek/re-prepare required for a mode change.
  *
  * Supported encodings:
@@ -35,7 +37,7 @@ import java.nio.ByteOrder
  */
 @UnstableApi
 class ChannelSplitProcessor(
-    private val assignedChannel: ChannelMode,
+    private val assignedSide: ProcessorSide,
 ) : BaseAudioProcessor() {
 
     /** Encoding decided at configure time; only valid when processor is active. */
@@ -54,10 +56,10 @@ class ChannelSplitProcessor(
             // (The other processor may set it independently.)
             inputAudioFormat          // output format == input format: same bytes, same channels
         } else {
-            val desc = "encoding=$enc channelCount=$ch (assignedChannel=$assignedChannel)"
+            val desc = "encoding=$enc channelCount=$ch (assignedSide=$assignedSide)"
             Timber.tag(TAG).w(
                 "ChannelSplitProcessor[%s]: unsupported audio format %s — processor bypassed",
-                assignedChannel, desc,
+                assignedSide, desc,
             )
             DualPlayChannelState.unsupportedFormatDescription = desc
             AudioFormat.NOT_SET       // processor skipped; Media3 routes audio past us unchanged
@@ -74,16 +76,24 @@ class ChannelSplitProcessor(
 
         val mode = DualPlayChannelState.mode
 
-        // Fast-path: dual play off or this processor is for the other channel.
-        val apply = mode != ChannelMode.OFF && mode == assignedChannel
-        if (!apply) {
+        // When Dual Play is OFF, both processors passthrough unchanged.
+        if (mode == ChannelMode.OFF) {
             passThrough(input)
             return
         }
 
+        // Determine whether THIS processor should keep the LEFT or RIGHT channel.
+        //   ACTIVE:  LEFT processor → keepLeft=true;  RIGHT processor → keepLeft=false
+        //   SWAPPED: LEFT processor → keepLeft=false; RIGHT processor → keepLeft=true
+        val keepLeft = when (mode) {
+            ChannelMode.ACTIVE  -> assignedSide == ProcessorSide.LEFT
+            ChannelMode.SWAPPED -> assignedSide == ProcessorSide.RIGHT
+            ChannelMode.OFF     -> true   // unreachable — handled above
+        }
+
         when (encoding) {
-            C.ENCODING_PCM_16BIT -> processShort(input, keepLeft = assignedChannel == ChannelMode.LEFT)
-            C.ENCODING_PCM_FLOAT -> processFloat(input, keepLeft = assignedChannel == ChannelMode.LEFT)
+            C.ENCODING_PCM_16BIT -> processShort(input, keepLeft = keepLeft)
+            C.ENCODING_PCM_FLOAT -> processFloat(input, keepLeft = keepLeft)
             else                 -> passThrough(input)
         }
     }
