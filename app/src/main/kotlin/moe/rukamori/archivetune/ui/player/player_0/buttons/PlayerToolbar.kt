@@ -30,10 +30,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.player.player_0.dualplay.FullPlayerToolbarEarButtons
 import moe.rukamori.archivetune.ui.state.PlayerUiState
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
+import kotlinx.coroutines.flow.flowOf
 
 @Composable
 fun PlayerToolbar(
@@ -110,6 +113,10 @@ fun PlayerToolbar(
                 }
             }
 
+            val playerConnection = LocalPlayerConnection.current
+            val dualPlayEngine = playerConnection?.dualPlayEngine
+            val dualPlayState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)
+
             Row(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
@@ -117,6 +124,18 @@ fun PlayerToolbar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.End
             ) {
+                if (dualPlayState?.enabled == true && dualPlayState?.splitViewActive != true) {
+                    FullPlayerToolbarEarButtons(
+                        currentEar = dualPlayState?.earSelectionA,
+                        onEarSelected = { ear ->
+                            if (dualPlayState?.earSelectionA != ear) {
+                                dualPlayEngine?.setEarA(ear)
+                            }
+                        },
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+
                 SleepTimerTopBadge(
                     state = state,
                     onClick = onTimerBadgeClick,

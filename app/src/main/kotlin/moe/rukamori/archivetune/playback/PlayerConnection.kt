@@ -144,6 +144,13 @@ class PlayerConnection(
 
     fun playQueue(queue: Queue) {
         synchronized(this) {
+            // ── Dual Play intercept ───────────────────────────────────────────
+            // If Dual Play is enabled, give the engine first refusal.
+            // The engine stores the pending queue and the UI shows the dialog.
+            // engine.rejectInterceptAndPlay() calls service.playQueue() directly,
+            // so we must NOT dispatch ourselves when intercepted.
+            if (service.dualPlayEngine.interceptQueue(queue)) return@synchronized
+
             playRequestGeneration++
             if (moe.rukamori.archivetune.BuildConfig.DEBUG) {
                 val mediaId = queue.preloadItem?.id

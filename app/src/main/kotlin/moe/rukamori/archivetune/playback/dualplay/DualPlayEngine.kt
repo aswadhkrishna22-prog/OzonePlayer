@@ -50,12 +50,23 @@ import moe.rukamori.archivetune.playback.cancelCrossfade
 import moe.rukamori.archivetune.playback.createMediaSourceFactory
 import moe.rukamori.archivetune.playback.PlaybackConstants
 import moe.rukamori.archivetune.playback.processor.SpatialProcessor
+import moe.rukamori.archivetune.playback.queues.Queue
+import moe.rukamori.archivetune.extensions.toMediaItem
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 
 // ── Public state model ─────────────────────────────────────────────────────────
+
+/**
+ * Holds a queue that the user tapped while Dual Play was active.
+ * The UI shows "Add to Dual Play / Play instead / Cancel" when this is non-null.
+ */
+data class PendingDualPlayQueue(
+    val queue: Queue,
+    val songTitle: String,
+)
 
 data class DualPlayState(
     val enabled: Boolean = false,
@@ -67,6 +78,21 @@ data class DualPlayState(
     val volumeB: Float = 1f,
     /** Non-null when the channel split was NOT applied (unsupported format). */
     val channelSplitUnsupportedFormat: String? = null,
+    /**
+     * Ear selection for Pane A. None selected initially (null = normal stereo).
+     */
+    val earSelectionA: EarSelection? = null,
+    /**
+     * Ear selection for Pane B.
+     */
+    val earSelectionB: EarSelection? = null,
+    /** True when Song B has been loaded and split view should be shown. */
+    val splitViewActive: Boolean = false,
+    /**
+     * Pending song intercept — non-null when the user taps a song while Dual Play is on.
+     * The UI observes this and shows the "Add to Dual Play / Play instead" dialog.
+     */
+    val pendingInterceptQueue: PendingDualPlayQueue? = null,
 )
 
 // ── Engine ─────────────────────────────────────────────────────────────────────
@@ -153,7 +179,9 @@ class DualPlayEngine(
         service.virtualizer?.let { runCatching { it.enabled = false } }
 
         // ── 4. Activate channel-split mode ────────────────────────────────────
-        DualPlayChannelState.mode = ChannelMode.ACTIVE   // Player A → left ear; Player B → right ear
+        DualPlayChannelState.mode  = ChannelMode.ACTIVE
+        DualPlayChannelState.modeA = EarMode.STEREO   // Normal stereo until user picks L/R/M
+        DualPlayChannelState.modeB = EarMode.STEREO
 
         // ── 5. Build Player B ─────────────────────────────────────────────────
         createAndConfigurePlayerB()
@@ -177,7 +205,9 @@ class DualPlayEngine(
         Timber.tag(TAG).i("Dual Play disabling…")
 
         // Order matters: stop audio first, then restore effects.
-        DualPlayChannelState.mode = ChannelMode.OFF
+        DualPlayChannelState.mode  = ChannelMode.OFF
+        DualPlayChannelState.modeA = EarMode.STEREO
+        DualPlayChannelState.modeB = EarMode.STEREO
 
         releasePlayerB()
         unregisterNoisyReceiver()
@@ -262,6 +292,8 @@ class DualPlayEngine(
     fun playB()  { playerB?.play() }
     fun pauseB() { playerB?.pause() }
     fun seekB(posMs: Long) { playerB?.seekTo(posMs) }
+    fun getPlayerBPosition(): Long = playerB?.currentPosition ?: 0L
+    fun getPlayerBDuration(): Long = playerB?.duration?.takeIf { it > 0 } ?: 0L
     fun setVolumeB(v: Float) {
         val clamped = v.coerceIn(0f, 1f)
         playerB?.volume = clamped
@@ -273,7 +305,93 @@ class DualPlayEngine(
         val b = playerB ?: return
         b.setMediaItem(item)
         b.prepare()
-        _state.value = _state.value.copy(playerBMediaItem = item, playerBError = null)
+        _state.value = _state.value.copy(
+            playerBMediaItem = item,
+            playerBError = null,
+            splitViewActive = true,
+        )
+        onSongBAdded()
+    }
+
+    // ── Ear selection ──────────────────────────────────────────────────────────
+
+    /**
+     * Returns true if stereo headphones are connected and Dual Play can be enabled.
+     * Exposed so the UI can disable the toggle with a reason.
+     */
+    fun canEnable(): Boolean = isHeadphonesConnected()
+
+    /**
+     * Set the ear routing for Pane A (Song A).
+     * Pane A only shows R and M buttons; L = default (no button highlighted).
+     */
+    fun setEarA(ear: EarSelection) {
+        DualPlayChannelState.modeA = earSelectionToMode(ear)
+        _state.value = _state.value.copy(earSelectionA = ear)
+        Timber.tag(TAG).d("Ear A → $ear (modeA=${DualPlayChannelState.modeA})")
+    }
+
+    /**
+     * Set the ear routing for Pane B (Song B).
+     * Pane B only shows L and M buttons; R = default (no button highlighted).
+     */
+    fun setEarB(ear: EarSelection) {
+        DualPlayChannelState.modeB = earSelectionToMode(ear)
+        _state.value = _state.value.copy(earSelectionB = ear)
+        Timber.tag(TAG).d("Ear B → $ear (modeB=${DualPlayChannelState.modeB})")
+    }
+
+    /** Swap ear assignments between Pane A and Pane B. Instant, no re-prepare. */
+    fun swapEars() {
+        val a = _state.value.earSelectionA
+        val b = _state.value.earSelectionB
+        // Atomic swap: write both before UI re-reads
+        DualPlayChannelState.modeA = earSelectionToMode(b)
+        DualPlayChannelState.modeB = earSelectionToMode(a)
+        _state.value = _state.value.copy(earSelectionA = b, earSelectionB = a)
+        Timber.tag(TAG).d("Ears swapped: A=$b B=$a")
+    }
+
+    // ── Song intercept ─────────────────────────────────────────────────────────
+
+    /**
+     * Called by [PlayerConnection.playQueue] when Dual Play is enabled.
+     * Stores the pending queue so the UI can show the intercept dialog.
+     * Returns true = intercepted (caller must NOT dispatch to service).
+     */
+    fun interceptQueue(queue: Queue): Boolean {
+        if (!isEnabled) return false
+        val title = queue.preloadItem?.title ?: "Unknown"
+        _state.value = _state.value.copy(
+            pendingInterceptQueue = PendingDualPlayQueue(queue = queue, songTitle = title)
+        )
+        Timber.tag(TAG).d("Song intercept: \"$title\"")
+        return true
+    }
+
+    /** User chose "Add to Dual Play": load queue's first item into Player B. */
+    fun acceptInterceptAsDualPlay() {
+        val pending = _state.value.pendingInterceptQueue ?: return
+        _state.value = _state.value.copy(pendingInterceptQueue = null)
+        val item = pending.queue.preloadItem?.toMediaItem() ?: run {
+            Timber.tag(TAG).w("acceptInterceptAsDualPlay: preloadItem has no MediaItem")
+            return
+        }
+        setMediaItemB(item)
+        playB()
+    }
+
+    /** User chose "Play instead": let the service handle it normally. */
+    fun rejectInterceptAndPlay() {
+        val pending = _state.value.pendingInterceptQueue ?: return
+        _state.value = _state.value.copy(pendingInterceptQueue = null)
+        // Dispatch to service directly (bypasses our intercept)
+        service.playQueue(pending.queue)
+    }
+
+    /** User chose "Cancel": dismiss without doing anything. */
+    fun cancelIntercept() {
+        _state.value = _state.value.copy(pendingInterceptQueue = null)
     }
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
@@ -482,5 +600,44 @@ class DualPlayEngine(
 
     companion object {
         private const val TAG = "DualPlayEngine"
+
+        /**
+         * When true, adding Song B auto-complements Song A's ear assignment.
+         * e.g. if A = L (default), B = R (default).
+         * If false, Song B defaults to M (both ears).
+         */
+        const val AUTO_COMPLEMENT_EAR = true
+    }
+
+    // ── Private: ear helpers ───────────────────────────────────────────────────
+
+    private fun earSelectionToMode(ear: EarSelection?): EarMode = when (ear) {
+        EarSelection.L -> EarMode.LEFT_ONLY
+        EarSelection.R -> EarMode.RIGHT_ONLY
+        EarSelection.M, null -> EarMode.STEREO
+    }
+
+    /**
+     * Called immediately after Song B is loaded.
+     * Rule D:
+     * - If A has no selection at split: A = M and B = M.
+     * - If A = L at split: A keeps L and B = R (auto). If A = R: B = L.
+     */
+    private fun onSongBAdded() {
+        val aEar = _state.value.earSelectionA
+        if (aEar == null || aEar == EarSelection.M) {
+            setEarA(EarSelection.M)
+            setEarB(EarSelection.M)
+        } else if (AUTO_COMPLEMENT_EAR) {
+            val bEar = when (aEar) {
+                EarSelection.L -> EarSelection.R
+                EarSelection.R -> EarSelection.L
+                else -> EarSelection.M
+            }
+            setEarB(bEar)
+        } else {
+            setEarB(EarSelection.M)
+        }
+        Timber.tag(TAG).d("Song B added: earA=${_state.value.earSelectionA} → earB=${_state.value.earSelectionB}")
     }
 }
