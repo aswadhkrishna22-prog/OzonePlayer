@@ -207,6 +207,17 @@ fun DebugSettings(navController: NavController) {
                         showChevron = true,
                     )
                 }
+                if (moe.rukamori.archivetune.BuildConfig.DEBUG) {
+                    item {
+                        PreferenceEntry(
+                            title = { Text("Dual Play (Debug)") },
+                            description = "Two independent songs simultaneously (Left/Right ear)",
+                            icon = { Icon(painterResource(R.drawable.waves), null) },
+                            onClick = { navController.navigate("settings/dual_play_debug") },
+                            showChevron = true,
+                        )
+                    }
+                }
                 item {
                     SwitchPreference(
                         title = { Text(stringResource(R.string.show_discord_debug_ui)) },

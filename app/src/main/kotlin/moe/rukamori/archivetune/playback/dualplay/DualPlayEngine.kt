@@ -1,0 +1,485 @@
+/*
+ * Ozone Player (2026) | Dual Play Engine
+ * GNU General Public License v3.0
+ *
+ * Plays two songs simultaneously: Song A in the LEFT ear only, Song B in the RIGHT ear only.
+ *
+ * Design rules (from spec):
+ *  • One ChannelSplitProcessor instance per ExoPlayer sink; mode shared via @Volatile flag.
+ *  • Crossfade disabled while Dual Play is on; user setting restored on disable.
+ *  • Player B: handleAudioFocus = false, wakeMode = WAKE_MODE_LOCAL.
+ *  • Headset button / becoming-noisy / audio-focus loss pause BOTH players.
+ *  • Only in-app DualPlayController per-song controls are independent.
+ *  • If stereo headphones disconnect → auto-disable and pause both.
+ *  • Foreground service kept alive while Player B is playing.
+ *  • Player B errors never crash or stop Player A.
+ */
+
+@file:Suppress("DEPRECATION")
+
+package moe.rukamori.archivetune.playback.dualplay
+
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
+import android.os.Build
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.audio.DefaultAudioSink
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import moe.rukamori.archivetune.playback.MusicService
+import moe.rukamori.archivetune.playback.PlaybackConstants
+import moe.rukamori.archivetune.playback.processor.SpatialProcessor
+import timber.log.Timber
+import java.util.concurrent.TimeUnit
+import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+
+// ── Public state model ─────────────────────────────────────────────────────────
+
+data class DualPlayState(
+    val enabled: Boolean = false,
+    val playerBMediaItem: MediaItem? = null,
+    val playerBIsPlaying: Boolean = false,
+    val playerBPlaybackState: Int = Player.STATE_IDLE,
+    val playerBError: String? = null,
+    val volumeA: Float = 1f,
+    val volumeB: Float = 1f,
+    /** Non-null when the channel split was NOT applied (unsupported format). */
+    val channelSplitUnsupportedFormat: String? = null,
+)
+
+// ── Engine ─────────────────────────────────────────────────────────────────────
+
+@UnstableApi
+class DualPlayEngine(
+    private val service: MusicService,
+    private val scope: CoroutineScope,
+) {
+
+    // ── State ──────────────────────────────────────────────────────────────────
+
+    private val _state = MutableStateFlow(DualPlayState())
+    val state: StateFlow<DualPlayState> = _state.asStateFlow()
+
+    val isEnabled: Boolean get() = _state.value.enabled
+
+    // ── Player B ───────────────────────────────────────────────────────────────
+
+    private var playerB: ExoPlayer? = null
+
+    /**
+     * RIGHT-channel processor owned by Player B's sink.
+     * Created once and reused for the lifetime of this engine.
+     */
+    private val rightProcessor = ChannelSplitProcessor(ChannelMode.RIGHT)
+
+    // ── Saved settings (restored on disable) ──────────────────────────────────
+
+    private var savedSpatialEnabled   = false
+    private var savedVirtualizerEnabled = false
+    private var savedCrossfadeEnabled = false
+
+    // ── Audio focus mirroring ──────────────────────────────────────────────────
+
+    private var wasPlayerBPlayingBeforeFocusLoss = false
+
+    // ── Jobs ───────────────────────────────────────────────────────────────────
+
+    private var foregroundKeepAliveJob: Job? = null
+    private var formatPollingJob: Job? = null
+
+    // ── Broadcast receiver for becoming-noisy ──────────────────────────────────
+
+    private var noisyReceiverRegistered = false
+    private val noisyReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action != AudioManager.ACTION_AUDIO_BECOMING_NOISY) return
+            Timber.tag(TAG).d("Becoming noisy → pausing Player B")
+            pausePlayerB()
+        }
+    }
+
+    // ── Enable / disable ───────────────────────────────────────────────────────
+
+    /**
+     * Enable Dual Play.  Returns false (and does nothing) if headphones are
+     * not connected or if already enabled.
+     */
+    fun enable(): Boolean {
+        if (isEnabled) return true
+        if (!isHeadphonesConnected()) {
+            Timber.tag(TAG).w("Dual Play: no supported stereo headphones connected – ignoring enable()")
+            return false
+        }
+        checkMonoAudioAccessibility()
+
+        // ── 1. Disable crossfade ───────────────────────────────────────────────
+        savedCrossfadeEnabled = service.crossfadeEnabled
+        if (service.crossfadeEnabled) {
+            service.crossfadeEnabled = false
+            service.cancelCrossfade(resetVolume = true, resetPauseAtEnd = true)
+            Timber.tag(TAG).d("Dual Play: crossfade disabled (was enabled)")
+        }
+
+        // ── 2. Disable SpatialProcessor (mixes channels → defeats split) ───────
+        savedSpatialEnabled = SpatialProcessor.instance.enabled
+        SpatialProcessor.instance.enabled = false
+
+        // ── 3. Disable Virtualizer (creates stereo width by cross-mixing) ───────
+        savedVirtualizerEnabled = service.virtualizer?.let {
+            runCatching { it.enabled }.getOrDefault(false)
+        } ?: false
+        service.virtualizer?.let { runCatching { it.enabled = false } }
+
+        // ── 4. Activate channel-split mode ────────────────────────────────────
+        DualPlayChannelState.mode = ChannelMode.LEFT   // Player A → left ear
+
+        // ── 5. Build Player B ─────────────────────────────────────────────────
+        createAndConfigurePlayerB()
+
+        // ── 6. Register becoming-noisy receiver ───────────────────────────────
+        registerNoisyReceiver()
+
+        // ── 7. Start format polling (for debug screen) ────────────────────────
+        startFormatPolling()
+
+        _state.value = _state.value.copy(enabled = true)
+        Timber.tag(TAG).i("Dual Play enabled")
+        return true
+    }
+
+    /**
+     * Disable Dual Play and restore all previous settings.
+     */
+    fun disable() {
+        if (!isEnabled) return
+        Timber.tag(TAG).i("Dual Play disabling…")
+
+        // Order matters: stop audio first, then restore effects.
+        DualPlayChannelState.mode = ChannelMode.OFF
+
+        releasePlayerB()
+        unregisterNoisyReceiver()
+        stopFormatPolling()
+        stopForegroundKeepAlive()
+
+        // Restore SpatialProcessor
+        SpatialProcessor.instance.enabled = savedSpatialEnabled
+
+        // Restore virtualizer
+        service.virtualizer?.let { runCatching { it.enabled = savedVirtualizerEnabled } }
+
+        // Restore crossfade
+        if (savedCrossfadeEnabled) {
+            service.crossfadeEnabled = true
+            // Let the lifecycle's crossfade flow re-schedule via normal dataStore observation;
+            // we just poke the flag so the next track transition picks it up.
+            Timber.tag(TAG).d("Dual Play: crossfade restored")
+        }
+
+        _state.value = DualPlayState()   // full reset
+        Timber.tag(TAG).i("Dual Play disabled")
+    }
+
+    // ── Audio focus mirroring (called from MusicServiceAudioFocusRoute) ────────
+
+    /**
+     * Mirror the same focus event that Player A received onto Player B.
+     * Player B has handleAudioFocus = false, so it never manages focus itself.
+     */
+    fun onAudioFocusChange(focusChange: Int) {
+        if (!isEnabled) return
+        val b = playerB ?: return
+        when (focusChange) {
+            AudioManager.AUDIOFOCUS_GAIN,
+            AudioManager.AUDIOFOCUS_GAIN_TRANSIENT,
+            AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK -> {
+                if (wasPlayerBPlayingBeforeFocusLoss) {
+                    b.play()
+                    wasPlayerBPlayingBeforeFocusLoss = false
+                }
+            }
+            AudioManager.AUDIOFOCUS_LOSS -> {
+                wasPlayerBPlayingBeforeFocusLoss = b.playWhenReady
+                b.pause()
+            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                wasPlayerBPlayingBeforeFocusLoss = b.playWhenReady
+                b.pause()
+            }
+        }
+    }
+
+    // ── Headphone disconnect (called from MusicServiceAudioFocusRoute) ─────────
+
+    /**
+     * Called whenever audio output devices change.
+     * If no supported stereo headphones remain connected, Dual Play is stopped.
+     */
+    fun onAudioOutputDeviceChanged() {
+        if (!isEnabled) return
+        if (!isHeadphonesConnected()) {
+            Timber.tag(TAG).w("Dual Play: headphones disconnected – disabling and pausing")
+            pausePlayerB()
+            pausePlayerA()
+            disable()
+        }
+    }
+
+    // ── In-app per-song controls (independent of focus) ───────────────────────
+
+    fun playA()  { service.player.play() }
+    fun pauseA() { service.player.pause() }
+    fun seekA(posMs: Long) { service.player.seekTo(posMs) }
+    fun setVolumeA(v: Float) {
+        val clamped = v.coerceIn(0f, 1f)
+        service.localPlayer.volume = clamped
+        _state.value = _state.value.copy(volumeA = clamped)
+    }
+
+    fun playB()  { playerB?.play() }
+    fun pauseB() { playerB?.pause() }
+    fun seekB(posMs: Long) { playerB?.seekTo(posMs) }
+    fun setVolumeB(v: Float) {
+        val clamped = v.coerceIn(0f, 1f)
+        playerB?.volume = clamped
+        _state.value = _state.value.copy(volumeB = clamped)
+    }
+
+    /** Set the media item for Player B and prepare (but don't auto-play). */
+    fun setMediaItemB(item: MediaItem) {
+        val b = playerB ?: return
+        b.setMediaItem(item)
+        b.prepare()
+        _state.value = _state.value.copy(playerBMediaItem = item, playerBError = null)
+    }
+
+    // ── Lifecycle ──────────────────────────────────────────────────────────────
+
+    /** Call from MusicService.onDestroy(). */
+    fun destroy() {
+        if (isEnabled) disable() else releasePlayerB()
+    }
+
+    // ── Private: Player B creation ─────────────────────────────────────────────
+
+    private fun createAndConfigurePlayerB() {
+        val context = service.applicationContext
+
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                PlaybackConstants.CROSSFADE_MIN_BUFFER_MS,
+                PlaybackConstants.CROSSFADE_MAX_BUFFER_MS,
+                2000, 2000,
+            )
+            .build()
+
+        val renderersFactory = object : DefaultRenderersFactory(context) {
+            override fun buildAudioSink(
+                context: Context,
+                enableFloatOutput: Boolean,
+                enableAudioTrackPlaybackParams: Boolean,
+            ) = DefaultAudioSink.Builder(context)
+                .setEnableFloatOutput(false)
+                .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
+                .setAudioProcessors(arrayOf(rightProcessor))
+                .build()
+        }
+
+        // Simple data-source factory: local files only for the debug phase.
+        // (The song picker in the debug screen shows only locally cached songs.)
+        val dataSourceFactory = DefaultDataSource.Factory(context)
+        val mediaSourceFactory = DefaultMediaSourceFactory(context)
+            .setDataSourceFactory(dataSourceFactory)
+
+        val b = ExoPlayer.Builder(context)
+            .setMediaSourceFactory(mediaSourceFactory)
+            .setRenderersFactory(renderersFactory)
+            .setLoadControl(loadControl)
+            .setHandleAudioBecomingNoisy(true)   // Amendment 5: headset button / unplug
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(C.USAGE_MEDIA)
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                    .build(),
+                /* handleAudioFocus = */ false,   // Amendment 5: focus managed by DualPlayEngine
+            )
+            .setWakeMode(C.WAKE_MODE_LOCAL)       // Amendment 5
+            .setSeekBackIncrementMs(5000)
+            .setSeekForwardIncrementMs(5000)
+            .build()
+            .apply {
+                addListener(playerBListener)
+                volume = _state.value.volumeB
+            }
+
+        playerB = b
+        startForegroundKeepAlive()
+        Timber.tag(TAG).d("Player B created")
+    }
+
+    // ── Private: Player B event listener ──────────────────────────────────────
+
+    private val playerBListener = object : Player.Listener {
+        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+            _state.value = _state.value.copy(playerBIsPlaying = playWhenReady)
+            if (playWhenReady) {
+                // Keep service alive while B is playing (Amendment 5).
+                service.cancelIdleStop()
+                service.promoteToStartedService()
+                service.ensureStartedAsForeground()
+            } else {
+                service.scheduleStopIfIdle()
+            }
+        }
+
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            _state.value = _state.value.copy(playerBPlaybackState = playbackState)
+        }
+
+        override fun onPlayerError(error: PlaybackException) {
+            // Player B errors NEVER crash or stop Player A (Amendment safety).
+            Timber.tag(TAG).w(error, "Player B error (Player A unaffected)")
+            _state.value = _state.value.copy(playerBError = error.message ?: "Unknown error")
+        }
+    }
+
+    // ── Private: headphone detection ───────────────────────────────────────────
+
+    /**
+     * Returns true if at least one of the permitted stereo-headphone device
+     * types is currently connected as a sink.
+     * Permitted types (Amendment 4): A2DP, BLE_HEADSET, WIRED_HEADSET,
+     * WIRED_HEADPHONES, USB_HEADSET, USB_DEVICE.
+     * Excluded: BLUETOOTH_SCO.
+     */
+    private fun isHeadphonesConnected(): Boolean {
+        val audioManager = service.audioManager
+        return audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS).any { device ->
+            device.isSink && isPermittedHeadphoneType(device.type)
+        }
+    }
+
+    private fun isPermittedHeadphoneType(type: Int): Boolean {
+        if (type == AudioDeviceInfo.TYPE_WIRED_HEADSET)   return true
+        if (type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES) return true
+        if (type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP)   return true
+        if (type == AudioDeviceInfo.TYPE_USB_HEADSET)      return true
+        if (type == AudioDeviceInfo.TYPE_USB_DEVICE)       return true
+        if (Build.VERSION.SDK_INT >= 31) {
+            @Suppress("NewApi")
+            if (type == AudioDeviceInfo.TYPE_BLE_HEADSET) return true
+        }
+        // TYPE_BLUETOOTH_SCO is intentionally excluded.
+        return false
+    }
+
+    // ── Private: mono audio accessibility check ────────────────────────────────
+
+    private fun checkMonoAudioAccessibility() {
+        val mono = android.provider.Settings.System.getString(
+            service.contentResolver,
+            "master_mono",
+        )
+        if (mono == "1") {
+            Timber.tag(TAG).w(
+                "Dual Play: Android 'mono audio' accessibility setting is ON — " +
+                "both channels will be merged by the OS; left/right separation will NOT work on this device.",
+            )
+        }
+    }
+
+    // ── Private: noisy broadcast ───────────────────────────────────────────────
+
+    private fun registerNoisyReceiver() {
+        if (noisyReceiverRegistered) return
+        val filter = IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
+        service.registerReceiver(noisyReceiver, filter)
+        noisyReceiverRegistered = true
+    }
+
+    private fun unregisterNoisyReceiver() {
+        if (!noisyReceiverRegistered) return
+        runCatching { service.unregisterReceiver(noisyReceiver) }
+        noisyReceiverRegistered = false
+    }
+
+    // ── Private: helpers ───────────────────────────────────────────────────────
+
+    private fun pausePlayerB() { playerB?.pause() }
+    private fun pausePlayerA() { runCatching { service.player.pause() } }
+
+    private fun releasePlayerB() {
+        val b = playerB ?: return
+        playerB = null
+        runCatching { b.removeListener(playerBListener) }
+        runCatching { b.pause() }
+        runCatching { b.release() }
+        Timber.tag(TAG).d("Player B released")
+    }
+
+    // ── Private: foreground keep-alive ────────────────────────────────────────
+
+    private fun startForegroundKeepAlive() {
+        stopForegroundKeepAlive()
+        foregroundKeepAliveJob = scope.launch {
+            while (isActive) {
+                val b = playerB
+                if (b != null && b.playWhenReady && b.playbackState != Player.STATE_ENDED) {
+                    service.cancelIdleStop()
+                    service.promoteToStartedService()
+                }
+                delay(10_000L)
+            }
+        }
+    }
+
+    private fun stopForegroundKeepAlive() {
+        foregroundKeepAliveJob?.cancel()
+        foregroundKeepAliveJob = null
+    }
+
+    // ── Private: format polling (debug screen "not applied" banner) ───────────
+
+    private fun startFormatPolling() {
+        stopFormatPolling()
+        formatPollingJob = scope.launch {
+            while (isActive) {
+                val desc = DualPlayChannelState.unsupportedFormatDescription
+                if (_state.value.channelSplitUnsupportedFormat != desc) {
+                    _state.value = _state.value.copy(channelSplitUnsupportedFormat = desc)
+                }
+                delay(2_000L)
+            }
+        }
+    }
+
+    private fun stopFormatPolling() {
+        formatPollingJob?.cancel()
+        formatPollingJob = null
+    }
+
+    companion object {
+        private const val TAG = "DualPlayEngine"
+    }
+}

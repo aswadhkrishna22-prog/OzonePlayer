@@ -92,6 +92,8 @@ internal fun MusicService.handleAudioFocusChange(focusChange: Int) {
             lastAudioFocusState = focusChange
         }
     }
+    // Mirror focus events to Player B (Amendment 5: focus loss pauses BOTH players).
+    runCatching { dualPlayEngine.onAudioFocusChange(focusChange) }
 }
 
 internal fun MusicService.requestAudioFocus(): Boolean {
@@ -231,6 +233,8 @@ internal fun MusicService.onAudioOutputDeviceChanged() {
     lastAudioOutputDeviceSignature = outputSignature
     cancelCrossfade(resetVolume = true, resetPauseAtEnd = true)
     player.setAudioAttributes(playbackAudioAttributes(), false)
+    // Inform Dual Play engine so it can auto-disable if headphones are gone.
+    runCatching { dualPlayEngine.onAudioOutputDeviceChanged() }
     audioRouteRecoveryJob?.cancel()
     audioRouteRecoveryJob = scope.launch {
         delay(AudioPolicyConstants.AUDIO_ROUTE_CHANGE_DEBOUNCE_MS)

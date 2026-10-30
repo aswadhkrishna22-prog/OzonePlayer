@@ -109,6 +109,7 @@ import moe.rukamori.archivetune.utils.YTPlayerUtils
 import moe.rukamori.archivetune.utils.dataStore
 import moe.rukamori.archivetune.utils.isLocalMediaId
 import moe.rukamori.archivetune.utils.reportException
+import moe.rukamori.archivetune.playback.dualplay.DualPlayEngine
 import moe.rukamori.archivetune.widget.LoadWidgetInsightsUseCase
 import okhttp3.OkHttpClient
 
@@ -144,6 +145,14 @@ class MusicService :
     internal var scopeJob = Job()
     internal var scope = CoroutineScope(Dispatchers.Main + scopeJob)
     internal var ioScope = CoroutineScope(Dispatchers.IO + scopeJob)
+
+    /**
+     * Dual Play engine — created lazily after [scope] is live.
+     * Null until the first call to [dualPlayEngine].
+     */
+    val dualPlayEngine: DualPlayEngine by lazy {
+        DualPlayEngine(service = this, scope = scope)
+    }
 
     internal val currentPlaybackSourceFlow = MutableStateFlow(PlaybackSource.YT_MUSIC)
     override var currentPlaybackSource: PlaybackSource
@@ -717,6 +726,10 @@ class MusicService :
 
     override fun onDestroy() {
         sponsorBlockPlaybackController.detach()
+        // Release Dual Play engine before the rest of teardown.
+        if (::playerListeners.isInitialized) {
+            runCatching { if (dualPlayEngine.isEnabled) dualPlayEngine.destroy() }
+        }
         serviceLifecycle.onDestroy {
             super.onDestroy()
         }

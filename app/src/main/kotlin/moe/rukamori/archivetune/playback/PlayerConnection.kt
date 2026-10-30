@@ -44,6 +44,8 @@ import jakarta.inject.Inject
 import kotlin.math.roundToInt
 
 
+import moe.rukamori.archivetune.playback.dualplay.DualPlayEngine
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlayerConnection(
     context: Context,
@@ -54,6 +56,9 @@ class PlayerConnection(
     val service = binder.service
     val player = service.player
     val localPlayer = service.localPlayer
+
+    /** Dual Play engine — safe to access from UI; null before first access is fine (lazy). */
+    val dualPlayEngine: DualPlayEngine get() = service.dualPlayEngine
 
     val playbackState = MutableStateFlow(player.playbackState)
     private val playWhenReady = MutableStateFlow(player.playWhenReady)
