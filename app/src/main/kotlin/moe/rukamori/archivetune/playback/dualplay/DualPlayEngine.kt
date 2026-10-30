@@ -46,6 +46,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.playback.MusicService
+import moe.rukamori.archivetune.playback.cancelCrossfade
 import moe.rukamori.archivetune.playback.PlaybackConstants
 import moe.rukamori.archivetune.playback.processor.SpatialProcessor
 import timber.log.Timber
@@ -136,7 +137,7 @@ class DualPlayEngine(
         savedCrossfadeEnabled = service.crossfadeEnabled
         if (service.crossfadeEnabled) {
             service.crossfadeEnabled = false
-            service.cancelCrossfade(resetVolume = true, resetPauseAtEnd = true)
+            service.cancelPlayerCrossfade(resetVolume = true, resetPauseAtEnd = true)
             Timber.tag(TAG).d("Dual Play: crossfade disabled (was enabled)")
         }
 
