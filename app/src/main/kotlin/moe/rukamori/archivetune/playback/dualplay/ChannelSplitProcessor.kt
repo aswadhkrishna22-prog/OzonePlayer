@@ -10,6 +10,7 @@ import androidx.media3.common.audio.BaseAudioProcessor
 import androidx.media3.common.util.UnstableApi
 import timber.log.Timber
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 /**
  * One instance per ExoPlayer audio sink.  NEVER share this instance between
@@ -68,10 +69,12 @@ class ChannelSplitProcessor(
     override fun onReset() = Unit
 
     override fun queueInput(input: ByteBuffer) {
+        val n = input.remaining()
+        if (n == 0) return
+
         val mode = DualPlayChannelState.mode
 
         // Fast-path: dual play off or this processor is for the other channel.
-        // The "other channel" guard handles an edge case where mode changes mid-frame.
         val apply = mode != ChannelMode.OFF && mode == assignedChannel
         if (!apply) {
             passThrough(input)
@@ -81,7 +84,7 @@ class ChannelSplitProcessor(
         when (encoding) {
             C.ENCODING_PCM_16BIT -> processShort(input, keepLeft = assignedChannel == ChannelMode.LEFT)
             C.ENCODING_PCM_FLOAT -> processFloat(input, keepLeft = assignedChannel == ChannelMode.LEFT)
-            else                 -> passThrough(input)   // shouldn't reach here; guarded in onConfigure
+            else                 -> passThrough(input)
         }
     }
 
@@ -89,19 +92,27 @@ class ChannelSplitProcessor(
 
     private fun passThrough(input: ByteBuffer) {
         val n = input.remaining()
+        if (n == 0) return
         val out = replaceOutputBuffer(n)
-        out.put(input)
+        out.order(ByteOrder.nativeOrder())
+        if (input !== out) {
+            out.put(input)
+        }
         out.flip()
     }
 
     /** PCM 16-bit stereo interleaved: [L0_lo, L0_hi, R0_lo, R0_hi, L1_lo, …] */
     private fun processShort(input: ByteBuffer, keepLeft: Boolean) {
-        val out = replaceOutputBuffer(input.remaining())
+        val count = input.remaining()
+        if (count < 4) return
+        val frames = count / 4
+        val out = replaceOutputBuffer(frames * 4)
+        out.order(ByteOrder.nativeOrder())
         while (input.remaining() >= 4) {
             val l = input.short
             val r = input.short
             // Arithmetic mean in int to avoid overflow, then clamp back to short range.
-            val mono = ((l.toInt() + r.toInt()) ushr 1).toShort()
+            val mono = ((l.toInt() + r.toInt()) shr 1).toShort()
             if (keepLeft) {
                 out.putShort(mono)
                 out.putShort(0)
@@ -115,7 +126,11 @@ class ChannelSplitProcessor(
 
     /** PCM float stereo interleaved: [L0_f32, R0_f32, L1_f32, …] range [-1, 1] */
     private fun processFloat(input: ByteBuffer, keepLeft: Boolean) {
-        val out = replaceOutputBuffer(input.remaining())
+        val count = input.remaining()
+        if (count < 8) return
+        val frames = count / 8
+        val out = replaceOutputBuffer(frames * 8)
+        out.order(ByteOrder.nativeOrder())
         while (input.remaining() >= 8) {
             val l = input.float
             val r = input.float
