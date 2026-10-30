@@ -87,7 +87,7 @@ class DiscordRPC(
         }
 
         val translatedMap = translateSongFields(song)
-        val appName = context.getString(R.string.app_name)
+        val appName = context.getString(R.string.ui_app_name)
         val namePref = context.dataStore[DiscordActivityNameKey] ?: "APP"
         val detailsPref = context.dataStore[DiscordActivityDetailsKey] ?: "SONG"
         val statePref = context.dataStore[DiscordActivityStateKey] ?: "ARTIST"
@@ -292,7 +292,7 @@ class DiscordRPC(
             "ARTIST" -> translatedMap["{artist}"] ?: song.artists.joinToString { it.name }.ifBlank { default }
             "ALBUM" -> translatedMap["{album}"] ?: song.song.albumName ?: song.album?.title ?: default
             "SONG" -> translatedMap["{song}"] ?: song.song.title.ifBlank { default }
-            "APP" -> context.getString(R.string.app_name)
+            "APP" -> context.getString(R.string.ui_app_name)
             else -> default
         }
 
@@ -304,7 +304,7 @@ class DiscordRPC(
             "song" -> translatedMap["{song}"] ?: song.song.title
             "artist" -> translatedMap["{artist}"] ?: song.artists.joinToString { it.name }.takeIf { it.isNotBlank() }
             "album" -> translatedMap["{album}"] ?: song.song.albumName ?: song.album?.title ?: song.song.title
-            "app" -> context.getString(R.string.app_name)
+            "app" -> context.getString(R.string.ui_app_name)
             "custom" -> (context.dataStore[DiscordLargeTextCustomKey] ?: "").ifBlank { null }
             "dontshow" -> null
             else -> translatedMap["{album}"] ?: song.song.albumName ?: song.album?.title
@@ -332,7 +332,7 @@ class DiscordRPC(
     private suspend fun resolveButtons(song: Song): List<DiscordPresenceButton> {
         val button1Label = context.dataStore[DiscordActivityButton1LabelKey] ?: "Listen on YouTube Music"
         val button1Enabled = context.dataStore[DiscordActivityButton1EnabledKey] ?: true
-        val button2Label = context.dataStore[DiscordActivityButton2LabelKey] ?: "Go to Yuma"
+        val button2Label = context.dataStore[DiscordActivityButton2LabelKey] ?: "Go to Ozone"
         val button2Enabled = context.dataStore[DiscordActivityButton2EnabledKey] ?: true
         val button1UrlSource = context.dataStore[DiscordActivityButton1UrlSourceKey] ?: "songurl"
         val button1CustomUrl = context.dataStore[DiscordActivityButton1CustomUrlKey] ?: ""
@@ -434,7 +434,7 @@ class DiscordRPC(
 
     private fun String?.toDiscordUrl(): String? = this?.normalizeUrl()?.take(256)
 
-    private fun String.toButtonLabel(): String = trim().take(32).ifBlank { context.getString(R.string.app_name) }
+    private fun String.toButtonLabel(): String = trim().take(32).ifBlank { context.getString(R.string.ui_app_name) }
 
     private fun Song.youtubeMusicUrl(): String? =
         song.id

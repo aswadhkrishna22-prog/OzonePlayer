@@ -26,7 +26,7 @@ internal fun buildAboutUiModel(
     isOverflowMenuExpanded: Boolean,
     activeDialog: AboutDialog,
 ): AboutUiModel = AboutUiModel(
-    appNameResId = R.string.app_name,
+    appNameResId = R.string.ui_app_name,
     versionName = BuildConfig.VERSION_NAME,
     buildHash = currentBuildHash,
     buildVariant = if (BuildConfig.DEBUG) "DEBUG" else BuildConfig.ARCHITECTURE.uppercase(),

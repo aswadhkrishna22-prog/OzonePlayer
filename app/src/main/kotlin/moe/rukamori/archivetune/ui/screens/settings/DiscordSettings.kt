@@ -316,7 +316,7 @@ fun DiscordSettings(navController: NavController) {
     val (button2Label) =
         rememberPreference(
             key = DiscordActivityButton2LabelKey,
-            defaultValue = "Go to Yuma",
+            defaultValue = "Go to Ozone",
         )
     val (button2Enabled) =
         rememberPreference(
@@ -864,7 +864,7 @@ private fun activitySourceLabel(source: ActivitySource): String =
         ActivitySource.ARTIST -> stringResource(R.string.artist_name)
         ActivitySource.ALBUM -> stringResource(R.string.album_name)
         ActivitySource.SONG -> stringResource(R.string.song_title)
-        ActivitySource.APP -> stringResource(R.string.app_name)
+        ActivitySource.APP -> stringResource(R.string.ui_app_name)
     }
 
 @Composable
@@ -919,7 +919,7 @@ private fun discordLargeTextSourceLabel(value: String): String =
         "song" -> stringResource(R.string.song_title)
         "artist" -> stringResource(R.string.artist_name)
         "album" -> stringResource(R.string.album_name)
-        "app" -> stringResource(R.string.app_name)
+        "app" -> stringResource(R.string.ui_app_name)
         "custom" -> stringResource(R.string.custom)
         "dontshow" -> stringResource(R.string.dont_show)
         else -> value
@@ -988,14 +988,14 @@ fun RichPresence(
     button1Enabled: Boolean = true,
     button1UrlSource: String = "songurl",
     button1CustomUrl: String = "",
-    button2Label: String = "Go to Yuma",
+    button2Label: String = "Go to Ozone",
     button2Enabled: Boolean = true,
     button2UrlSource: String = "custom",
-    button2CustomUrl: String = "https://github.com/MuwMx/YumaPlayer",
+    button2CustomUrl: String = "https://github.com/aswadhkrishna22-prog/OzonePlayer",
     isPlaying: Boolean = false,
 ) {
     val context = LocalContext.current
-    val appName = stringResource(R.string.app_name)
+    val appName = stringResource(R.string.ui_app_name)
     val artistNameFallback = stringResource(R.string.artist_name)
     val albumNameFallback = stringResource(R.string.album_name)
     val songTitleFallback = stringResource(R.string.song_title)

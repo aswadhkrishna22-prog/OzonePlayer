@@ -75,7 +75,7 @@
     <string name="library_top_mixes_refresh">മിക്സുകൾ റീഫ്രഷ് ചെയ്യുക</string>
     <string name="library_top_mixes_configure_ai">AI ക്രമീകരിക്കുക</string>
     <string name="library_top_mixes_ai_not_configured_title">മിക്സുകൾ തയ്യാറാക്കാൻ AI ക്രമീകരിക്കുക</string>
-    <string name="library_top_mixes_ai_not_configured_desc">യുമയ്ക്ക് നിങ്ങളുടെ മികച്ച മിക്സുകൾ തയ്യാറാക്കാൻ AI ഇൻ്റഗ്രേഷൻ ആവശ്യമാണ്.</string>
+    <string name="library_top_mixes_ai_not_configured_desc">ഓസോണിന് നിങ്ങളുടെ മികച്ച മിക്സുകൾ തയ്യാറാക്കാൻ AI ഇൻ്റഗ്രേഷൻ ആവശ്യമാണ്.</string>
     <string name="library_top_mixes_no_recent_history_title">അടുത്തിടെ കേട്ട മിക്സുകൾ ഇതുവരെയില്ല</string>
     <string name="library_top_mixes_no_recent_history">കൂടുതൽ പാട്ടുകൾ കേൾക്കുക, തുടർന്ന് നിങ്ങളുടെ അടുത്തിടെ കേട്ട ഹിസ്റ്ററിയിൽ നിന്ന് AI മിക്സുകൾ തയ്യാറാക്കാൻ പുതുക്കുക.</string>
     <string name="library_top_mixes_no_valid_mixes">നിങ്ങളുടെ ഹിസ്റ്ററിയിൽ നിന്ന് പ്ലേ ചെയ്യാവുന്ന മിക്സുകളൊന്നും AI നൽകിയില്ല.</string>

@@ -142,7 +142,7 @@ internal fun VersionStamp(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
-            text = stringResource(R.string.app_name),
+            text = stringResource(R.string.ui_app_name),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.60f),

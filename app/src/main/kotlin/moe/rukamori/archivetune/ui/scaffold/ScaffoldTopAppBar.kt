@@ -156,7 +156,7 @@ fun ScaffoldTopAppBar(
                             modifier = Modifier.weight(1f, fill = false),
                         ) { isGreeting ->
                             Text(
-                                text = if (isGreeting) getGreetingText() else stringResource(R.string.app_name),
+                                text = if (isGreeting) getGreetingText() else stringResource(R.string.ui_app_name),
                                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
@@ -164,7 +164,7 @@ fun ScaffoldTopAppBar(
                         }
                     } else {
                         Text(
-                            text = stringResource(R.string.app_name),
+                            text = stringResource(R.string.ui_app_name),
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,

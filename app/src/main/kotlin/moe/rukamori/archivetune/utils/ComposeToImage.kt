@@ -706,7 +706,7 @@ object ComposeToImage {
                 colored
             }
 
-        val appName = context.getString(R.string.app_name)
+        val appName = context.getString(R.string.ui_app_name)
         val appNamePaint =
             TextPaint().apply {
                 color = textColor

@@ -84,8 +84,8 @@ internal fun UpdateDownloadDialog(
     val downloadTitle =
         buildString {
             when (updateChannel) {
-                UpdateChannel.DAILY_NIGHTLY -> append("${context.getString(R.string.app_name)} Nightly")
-                else -> append(context.getString(R.string.app_name))
+                UpdateChannel.DAILY_NIGHTLY -> append("${context.getString(R.string.ui_app_name)} Nightly")
+                else -> append(context.getString(R.string.ui_app_name))
             }
             append(' ')
             if (updateChannel == UpdateChannel.NIGHTLY) {

@@ -74,7 +74,7 @@ internal object MusicServiceNotification {
             .Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.small_icon)
             .setContentTitle(context.getString(R.string.music_player))
-            .setContentText(context.getString(R.string.app_name))
+            .setContentText(context.getString(R.string.ui_app_name))
             .setContentIntent(contentIntent)
             .setCategory(Notification.CATEGORY_SERVICE)
             .setPriority(NotificationCompat.PRIORITY_LOW)

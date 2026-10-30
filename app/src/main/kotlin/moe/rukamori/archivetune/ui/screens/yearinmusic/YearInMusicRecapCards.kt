@@ -66,7 +66,7 @@ internal fun EmptyRecapCard(
 ) {
     RecapCardContent(
         badge = stringResource(R.string.year_in_music_recap),
-        footer = joinByBullet(stringResource(R.string.app_name), card.year.toString()),
+        footer = joinByBullet(stringResource(R.string.ui_app_name), card.year.toString()),
         verticalArrangement = Arrangement.Center,
         applySafeContentInsets = applySafeContentInsets,
     ) {

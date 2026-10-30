@@ -378,7 +378,7 @@ fun LyricsImageCard(
                         Spacer(modifier = Modifier.size(8.dp))
 
                         androidx.compose.material3.Text(
-                            text = stringResource(R.string.app_name),
+                            text = stringResource(R.string.ui_app_name),
                             color = colors.secondary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,

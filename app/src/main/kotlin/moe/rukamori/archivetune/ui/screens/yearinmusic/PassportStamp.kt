@@ -130,7 +130,7 @@ internal fun ArchiveTuneBrand(
             modifier = Modifier.size(20.dp),
         )
         Text(
-            text = stringResource(R.string.app_name),
+            text = stringResource(R.string.ui_app_name),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Black,
             color = contentColor,
