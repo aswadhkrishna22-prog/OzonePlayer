@@ -122,7 +122,7 @@ fun DualPlaySplitView(
                     badgeLabel = "SONG A",
                     title = state.title,
                     artist = state.artist,
-                    artworkUrl = state.thumbnailUrl ?: state.trackUrl,
+                    artworkUrl = state.coverUrl.takeIf { it.isNotBlank() } ?: state.coverDrawable,
                     isPlaying = state.isPlaying,
                     positionMs = progressA,
                     durationMs = state.durationMs,
