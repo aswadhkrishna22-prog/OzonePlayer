@@ -6,8 +6,10 @@
 
 package moe.rukamori.archivetune.utils
 
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInstaller
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -217,6 +219,56 @@ object AppUpdateInstaller {
         }
     }
 
+    private fun tryInstallWithPackageInstaller(
+        context: Context,
+        apkFile: File,
+    ): Boolean {
+        var session: PackageInstaller.Session? = null
+        return try {
+            val packageInstaller = context.packageManager.packageInstaller
+            val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
+            params.setAppPackageName(context.packageName)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                params.setPackageSource(PackageInstaller.PACKAGE_SOURCE_OTHER)
+            }
+            val sessionId = packageInstaller.createSession(params)
+            session = packageInstaller.openSession(sessionId)
+            session.openWrite("package", 0, apkFile.length()).use { output ->
+                apkFile.inputStream().use { input ->
+                    input.copyTo(output)
+                }
+                session.fsync(output)
+            }
+
+            val intent = Intent(context, AppUpdateInstallReceiver::class.java).apply {
+                action = AppUpdateInstallReceiver.ACTION_INSTALL_STATUS
+                setPackage(context.packageName)
+            }
+            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                sessionId,
+                intent,
+                flags,
+            )
+
+            session.commit(pendingIntent.intentSender)
+            session.close()
+            session = null
+            true
+        } catch (e: Throwable) {
+            session?.abandon()
+            false
+        }
+    }
+
     private fun installApk(
         context: Context,
         apkFile: File,
@@ -226,18 +278,21 @@ object AppUpdateInstaller {
             throw SecurityException("Please allow app installation from this source in Settings")
         }
 
-        val uri =
-            FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.FileProvider",
-                apkFile,
-            )
-        val intent =
-            Intent(Intent.ACTION_VIEW)
-                .setDataAndType(uri, ApkMimeType)
-                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(intent)
+        val installedViaPackageInstaller = tryInstallWithPackageInstaller(context, apkFile)
+        if (!installedViaPackageInstaller) {
+            val uri =
+                FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.FileProvider",
+                    apkFile,
+                )
+            val intent =
+                Intent(Intent.ACTION_VIEW)
+                    .setDataAndType(uri, ApkMimeType)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        }
     }
 
     private const val UpdateDirectoryName = "app_update"

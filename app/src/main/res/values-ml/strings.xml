@@ -88,4 +88,7 @@
     <string name="lyrics_romanize_tamil">തമിഴ് വരികൾ റോമനൈസ് ചെയ്യുക (Tanglish)</string>
     <string name="lyrics_romanize_telugu">തെലുങ്ക് വരികൾ റോമനൈസ് ചെയ്യുക</string>
     <string name="lyrics_romanize_kannada">കന്നഡ വരികൾ റോമനൈസ് ചെയ്യുക</string>
+    <string name="remind_me_later">പിന്നീട് ഓർമ്മിപ്പിക്കുക</string>
+    <string name="downloading_update">അപ്‌ഡേറ്റ് ഡൗൺലോഡ് ചെയ്യുന്നു…</string>
+    <string name="update_now">ഇപ്പോൾ അപ്‌ഡേറ്റ് ചെയ്യുക</string>
 </resources>

@@ -52,7 +52,7 @@ private data class ReleasesNetworkResult(
 
 object Updater {
     private val client = HttpClient()
-    private const val ReleaseCacheCheckIntervalMs: Long = 6 * 60 * 60 * 1000L
+    private const val ReleaseCacheCheckIntervalMs: Long = 10 * 60 * 1000L
     private const val StableReleaseBaseUrl = "https://github.com/aswadhkrishna22-prog/OzonePlayer/releases"
     private const val CanaryReleaseBaseUrl = "https://github.com/aswadhkrishna22-prog/OzonePlayer/releases"
     private val GitHubCanaryReleasesEtagKey = stringPreferencesKey("github_canary_releases_etag")

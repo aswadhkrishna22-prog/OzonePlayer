@@ -272,6 +272,10 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".utils.AppUpdateInstallReceiver"
+            android:exported="false" />
 <receiver
     android:name=".widget.MusicWidgetReceiver"
     android:exported="true">

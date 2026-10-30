@@ -23,7 +23,9 @@ import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -59,6 +61,7 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -67,6 +70,7 @@ import moe.rukamori.archivetune.constants.HasPressedStarKey
 import moe.rukamori.archivetune.constants.LaunchCountKey
 import moe.rukamori.archivetune.constants.RemindAfterKey
 import moe.rukamori.archivetune.constants.UpdateChannel
+import moe.rukamori.archivetune.constants.UpdateRemindLaterTimestampKey
 import moe.rukamori.archivetune.innertube.models.SongItem
 import moe.rukamori.archivetune.network.NetworkBannerUiState
 import moe.rukamori.archivetune.playback.PlayerConnection
@@ -79,14 +83,17 @@ import moe.rukamori.archivetune.ui.component.NetworkStatusBanner
 import moe.rukamori.archivetune.ui.component.SineWaveLine
 import moe.rukamori.archivetune.ui.component.StarDialog
 import moe.rukamori.archivetune.ui.menu.YouTubeSongMenu
+import moe.rukamori.archivetune.utils.AppUpdateInstaller
 import moe.rukamori.archivetune.utils.UpdateNotificationManager
 import moe.rukamori.archivetune.utils.Updater
 import moe.rukamori.archivetune.utils.dataStore
 import moe.rukamori.archivetune.utils.get
+import moe.rukamori.archivetune.utils.getAsync
 import moe.rukamori.archivetune.utils.reportException
 import moe.rukamori.archivetune.viewmodels.BackupCategory
 import moe.rukamori.archivetune.viewmodels.BackupRestoreViewModel
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.minutes
 
 @Composable
 fun BoxScope.GlobalDialogsHost(
@@ -110,6 +117,20 @@ fun BoxScope.GlobalDialogsHost(
     var latestUpdateChannel by remember { mutableStateOf(defaultUpdateChannel) }
     var latestImageUrl by remember { mutableStateOf<String?>(null) }
     val releaseNotesState = remember { mutableStateOf<String?>(null) }
+    var isDownloadingUpdate by remember { mutableStateOf(false) }
+    var updateDownloadProgress by remember { mutableStateOf<Float?>(null) }
+    var updateDownloadError by remember { mutableStateOf<String?>(null) }
+    var updateDownloadJob by remember { mutableStateOf<Job?>(null) }
+    var isUpdateSheetShowing by remember { mutableStateOf(false) }
+
+    LaunchedEffect(bottomSheetPageState.isVisible) {
+        if (!bottomSheetPageState.isVisible && isUpdateSheetShowing && !isDownloadingUpdate) {
+            isUpdateSheetShowing = false
+            context.dataStore.edit { prefs ->
+                prefs[UpdateRemindLaterTimestampKey] = System.currentTimeMillis()
+            }
+        }
+    }
 
     val updateSheetContent: @Composable ColumnScope.() -> Unit = {
         Column(
@@ -164,37 +185,154 @@ fun BoxScope.GlobalDialogsHost(
                 )
             }
         }
-        androidx.compose.material3.Button(
-            onClick = {
-                bottomSheetPageState.dismiss()
-                if (BuildConfig.DISTRIBUTION == "gms") {
-                    navController.navigate("settings/update?autostart=1") {
-                        launchSingleTop = true
-                    }
-                } else {
-                    val releaseUrl =
-                        if (latestUpdateChannel == UpdateChannel.DAILY_NIGHTLY) {
-                            Updater.getLatestCanaryDownloadUrl().ifBlank {
-                                "https://github.com/aswadhkrishna22-prog/OzonePlayer/releases/latest"
+
+        if (isDownloadingUpdate) {
+            Spacer(Modifier.height(16.dp))
+            LinearProgressIndicator(
+                progress = { updateDownloadProgress ?: 0f },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp)),
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text =
+                        updateDownloadProgress?.let { "${(it * 100).toInt()}%" }
+                            ?: stringResource(R.string.downloading_update),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+                TextButton(
+                    onClick = {
+                        updateDownloadJob?.cancel()
+                        isDownloadingUpdate = false
+                        updateDownloadProgress = null
+                    },
+                ) {
+                    Text(text = stringResource(R.string.cancel))
+                }
+            }
+            if (updateDownloadError != null) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = updateDownloadError.orEmpty(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+        } else {
+            if (updateDownloadError != null) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = updateDownloadError.orEmpty(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp, bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                androidx.compose.material3.OutlinedButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            context.dataStore.edit { prefs ->
+                                prefs[UpdateRemindLaterTimestampKey] = System.currentTimeMillis()
+                            }
+                        }
+                        isUpdateSheetShowing = false
+                        bottomSheetPageState.dismiss()
+                    },
+                    modifier = Modifier.weight(1f),
+                    shapes = ButtonDefaults.shapes(),
+                ) {
+                    Text(
+                        text = stringResource(R.string.remind_me_later),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+
+                androidx.compose.material3.Button(
+                    onClick = {
+                        if (BuildConfig.DISTRIBUTION == "gms") {
+                            val downloadUrl =
+                                if (latestUpdateChannel == UpdateChannel.DAILY_NIGHTLY) {
+                                    Updater.getLatestCanaryDownloadUrl()
+                                } else {
+                                    Updater.getLatestDownloadUrl()
+                                }
+                            if (downloadUrl.isNotBlank()) {
+                                isDownloadingUpdate = true
+                                updateDownloadProgress = null
+                                updateDownloadError = null
+                                updateDownloadJob =
+                                    coroutineScope.launch {
+                                        AppUpdateInstaller.downloadAndInstall(
+                                            context = context,
+                                            url = downloadUrl,
+                                            onProgress = { updateDownloadProgress = it.fraction },
+                                        ).onSuccess {
+                                            isDownloadingUpdate = false
+                                            isUpdateSheetShowing = false
+                                            bottomSheetPageState.dismiss()
+                                        }.onFailure { e ->
+                                            isDownloadingUpdate = false
+                                            updateDownloadError = e.message ?: context.getString(R.string.error_unknown)
+                                        }
+                                    }
+                            } else {
+                                isUpdateSheetShowing = false
+                                bottomSheetPageState.dismiss()
+                                navController.navigate("settings/update?autostart=1") {
+                                    launchSingleTop = true
+                                }
                             }
                         } else {
-                            Updater.getLatestDownloadUrl().ifBlank {
-                                "https://github.com/aswadhkrishna22-prog/OzonePlayer/releases/latest"
+                            isUpdateSheetShowing = false
+                            bottomSheetPageState.dismiss()
+                            val releaseUrl =
+                                if (latestUpdateChannel == UpdateChannel.DAILY_NIGHTLY) {
+                                    Updater.getLatestCanaryDownloadUrl().ifBlank {
+                                        "https://github.com/aswadhkrishna22-prog/OzonePlayer/releases/latest"
+                                    }
+                                } else {
+                                    Updater.getLatestDownloadUrl().ifBlank {
+                                        "https://github.com/aswadhkrishna22-prog/OzonePlayer/releases/latest"
+                                    }
+                                }
+                            try {
+                                uriHandler.openUri(releaseUrl)
+                            } catch (_: Exception) {
+                                navController.navigate("settings/update") {
+                                    launchSingleTop = true
+                                }
                             }
                         }
-                    try {
-                        uriHandler.openUri(releaseUrl)
-                    } catch (_: Exception) {
-                        navController.navigate("settings/update") {
-                            launchSingleTop = true
-                        }
-                    }
+                    },
+                    modifier = Modifier.weight(1f),
+                    shapes = ButtonDefaults.shapes(),
+                ) {
+                    Text(
+                        text = stringResource(R.string.update_now),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
-            },
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 16.dp),
-            shapes = ButtonDefaults.shapes(),
-        ) {
-            Text(text = stringResource(R.string.update_text))
+            }
         }
     }
 
@@ -203,10 +341,11 @@ fun BoxScope.GlobalDialogsHost(
             delay(100)
         }
         delay(500)
-        if (
+        val lastCheck = Updater.lastCheckTime
+        val shouldCheck =
             BuildConfig.UPDATER_AVAILABLE &&
-            System.currentTimeMillis() - Updater.lastCheckTime > 1.days.inWholeMilliseconds
-        ) {
+                (lastCheck == -1L || System.currentTimeMillis() - lastCheck > 10.minutes.inWholeMilliseconds)
+        if (shouldCheck) {
             val isCanary =
                 BuildConfig.VERSION_NAME.startsWith("canary.") ||
                     BuildConfig.NIGHTLY_BUILD_HASH.isNotBlank()
@@ -244,24 +383,29 @@ fun BoxScope.GlobalDialogsHost(
             latestUpdateChannel == expectedChannel &&
             Updater.isUpdateAvailable(latestVersionName, BuildConfig.VERSION_NAME)
         ) {
-            val releaseNotesResult =
-                if (latestUpdateChannel == UpdateChannel.DAILY_NIGHTLY) {
-                    Updater.getLatestCanaryReleaseNotes()
-                } else {
-                    Updater.getLatestReleaseNotes()
+            val remindLaterTimestamp = context.dataStore.getAsync(UpdateRemindLaterTimestampKey, 0L)
+            val isRemindLaterActive = (System.currentTimeMillis() - remindLaterTimestamp) < 24 * 60 * 60 * 1000L
+            if (!isRemindLaterActive) {
+                val releaseNotesResult =
+                    if (latestUpdateChannel == UpdateChannel.DAILY_NIGHTLY) {
+                        Updater.getLatestCanaryReleaseNotes()
+                    } else {
+                        Updater.getLatestReleaseNotes()
+                    }
+                releaseNotesResult.onSuccess {
+                    releaseNotesState.value = it
+                }.onFailure {
+                    releaseNotesState.value = null
                 }
-            releaseNotesResult.onSuccess {
-                releaseNotesState.value = it
-            }.onFailure {
-                releaseNotesState.value = null
+                latestImageUrl =
+                    if (latestUpdateChannel == UpdateChannel.DAILY_NIGHTLY) {
+                        Updater.getLatestCanaryReleaseInfo().getOrNull()?.imageUrl
+                    } else {
+                        Updater.getLatestReleaseInfo().getOrNull()?.imageUrl
+                    }
+                isUpdateSheetShowing = true
+                bottomSheetPageState.show(updateSheetContent)
             }
-            latestImageUrl =
-                if (latestUpdateChannel == UpdateChannel.DAILY_NIGHTLY) {
-                    Updater.getLatestCanaryReleaseInfo().getOrNull()?.imageUrl
-                } else {
-                    Updater.getLatestReleaseInfo().getOrNull()?.imageUrl
-                }
-            bottomSheetPageState.show(updateSheetContent)
         }
     }
 
