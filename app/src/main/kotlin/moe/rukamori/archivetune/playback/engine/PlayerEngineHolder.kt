@@ -24,6 +24,8 @@ import moe.rukamori.archivetune.audiodsp.DjFilterAudioProcessor
 import moe.rukamori.archivetune.audiodsp.DualForwardingPlayer
 import moe.rukamori.archivetune.audiodsp.DualPlayerRoleHolder
 import moe.rukamori.archivetune.playback.processor.SpatialProcessor
+import moe.rukamori.archivetune.playback.dualplay.ChannelMode
+import moe.rukamori.archivetune.playback.dualplay.ChannelSplitProcessor
 import moe.rukamori.archivetune.extensions.setOffloadEnabled
 import moe.rukamori.archivetune.innertube.YouTube
 import moe.rukamori.archivetune.playback.ExoDeckController
@@ -225,7 +227,11 @@ class PlayerEngineHolder {
                 .Builder(context)
                 .setEnableFloatOutput(false)
                 .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
-                .setAudioProcessors(arrayOf(SpatialProcessor.instance, djFilter))
+                // Amendment 1 & 2: One ChannelSplitProcessor instance per sink (never shared).
+                // Always active; mode = OFF → transparent passthrough (no seek/re-prepare needed).
+                // After crossfade handoff the incoming player already has its own LEFT processor,
+                // so Song A stays left-only across track changes.
+                .setAudioProcessors(arrayOf(ChannelSplitProcessor(ChannelMode.LEFT), SpatialProcessor.instance, djFilter))
                 .build()
         }
 

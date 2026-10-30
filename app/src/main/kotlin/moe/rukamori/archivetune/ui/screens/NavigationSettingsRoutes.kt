@@ -111,6 +111,9 @@ internal fun NavGraphBuilder.settingsNavigationRoutes(
     composable("settings/spatial_audio") {
         SpatialAudioSettings(navController)
     }
+    composable("settings/dual_play_debug") {
+        moe.rukamori.archivetune.ui.screens.settings.DualPlayDebugScreen(navController)
+    }
     composable(
         route = "settings/changelog?channel={channel}",
         arguments =
