@@ -47,6 +47,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.playback.MusicService
 import moe.rukamori.archivetune.playback.cancelCrossfade
+import moe.rukamori.archivetune.playback.createMediaSourceFactory
 import moe.rukamori.archivetune.playback.PlaybackConstants
 import moe.rukamori.archivetune.playback.processor.SpatialProcessor
 import timber.log.Timber
@@ -307,11 +308,8 @@ class DualPlayEngine(
                 .build()
         }
 
-        // Simple data-source factory: local files only for the debug phase.
-        // (The song picker in the debug screen shows only locally cached songs.)
-        val dataSourceFactory = DefaultDataSource.Factory(context)
-        val mediaSourceFactory = DefaultMediaSourceFactory(context)
-            .setDataSourceFactory(dataSourceFactory)
+        // Use the full playback media source factory (resolves YouTube streams, cache, FLAC, and local files)
+        val mediaSourceFactory = service.createMediaSourceFactory()
 
         val b = ExoPlayer.Builder(context)
             .setMediaSourceFactory(mediaSourceFactory)
