@@ -267,6 +267,7 @@ fun PlayerSettings(navController: NavController) {
             onQobuzUserAuthTokenChange = onQobuzUserAuthTokenChange,
             onEqualizerClick = onEqualizerClick,
             onSpatialAudioClick = { navController.navigate("settings/spatial_audio") },
+            onDualPlayClick = { navController.navigate("settings/dual_play_debug") },
         )
     }
 

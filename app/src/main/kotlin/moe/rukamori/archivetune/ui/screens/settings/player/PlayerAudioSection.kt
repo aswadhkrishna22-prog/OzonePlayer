@@ -60,5 +60,14 @@ internal fun PlayerAudioSection(
                 showChevron = true,
             )
         }
+        item {
+            PreferenceEntry(
+                title = { Text("Dual Play (Debug)") },
+                description = "Two independent songs simultaneously (Left/Right ear)",
+                icon = { Icon(painterResource(R.drawable.waves), null) },
+                onClick = actions.onDualPlayClick,
+                showChevron = true,
+            )
+        }
     }
 }
