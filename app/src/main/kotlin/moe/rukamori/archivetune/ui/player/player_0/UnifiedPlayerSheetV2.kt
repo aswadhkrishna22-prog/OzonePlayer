@@ -34,6 +34,7 @@ import moe.rukamori.archivetune.MiniPlayerDropState
 import moe.rukamori.archivetune.PlayerDockGeometry
 import moe.rukamori.archivetune.constants.EnableHapticFeedbackKey
 import moe.rukamori.archivetune.playback.dualplay.DualPlaySheetTarget
+import moe.rukamori.archivetune.playback.dualplay.DualPlayState
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.player.player_0.sett.PlayerMenuScreen
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
@@ -75,7 +76,8 @@ fun UnifiedPlayerSheetV2(
 
     val playerConnection = LocalPlayerConnection.current
     val dualPlayEngine = playerConnection?.dualPlayEngine
-    val dualPlayState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)
+    val dualPlayState by (dualPlayEngine?.state ?: flowOf(DualPlayState()))
+        .collectAsState(dualPlayEngine?.state?.value ?: DualPlayState())
     var sheetTarget by remember { mutableStateOf(DualPlaySheetTarget.PLAYER_A) }
 
     LaunchedEffect(dualPlayState?.enabled, dualPlayState?.splitViewActive) {
@@ -230,6 +232,8 @@ fun UnifiedPlayerSheetV2(
                             sheetTarget = DualPlaySheetTarget.PLAYER_B
                             onAction(PlayerAction.Lyrics)
                         },
+                        dualState = dualPlayState,
+                        dualPlayEngine = dualPlayEngine,
                     )
                 }
             }

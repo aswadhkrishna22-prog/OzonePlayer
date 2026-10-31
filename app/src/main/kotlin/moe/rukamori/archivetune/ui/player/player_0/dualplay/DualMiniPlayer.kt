@@ -52,6 +52,7 @@ import coil3.request.allowHardware
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import moe.rukamori.archivetune.LocalPlayerConnection
+import moe.rukamori.archivetune.playback.dualplay.DualPlayEngine
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.MiniPlayerHeight
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
@@ -74,10 +75,11 @@ fun DualMiniPlayer(
     onExpandClick: () -> Unit,
     expansionFractionProvider: () -> Float = { 0f },
     isVisible: Boolean = true,
+    engine: DualPlayEngine? = null,
     modifier: Modifier = Modifier,
 ) {
     val playerConnection = LocalPlayerConnection.current
-    val engine = playerConnection?.dualPlayEngine
+    val effectiveEngine = engine ?: playerConnection?.dualPlayEngine
 
     val isPlayingA = paneSourceA.uiState.isPlaying
     val isPlayingB = paneSourceB.uiState.isPlaying
@@ -86,14 +88,14 @@ fun DualMiniPlayer(
     val onPlayPauseBoth: () -> Unit = {
         if (anyPlaying) {
             if (isPlayingA) {
-                if (engine != null) engine.pauseA() else paneSourceA.onAction(PlayerAction.PlayPause)
+                if (effectiveEngine != null) effectiveEngine.pauseA() else paneSourceA.onAction(PlayerAction.PlayPause)
             }
             if (isPlayingB) {
-                if (engine != null) engine.pauseB() else paneSourceB.onAction(PlayerAction.PlayPause)
+                if (effectiveEngine != null) effectiveEngine.pauseB() else paneSourceB.onAction(PlayerAction.PlayPause)
             }
         } else {
-            if (engine != null) engine.playA() else paneSourceA.onAction(PlayerAction.PlayPause)
-            if (engine != null) engine.playB() else paneSourceB.onAction(PlayerAction.PlayPause)
+            if (effectiveEngine != null) effectiveEngine.playA() else paneSourceA.onAction(PlayerAction.PlayPause)
+            if (effectiveEngine != null) effectiveEngine.playB() else paneSourceB.onAction(PlayerAction.PlayPause)
         }
     }
 
@@ -180,7 +182,7 @@ private fun DualMiniArtwork(
     val positionFlow = paneSource.positionFlow
 
     // State updated at most ~4 times/sec only while playing
-    val progressMsState = remember { mutableLongStateOf(positionFlow.value) }
+    val progressMsState = remember(positionFlow) { mutableLongStateOf(positionFlow.value) }
 
     LaunchedEffect(isPlaying, isVisible, positionFlow) {
         if (!isVisible) return@LaunchedEffect

@@ -29,7 +29,9 @@ import moe.rukamori.archivetune.constants.FloatingToolbarHorizontalPadding
 import moe.rukamori.archivetune.extensions.metadata
 import moe.rukamori.archivetune.extensions.toMediaMetadata
 import moe.rukamori.archivetune.models.MediaMetadata
+import moe.rukamori.archivetune.playback.dualplay.DualPlayEngine
 import moe.rukamori.archivetune.playback.dualplay.DualPlaySheetTarget
+import moe.rukamori.archivetune.playback.dualplay.DualPlayState
 import moe.rukamori.archivetune.ui.player.player_0.PlayerPaletteExtractor
 import moe.rukamori.archivetune.ui.player.player_0.dualplay.rememberPaneSourceA
 import moe.rukamori.archivetune.ui.player.player_0.dualplay.rememberPaneSourceB
@@ -85,16 +87,20 @@ internal fun UnifiedPlayerSheetLayers(
     onOpenQueueB: () -> Unit = {},
     onOpenLyricsA: () -> Unit = {},
     onOpenLyricsB: () -> Unit = {},
+    dualState: DualPlayState? = null,
+    dualPlayEngine: DualPlayEngine? = null,
 ) {
     val density = LocalDensity.current.density
     val canvasState = rememberPlayerCanvasState(state.trackUrl, state.title, state.artist)
 
     val playerConnection = LocalPlayerConnection.current
-    val dualPlayEngine = playerConnection?.dualPlayEngine
-    val dualState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)
-    val itemB = dualState?.playerBMediaItem
-    val metadataB = remember(itemB, dualState?.playerBDuration) {
-        itemB?.toMediaMetadata(dualState?.playerBDuration ?: 0L)
+    val effectiveEngine = dualPlayEngine ?: playerConnection?.dualPlayEngine
+    val collectedDualState by (effectiveEngine?.state ?: flowOf(DualPlayState()))
+        .collectAsState(effectiveEngine?.state?.value ?: DualPlayState())
+    val effectiveDualState = dualState ?: collectedDualState
+    val itemB = effectiveDualState.playerBMediaItem
+    val metadataB = remember(itemB, effectiveDualState.playerBDuration) {
+        itemB?.toMediaMetadata(effectiveDualState.playerBDuration)
     }
     val database = playerConnection?.service?.database
     val lyricsBFlow = remember(itemB?.mediaId) {
@@ -145,11 +151,11 @@ internal fun UnifiedPlayerSheetLayers(
         onSeekStarted = onSeekStarted,
     )
 
-    val paneSourceB = if (dualState != null && dualPlayEngine != null) {
+    val paneSourceB = if (effectiveEngine != null && effectiveDualState.playerBMediaItem != null) {
         rememberPaneSourceB(
             baseState = state,
-            dualState = dualState!!,
-            engine = dualPlayEngine,
+            dualState = effectiveDualState,
+            engine = effectiveEngine,
             vibrantColorB = vibrantColorB,
             gradientColorB = gradientColorB,
             mediaMetadataB = metadataB,
@@ -205,7 +211,7 @@ internal fun UnifiedPlayerSheetLayers(
                     }
                     .padding(horizontal = miniHorizontalInset)
             ) {
-                val isDualMiniActive = dualState?.enabled == true && dualState?.playerBMediaItem != null
+                val isDualMiniActive = effectiveDualState.enabled && effectiveDualState.playerBMediaItem != null
                 AnimatedContent(
                     targetState = isDualMiniActive,
                     transitionSpec = {
@@ -214,13 +220,14 @@ internal fun UnifiedPlayerSheetLayers(
                     },
                     label = "MiniPlayerSwitch",
                 ) { dualActive ->
-                    if (dualActive && paneSourceB != null) {
+                    if (dualActive) {
                         DualMiniPlayer(
                             paneSourceA = paneSourceA,
                             paneSourceB = paneSourceB,
                             onExpandClick = onExpandClick,
                             expansionFractionProvider = expansionFractionProvider,
                             isVisible = isMiniPlayerVisible,
+                            engine = effectiveEngine,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     } else {
