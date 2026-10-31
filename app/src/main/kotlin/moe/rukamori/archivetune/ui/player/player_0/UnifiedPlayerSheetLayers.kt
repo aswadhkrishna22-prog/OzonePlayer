@@ -34,6 +34,8 @@ import moe.rukamori.archivetune.ui.player.player_0.PlayerPaletteExtractor
 import moe.rukamori.archivetune.ui.player.player_0.dualplay.rememberPaneSourceA
 import moe.rukamori.archivetune.ui.player.player_0.dualplay.rememberPaneSourceB
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.key
 import moe.rukamori.archivetune.ui.player.player_0.MiniPlayerContentInternal
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.player.player_0.scoped.FullPlayerVisualState
@@ -292,4 +294,3 @@ internal fun UnifiedPlayerSheetLayers(
             }
         }
     }
-}

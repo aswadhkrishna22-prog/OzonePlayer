@@ -53,8 +53,8 @@ fun rememberPaneSourceA(
     onSeek: (Float) -> Unit,
     onSeekStarted: () -> Unit = {},
 ): PaneSource {
-    val artId = mediaMetadata?.artists?.firstOrNull()?.id ?: state.artistId
-    val albId = mediaMetadata?.album?.id ?: state.albumId
+    val artId = mediaMetadata?.artists?.firstOrNull()?.id
+    val albId = mediaMetadata?.album?.id
     return remember(state, queueState, playbackProgress, mediaMetadata, onAction, onSeek) {
         object : PaneSource {
             override val target: DualPlaySheetTarget = DualPlaySheetTarget.PLAYER_A
@@ -125,8 +125,6 @@ fun rememberPaneSourceB(
             title = titleB,
             artist = artistB,
             album = albumB,
-            artistId = artIdB,
-            albumId = albIdB,
             coverUrl = artworkUriB,
             isPlaying = dualState.playerBIsPlaying,
             isLoading = dualState.playerBPlaybackState == androidx.media3.common.Player.STATE_BUFFERING,
@@ -189,12 +187,11 @@ fun rememberPaneSourceB(
                     }
                     is PlayerAction.Next -> engine.nextB()
                     is PlayerAction.Previous -> engine.prevB()
-                    is PlayerAction.Seek -> engine.seekB(action.positionMs)
+                    is PlayerAction.SeekTo -> engine.seekB(action.positionMs)
                     is PlayerAction.Like, is PlayerAction.ToggleLike -> engine.toggleLikeB()
                     is PlayerAction.Shuffle -> engine.toggleShuffleB()
                     is PlayerAction.Repeat -> engine.toggleRepeatB()
-                    is PlayerAction.Lyrics -> onOpenLyricsB()
-                    is PlayerAction.Queue -> onOpenQueueB()
+                    is PlayerAction.Lyrics, is PlayerAction.ToggleLyrics -> onOpenLyricsB()
                     is PlayerAction.PlayQueueItem -> {
                         val idx = engine.findWindowIndexByUidB(action.windowUid)
                         if (idx >= 0) engine.playQueueItemB(idx)
