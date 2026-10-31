@@ -35,19 +35,26 @@ class ChannelSplitProcessor(
 ) : BaseAudioProcessor() {
 
     private var encoding = C.ENCODING_PCM_16BIT
+    private var lastLoggedMode: EarMode? = null
 
     // ── BaseAudioProcessor ────────────────────────────────────────────────────
 
     override fun onConfigure(inputAudioFormat: AudioFormat): AudioFormat {
         val enc = inputAudioFormat.encoding
         val ch  = inputAudioFormat.channelCount
+        val sr  = inputAudioFormat.sampleRate
         val supported =
             (enc == C.ENCODING_PCM_16BIT || enc == C.ENCODING_PCM_FLOAT) && ch == 2
         return if (supported) {
             encoding = enc
+            val encName = if (enc == C.ENCODING_PCM_16BIT) "PCM_16BIT" else "PCM_FLOAT"
+            Timber.tag(TAG).i(
+                "ChannelSplitProcessor[%s]: configured format successfully: encoding=%s ($enc), channels=%d, sampleRate=%d",
+                assignedSide, encName, ch, sr,
+            )
             inputAudioFormat
         } else {
-            val desc = "encoding=$enc channelCount=$ch (assignedSide=$assignedSide)"
+            val desc = "encoding=$enc channelCount=$ch sampleRate=$sr (assignedSide=$assignedSide)"
             Timber.tag(TAG).w(
                 "ChannelSplitProcessor[%s]: unsupported format %s — bypassed",
                 assignedSide, desc,
@@ -74,6 +81,14 @@ class ChannelSplitProcessor(
         val earMode = when (assignedSide) {
             ProcessorSide.LEFT  -> DualPlayChannelState.modeA
             ProcessorSide.RIGHT -> DualPlayChannelState.modeB
+        }
+
+        if (earMode != lastLoggedMode) {
+            lastLoggedMode = earMode
+            Timber.tag(TAG).i(
+                "ChannelSplitProcessor[%s]: earMode changed to %s (encoding=%d)",
+                assignedSide, earMode, encoding,
+            )
         }
 
         if (earMode == EarMode.STEREO) {

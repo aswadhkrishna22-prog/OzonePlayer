@@ -229,9 +229,8 @@ class PlayerEngineHolder {
                 .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
                 // Amendment 1 & 2: One ChannelSplitProcessor instance per sink (never shared).
                 // Always active; mode = OFF → transparent passthrough (no seek/re-prepare needed).
-                // After crossfade handoff the incoming player already has its own LEFT processor,
-                // so Song A stays left-only across track changes.
-                .setAudioProcessors(arrayOf(ChannelSplitProcessor(ProcessorSide.LEFT), SpatialProcessor.instance, djFilter))
+                // Placed at the END of the audio processor array so no downstream processor can re-mix or bleed channels.
+                .setAudioProcessors(arrayOf(SpatialProcessor.instance, djFilter, ChannelSplitProcessor(ProcessorSide.LEFT)))
                 .build()
         }
 

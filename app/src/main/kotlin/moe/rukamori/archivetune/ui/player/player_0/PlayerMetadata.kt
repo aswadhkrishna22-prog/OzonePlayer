@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
@@ -31,9 +32,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.flow.flowOf
+import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
+import moe.rukamori.archivetune.ui.player.player_0.dualplay.FullPlayerToolbarEarButtons
 
 import moe.rukamori.archivetune.ui.component.MarqueeText
 import moe.rukamori.archivetune.ui.state.PlayerUiState
@@ -55,6 +59,12 @@ fun PlayerMetadata(
 ) {
     val haptics = rememberYumaHaptics()
     val gradientEdgeColor = Color.Black
+
+    val playerConnection = LocalPlayerConnection.current
+    val dualPlayEngine = playerConnection?.dualPlayEngine
+    val dualPlayState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)
+    val isDualPlaySingle = dualPlayState?.enabled == true && dualPlayState?.splitViewActive != true
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -168,6 +178,21 @@ fun PlayerMetadata(
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (state.isImmersiveEnabled && isDualPlaySingle) {
+                FullPlayerToolbarEarButtons(
+                    currentEar = dualPlayState?.earSelectionA,
+                    onEarSelected = { ear ->
+                        if (dualPlayState?.earSelectionA != ear) {
+                            dualPlayEngine?.setEarA(ear)
+                        }
+                    },
+                    circleSize = 26.dp,
+                    gap = 3.dp,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(end = 4.dp),
+                )
+            }
+
             // Кнопка лайка
             var lastLikeClickTime by remember { mutableLongStateOf(0L) }
 

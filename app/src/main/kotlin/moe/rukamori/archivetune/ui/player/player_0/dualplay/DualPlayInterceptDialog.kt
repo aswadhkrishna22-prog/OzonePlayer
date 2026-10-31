@@ -4,21 +4,33 @@
  */
 package moe.rukamori.archivetune.ui.player.player_0.dualplay
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.playback.dualplay.PendingDualPlayQueue
 
@@ -41,15 +53,52 @@ fun DualPlayInterceptDialog(
             Text(text = "Dual Play Active", fontWeight = FontWeight.Bold)
         },
         text = {
-            Column {
-                Text(text = "\"${pending.songTitle}\"")
-                Spacer(modifier = Modifier.height(8.dp))
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    if (!pending.artworkUri.isNullOrBlank()) {
+                        AsyncImage(
+                            model = pending.artworkUri,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(52.dp)
+                                .clip(RoundedCornerShape(8.dp)),
+                        )
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = pending.songTitle,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        if (!pending.songArtist.isNullOrBlank()) {
+                            Text(
+                                text = pending.songArtist,
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
+
                 Text(
                     text = if (hasSongB) {
-                        "Do you want to replace Song B (Right ear) or play this song normally?"
+                        "Do you want to replace Song B in Dual Play or play this song instead?"
                     } else {
-                        "Do you want to add this song as Song B (Right ear) or replace the currently playing song?"
-                    }
+                        "Do you want to add this song to Dual Play or play it instead?"
+                    },
+                    fontSize = 14.sp,
                 )
             }
         },
