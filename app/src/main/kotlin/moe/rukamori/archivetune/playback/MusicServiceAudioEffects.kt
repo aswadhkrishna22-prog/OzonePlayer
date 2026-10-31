@@ -110,6 +110,13 @@ internal inline fun <T> MusicService.createAudioEffect(
 }.getOrNull()
 
 internal fun MusicService.applyEqSettingsToEffects(settings: EqSettings) {
+    if (dualPlayEngine.isEnabled) {
+        runCatching { equalizer?.enabled = false }
+        runCatching { bassBoost?.enabled = false }
+        runCatching { virtualizer?.enabled = false }
+        runCatching { loudnessEnhancer?.enabled = false }
+        return
+    }
     val eq = equalizer ?: return
     val caps = eqCapabilities.value
     val bandCount = caps?.bandCount ?: readAudioEffectValue("equalizer band count") { eq.numberOfBands.toInt() } ?: 0

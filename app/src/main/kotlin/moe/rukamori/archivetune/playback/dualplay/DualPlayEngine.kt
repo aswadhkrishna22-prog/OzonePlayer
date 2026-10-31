@@ -50,8 +50,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import moe.rukamori.archivetune.extensions.setOffloadEnabled
 import moe.rukamori.archivetune.playback.MusicService
+import moe.rukamori.archivetune.playback.applyEqSettingsToEffects
 import moe.rukamori.archivetune.playback.cancelCrossfade
 import moe.rukamori.archivetune.playback.createMediaSourceFactory
+import moe.rukamori.archivetune.playback.playbackAudioAttributes
 import moe.rukamori.archivetune.playback.PlaybackConstants
 import moe.rukamori.archivetune.playback.processor.SpatialProcessor
 import moe.rukamori.archivetune.playback.queues.Queue
@@ -151,6 +153,11 @@ class DualPlayEngine(
 
     private var savedSpatialEnabled   = false
     private var savedVirtualizerEnabled = false
+    private var savedEqualizerEnabled = false
+    private var savedBassBoostEnabled = false
+    private var savedLoudnessEnhancerEnabled = false
+    private var savedAudioNormalizationEnabled = false
+    private var savedAudioAttributesA: AudioAttributes? = null
     private var savedCrossfadeEnabled = false
 
     // ── Audio focus mirroring ──────────────────────────────────────────────────
@@ -199,27 +206,55 @@ class DualPlayEngine(
         savedSpatialEnabled = SpatialProcessor.instance.enabled
         SpatialProcessor.instance.enabled = false
 
-        // ── 3. Disable Virtualizer (creates stereo width by cross-mixing) ───────
+        // ── 3. Disable all AudioEffects & normalization (leak prevention) ─────
         savedVirtualizerEnabled = service.virtualizer?.let {
             runCatching { it.enabled }.getOrDefault(false)
         } ?: false
         service.virtualizer?.let { runCatching { it.enabled = false } }
 
-        // ── 4. Activate channel-split mode ────────────────────────────────────
+        savedEqualizerEnabled = service.equalizer?.let {
+            runCatching { it.enabled }.getOrDefault(false)
+        } ?: false
+        service.equalizer?.let { runCatching { it.enabled = false } }
+
+        savedBassBoostEnabled = service.bassBoost?.let {
+            runCatching { it.enabled }.getOrDefault(false)
+        } ?: false
+        service.bassBoost?.let { runCatching { it.enabled = false } }
+
+        savedLoudnessEnhancerEnabled = service.loudnessEnhancer?.let {
+            runCatching { it.enabled }.getOrDefault(false)
+        } ?: false
+        service.loudnessEnhancer?.let { runCatching { it.enabled = false } }
+
+        savedAudioNormalizationEnabled = service.audioNormalizationEnabled
+        service.audioNormalizationEnabled = false
+
+        // ── 4. Opt out of platform spatialization for Player A ────────────────
+        savedAudioAttributesA = service.localPlayer.audioAttributes
+        val dualPlayAttrs = AudioAttributes.Builder()
+            .setUsage(C.USAGE_MEDIA)
+            .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+            .setAllowedCapturePolicy(C.ALLOW_CAPTURE_BY_ALL)
+            .setSpatializationBehavior(C.SPATIALIZATION_BEHAVIOR_NEVER)
+            .build()
+        service.localPlayer.setAudioAttributes(dualPlayAttrs, false)
+
+        // ── 5. Activate channel-split mode ────────────────────────────────────
         DualPlayChannelState.mode  = ChannelMode.ACTIVE
         DualPlayChannelState.modeA = EarMode.STEREO   // Normal stereo until user picks L/R/M
         DualPlayChannelState.modeB = EarMode.STEREO
 
-        // ── 5. Build Player B ─────────────────────────────────────────────────
+        // ── 6. Build Player B (with SPATIALIZATION_BEHAVIOR_NEVER) ────────────
         createAndConfigurePlayerB()
 
-        // ── 6. Register becoming-noisy receiver ───────────────────────────────
+        // ── 7. Register becoming-noisy receiver ───────────────────────────────
         registerNoisyReceiver()
 
-        // ── 7. Start format polling (for debug screen) ────────────────────────
+        // ── 8. Start format polling (for debug screen) ────────────────────────
         startFormatPolling()
 
-        // ── 8. Disable audio offload so processors are never bypassed ──────────
+        // ── 9. Disable audio offload so processors are never bypassed ──────────
         service.localPlayer.setOffloadEnabled(false)
         playerB?.setOffloadEnabled(false)
 
@@ -252,11 +287,21 @@ class DualPlayEngine(
         stopFormatPolling()
         stopForegroundKeepAlive()
 
+        // Restore Player A AudioAttributes
+        val originalAttrs = savedAudioAttributesA ?: service.playbackAudioAttributes()
+        service.localPlayer.setAudioAttributes(originalAttrs, false)
+        savedAudioAttributesA = null
+
         // Restore SpatialProcessor
         SpatialProcessor.instance.enabled = savedSpatialEnabled
 
-        // Restore virtualizer
+        // Restore audio effects & normalization
+        service.equalizer?.let { runCatching { it.enabled = savedEqualizerEnabled } }
+        service.bassBoost?.let { runCatching { it.enabled = savedBassBoostEnabled } }
         service.virtualizer?.let { runCatching { it.enabled = savedVirtualizerEnabled } }
+        service.loudnessEnhancer?.let { runCatching { it.enabled = savedLoudnessEnhancerEnabled } }
+        service.audioNormalizationEnabled = savedAudioNormalizationEnabled
+        runCatching { service.applyEqSettingsToEffects(service.desiredEqSettings.value) }
 
         // Restore crossfade
         if (savedCrossfadeEnabled) {
@@ -801,6 +846,8 @@ class DualPlayEngine(
                 AudioAttributes.Builder()
                     .setUsage(C.USAGE_MEDIA)
                     .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                    .setAllowedCapturePolicy(C.ALLOW_CAPTURE_BY_ALL)
+                    .setSpatializationBehavior(C.SPATIALIZATION_BEHAVIOR_NEVER)
                     .build(),
                 /* handleAudioFocus = */ false,   // Amendment 5: focus managed by DualPlayEngine
             )
