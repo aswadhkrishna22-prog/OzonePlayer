@@ -223,6 +223,7 @@ fun DualPlaySplitView(
                 onDisableDualPlay = { engine.disable() },
                 bottomGapDp = 16.dp, // 16dp gap below lyrics/queue row (Amendment 3)
                 onControlsHeightMeasured = { if (it > controlsHeightPx) controlsHeightPx = it },
+                controlsHeightPx = controlsHeightPx,
             )
 
             // ── BOTTOM PANE: Song B ───────────────────────────────────────────
@@ -297,6 +298,7 @@ fun DualPlaySplitView(
                 onDisableDualPlay = { engine.disable() },
                 bottomGapDp = navBarBottomDp + 8.dp,
                 onControlsHeightMeasured = { if (it > controlsHeightPx) controlsHeightPx = it },
+                controlsHeightPx = controlsHeightPx,
             )
         }
 
@@ -408,9 +410,23 @@ private fun ImmersiveNowPlayingPane(
     onDisableDualPlay: () -> Unit,
     bottomGapDp: Dp,
     onControlsHeightMeasured: (Int) -> Unit,
+    controlsHeightPx: Int = 0,
     modifier: Modifier = Modifier,
 ) {
     var showOptionsMenu by remember { mutableStateOf(false) }
+
+    val density = LocalDensity.current
+    val paneHeightPx = with(density) { paneHeightDp.toPx() }
+    val effectiveControlsHeightPx = if (controlsHeightPx > 0) {
+        controlsHeightPx.toFloat()
+    } else {
+        with(density) { 260.dp.toPx() }
+    }
+    val controlsTopPx = (paneHeightPx - effectiveControlsHeightPx).coerceAtLeast(0f)
+    val clearArtworkFadeEndY = controlsTopPx + with(density) { 16.dp.toPx() }
+
+    var localGradientColor by remember(paneState.gradientColor) { mutableIntStateOf(paneState.gradientColor) }
+    var localVibrantColor by remember(paneState.vibrantColor) { mutableIntStateOf(paneState.vibrantColor) }
 
     Box(
         modifier = modifier
@@ -420,11 +436,16 @@ private fun ImmersiveNowPlayingPane(
     ) {
         // ── 1. Real Player Background Layers (Full bleed artwork, haze blur, gradient) ──
         PlayerBackgroundLayers(
-            state = paneState,
-            gradientColor = Color(paneState.gradientColor),
+            state = paneState.copy(gradientColor = localGradientColor, vibrantColor = localVibrantColor),
+            gradientColor = Color(localGradientColor),
             expansionFractionProvider = { 1f },
             lyricsFractionProvider = { 0f },
             queueFractionProvider = { 0f },
+            onColorsExtracted = { vibrant, _, gradient ->
+                localVibrantColor = vibrant
+                localGradientColor = gradient
+            },
+            clearArtworkFadeEndY = clearArtworkFadeEndY,
             modifier = Modifier.fillMaxSize(),
         )
 

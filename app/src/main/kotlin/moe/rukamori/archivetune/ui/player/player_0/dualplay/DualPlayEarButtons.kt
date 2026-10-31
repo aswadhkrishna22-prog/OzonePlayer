@@ -43,6 +43,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -51,6 +52,7 @@ import androidx.compose.ui.unit.sp
 import moe.rukamori.archivetune.playback.dualplay.EarSelection
 import moe.rukamori.archivetune.ui.haptics.LocalYumaHaptics
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
+import moe.rukamori.archivetune.ui.theme.SoftTextShadow
 
 // ── Sizes ─────────────────────────────────────────────────────────────────────
 
@@ -60,7 +62,7 @@ private val DefaultLetterSize = 12.sp
 
 // ── Colors ─────────────────────────────────────────────────────────────────────
 
-private val UnselectedFill   = Color.White.copy(alpha = 0.14f)
+private val UnselectedFill   = Color.Black.copy(alpha = 0.30f)
 private val SelectedFill     = Color.White.copy(alpha = 0.85f)
 private val SelectedLetter   = Color.Black.copy(alpha = 0.9f)
 private val UnselectedLetter = Color.White
@@ -279,6 +281,7 @@ private fun EarCircleButton(
                 fontSize   = fontSize,
                 fontWeight = FontWeight.Bold,
                 fontFamily = fontFamily,
+                style      = TextStyle(shadow = if (selected) null else SoftTextShadow),
             )
         }
     }
