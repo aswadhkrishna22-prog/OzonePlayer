@@ -212,6 +212,12 @@ android {
                 keyPassword = releaseKeyPassword
             }
         }
+        create("dualplay") {
+            storeFile = rootProject.file("app/keystore/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
 
     buildTypes {
@@ -250,6 +256,7 @@ android {
             if (isDualPlay) {
                 applicationIdSuffix = ".dualplay"
                 manifestPlaceholders["appName"] = "Ozone Dual Play"
+                signingConfig = signingConfigs.getByName("dualplay")
             }
         }
     }

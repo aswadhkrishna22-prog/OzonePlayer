@@ -31,11 +31,13 @@ fun MediaItem.toMediaMetadata(durationMs: Long = 0L): MediaMetadata =
     metadata?.let { if (durationMs > 0 && it.duration == 0) it.copy(duration = (durationMs / 1000).toInt()) else it }
         ?: MediaMetadata(
             id = mediaId,
-            title = mediaMetadata.title?.toString().orEmpty(),
-            artists = listOf(MediaMetadata.Artist(id = null, name = mediaMetadata.artist?.toString().orEmpty())),
+            title = mediaMetadata.title?.toString()?.trim().orEmpty(),
+            artists = mediaMetadata.artist?.toString()?.takeIf { it.isNotBlank() }
+                ?.let { listOf(MediaMetadata.Artist(id = null, name = it.trim())) }
+                ?: emptyList(),
             duration = if (durationMs > 0) (durationMs / 1000).toInt() else 0,
             thumbnailUrl = mediaMetadata.artworkUri?.toString(),
-            album = mediaMetadata.albumTitle?.toString()?.takeIf { it.isNotBlank() }?.let { MediaMetadata.Album(id = "", title = it) },
+            album = null,
         )
 
 private fun String?.toNotificationArtworkUri() = this?.resize(NotificationArtworkSizePx, NotificationArtworkSizePx)?.toUri()
