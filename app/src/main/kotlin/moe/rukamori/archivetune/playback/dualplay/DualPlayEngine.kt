@@ -200,7 +200,7 @@ class DualPlayEngine(
         startFormatPolling()
 
         // ── 8. Disable audio offload so processors are never bypassed ──────────
-        service.player.setOffloadEnabled(false)
+        service.localPlayer.setOffloadEnabled(false)
         playerB?.setOffloadEnabled(false)
 
         _state.value = _state.value.copy(
