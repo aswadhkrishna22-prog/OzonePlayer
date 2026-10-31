@@ -69,6 +69,8 @@ fun PlayerControls(
     onSeekStarted: (() -> Unit)? = null,
     shuffleContent: @Composable (() -> Unit)? = null,
     repeatContent: @Composable (() -> Unit)? = null,
+    isNextEnabled: Boolean = true,
+    isPrevEnabled: Boolean = true,
 ) {
     var dragFraction by remember { mutableStateOf<Float?>(null) }
     val safeDuration = duration.coerceAtLeast(0L)
@@ -111,13 +113,13 @@ fun PlayerControls(
             if (shuffleContent != null) {
                 shuffleContent()
             }
-            PressIcon(Icons.Rounded.SkipPrevious, 44.dp, onPrev)
+            PressIcon(Icons.Rounded.SkipPrevious, 44.dp, onPrev, enabled = isPrevEnabled)
             PressIcon(
                 if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                 72.dp,
                 onPlayPause
             )
-            PressIcon(Icons.Rounded.SkipNext, 44.dp, onNext)
+            PressIcon(Icons.Rounded.SkipNext, 44.dp, onNext, enabled = isNextEnabled)
             if (repeatContent != null) {
                 repeatContent()
             }
@@ -126,11 +128,16 @@ fun PlayerControls(
 }
 
 @Composable
-fun PressIcon(icon: ImageVector, size: Dp, onClick: () -> Unit) {
+fun PressIcon(
+    icon: ImageVector,
+    size: Dp,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+) {
     val src = remember { MutableInteractionSource() }
     val pressed by src.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.86f else 1f,
+        targetValue = if (pressed && enabled) 0.86f else 1f,
         animationSpec = spring(dampingRatio = 0.55f, stiffness = 500f),
         label = "PressIconScale"
     )
@@ -138,25 +145,30 @@ fun PressIcon(icon: ImageVector, size: Dp, onClick: () -> Unit) {
     Icon(
         imageVector = icon,
         contentDescription = null,
-        tint = Color.White,
+        tint = if (enabled) Color.White else Color.White.copy(alpha = 0.38f),
         modifier = Modifier
             .size(size)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
+                alpha = if (enabled) 1f else 0.38f
             }
             .clip(CircleShape)
-            .clickable(
-                interactionSource = src,
-                indication = null,
-                onClick = {
-                    try {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    } catch (_: Throwable) {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    }
-                    onClick()
-                }
+            .then(
+                if (enabled) {
+                    Modifier.clickable(
+                        interactionSource = src,
+                        indication = null,
+                        onClick = {
+                            try {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            } catch (_: Throwable) {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            }
+                            onClick()
+                        }
+                    )
+                } else Modifier
             )
     )
 }

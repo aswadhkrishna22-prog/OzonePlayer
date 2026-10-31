@@ -83,6 +83,8 @@ data class DualPlayState(
     val playerBError: String? = null,
     val volumeA: Float = 1f,
     val volumeB: Float = 1f,
+    val playerBRepeatMode: Int = Player.REPEAT_MODE_OFF,
+    val playerBDuration: Long = 0L,
     /** Non-null when the channel split was NOT applied (unsupported format). */
     val channelSplitUnsupportedFormat: String? = null,
     /**
@@ -114,6 +116,11 @@ class DualPlayEngine(
 
     private val _state = MutableStateFlow(DualPlayState())
     val state: StateFlow<DualPlayState> = _state.asStateFlow()
+
+    private val _playerBPosition = MutableStateFlow(0L)
+    val playerBPosition: StateFlow<Long> = _playerBPosition.asStateFlow()
+
+    private var playerBPositionJob: Job? = null
 
     val isEnabled: Boolean get() = _state.value.enabled
 
@@ -316,13 +323,46 @@ class DualPlayEngine(
         b.play()
     }
     fun pauseB() { playerB?.pause() }
-    fun seekB(posMs: Long) { playerB?.seekTo(posMs) }
+    fun seekB(posMs: Long) {
+        playerB?.seekTo(posMs)
+        _playerBPosition.value = posMs
+    }
     fun getPlayerBPosition(): Long = playerB?.currentPosition ?: 0L
     fun getPlayerBDuration(): Long = playerB?.duration?.takeIf { it > 0 } ?: 0L
+    fun toggleRepeatB() {
+        val b = playerB ?: return
+        val nextMode = if (b.repeatMode == Player.REPEAT_MODE_ONE) {
+            Player.REPEAT_MODE_OFF
+        } else {
+            Player.REPEAT_MODE_ONE
+        }
+        b.repeatMode = nextMode
+        _state.value = _state.value.copy(playerBRepeatMode = nextMode)
+    }
     fun setVolumeB(v: Float) {
         val clamped = v.coerceIn(0f, 1f)
         playerB?.volume = clamped
         _state.value = _state.value.copy(volumeB = clamped)
+    }
+
+    private fun updatePlayerBPositionPolling(isPlaying: Boolean) {
+        playerBPositionJob?.cancel()
+        if (isPlaying) {
+            playerBPositionJob = scope.launch {
+                while (isActive) {
+                    val b = playerB
+                    if (b != null) {
+                        _playerBPosition.value = b.currentPosition
+                    }
+                    delay(300L)
+                }
+            }
+        } else {
+            val b = playerB
+            if (b != null) {
+                _playerBPosition.value = b.currentPosition
+            }
+        }
     }
 
     /** Set the media item for Player B and prepare (splitViewActive will be activated once ready/playing). */
@@ -568,7 +608,11 @@ class DualPlayEngine(
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
-            _state.value = _state.value.copy(playerBPlaybackState = playbackState)
+            val dur = playerB?.duration?.takeIf { it > 0 } ?: 0L
+            _state.value = _state.value.copy(
+                playerBPlaybackState = playbackState,
+                playerBDuration = dur,
+            )
             Timber.tag(TAG).i("Player B playbackState: $playbackState (READY=${Player.STATE_READY})")
             if (playbackState == Player.STATE_READY && playerB?.playWhenReady == true) {
                 if (!_state.value.splitViewActive) {
@@ -581,11 +625,16 @@ class DualPlayEngine(
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             Timber.tag(TAG).d("Player B isPlaying changed: $isPlaying")
+            updatePlayerBPositionPolling(isPlaying)
             if (isPlaying && !_state.value.splitViewActive) {
                 Timber.tag(TAG).i("Player B started playing -> entering split view state")
                 _state.value = _state.value.copy(splitViewActive = true)
                 onSongBAdded()
             }
+        }
+
+        override fun onRepeatModeChanged(repeatMode: Int) {
+            _state.value = _state.value.copy(playerBRepeatMode = repeatMode)
         }
 
         override fun onPlayerError(error: PlaybackException) {
@@ -671,6 +720,9 @@ class DualPlayEngine(
     private fun pausePlayerA() { runCatching { service.player.pause() } }
 
     private fun releasePlayerB() {
+        playerBPositionJob?.cancel()
+        playerBPositionJob = null
+        _playerBPosition.value = 0L
         val b = playerB ?: return
         playerB = null
         runCatching { b.removeListener(playerBListener) }

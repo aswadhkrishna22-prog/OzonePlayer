@@ -91,7 +91,11 @@ private fun AiryIconButton(
     Column(
         modifier = Modifier
             .size(ButtonClickAreaSize)
-            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                alpha = if (enabled) 1f else 0.38f
+            }
             .clip(CircleShape)
             .then(
                 if (enabled) {

@@ -56,6 +56,7 @@ fun PlayerMetadata(
     enabled: Boolean = true,
     likeFractionProvider: (() -> Float)? = null,
     likeEnabled: Boolean = true,
+    earButtons: @Composable (() -> Unit)? = null,
 ) {
     val haptics = rememberYumaHaptics()
     val gradientEdgeColor = Color.Black
@@ -178,7 +179,9 @@ fun PlayerMetadata(
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (state.isImmersiveEnabled && isDualPlaySingle) {
+            if (earButtons != null) {
+                earButtons()
+            } else if (state.isImmersiveEnabled && isDualPlaySingle) {
                 FullPlayerToolbarEarButtons(
                     currentEar = dualPlayState?.earSelectionA,
                     onEarSelected = { ear ->
@@ -197,7 +200,7 @@ fun PlayerMetadata(
             var lastLikeClickTime by remember { mutableLongStateOf(0L) }
 
             val heartColor by animateColorAsState(
-                targetValue = if (state.isLiked) Color(state.vibrantColor) else Color.White.copy(alpha = 0.6f),
+                targetValue = if (state.isLiked) Color(state.vibrantColor) else Color.White.copy(alpha = if (likeEnabled) 0.6f else 0.38f),
                 animationSpec = tween(300),
                 label = "MetadataHeartColor"
             )
@@ -221,6 +224,8 @@ fun PlayerMetadata(
                         if (likeFractionProvider != null) {
                             val p = (likeFractionProvider.invoke() / 0.45f).coerceIn(0f, 1f)
                             alpha = (1f - p).coerceIn(0f, 1f)
+                        } else if (!likeEnabled) {
+                            alpha = 0.38f
                         }
                     }
                     .clip(CircleShape)

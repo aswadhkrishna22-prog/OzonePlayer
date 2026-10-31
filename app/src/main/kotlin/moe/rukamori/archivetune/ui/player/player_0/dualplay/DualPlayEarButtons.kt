@@ -84,6 +84,7 @@ fun FullPlayerToolbarEarButtons(
     currentEar: EarSelection?,
     onEarSelected: (EarSelection) -> Unit,
     modifier: Modifier = Modifier,
+    disabledEar: EarSelection? = null,
     circleSize: Dp = DefaultCircleSize,
     gap: Dp = DefaultButtonGap,
     fontSize: TextUnit = DefaultLetterSize,
@@ -97,6 +98,7 @@ fun FullPlayerToolbarEarButtons(
             EarCircleButton(
                 label = "L",
                 selected = currentEar == EarSelection.L,
+                disabled = disabledEar == EarSelection.L,
                 onClick = { onEarSelected(EarSelection.L) },
                 circleSize = circleSize,
                 fontSize = fontSize,
@@ -104,6 +106,7 @@ fun FullPlayerToolbarEarButtons(
             EarCircleButton(
                 label = "R",
                 selected = currentEar == EarSelection.R,
+                disabled = disabledEar == EarSelection.R,
                 onClick = { onEarSelected(EarSelection.R) },
                 circleSize = circleSize,
                 fontSize = fontSize,
@@ -111,6 +114,7 @@ fun FullPlayerToolbarEarButtons(
             EarCircleButton(
                 label = "M",
                 selected = currentEar == EarSelection.M,
+                disabled = false,
                 onClick = { onEarSelected(EarSelection.M) },
                 circleSize = circleSize,
                 fontSize = fontSize,
