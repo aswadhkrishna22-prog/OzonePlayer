@@ -85,6 +85,28 @@ import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerBottomBar
 import moe.rukamori.archivetune.ui.player.player_0.sett.PlayerMenuScreen
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.state.PlayerUiState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
+import moe.rukamori.archivetune.ui.menu.AddToPlaylistDialog
+import moe.rukamori.archivetune.ui.player.player_0.sett.CompactMenuRow
+import moe.rukamori.archivetune.ui.player.player_0.sett.DownloadMenuContent
+import moe.rukamori.archivetune.ui.utils.ShowMediaInfo
+import moe.rukamori.archivetune.utils.rememberPreference
+import moe.rukamori.archivetune.constants.SpeedDialSongIdsKey
+import moe.rukamori.archivetune.utils.SpeedDialPin
+import moe.rukamori.archivetune.utils.SpeedDialPinType
+import moe.rukamori.archivetune.utils.parseSpeedDialPins
+import moe.rukamori.archivetune.utils.serializeSpeedDialPins
+import moe.rukamori.archivetune.utils.toggleSpeedDialPin
+import moe.rukamori.archivetune.extensions.toMediaMetadata
+import moe.rukamori.archivetune.playback.dualplay.DualPlaySheetTarget
+import moe.rukamori.archivetune.ui.state.QueueUiState
+import moe.rukamori.archivetune.ui.player.player_0.dualplay.rememberPaneSourceA
+import moe.rukamori.archivetune.ui.player.player_0.dualplay.rememberPaneSourceB
+import moe.rukamori.archivetune.ui.player.player_0.dualplay.PaneSource
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
 import moe.rukamori.archivetune.ui.utils.bounceClick
 import timber.log.Timber
@@ -182,6 +204,44 @@ fun DualPlaySplitView(
         )
     }
 
+    val metadataA = playerConnection?.mediaMetadata?.value
+    val paneSourceA = rememberPaneSourceA(
+        state = stateA,
+        queueState = QueueUiState(),
+        playbackProgress = playbackProgress,
+        mediaMetadata = metadataA,
+        onAction = onAction,
+        onSeek = { onSeekA(it) },
+    )
+
+    val metadataB = remember(itemB, dualState.playerBDuration) {
+        itemB?.toMediaMetadata(dualState.playerBDuration)
+    }
+
+    val context = LocalContext.current
+    val paneSourceB = rememberPaneSourceB(
+        baseState = stateB,
+        dualState = dualState,
+        engine = engine,
+        vibrantColorB = vibrantColorB,
+        gradientColorB = gradientColorB,
+        mediaMetadataB = metadataB,
+        onOpenLyricsB = onOpenLyricsB,
+        onOpenQueueB = onOpenQueueB,
+        onShareTrack = { url ->
+            val sendIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                putExtra(android.content.Intent.EXTRA_TEXT, url)
+                type = "text/plain"
+            }
+            context.startActivity(
+                android.content.Intent.createChooser(sendIntent, null).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        },
+        onNavigate = { _ ->
+            onCollapseClick()
+        }
+    )
+
     val coroutineScope = rememberCoroutineScope()
     val dividerFractionAnim = remember { Animatable(0.50f) }
 
@@ -215,6 +275,7 @@ fun DualPlaySplitView(
             // ── TOP PANE: Song A ──────────────────────────────────────────────
             ImmersiveNowPlayingPane(
                 paneHeightDp = topPaneHeightDp,
+                paneSource = paneSourceA,
                 paneState = stateA,
                 title = titleA,
                 artist = state.artist,
@@ -268,6 +329,7 @@ fun DualPlaySplitView(
 
             ImmersiveNowPlayingPane(
                 paneHeightDp = bottomPaneHeightDp,
+                paneSource = paneSourceB,
                 paneState = stateB,
                 title = titleB,
                 artist = artistB,
@@ -339,7 +401,7 @@ fun DualPlaySplitView(
                 onOpenQueue = onOpenQueueB,
                 isTopPane = false,
                 onCollapseClick = {},
-                onOpenSettingsMenu = null,
+                onOpenSettingsMenu = onOpenSettingsMenu,
                 volume = dualState.volumeB,
                 onVolumeChange = { engine.setVolumeB(it) },
                 onSwapEars = { engine.swapEars() },
@@ -428,6 +490,7 @@ fun DualPlaySplitView(
 @Composable
 private fun ImmersiveNowPlayingPane(
     paneHeightDp: Dp,
+    paneSource: PaneSource,
     paneState: PlayerUiState,
     title: String,
     artist: String,
@@ -589,6 +652,7 @@ private fun ImmersiveNowPlayingPane(
         // ── 3. In-Pane Options Menu Dialog ────────────────────────────────────
         if (showOptionsMenu) {
             DualPlayPaneOptionsMenu(
+                paneSource = paneSource,
                 volume = volume,
                 onVolumeChange = onVolumeChange,
                 onSwapEars = onSwapEars,
@@ -689,11 +753,20 @@ private fun PaneControlsRow(
     )
 }
 
+private enum class DualPlayMenuSubScreen {
+    MAIN,
+    DETAILS,
+    DOWNLOAD,
+}
+
 /**
  * 3-Dot Options Dialog for each pane in Dual Play split view.
+ * Both Pane A and Pane B menus are built from this single function so they cannot diverge.
+ * Track actions operate on the song of this pane via [paneSource].
  */
 @Composable
 private fun DualPlayPaneOptionsMenu(
+    paneSource: PaneSource,
     volume: Float,
     onVolumeChange: (Float) -> Unit,
     onSwapEars: () -> Unit,
@@ -703,6 +776,20 @@ private fun DualPlayPaneOptionsMenu(
 ) {
     val haptics = LocalYumaHaptics.current
     val fontFamily = LocalArchiveTuneFontFamily.current
+    var currentSubScreen by remember { mutableStateOf(DualPlayMenuSubScreen.MAIN) }
+    var showAddToPlaylistDialog by remember { mutableStateOf(false) }
+
+    val state = paneSource.uiState
+    val songId = state.trackUrl
+
+    val (speedDialSongIds, onSpeedDialSongIdsChange) = rememberPreference(SpeedDialSongIdsKey, "")
+    val speedDialPins = remember(speedDialSongIds) { parseSpeedDialPins(speedDialSongIds) }
+    val songPin = remember(songId) { SpeedDialPin(type = SpeedDialPinType.SONG, id = songId) }
+    val isPinned = remember(speedDialPins, songPin) {
+        speedDialPins.any { it.type == songPin.type && it.id == songPin.id }
+    }
+
+    val paneLabel = if (paneSource.target == DualPlaySheetTarget.PLAYER_A) "Song A Options" else "Song B Options"
 
     Dialog(onDismissRequest = onDismiss) {
         Box(
@@ -713,150 +800,362 @@ private fun DualPlayPaneOptionsMenu(
                 .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(24.dp))
                 .padding(20.dp)
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                // Header
-                Text(
-                    text = "Pane Options",
-                    color = Color.White,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = fontFamily,
-                )
-
-                // Volume row
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
+            when (currentSubScreen) {
+                DualPlayMenuSubScreen.DETAILS -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 480.dp),
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { currentSubScreen = DualPlayMenuSubScreen.MAIN }
+                                .padding(bottom = 12.dp)
+                        ) {
                             Icon(
-                                painter = painterResource(R.drawable.volume_up),
+                                painter = painterResource(R.drawable.arrow_back),
                                 contentDescription = null,
-                                tint = Color.White.copy(alpha = 0.85f),
-                                modifier = Modifier.size(20.dp),
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
                             )
-                            Spacer(modifier = Modifier.width(10.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Volume",
+                                text = stringResource(R.string.track_details),
                                 color = Color.White,
-                                fontSize = 14.sp,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
                                 fontFamily = fontFamily,
                             )
                         }
-                        Text(
-                            text = "${(volume * 100).roundToInt()}%",
-                            color = Color.White.copy(alpha = 0.70f),
-                            fontSize = 13.sp,
-                            fontFamily = fontFamily,
-                        )
-                    }
-                    Slider(
-                        value = volume,
-                        onValueChange = onVolumeChange,
-                        valueRange = 0f..1f,
-                        colors = SliderDefaults.colors(
-                            thumbColor = Color.White,
-                            activeTrackColor = Color.White,
-                            inactiveTrackColor = Color.White.copy(alpha = 0.20f),
-                        ),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-
-                // Swap ears button
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable {
-                            haptics.click()
-                            onSwapEars()
-                            onDismiss()
+                        if (songId.isNotBlank()) {
+                            ShowMediaInfo(videoId = songId)
                         }
-                        .padding(vertical = 10.dp, horizontal = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.restore),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Swap ears",
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        fontFamily = fontFamily,
-                    )
+                    }
                 }
-
-                // Player settings (if available)
-                if (onOpenSettings != null) {
-                    Row(
+                DualPlayMenuSubScreen.DOWNLOAD -> {
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable {
-                                haptics.click()
-                                onDismiss()
-                                onOpenSettings()
-                            }
-                            .padding(vertical = 10.dp, horizontal = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                            .heightIn(max = 480.dp)
+                            .verticalScroll(rememberScrollState()),
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_settings),
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp),
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "Settings",
-                            color = Color.White,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            fontFamily = fontFamily,
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { currentSubScreen = DualPlayMenuSubScreen.MAIN }
+                                .padding(bottom = 12.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.arrow_back),
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.download),
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = fontFamily,
+                            )
+                        }
+                        DownloadMenuContent(
+                            state = state,
+                            onDismissRequest = onDismiss,
                         )
                     }
                 }
-
-                // Turn off Dual Play button
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable {
-                            haptics.click()
-                            onDismiss()
-                            onDisableDualPlay()
+                DualPlayMenuSubScreen.MAIN -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 560.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        // Header
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = paneLabel,
+                                color = Color.White,
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = fontFamily,
+                            )
+                            if (state.title.isNotBlank()) {
+                                Text(
+                                    text = "${state.title} • ${state.artist}",
+                                    color = Color.White.copy(alpha = 0.70f),
+                                    fontSize = 12.sp,
+                                    fontFamily = fontFamily,
+                                    maxLines = 1,
+                                )
+                            }
                         }
-                        .padding(vertical = 10.dp, horizontal = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.close),
-                        contentDescription = null,
-                        tint = Color(0xFFFF5252),
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Turn off Dual Play",
-                        color = Color(0xFFFF5252),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        fontFamily = fontFamily,
-                    )
+
+                        // Volume row
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.volume_up),
+                                        contentDescription = null,
+                                        tint = Color.White.copy(alpha = 0.85f),
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text(
+                                        text = "Volume",
+                                        color = Color.White,
+                                        fontSize = 14.sp,
+                                        fontFamily = fontFamily,
+                                    )
+                                }
+                                Text(
+                                    text = "${(volume * 100).roundToInt()}%",
+                                    color = Color.White.copy(alpha = 0.70f),
+                                    fontSize = 13.sp,
+                                    fontFamily = fontFamily,
+                                )
+                            }
+                            Slider(
+                                value = volume,
+                                onValueChange = onVolumeChange,
+                                valueRange = 0f..1f,
+                                colors = SliderDefaults.colors(
+                                    thumbColor = Color.White,
+                                    activeTrackColor = Color.White,
+                                    inactiveTrackColor = Color.White.copy(alpha = 0.20f),
+                                ),
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+
+                        // Swap ears button
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    haptics.click()
+                                    onSwapEars()
+                                    onDismiss()
+                                }
+                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.restore),
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp),
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Swap ears",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                fontFamily = fontFamily,
+                            )
+                        }
+
+                        // ── Track Actions ──
+                        val actionsCount = 6 +
+                            (if (paneSource.hasArtistId) 1 else 0) +
+                            (if (paneSource.hasAlbumId) 1 else 0)
+                        var rowIndex = 0
+
+                        // Share track
+                        CompactMenuRow(
+                            title = stringResource(R.string.share),
+                            subtitle = "Share track link",
+                            iconResId = R.drawable.ic_share,
+                            onClick = {
+                                onDismiss()
+                                paneSource.onAction(PlayerAction.Share)
+                            },
+                            index = rowIndex++,
+                            count = actionsCount,
+                        )
+
+                        // Add to playlist
+                        CompactMenuRow(
+                            title = stringResource(R.string.add_to_playlist_title),
+                            subtitle = stringResource(R.string.add_to_playlist_desc),
+                            iconResId = R.drawable.playlist_add,
+                            onClick = {
+                                showAddToPlaylistDialog = true
+                            },
+                            showArrow = true,
+                            index = rowIndex++,
+                            count = actionsCount,
+                        )
+
+                        // Download
+                        CompactMenuRow(
+                            title = stringResource(R.string.download),
+                            subtitle = stringResource(R.string.save_track_offline),
+                            iconResId = R.drawable.download,
+                            onClick = {
+                                currentSubScreen = DualPlayMenuSubScreen.DOWNLOAD
+                            },
+                            showArrow = true,
+                            index = rowIndex++,
+                            count = actionsCount,
+                        )
+
+                        // Track Details
+                        CompactMenuRow(
+                            title = stringResource(R.string.track_details),
+                            subtitle = stringResource(R.string.track_details_desc),
+                            iconResId = R.drawable.ic_about,
+                            onClick = {
+                                currentSubScreen = DualPlayMenuSubScreen.DETAILS
+                            },
+                            showArrow = true,
+                            index = rowIndex++,
+                            count = actionsCount,
+                        )
+
+                        // View Artist (if available)
+                        if (paneSource.hasArtistId) {
+                            CompactMenuRow(
+                                title = stringResource(R.string.view_artist),
+                                subtitle = state.artist,
+                                iconResId = R.drawable.artist,
+                                onClick = {
+                                    onDismiss()
+                                    paneSource.onAction(PlayerAction.OpenArtist)
+                                },
+                                showArrow = true,
+                                index = rowIndex++,
+                                count = actionsCount,
+                            )
+                        }
+
+                        // View Album (if available)
+                        if (paneSource.hasAlbumId) {
+                            CompactMenuRow(
+                                title = stringResource(R.string.view_album),
+                                subtitle = state.album.orEmpty(),
+                                iconResId = R.drawable.album,
+                                onClick = {
+                                    onDismiss()
+                                    paneSource.onAction(PlayerAction.OpenAlbum)
+                                },
+                                showArrow = true,
+                                index = rowIndex++,
+                                count = actionsCount,
+                            )
+                        }
+
+                        // Start Radio
+                        CompactMenuRow(
+                            title = stringResource(R.string.start_radio_title),
+                            subtitle = stringResource(R.string.start_radio_desc),
+                            iconResId = R.drawable.radio,
+                            onClick = {
+                                onDismiss()
+                                paneSource.onAction(PlayerAction.StartRadio)
+                            },
+                            index = rowIndex++,
+                            count = actionsCount,
+                        )
+
+                        // Pin to speed dial
+                        CompactMenuRow(
+                            title = if (isPinned) stringResource(R.string.unpin_track) else stringResource(R.string.pin_track),
+                            subtitle = if (isPinned) stringResource(R.string.remove_from_speed_dial_title) else stringResource(R.string.pin_to_speed_dial_title),
+                            iconResId = if (isPinned) R.drawable.bookmark_filled else R.drawable.bookmark,
+                            isActive = isPinned,
+                            activeIconTint = Color(state.vibrantColor),
+                            onClick = {
+                                val updated = toggleSpeedDialPin(speedDialPins, songPin)
+                                onSpeedDialSongIdsChange(serializeSpeedDialPins(updated))
+                            },
+                            index = rowIndex++,
+                            count = actionsCount,
+                        )
+
+                        // Settings (Single-Player Player Settings Sheet)
+                        if (onOpenSettings != null) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable {
+                                        haptics.click()
+                                        onDismiss()
+                                        onOpenSettings()
+                                    }
+                                    .padding(vertical = 8.dp, horizontal = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_settings),
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = "Settings",
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    fontFamily = fontFamily,
+                                )
+                            }
+                        }
+
+                        // Turn off Dual Play button
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    haptics.click()
+                                    onDismiss()
+                                    onDisableDualPlay()
+                                }
+                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.close),
+                                contentDescription = null,
+                                tint = Color(0xFFFF5252),
+                                modifier = Modifier.size(20.dp),
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Turn off Dual Play",
+                                color = Color(0xFFFF5252),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                fontFamily = fontFamily,
+                            )
+                        }
+                    }
                 }
             }
         }
+    }
+
+    if (showAddToPlaylistDialog && songId.isNotBlank()) {
+        AddToPlaylistDialog(
+            isVisible = showAddToPlaylistDialog,
+            onGetSong = { listOf(songId) },
+            onDismiss = { showAddToPlaylistDialog = false },
+        )
     }
 }

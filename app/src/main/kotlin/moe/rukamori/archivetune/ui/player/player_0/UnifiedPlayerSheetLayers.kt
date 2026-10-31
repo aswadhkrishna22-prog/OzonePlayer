@@ -30,6 +30,10 @@ import moe.rukamori.archivetune.extensions.metadata
 import moe.rukamori.archivetune.extensions.toMediaMetadata
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.playback.dualplay.DualPlaySheetTarget
+import moe.rukamori.archivetune.ui.player.player_0.PlayerPaletteExtractor
+import moe.rukamori.archivetune.ui.player.player_0.dualplay.rememberPaneSourceA
+import moe.rukamori.archivetune.ui.player.player_0.dualplay.rememberPaneSourceB
+import androidx.compose.runtime.mutableIntStateOf
 import moe.rukamori.archivetune.ui.player.player_0.MiniPlayerContentInternal
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.player.player_0.scoped.FullPlayerVisualState
@@ -106,26 +110,46 @@ internal fun UnifiedPlayerSheetLayers(
         }
     }
 
-    val activeState = if (sheetTarget == DualPlaySheetTarget.PLAYER_B && itemB != null) {
-        state.copy(
-            title = itemB.mediaMetadata.title?.toString() ?: "(No Song B)",
-            artist = itemB.mediaMetadata.artist?.toString() ?: "",
-            coverUrl = itemB.mediaMetadata.artworkUri?.toString() ?: "",
-            isPlaying = dualState?.playerBIsPlaying == true,
-            durationMs = dualState?.playerBDuration ?: 0L,
-            trackUrl = itemB.mediaId,
-            isLiked = dualState?.playerBIsLiked == true,
-            isImmersiveEnabled = true,
+    var vibrantColorB by remember { mutableIntStateOf(0xFF4DD0E1.toInt()) }
+    var gradientColorB by remember { mutableIntStateOf(0xFF1E1E24.toInt()) }
+
+    key(itemB?.mediaId ?: itemB?.mediaMetadata?.artworkUri?.toString()) {
+        PlayerPaletteExtractor(
+            targetUrl = itemB?.mediaMetadata?.artworkUri?.toString(),
+            trackUrl = itemB?.mediaId ?: "playerB",
+            onColorsExtracted = { vibrant, _, gradient ->
+                vibrantColorB = vibrant
+                gradientColorB = gradient
+            }
         )
-    } else {
-        state
     }
 
-    val activeProgress = if (sheetTarget == DualPlaySheetTarget.PLAYER_B && dualPlayEngine != null) {
-        dualPlayEngine.playerBPosition
+    val paneSourceA = rememberPaneSourceA(
+        state = state,
+        queueState = queueState,
+        playbackProgress = playbackProgress,
+        mediaMetadata = playerConnection?.mediaMetadata?.value,
+        onAction = onAction,
+        onSeek = onSeek,
+        onSeekStarted = onSeekStarted,
+    )
+
+    val paneSourceB = if (dualState != null && dualPlayEngine != null) {
+        rememberPaneSourceB(
+            baseState = state,
+            dualState = dualState!!,
+            engine = dualPlayEngine,
+            vibrantColorB = vibrantColorB,
+            gradientColorB = gradientColorB,
+            mediaMetadataB = metadataB,
+            onOpenLyricsB = onOpenLyricsB,
+            onOpenQueueB = onOpenQueueB,
+        )
     } else {
-        playbackProgress
+        paneSourceA
     }
+
+    val activePaneSource = if (sheetTarget == DualPlaySheetTarget.PLAYER_B) paneSourceB else paneSourceA
 
     Box(modifier = modifier.fillMaxSize()) {
         Box(
@@ -136,13 +160,18 @@ internal fun UnifiedPlayerSheetLayers(
                 }
         ) {
             PlayerBackgroundLayers(
-                state = state,
+                state = activePaneSource.uiState,
                 canvasState = canvasState,
                 expansionFractionProvider = expansionFractionProvider,
                 lyricsFractionProvider = lyricsFractionProvider,
                 queueFractionProvider = queueFractionProvider,
                 onColorsExtracted = { vibrant, darkMuted, gradient ->
-                    onAction(PlayerAction.UpdateColors(vibrant, darkMuted, gradient))
+                    if (sheetTarget == DualPlaySheetTarget.PLAYER_B) {
+                        vibrantColorB = vibrant
+                        gradientColorB = gradient
+                    } else {
+                        onAction(PlayerAction.UpdateColors(vibrant, darkMuted, gradient))
+                    }
                 },
             )
         }
@@ -228,30 +257,14 @@ internal fun UnifiedPlayerSheetLayers(
 
             if (isLyricsMounted) {
                 PlayerLyricsLayer(
-                    state = activeState,
+                    state = activePaneSource.uiState,
                     lyricsFractionProvider = lyricsFractionProvider,
-                    playbackProgress = activeProgress,
-                    onAction = { action ->
-                        if (sheetTarget == DualPlaySheetTarget.PLAYER_B) {
-                            if (action is PlayerAction.Like || action is PlayerAction.ToggleLike) {
-                                dualPlayEngine?.toggleLikeB()
-                            } else if (action is PlayerAction.PlayPause) {
-                                if (dualState?.playerBIsPlaying == true) dualPlayEngine?.pauseB() else dualPlayEngine?.playB()
-                            }
-                        } else {
-                            onAction(action)
-                        }
-                    },
+                    playbackProgress = activePaneSource.positionFlow,
+                    onAction = { action -> activePaneSource.onAction(action) },
                     onCloseLyricsClick = onCloseLyricsClick,
                     onMoreLyricsClick = onMoreLyricsClick,
                     onSearchLyricsClick = onSearchLyricsClick,
-                    onSeek = { seekPos ->
-                        if (sheetTarget == DualPlaySheetTarget.PLAYER_B) {
-                            dualPlayEngine?.seekB(seekPos.toLong())
-                        } else {
-                            onSeek(seekPos)
-                        }
-                    },
+                    onSeek = { seekPos -> activePaneSource.onSeek(seekPos) },
                     onSeekStarted = onSeekStarted,
                     dragHandler = dragHandler,
                     playerOverride = if (sheetTarget == DualPlaySheetTarget.PLAYER_B) dualPlayEngine?.getPlayerB() else null,
@@ -266,52 +279,17 @@ internal fun UnifiedPlayerSheetLayers(
             }
 
             if (isQueueMounted) {
-                val activeQueueState = if (sheetTarget == DualPlaySheetTarget.PLAYER_B && dualState != null) {
-                    QueueUiState(
-                        queueWindows = dualState?.playerBQueueWindows ?: emptyList(),
-                        currentWindowIndex = dualState?.playerBQueueIndex ?: -1,
-                        title = "Song B Queue",
-                        songCount = dualState?.playerBQueueSongCount ?: 0,
-                        queueDurationMs = dualState?.playerBQueueDurationMs ?: 0L,
-                    )
-                } else {
-                    queueState
-                }
-
                 PlayerQueueLayer(
-                    state = activeState,
-                    queueState = activeQueueState,
+                    state = activePaneSource.uiState,
+                    queueState = activePaneSource.queueState,
                     queueFractionProvider = queueFractionProvider,
-                    onAction = { action ->
-                        if (sheetTarget == DualPlaySheetTarget.PLAYER_B && dualPlayEngine != null) {
-                            when (action) {
-                                is PlayerAction.PlayQueueItem -> {
-                                    val idx = dualPlayEngine.findWindowIndexByUidB(action.windowUid)
-                                    if (idx >= 0) dualPlayEngine.playQueueItemB(idx)
-                                }
-                                is PlayerAction.RemoveQueueItem -> {
-                                    val idx = dualPlayEngine.findWindowIndexByUidB(action.windowUid)
-                                    if (idx >= 0) dualPlayEngine.removeQueueItemB(idx)
-                                }
-                                is PlayerAction.MoveQueueItem -> {
-                                    val from = dualPlayEngine.findWindowIndexByUidB(action.fromUid)
-                                    val to = dualPlayEngine.findWindowIndexByUidB(action.toUid)
-                                    if (from >= 0 && to >= 0) dualPlayEngine.moveQueueItemB(from, to)
-                                }
-                                is PlayerAction.PlayPause -> {
-                                    if (dualState?.playerBIsPlaying == true) dualPlayEngine.pauseB() else dualPlayEngine.playB()
-                                }
-                                else -> {}
-                            }
-                        } else {
-                            onAction(action)
-                        }
-                    },
+                    onAction = { action -> activePaneSource.onAction(action) },
                     onCloseQueueClick = onCloseQueueClick,
                     onMoreQueueClick = onMoreQueueClick,
                     dragHandler = dragHandler,
                     sheetTarget = sheetTarget,
                 )
+            }
         }
     }
 }
