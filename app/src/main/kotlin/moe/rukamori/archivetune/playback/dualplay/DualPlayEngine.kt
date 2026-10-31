@@ -54,6 +54,8 @@ import moe.rukamori.archivetune.playback.applyEqSettingsToEffects
 import moe.rukamori.archivetune.playback.cancelCrossfade
 import moe.rukamori.archivetune.playback.createMediaSourceFactory
 import moe.rukamori.archivetune.playback.playbackAudioAttributes
+import moe.rukamori.archivetune.playback.sendCloseAudioEffectSessionBroadcast
+import moe.rukamori.archivetune.playback.sendOpenAudioEffectSessionBroadcast
 import moe.rukamori.archivetune.playback.PlaybackConstants
 import moe.rukamori.archivetune.playback.processor.SpatialProcessor
 import moe.rukamori.archivetune.playback.queues.Queue
@@ -235,6 +237,9 @@ class DualPlayEngine(
         savedAudioNormalizationEnabled = service.audioNormalizationEnabled
         service.audioNormalizationEnabled = false
 
+        // Detach any system-level OEM audio effect sessions (e.g. Dolby Atmos / Dirac) from Player A
+        runCatching { service.sendCloseAudioEffectSessionBroadcast(service.localPlayer.audioSessionId) }
+
         // ── 4. Opt out of platform spatialization for Player A ────────────────
         savedAudioAttributesA = service.localPlayer.audioAttributes
         val dualPlayAttrs = AudioAttributes.Builder()
@@ -307,6 +312,7 @@ class DualPlayEngine(
         service.loudnessEnhancer?.let { runCatching { it.enabled = savedLoudnessEnhancerEnabled } }
         service.audioNormalizationEnabled = savedAudioNormalizationEnabled
         runCatching { service.applyEqSettingsToEffects(service.desiredEqSettings.value) }
+        runCatching { service.sendOpenAudioEffectSessionBroadcast(service.localPlayer.audioSessionId) }
 
         // Restore crossfade
         if (savedCrossfadeEnabled) {

@@ -99,6 +99,8 @@ fun FullPlayer(
                 onOpenQueueB = onOpenQueueB,
                 onOpenLyricsA = onOpenLyricsA,
                 onOpenLyricsB = onOpenLyricsB,
+                lyricsFractionProvider = lyricsFractionProvider,
+                queueFractionProvider = queueFractionProvider,
                 modifier = Modifier.fillMaxSize(),
             )
         } else {

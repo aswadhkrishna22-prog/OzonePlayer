@@ -42,6 +42,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -53,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -131,6 +133,8 @@ fun DualPlaySplitView(
     onOpenQueueB: () -> Unit = {},
     onOpenLyricsA: () -> Unit = {},
     onOpenLyricsB: () -> Unit = {},
+    lyricsFractionProvider: () -> Float = { 0f },
+    queueFractionProvider: () -> Float = { 0f },
     modifier: Modifier = Modifier,
 ) {
     val haptics = LocalYumaHaptics.current
@@ -271,6 +275,18 @@ fun DualPlaySplitView(
 
         val navBarBottomDp = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
+        val lFraction = lyricsFractionProvider().coerceIn(0f, 1f)
+        val qFraction = queueFractionProvider().coerceIn(0f, 1f)
+        val lyricsForegroundAlpha = (1f - lFraction).coerceIn(0f, 1f)
+        // Bottom pane is physically covered by the queue sheet in half state (q up to 0.45f)
+        val bottomPaneQueueAlpha = (1f - (qFraction / 0.35f)).coerceIn(0f, 1f)
+        // Top pane is covered when expanding from half (0.45f) to full (1.0f)
+        val topPaneQueueAlpha = if (qFraction <= 0.45f) 1f else (1f - (qFraction - 0.45f) / 0.13f).coerceIn(0f, 1f)
+
+        val topForegroundAlpha = minOf(lyricsForegroundAlpha, topPaneQueueAlpha)
+        val bottomForegroundAlpha = minOf(lyricsForegroundAlpha, bottomPaneQueueAlpha)
+        val dividerAlpha = minOf(lyricsForegroundAlpha, (1f - (qFraction / 0.25f)).coerceIn(0f, 1f))
+
         Column(modifier = Modifier.fillMaxSize()) {
             // ── TOP PANE: Song A ──────────────────────────────────────────────
             ImmersiveNowPlayingPane(
@@ -313,6 +329,7 @@ fun DualPlaySplitView(
                 bottomGapDp = 16.dp, // 16dp gap below lyrics/queue row (Amendment 3)
                 onControlsHeightMeasured = { if (it > controlsHeightPx) controlsHeightPx = it },
                 controlsHeightPx = controlsHeightPx,
+                foregroundAlphaProvider = { topForegroundAlpha },
             )
 
             // ── BOTTOM PANE: Song B ───────────────────────────────────────────
@@ -409,6 +426,7 @@ fun DualPlaySplitView(
                 bottomGapDp = navBarBottomDp + 8.dp,
                 onControlsHeightMeasured = { if (it > controlsHeightPx) controlsHeightPx = it },
                 controlsHeightPx = controlsHeightPx,
+                foregroundAlphaProvider = { bottomForegroundAlpha },
             )
         }
 
@@ -430,9 +448,13 @@ fun DualPlaySplitView(
                         y = with(density) { (topPaneHeightDp - 24.dp).roundToPx() }
                     )
                 }
+                .graphicsLayer {
+                    alpha = dividerAlpha
+                }
                 .draggable(
                     state = draggableState,
                     orientation = Orientation.Vertical,
+                    enabled = dividerAlpha >= 0.95f,
                     onDragStopped = {
                         val cur = dividerFractionAnim.value
                         val closest = snapTargets.minByOrNull { abs(it - cur) } ?: 0.50f
@@ -448,21 +470,23 @@ fun DualPlaySplitView(
                         }
                     },
                 )
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onDoubleTap = {
-                            coroutineScope.launch {
-                                haptics.click()
-                                dividerFractionAnim.animateTo(
-                                    targetValue = 0.50f,
-                                    animationSpec = spring(
-                                        dampingRatio = 0.75f,
-                                        stiffness = Spring.StiffnessMediumLow,
-                                    ),
-                                )
-                            }
-                        },
-                    )
+                .pointerInput(dividerAlpha >= 0.95f) {
+                    if (dividerAlpha >= 0.95f) {
+                        detectTapGestures(
+                            onDoubleTap = {
+                                coroutineScope.launch {
+                                    haptics.click()
+                                    dividerFractionAnim.animateTo(
+                                        targetValue = 0.50f,
+                                        animationSpec = spring(
+                                            dampingRatio = 0.75f,
+                                            stiffness = Spring.StiffnessMediumLow,
+                                        ),
+                                    )
+                                }
+                            },
+                        )
+                    }
                 },
             contentAlignment = Alignment.Center,
         ) {
@@ -522,6 +546,7 @@ private fun ImmersiveNowPlayingPane(
     bottomGapDp: Dp,
     onControlsHeightMeasured: (Int) -> Unit,
     controlsHeightPx: Int = 0,
+    foregroundAlphaProvider: () -> Float = { 1f },
     modifier: Modifier = Modifier,
 ) {
     var showOptionsMenu by remember { mutableStateOf(false) }
@@ -535,6 +560,10 @@ private fun ImmersiveNowPlayingPane(
     }
     val controlsTopPx = (paneHeightPx - effectiveControlsHeightPx).coerceAtLeast(0f)
     val clearArtworkFadeEndY = controlsTopPx + with(density) { 16.dp.toPx() }
+
+    val isForegroundInteractive by remember(foregroundAlphaProvider) {
+        derivedStateOf { foregroundAlphaProvider() >= 0.95f }
+    }
 
     var localGradientColor by remember(paneState.gradientColor) { mutableIntStateOf(paneState.gradientColor) }
     var localVibrantColor by remember(paneState.vibrantColor) { mutableIntStateOf(paneState.vibrantColor) }
@@ -562,11 +591,15 @@ private fun ImmersiveNowPlayingPane(
 
         // ── 2. Foreground Content (Anchored to Bottom) ────────────────────────
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    alpha = foregroundAlphaProvider()
+                },
             verticalArrangement = Arrangement.Bottom,
         ) {
             // Upper artwork area: on top pane, detects swipe down to collapse
-            if (isTopPane) {
+            if (isTopPane && isForegroundInteractive) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -597,16 +630,16 @@ private fun ImmersiveNowPlayingPane(
                     title = title,
                     artist = artist,
                     state = paneState,
-                    onAction = onAction,
-                    onMoreClick = { showOptionsMenu = true },
+                    onAction = { if (isForegroundInteractive) onAction(it) },
+                    onMoreClick = { if (isForegroundInteractive) showOptionsMenu = true },
                     isVisible = true,
-                    enabled = true,
-                    likeEnabled = isLikeEnabled,
+                    enabled = isForegroundInteractive,
+                    likeEnabled = isLikeEnabled && isForegroundInteractive,
                     earButtons = {
                         FullPlayerToolbarEarButtons(
                             currentEar = currentEar,
                             disabledEar = disabledEar,
-                            onEarSelected = onEarSelected,
+                            onEarSelected = { if (isForegroundInteractive) onEarSelected(it) },
                             circleSize = 26.dp,
                             gap = 3.dp,
                             fontSize = 11.sp,
@@ -622,16 +655,16 @@ private fun ImmersiveNowPlayingPane(
                     isPlaying = isPlaying,
                     positionFlow = positionFlow,
                     durationMs = durationMs,
-                    onSeek = onSeek,
-                    onPlayPause = onPlayPause,
-                    onPrev = onPrev,
-                    onNext = onNext,
-                    isNextEnabled = isNextEnabled,
-                    isPrevEnabled = isPrevEnabled,
+                    onSeek = { if (isForegroundInteractive) onSeek(it) },
+                    onPlayPause = { if (isForegroundInteractive) onPlayPause() },
+                    onPrev = { if (isForegroundInteractive) onPrev() },
+                    onNext = { if (isForegroundInteractive) onNext() },
+                    isNextEnabled = isNextEnabled && isForegroundInteractive,
+                    isPrevEnabled = isPrevEnabled && isForegroundInteractive,
                     shuffleContent = shuffleContent,
                     repeatContent = repeatContent,
                     paneState = paneState,
-                    onAction = onAction,
+                    onAction = { if (isForegroundInteractive) onAction(it) },
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -639,9 +672,9 @@ private fun ImmersiveNowPlayingPane(
                 // (c) Bottom Bar: Lyrics & Queue
                 PlayerBottomBar(
                     state = paneState,
-                    onAction = onAction,
-                    onOpenQueue = onOpenQueue,
-                    enabled = isBottomBarEnabled,
+                    onAction = { if (isForegroundInteractive) onAction(it) },
+                    onOpenQueue = { if (isForegroundInteractive) onOpenQueue() },
+                    enabled = isBottomBarEnabled && isForegroundInteractive,
                 )
 
                 // (d) Bottom spacing: 16dp for top pane, nav bar padding for bottom pane
@@ -878,22 +911,48 @@ private fun DualPlayPaneOptionsMenu(
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
                         // Header
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Text(
-                                text = paneLabel,
-                                color = Color.White,
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Bold,
-                                fontFamily = fontFamily,
-                            )
-                            if (state.title.isNotBlank()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "${state.title} • ${state.artist}",
-                                    color = Color.White.copy(alpha = 0.70f),
-                                    fontSize = 12.sp,
+                                    text = paneLabel,
+                                    color = Color.White,
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Bold,
                                     fontFamily = fontFamily,
-                                    maxLines = 1,
                                 )
+                                if (state.title.isNotBlank()) {
+                                    Text(
+                                        text = "${state.title} • ${state.artist}",
+                                        color = Color.White.copy(alpha = 0.70f),
+                                        fontSize = 12.sp,
+                                        fontFamily = fontFamily,
+                                        maxLines = 1,
+                                    )
+                                }
+                            }
+                            if (onOpenSettings != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .clickable {
+                                            haptics.click()
+                                            onDismiss()
+                                            onOpenSettings()
+                                        },
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_settings),
+                                        contentDescription = "Settings",
+                                        tint = Color.White.copy(alpha = 0.85f),
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
                             }
                         }
 
@@ -1085,37 +1144,6 @@ private fun DualPlayPaneOptionsMenu(
                             index = rowIndex++,
                             count = actionsCount,
                         )
-
-                        // Settings (Single-Player Player Settings Sheet)
-                        if (onOpenSettings != null) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable {
-                                        haptics.click()
-                                        onDismiss()
-                                        onOpenSettings()
-                                    }
-                                    .padding(vertical = 8.dp, horizontal = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_settings),
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp),
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(
-                                    text = "Settings",
-                                    color = Color.White,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    fontFamily = fontFamily,
-                                )
-                            }
-                        }
 
                         // Turn off Dual Play button
                         Row(

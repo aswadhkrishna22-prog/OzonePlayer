@@ -107,30 +107,36 @@ fun UnifiedPlayerSheetV2(
             density = density,
             onExpansionFractionChanged = onExpansionFractionChanged,
             onCloseLyricsClick = {
-                sheetTarget = DualPlaySheetTarget.PLAYER_A
                 onCloseLyricsClick()
             },
             onOpenQueue = onOpenQueue,
             onCloseQueueClick = {
-                sheetTarget = DualPlaySheetTarget.PLAYER_A
                 onCloseQueueClick()
             },
         )
+
+        LaunchedEffect(motionScope.queueFractionProvider(), motionScope.lyricsFractionProvider()) {
+            if (motionScope.queueFractionProvider() <= 0.01f && motionScope.lyricsFractionProvider() <= 0.01f) {
+                sheetTarget = DualPlaySheetTarget.PLAYER_A
+            }
+        }
 
         val gestures = PlayerSheetGestures(
             motionScope = motionScope,
             state = state,
             onAction = onAction,
             onCloseLyricsClick = {
-                sheetTarget = DualPlaySheetTarget.PLAYER_A
                 onCloseLyricsClick()
             },
             view = view,
             hapticFeedbackEnabled = hapticFeedbackEnabled,
             onDragStartedPosition = { pos ->
                 if (dualPlayState?.enabled == true && dualPlayState?.splitViewActive == true) {
-                    val h = motionScope.screenHeightPx
-                    sheetTarget = if (pos.y > h / 2f) DualPlaySheetTarget.PLAYER_B else DualPlaySheetTarget.PLAYER_A
+                    val isSheetOpen = motionScope.queueFractionProvider() > 0.05f || motionScope.lyricsFractionProvider() > 0.05f
+                    if (!isSheetOpen) {
+                        val h = motionScope.screenHeightPx
+                        sheetTarget = if (pos.y > h / 2f) DualPlaySheetTarget.PLAYER_B else DualPlaySheetTarget.PLAYER_A
+                    }
                 }
             },
         )
@@ -188,15 +194,16 @@ fun UnifiedPlayerSheetV2(
                         fullPlayerVisualState = motionScope.fullPlayerVisualState,
                         onAction = onAction,
                         onCloseLyricsClick = {
-                            sheetTarget = DualPlaySheetTarget.PLAYER_A
                             onCloseLyricsClick()
                         },
                         onCloseQueueClick = {
-                            sheetTarget = DualPlaySheetTarget.PLAYER_A
                             motionScope.handleCloseQueue()
                         },
                         onMoreQueueClick = { isQueueMenuVisible = true },
-                        onOpenQueue = motionScope.handleOpenQueue,
+                        onOpenQueue = {
+                            sheetTarget = DualPlaySheetTarget.PLAYER_A
+                            motionScope.handleOpenQueue()
+                        },
                         onMoreLyricsClick = { isLyricsMenuVisible = true },
                         onSearchLyricsClick = onSearchLyricsClick,
                         onCollapseClick = { motionScope.collapse() },
@@ -228,11 +235,56 @@ fun UnifiedPlayerSheetV2(
             }
         )
 
+        val isTargetB = sheetTarget == DualPlaySheetTarget.PLAYER_B && dualPlayEngine != null && dualPlayState != null
+        val activeDialogQueueState = if (isTargetB) {
+            QueueUiState(
+                queueWindows = dualPlayState?.playerBQueueWindows ?: emptyList(),
+                currentWindowIndex = dualPlayState?.playerBQueueIndex ?: -1,
+                title = "Song B Queue",
+                songCount = dualPlayState?.playerBQueueSongCount ?: 0,
+                queueDurationMs = dualPlayState?.playerBQueueDurationMs ?: 0L,
+            )
+        } else {
+            queueState
+        }
+        val activeDialogState = if (isTargetB && dualPlayState?.playerBMediaItem != null) {
+            val itemB = dualPlayState?.playerBMediaItem
+            state.copy(
+                trackUrl = itemB?.mediaId ?: "",
+                title = itemB?.mediaMetadata?.title?.toString() ?: "",
+                artist = itemB?.mediaMetadata?.artist?.toString() ?: "",
+                album = itemB?.mediaMetadata?.albumTitle?.toString(),
+            )
+        } else {
+            state
+        }
+
         PlayerSheetDialogs(
-            state = state,
-            queueState = queueState,
+            state = activeDialogState,
+            queueState = activeDialogQueueState,
             updateState = updateState,
-            onAction = onAction,
+            onAction = { action ->
+                if (isTargetB && dualPlayEngine != null) {
+                    when (action) {
+                        is PlayerAction.PlayQueueItem -> {
+                            val idx = dualPlayEngine.findWindowIndexByUidB(action.windowUid)
+                            if (idx >= 0) dualPlayEngine.playQueueItemB(idx)
+                        }
+                        is PlayerAction.RemoveQueueItem -> {
+                            val idx = dualPlayEngine.findWindowIndexByUidB(action.windowUid)
+                            if (idx >= 0) dualPlayEngine.removeQueueItemB(idx)
+                        }
+                        is PlayerAction.MoveQueueItem -> {
+                            val from = dualPlayEngine.findWindowIndexByUidB(action.fromUid)
+                            val to = dualPlayEngine.findWindowIndexByUidB(action.toUid)
+                            if (from >= 0 && to >= 0) dualPlayEngine.moveQueueItemB(from, to)
+                        }
+                        else -> onAction(action)
+                    }
+                } else {
+                    onAction(action)
+                }
+            },
             onBackgroundStyleChanged = onBackgroundStyleChanged,
             onImmersiveChanged = onImmersiveChanged,
             isLyricsMenuVisible = isLyricsMenuVisible,
