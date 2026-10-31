@@ -30,8 +30,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -41,32 +43,35 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import moe.rukamori.archivetune.playback.dualplay.EarSelection
 import moe.rukamori.archivetune.ui.haptics.LocalYumaHaptics
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
+import moe.rukamori.archivetune.ui.theme.SoftTextShadow
 
 // ── Sizes ─────────────────────────────────────────────────────────────────────
 
-private val CircleSize   = 28.dp   // visual circle diameter
-private val TouchTarget  = 40.dp   // minimum interactive area
-private val LetterSize   = 12.sp
-private val ButtonGap    = 4.dp
+private val DefaultCircleSize = 30.dp
+private val DefaultButtonGap  = 4.dp
+private val DefaultLetterSize = 12.sp
 
 // ── Colors ─────────────────────────────────────────────────────────────────────
 
-private val UnselectedFill   = Color.White.copy(alpha = 0.14f)
+private val UnselectedFill   = Color.Black.copy(alpha = 0.30f)
 private val SelectedFill     = Color.White.copy(alpha = 0.85f)
 private val SelectedLetter   = Color.Black.copy(alpha = 0.9f)
 private val UnselectedLetter = Color.White
 private val SelectedBorder   = Color.White
 
-private fun unselectedBorderBrush() = Brush.linearGradient(
+private fun unselectedBorderBrush(size: Dp = DefaultCircleSize) = Brush.linearGradient(
     colors = listOf(Color.White.copy(alpha = 0.55f), Color.White.copy(alpha = 0.12f)),
     start = Offset(0f, 0f),
-    end   = Offset(28f, 28f),   // 28dp gradient across the circle
+    end   = Offset(size.value, size.value),
 )
 
 // ── Public composables ─────────────────────────────────────────────────────────
@@ -81,27 +86,42 @@ fun FullPlayerToolbarEarButtons(
     currentEar: EarSelection?,
     onEarSelected: (EarSelection) -> Unit,
     modifier: Modifier = Modifier,
+    disabledEar: EarSelection? = null,
+    circleSize: Dp = DefaultCircleSize,
+    gap: Dp = DefaultButtonGap,
+    fontSize: TextUnit = DefaultLetterSize,
 ) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(ButtonGap),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        EarCircleButton(
-            label = "L",
-            selected = currentEar == EarSelection.L,
-            onClick = { onEarSelected(EarSelection.L) },
-        )
-        EarCircleButton(
-            label = "R",
-            selected = currentEar == EarSelection.R,
-            onClick = { onEarSelected(EarSelection.R) },
-        )
-        EarCircleButton(
-            label = "M",
-            selected = currentEar == EarSelection.M,
-            onClick = { onEarSelected(EarSelection.M) },
-        )
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+        Row(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.spacedBy(gap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            EarCircleButton(
+                label = "L",
+                selected = currentEar == EarSelection.L,
+                disabled = disabledEar == EarSelection.L,
+                onClick = { onEarSelected(EarSelection.L) },
+                circleSize = circleSize,
+                fontSize = fontSize,
+            )
+            EarCircleButton(
+                label = "R",
+                selected = currentEar == EarSelection.R,
+                disabled = disabledEar == EarSelection.R,
+                onClick = { onEarSelected(EarSelection.R) },
+                circleSize = circleSize,
+                fontSize = fontSize,
+            )
+            EarCircleButton(
+                label = "M",
+                selected = currentEar == EarSelection.M,
+                disabled = false,
+                onClick = { onEarSelected(EarSelection.M) },
+                circleSize = circleSize,
+                fontSize = fontSize,
+            )
+        }
     }
 }
 
@@ -119,26 +139,35 @@ fun PaneAEarButtons(
     disabledEar: EarSelection? = null,
     onEarSelected: (EarSelection) -> Unit,
     modifier: Modifier = Modifier,
+    circleSize: Dp = DefaultCircleSize,
+    gap: Dp = DefaultButtonGap,
+    fontSize: TextUnit = DefaultLetterSize,
 ) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(ButtonGap),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // R button — selecting R means Song A goes to the right ear
-        EarCircleButton(
-            label     = "R",
-            selected  = currentEar == EarSelection.R,
-            disabled  = disabledEar == EarSelection.R,
-            onClick   = { onEarSelected(EarSelection.R) },
-        )
-        // M button — M means Song A in both ears (Mono / Mid)
-        EarCircleButton(
-            label     = "M",
-            selected  = currentEar == EarSelection.M,
-            disabled  = false,
-            onClick   = { onEarSelected(EarSelection.M) },
-        )
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+        Row(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.spacedBy(gap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // R button — selecting R means Song A goes to the right ear
+            EarCircleButton(
+                label     = "R",
+                selected  = currentEar == EarSelection.R,
+                disabled  = disabledEar == EarSelection.R,
+                onClick   = { onEarSelected(EarSelection.R) },
+                circleSize = circleSize,
+                fontSize = fontSize,
+            )
+            // M button — M means Song A in both ears (Mono / Mid)
+            EarCircleButton(
+                label     = "M",
+                selected  = currentEar == EarSelection.M,
+                disabled  = false,
+                onClick   = { onEarSelected(EarSelection.M) },
+                circleSize = circleSize,
+                fontSize = fontSize,
+            )
+        }
     }
 }
 
@@ -156,26 +185,35 @@ fun PaneBEarButtons(
     disabledEar: EarSelection? = null,
     onEarSelected: (EarSelection) -> Unit,
     modifier: Modifier = Modifier,
+    circleSize: Dp = DefaultCircleSize,
+    gap: Dp = DefaultButtonGap,
+    fontSize: TextUnit = DefaultLetterSize,
 ) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(ButtonGap),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // L button — selecting L means Song B goes to the left ear
-        EarCircleButton(
-            label     = "L",
-            selected  = currentEar == EarSelection.L,
-            disabled  = disabledEar == EarSelection.L,
-            onClick   = { onEarSelected(EarSelection.L) },
-        )
-        // M button — M means Song B in both ears
-        EarCircleButton(
-            label     = "M",
-            selected  = currentEar == EarSelection.M,
-            disabled  = false,
-            onClick   = { onEarSelected(EarSelection.M) },
-        )
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+        Row(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.spacedBy(gap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // L button — selecting L means Song B goes to the left ear
+            EarCircleButton(
+                label     = "L",
+                selected  = currentEar == EarSelection.L,
+                disabled  = disabledEar == EarSelection.L,
+                onClick   = { onEarSelected(EarSelection.L) },
+                circleSize = circleSize,
+                fontSize = fontSize,
+            )
+            // M button — M means Song B in both ears
+            EarCircleButton(
+                label     = "M",
+                selected  = currentEar == EarSelection.M,
+                disabled  = false,
+                onClick   = { onEarSelected(EarSelection.M) },
+                circleSize = circleSize,
+                fontSize = fontSize,
+            )
+        }
     }
 }
 
@@ -187,6 +225,8 @@ private fun EarCircleButton(
     selected: Boolean,
     onClick:  () -> Unit,
     disabled: Boolean = false,
+    circleSize: Dp = DefaultCircleSize,
+    fontSize: TextUnit = DefaultLetterSize,
     modifier: Modifier = Modifier,
 ) {
     val haptics = LocalYumaHaptics.current
@@ -201,51 +241,47 @@ private fun EarCircleButton(
         label        = "EarButtonBounce",
     )
 
-    // Touch target box (40dp) centred around the 28dp visual circle
-    Box(
-        modifier = modifier
-            .size(TouchTarget)
-            .graphicsLayer {
-                scaleX = pressScale
-                scaleY = pressScale
-                alpha  = if (disabled) 0.3f else 1f
-            }
-            .then(
-                if (!disabled) {
-                    Modifier.clickable(
-                        interactionSource = interactionSource,
-                        indication        = null,
-                    ) {
-                        haptics.click()
-                        onClick()
-                    }
-                } else Modifier
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        // Visual circle
-        val fill         = if (selected) SelectedFill else UnselectedFill
-        val letterColor  = if (selected) SelectedLetter else UnselectedLetter
-        val borderBrush  = if (selected) {
-            Brush.linearGradient(listOf(SelectedBorder, SelectedBorder))
-        } else {
-            unselectedBorderBrush()
-        }
+    // Visual circle styling
+    val fill         = if (selected) SelectedFill else UnselectedFill
+    val letterColor  = if (selected) SelectedLetter else UnselectedLetter
+    val borderBrush  = if (selected) {
+        Brush.linearGradient(listOf(SelectedBorder, SelectedBorder))
+    } else {
+        unselectedBorderBrush(circleSize)
+    }
 
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
         Box(
-            modifier = Modifier
-                .size(CircleSize)
+            modifier = modifier
+                .size(circleSize)
+                .graphicsLayer {
+                    scaleX = pressScale
+                    scaleY = pressScale
+                    alpha  = if (disabled) 0.3f else 1f
+                }
                 .clip(CircleShape)
                 .background(fill, CircleShape)
-                .border(1.dp, borderBrush, CircleShape),
+                .border(1.dp, borderBrush, CircleShape)
+                .then(
+                    if (!disabled) {
+                        Modifier.clickable(
+                            interactionSource = interactionSource,
+                            indication        = null,
+                        ) {
+                            haptics.click()
+                            onClick()
+                        }
+                    } else Modifier
+                ),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text       = label,
                 color      = letterColor,
-                fontSize   = LetterSize,
-                fontWeight = FontWeight.Medium,
+                fontSize   = fontSize,
+                fontWeight = FontWeight.Bold,
                 fontFamily = fontFamily,
+                style      = TextStyle(shadow = if (selected) null else SoftTextShadow),
             )
         }
     }

@@ -27,6 +27,19 @@ private const val NotificationArtworkSizePx = 1080
 val MediaItem.metadata: MediaMetadata?
     get() = localConfiguration?.tag as? MediaMetadata
 
+fun MediaItem.toMediaMetadata(durationMs: Long = 0L): MediaMetadata =
+    metadata?.let { if (durationMs > 0 && it.duration == 0) it.copy(duration = (durationMs / 1000).toInt()) else it }
+        ?: MediaMetadata(
+            id = mediaId,
+            title = mediaMetadata.title?.toString()?.trim().orEmpty(),
+            artists = mediaMetadata.artist?.toString()?.takeIf { it.isNotBlank() }
+                ?.let { listOf(MediaMetadata.Artist(id = null, name = it.trim())) }
+                ?: emptyList(),
+            duration = if (durationMs > 0) (durationMs / 1000).toInt() else 0,
+            thumbnailUrl = mediaMetadata.artworkUri?.toString(),
+            album = null,
+        )
+
 private fun String?.toNotificationArtworkUri() = this?.resize(NotificationArtworkSizePx, NotificationArtworkSizePx)?.toUri()
 
 private fun MediaItem.Builder.setCacheKeyIfRemote(mediaId: String): MediaItem.Builder {

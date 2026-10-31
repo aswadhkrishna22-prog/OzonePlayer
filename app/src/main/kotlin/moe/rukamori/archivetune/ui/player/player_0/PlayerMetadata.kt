@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
@@ -31,9 +32,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.flow.flowOf
+import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
+import moe.rukamori.archivetune.ui.player.player_0.dualplay.FullPlayerToolbarEarButtons
 
 import moe.rukamori.archivetune.ui.component.MarqueeText
 import moe.rukamori.archivetune.ui.state.PlayerUiState
@@ -52,9 +56,16 @@ fun PlayerMetadata(
     enabled: Boolean = true,
     likeFractionProvider: (() -> Float)? = null,
     likeEnabled: Boolean = true,
+    earButtons: @Composable (() -> Unit)? = null,
 ) {
     val haptics = rememberYumaHaptics()
     val gradientEdgeColor = Color.Black
+
+    val playerConnection = LocalPlayerConnection.current
+    val dualPlayEngine = playerConnection?.dualPlayEngine
+    val dualPlayState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)
+    val isDualPlaySingle = dualPlayState?.enabled == true && dualPlayState?.splitViewActive != true
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -168,11 +179,28 @@ fun PlayerMetadata(
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (earButtons != null) {
+                earButtons()
+            } else if (state.isImmersiveEnabled && isDualPlaySingle) {
+                FullPlayerToolbarEarButtons(
+                    currentEar = dualPlayState?.earSelectionA,
+                    onEarSelected = { ear ->
+                        if (dualPlayState?.earSelectionA != ear) {
+                            dualPlayEngine?.setEarA(ear)
+                        }
+                    },
+                    circleSize = 26.dp,
+                    gap = 3.dp,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(end = 4.dp),
+                )
+            }
+
             // Кнопка лайка
             var lastLikeClickTime by remember { mutableLongStateOf(0L) }
 
             val heartColor by animateColorAsState(
-                targetValue = if (state.isLiked) Color(state.vibrantColor) else Color.White.copy(alpha = 0.6f),
+                targetValue = if (state.isLiked) Color(state.vibrantColor) else Color.White.copy(alpha = if (likeEnabled) 0.6f else 0.38f),
                 animationSpec = tween(300),
                 label = "MetadataHeartColor"
             )
@@ -196,6 +224,8 @@ fun PlayerMetadata(
                         if (likeFractionProvider != null) {
                             val p = (likeFractionProvider.invoke() / 0.45f).coerceIn(0f, 1f)
                             alpha = (1f - p).coerceIn(0f, 1f)
+                        } else if (!likeEnabled) {
+                            alpha = 0.38f
                         }
                     }
                     .clip(CircleShape)

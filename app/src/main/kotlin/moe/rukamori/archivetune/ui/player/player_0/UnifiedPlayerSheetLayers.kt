@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -17,8 +19,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.withContext
+import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.constants.FloatingToolbarHorizontalPadding
+import moe.rukamori.archivetune.extensions.metadata
+import moe.rukamori.archivetune.extensions.toMediaMetadata
+import moe.rukamori.archivetune.models.MediaMetadata
+import moe.rukamori.archivetune.playback.dualplay.DualPlaySheetTarget
+import moe.rukamori.archivetune.ui.player.player_0.PlayerPaletteExtractor
+import moe.rukamori.archivetune.ui.player.player_0.dualplay.rememberPaneSourceA
+import moe.rukamori.archivetune.ui.player.player_0.dualplay.rememberPaneSourceB
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.key
+import moe.rukamori.archivetune.ui.player.player_0.MiniPlayerContentInternal
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.player.player_0.scoped.FullPlayerVisualState
 import moe.rukamori.archivetune.ui.player.player_0.scoped.SheetVerticalDragGestureHandler
@@ -54,9 +72,86 @@ internal fun UnifiedPlayerSheetLayers(
     modifier: Modifier = Modifier,
     onSeekStarted: () -> Unit,
     dragHandler: SheetVerticalDragGestureHandler? = null,
+    sheetTarget: DualPlaySheetTarget = DualPlaySheetTarget.PLAYER_A,
+    onOpenQueueB: () -> Unit = {},
+    onOpenLyricsA: () -> Unit = {},
+    onOpenLyricsB: () -> Unit = {},
 ) {
     val density = LocalDensity.current.density
     val canvasState = rememberPlayerCanvasState(state.trackUrl, state.title, state.artist)
+
+    val playerConnection = LocalPlayerConnection.current
+    val dualPlayEngine = playerConnection?.dualPlayEngine
+    val dualState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)
+    val itemB = dualState?.playerBMediaItem
+    val metadataB = remember(itemB, dualState?.playerBDuration) {
+        itemB?.toMediaMetadata(dualState?.playerBDuration ?: 0L)
+    }
+    val database = playerConnection?.service?.database
+    val lyricsBFlow = remember(itemB?.mediaId) {
+        if (itemB?.mediaId != null) database?.lyrics(itemB.mediaId) ?: flowOf(null) else flowOf(null)
+    }
+
+    LaunchedEffect(sheetTarget, itemB?.mediaId) {
+        if (sheetTarget == DualPlaySheetTarget.PLAYER_B && itemB != null) {
+            val meta = metadataB
+            val s = playerConnection?.service
+            if (meta != null && s != null) {
+                val db = s.database
+                if (db.lyrics(meta.id).first() == null) {
+                    withContext(Dispatchers.IO) {
+                        try {
+                            val lyr = s.lyricsHelper.getLyrics(meta)
+                            db.query {
+                                insertLyricsIfAbsent(id = meta.id, lyrics = lyr)
+                            }
+                        } catch (_: Throwable) {}
+                    }
+                }
+            }
+        }
+    }
+
+    var vibrantColorB by remember { mutableIntStateOf(0xFF4DD0E1.toInt()) }
+    var gradientColorB by remember { mutableIntStateOf(0xFF1E1E24.toInt()) }
+
+    key(itemB?.mediaId ?: itemB?.mediaMetadata?.artworkUri?.toString()) {
+        PlayerPaletteExtractor(
+            targetUrl = itemB?.mediaMetadata?.artworkUri?.toString(),
+            trackUrl = itemB?.mediaId ?: "playerB",
+            onColorsExtracted = { vibrant, _, gradient ->
+                vibrantColorB = vibrant
+                gradientColorB = gradient
+            }
+        )
+    }
+
+    val paneSourceA = rememberPaneSourceA(
+        state = state,
+        queueState = queueState,
+        playbackProgress = playbackProgress,
+        mediaMetadata = playerConnection?.mediaMetadata?.value,
+        onAction = onAction,
+        onSeek = onSeek,
+        onSeekStarted = onSeekStarted,
+    )
+
+    val paneSourceB = if (dualState != null && dualPlayEngine != null) {
+        rememberPaneSourceB(
+            baseState = state,
+            dualState = dualState!!,
+            engine = dualPlayEngine,
+            vibrantColorB = vibrantColorB,
+            gradientColorB = gradientColorB,
+            mediaMetadataB = metadataB,
+            onOpenLyricsB = onOpenLyricsB,
+            onOpenQueueB = onOpenQueueB,
+        )
+    } else {
+        paneSourceA
+    }
+
+    val activePaneSource = if (sheetTarget == DualPlaySheetTarget.PLAYER_B) paneSourceB else paneSourceA
 
     Box(modifier = modifier.fillMaxSize()) {
         Box(
@@ -67,13 +162,18 @@ internal fun UnifiedPlayerSheetLayers(
                 }
         ) {
             PlayerBackgroundLayers(
-                state = state,
+                state = activePaneSource.uiState,
                 canvasState = canvasState,
                 expansionFractionProvider = expansionFractionProvider,
                 lyricsFractionProvider = lyricsFractionProvider,
                 queueFractionProvider = queueFractionProvider,
                 onColorsExtracted = { vibrant, darkMuted, gradient ->
-                    onAction(PlayerAction.UpdateColors(vibrant, darkMuted, gradient))
+                    if (sheetTarget == DualPlaySheetTarget.PLAYER_B) {
+                        vibrantColorB = vibrant
+                        gradientColorB = gradient
+                    } else {
+                        onAction(PlayerAction.UpdateColors(vibrant, darkMuted, gradient))
+                    }
                 },
             )
         }
@@ -107,21 +207,11 @@ internal fun UnifiedPlayerSheetLayers(
             }
         }
 
-        val hasTrack by remember(state.title) {
-            derivedStateOf { state.title.isNotEmpty() }
-        }
-
-        if (hasTrack) {
-            val isFullPlayerMounted by remember {
-                derivedStateOf { expansionFractionProvider() > 0.005f }
-            }
-
             val isFullPlayerVisible by remember {
-                derivedStateOf {
-                    expansionFractionProvider() > 0.005f && maxOf(lyricsFractionProvider(), queueFractionProvider()) < 1f
-                }
+                derivedStateOf { expansionFractionProvider() > 0.05f }
             }
 
+            if (isFullPlayerVisible) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -155,10 +245,13 @@ internal fun UnifiedPlayerSheetLayers(
                         onSeekStarted = onSeekStarted,
                         lyricsFractionProvider = lyricsFractionProvider,
                         queueFractionProvider = queueFractionProvider,
-                        isVisible = isFullPlayerVisible
+                        isVisible = isFullPlayerVisible,
+                        onOpenQueueB = onOpenQueueB,
+                        onOpenLyricsA = onOpenLyricsA,
+                        onOpenLyricsB = onOpenLyricsB,
                     )
                 }
-
+            }
 
             val isLyricsMounted by remember {
                 derivedStateOf { lyricsFractionProvider() > 0.001f }
@@ -166,16 +259,20 @@ internal fun UnifiedPlayerSheetLayers(
 
             if (isLyricsMounted) {
                 PlayerLyricsLayer(
-                    state = state,
+                    state = activePaneSource.uiState,
                     lyricsFractionProvider = lyricsFractionProvider,
-                    playbackProgress = playbackProgress,
-                    onAction = onAction,
+                    playbackProgress = activePaneSource.positionFlow,
+                    onAction = { action -> activePaneSource.onAction(action) },
                     onCloseLyricsClick = onCloseLyricsClick,
                     onMoreLyricsClick = onMoreLyricsClick,
                     onSearchLyricsClick = onSearchLyricsClick,
-                    onSeek = onSeek,
+                    onSeek = { seekPos -> activePaneSource.onSeek(seekPos) },
                     onSeekStarted = onSeekStarted,
                     dragHandler = dragHandler,
+                    playerOverride = if (sheetTarget == DualPlaySheetTarget.PLAYER_B) dualPlayEngine?.getPlayerB() else null,
+                    mediaMetadataOverride = if (sheetTarget == DualPlaySheetTarget.PLAYER_B) metadataB else null,
+                    lyricsOverride = if (sheetTarget == DualPlaySheetTarget.PLAYER_B) lyricsBFlow else null,
+                    sheetTarget = sheetTarget,
                 )
             }
 
@@ -185,15 +282,15 @@ internal fun UnifiedPlayerSheetLayers(
 
             if (isQueueMounted) {
                 PlayerQueueLayer(
-                    state = state,
-                    queueState = queueState,
+                    state = activePaneSource.uiState,
+                    queueState = activePaneSource.queueState,
                     queueFractionProvider = queueFractionProvider,
-                    onAction = onAction,
+                    onAction = { action -> activePaneSource.onAction(action) },
                     onCloseQueueClick = onCloseQueueClick,
                     onMoreQueueClick = onMoreQueueClick,
                     dragHandler = dragHandler,
+                    sheetTarget = sheetTarget,
                 )
             }
         }
     }
-}

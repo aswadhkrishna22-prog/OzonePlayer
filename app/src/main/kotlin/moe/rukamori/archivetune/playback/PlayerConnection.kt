@@ -142,14 +142,12 @@ class PlayerConnection(
         }
     }
 
-    fun playQueue(queue: Queue) {
+    fun playQueue(queue: Queue, userInitiated: Boolean = true) {
         synchronized(this) {
             // ── Dual Play intercept ───────────────────────────────────────────
-            // If Dual Play is enabled, give the engine first refusal.
-            // The engine stores the pending queue and the UI shows the dialog.
-            // engine.rejectInterceptAndPlay() calls service.playQueue() directly,
-            // so we must NOT dispatch ourselves when intercepted.
-            if (service.dualPlayEngine.interceptQueue(queue)) return@synchronized
+            // Only user-initiated taps from the in-app UI trigger intercept.
+            // External intents, deep links, and background playback triggers pass userInitiated = false.
+            if (userInitiated && service.dualPlayEngine.interceptQueue(queue)) return@synchronized
 
             playRequestGeneration++
             if (moe.rukamori.archivetune.BuildConfig.DEBUG) {
@@ -170,9 +168,10 @@ class PlayerConnection(
         }
     }
 
-    fun playQueueIfCurrent(queue: Queue, generation: Long): Boolean {
+    fun playQueueIfCurrent(queue: Queue, generation: Long, userInitiated: Boolean = true): Boolean {
         synchronized(this) {
             if (generation != playRequestGeneration) return false
+            if (userInitiated && service.dualPlayEngine.interceptQueue(queue)) return true
             playRequestGeneration++
             if (moe.rukamori.archivetune.BuildConfig.DEBUG) {
                 val mediaId = queue.preloadItem?.id

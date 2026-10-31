@@ -26,6 +26,7 @@ import android.content.IntentFilter
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.os.Build
+import android.widget.Toast
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -38,6 +39,7 @@ import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,9 +47,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import moe.rukamori.archivetune.extensions.setOffloadEnabled
 import moe.rukamori.archivetune.playback.MusicService
+import moe.rukamori.archivetune.playback.applyEqSettingsToEffects
 import moe.rukamori.archivetune.playback.cancelCrossfade
 import moe.rukamori.archivetune.playback.createMediaSourceFactory
+import moe.rukamori.archivetune.playback.playbackAudioAttributes
+import moe.rukamori.archivetune.playback.sendCloseAudioEffectSessionBroadcast
+import moe.rukamori.archivetune.playback.sendOpenAudioEffectSessionBroadcast
 import moe.rukamori.archivetune.playback.PlaybackConstants
 import moe.rukamori.archivetune.playback.processor.SpatialProcessor
 import moe.rukamori.archivetune.playback.queues.Queue
@@ -56,6 +64,17 @@ import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.common.Timeline
+import moe.rukamori.archivetune.extensions.getQueueWindows
+import moe.rukamori.archivetune.extensions.metadata
+import moe.rukamori.archivetune.extensions.toMediaMetadata
+import moe.rukamori.archivetune.utils.isLocalMediaId
+import moe.rukamori.archivetune.models.MediaMetadata
+import moe.rukamori.archivetune.utils.LikeSourceResolver
+import moe.rukamori.archivetune.constants.HideExplicitKey
+import moe.rukamori.archivetune.constants.HideVideoKey
+import moe.rukamori.archivetune.utils.dataStore
+import moe.rukamori.archivetune.utils.get
 
 // ── Public state model ─────────────────────────────────────────────────────────
 
@@ -66,6 +85,9 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 data class PendingDualPlayQueue(
     val queue: Queue,
     val songTitle: String,
+    val songArtist: String? = null,
+    val artworkUri: String? = null,
+    val resolvedMediaItem: MediaItem? = null,
 )
 
 data class DualPlayState(
@@ -76,6 +98,14 @@ data class DualPlayState(
     val playerBError: String? = null,
     val volumeA: Float = 1f,
     val volumeB: Float = 1f,
+    val playerBRepeatMode: Int = Player.REPEAT_MODE_OFF,
+    val playerBShuffleModeEnabled: Boolean = false,
+    val playerBIsLiked: Boolean = false,
+    val playerBQueueIndex: Int = -1,
+    val playerBQueueWindows: List<Timeline.Window> = emptyList(),
+    val playerBQueueDurationMs: Long = 0L,
+    val playerBQueueSongCount: Int = 0,
+    val playerBDuration: Long = 0L,
     /** Non-null when the channel split was NOT applied (unsupported format). */
     val channelSplitUnsupportedFormat: String? = null,
     /**
@@ -108,11 +138,17 @@ class DualPlayEngine(
     private val _state = MutableStateFlow(DualPlayState())
     val state: StateFlow<DualPlayState> = _state.asStateFlow()
 
+    private val _playerBPosition = MutableStateFlow(0L)
+    val playerBPosition: StateFlow<Long> = _playerBPosition.asStateFlow()
+
+    private var playerBPositionJob: Job? = null
+
     val isEnabled: Boolean get() = _state.value.enabled
 
     // ── Player B ───────────────────────────────────────────────────────────────
 
     private var playerB: ExoPlayer? = null
+    private var currentQueueB: Queue? = null
 
     /**
      * RIGHT-channel processor owned by Player B's sink.
@@ -124,6 +160,11 @@ class DualPlayEngine(
 
     private var savedSpatialEnabled   = false
     private var savedVirtualizerEnabled = false
+    private var savedEqualizerEnabled = false
+    private var savedBassBoostEnabled = false
+    private var savedLoudnessEnhancerEnabled = false
+    private var savedAudioNormalizationEnabled = false
+    private var savedAudioAttributesA: AudioAttributes? = null
     private var savedCrossfadeEnabled = false
 
     // ── Audio focus mirroring ──────────────────────────────────────────────────
@@ -172,28 +213,70 @@ class DualPlayEngine(
         savedSpatialEnabled = SpatialProcessor.instance.enabled
         SpatialProcessor.instance.enabled = false
 
-        // ── 3. Disable Virtualizer (creates stereo width by cross-mixing) ───────
+        // ── 3. Disable all AudioEffects & normalization (leak prevention) ─────
         savedVirtualizerEnabled = service.virtualizer?.let {
             runCatching { it.enabled }.getOrDefault(false)
         } ?: false
         service.virtualizer?.let { runCatching { it.enabled = false } }
 
-        // ── 4. Activate channel-split mode ────────────────────────────────────
+        savedEqualizerEnabled = service.equalizer?.let {
+            runCatching { it.enabled }.getOrDefault(false)
+        } ?: false
+        service.equalizer?.let { runCatching { it.enabled = false } }
+
+        savedBassBoostEnabled = service.bassBoost?.let {
+            runCatching { it.enabled }.getOrDefault(false)
+        } ?: false
+        service.bassBoost?.let { runCatching { it.enabled = false } }
+
+        savedLoudnessEnhancerEnabled = service.loudnessEnhancer?.let {
+            runCatching { it.enabled }.getOrDefault(false)
+        } ?: false
+        service.loudnessEnhancer?.let { runCatching { it.enabled = false } }
+
+        savedAudioNormalizationEnabled = service.audioNormalizationEnabled
+        service.audioNormalizationEnabled = false
+
+        // Detach any system-level OEM audio effect sessions (e.g. Dolby Atmos / Dirac) from Player A
+        runCatching { service.sendCloseAudioEffectSessionBroadcast(service.localPlayer.audioSessionId) }
+
+        // ── 4. Opt out of platform spatialization for Player A ────────────────
+        savedAudioAttributesA = service.localPlayer.audioAttributes
+        val dualPlayAttrs = AudioAttributes.Builder()
+            .setUsage(C.USAGE_MEDIA)
+            .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+            .setAllowedCapturePolicy(C.ALLOW_CAPTURE_BY_ALL)
+            .setSpatializationBehavior(C.SPATIALIZATION_BEHAVIOR_NEVER)
+            .build()
+        service.localPlayer.setAudioAttributes(dualPlayAttrs, false)
+
+        // ── 5. Activate channel-split mode ────────────────────────────────────
         DualPlayChannelState.mode  = ChannelMode.ACTIVE
         DualPlayChannelState.modeA = EarMode.STEREO   // Normal stereo until user picks L/R/M
         DualPlayChannelState.modeB = EarMode.STEREO
 
-        // ── 5. Build Player B ─────────────────────────────────────────────────
+        // ── 6. Build Player B (with SPATIALIZATION_BEHAVIOR_NEVER) ────────────
         createAndConfigurePlayerB()
 
-        // ── 6. Register becoming-noisy receiver ───────────────────────────────
+        // ── 7. Register becoming-noisy receiver ───────────────────────────────
         registerNoisyReceiver()
 
-        // ── 7. Start format polling (for debug screen) ────────────────────────
+        // ── 8. Start format polling (for debug screen) ────────────────────────
         startFormatPolling()
 
-        _state.value = _state.value.copy(enabled = true)
-        Timber.tag(TAG).i("Dual Play enabled")
+        // ── 9. Disable audio offload so processors are never bypassed ──────────
+        service.localPlayer.setOffloadEnabled(false)
+        playerB?.setOffloadEnabled(false)
+
+        _state.value = _state.value.copy(
+            enabled = true,
+            earSelectionA = null,
+            earSelectionB = null,
+            splitViewActive = false,
+            playerBMediaItem = null,
+            playerBError = null,
+        )
+        Timber.tag(TAG).i("Dual Play enabled (earSelectionA=null, splitViewActive=false)")
         return true
     }
 
@@ -214,11 +297,22 @@ class DualPlayEngine(
         stopFormatPolling()
         stopForegroundKeepAlive()
 
+        // Restore Player A AudioAttributes
+        val originalAttrs = savedAudioAttributesA ?: service.playbackAudioAttributes()
+        service.localPlayer.setAudioAttributes(originalAttrs, false)
+        savedAudioAttributesA = null
+
         // Restore SpatialProcessor
         SpatialProcessor.instance.enabled = savedSpatialEnabled
 
-        // Restore virtualizer
+        // Restore audio effects & normalization
+        service.equalizer?.let { runCatching { it.enabled = savedEqualizerEnabled } }
+        service.bassBoost?.let { runCatching { it.enabled = savedBassBoostEnabled } }
         service.virtualizer?.let { runCatching { it.enabled = savedVirtualizerEnabled } }
+        service.loudnessEnhancer?.let { runCatching { it.enabled = savedLoudnessEnhancerEnabled } }
+        service.audioNormalizationEnabled = savedAudioNormalizationEnabled
+        runCatching { service.applyEqSettingsToEffects(service.desiredEqSettings.value) }
+        runCatching { service.sendOpenAudioEffectSessionBroadcast(service.localPlayer.audioSessionId) }
 
         // Restore crossfade
         if (savedCrossfadeEnabled) {
@@ -280,6 +374,8 @@ class DualPlayEngine(
 
     // ── In-app per-song controls (independent of focus) ───────────────────────
 
+    fun getPlayerB(): ExoPlayer? = playerB
+
     fun playA()  { service.player.play() }
     fun pauseA() { service.player.pause() }
     fun seekA(posMs: Long) { service.player.seekTo(posMs) }
@@ -289,28 +385,296 @@ class DualPlayEngine(
         _state.value = _state.value.copy(volumeA = clamped)
     }
 
-    fun playB()  { playerB?.play() }
-    fun pauseB() { playerB?.pause() }
-    fun seekB(posMs: Long) { playerB?.seekTo(posMs) }
-    fun getPlayerBPosition(): Long = playerB?.currentPosition ?: 0L
-    fun getPlayerBDuration(): Long = playerB?.duration?.takeIf { it > 0 } ?: 0L
-    fun setVolumeB(v: Float) {
-        val clamped = v.coerceIn(0f, 1f)
-        playerB?.volume = clamped
-        _state.value = _state.value.copy(volumeB = clamped)
+    fun playB() {
+        scope.launch(Dispatchers.Main) {
+            val b = playerB ?: run {
+                Timber.tag(TAG).w("playB: playerB is null")
+                return@launch
+            }
+            Timber.tag(TAG).i("playB: state=${b.playbackState}, playWhenReady=${b.playWhenReady}")
+            if (b.playbackState == Player.STATE_ENDED) {
+                b.seekTo(0, 0L)
+            }
+            b.play()
+        }
     }
 
-    /** Set the media item for Player B and prepare (but don't auto-play). */
-    fun setMediaItemB(item: MediaItem) {
+    fun pauseB() {
+        scope.launch(Dispatchers.Main) {
+            playerB?.pause()
+        }
+    }
+
+    fun seekB(posMs: Long) {
+        scope.launch(Dispatchers.Main) {
+            playerB?.seekTo(posMs)
+            _playerBPosition.value = posMs
+        }
+    }
+
+    fun getPlayerBPosition(): Long = playerB?.currentPosition ?: 0L
+    fun getPlayerBDuration(): Long = playerB?.duration?.takeIf { it > 0 } ?: 0L
+
+    fun nextB() {
+        scope.launch(Dispatchers.Main) {
+            val b = playerB ?: return@launch
+            if (b.hasNextMediaItem()) {
+                b.seekToNextMediaItem()
+            }
+        }
+    }
+
+    fun prevB() {
+        scope.launch(Dispatchers.Main) {
+            val b = playerB ?: return@launch
+            if (b.currentPosition > 3000L) {
+                b.seekTo(0L)
+                _playerBPosition.value = 0L
+            } else if (b.hasPreviousMediaItem()) {
+                b.seekToPreviousMediaItem()
+            } else {
+                b.seekTo(0L)
+                _playerBPosition.value = 0L
+            }
+        }
+    }
+
+    fun toggleRepeatB() {
+        scope.launch(Dispatchers.Main) {
+            val b = playerB ?: return@launch
+            val nextMode = when (b.repeatMode) {
+                Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                else -> Player.REPEAT_MODE_OFF
+            }
+            b.repeatMode = nextMode
+            _state.value = _state.value.copy(playerBRepeatMode = nextMode)
+        }
+    }
+
+    fun toggleShuffleB() {
+        scope.launch(Dispatchers.Main) {
+            val b = playerB ?: return@launch
+            val nextShuffle = !b.shuffleModeEnabled
+            b.shuffleModeEnabled = nextShuffle
+            _state.value = _state.value.copy(playerBShuffleModeEnabled = nextShuffle)
+            updatePlayerBQueueWindows()
+        }
+    }
+
+    fun playQueueItemB(index: Int) {
+        scope.launch(Dispatchers.Main) {
+            val b = playerB ?: return@launch
+            if (index in 0 until b.mediaItemCount) {
+                b.seekToDefaultPosition(index)
+                b.play()
+            }
+        }
+    }
+
+    fun removeQueueItemB(index: Int) {
+        scope.launch(Dispatchers.Main) {
+            val b = playerB ?: return@launch
+            if (index in 0 until b.mediaItemCount) {
+                b.removeMediaItem(index)
+                updatePlayerBQueueWindows()
+            }
+        }
+    }
+
+    fun moveQueueItemB(fromIndex: Int, toIndex: Int) {
+        scope.launch(Dispatchers.Main) {
+            val b = playerB ?: return@launch
+            if (fromIndex in 0 until b.mediaItemCount && toIndex in 0 until b.mediaItemCount) {
+                b.moveMediaItem(fromIndex, toIndex)
+                updatePlayerBQueueWindows()
+            }
+        }
+    }
+
+    fun findWindowIndexByUidB(uid: Any?): Int {
+        val b = playerB ?: return -1
+        val timeline = b.currentTimeline
+        if (timeline.isEmpty || uid == null) return -1
+        val window = Timeline.Window()
+        for (i in 0 until timeline.windowCount) {
+            timeline.getWindow(i, window)
+            if (window.uid == uid) return i
+        }
+        return -1
+    }
+
+    private fun updatePlayerBQueueWindows() {
         val b = playerB ?: return
-        b.setMediaItem(item)
-        b.prepare()
+        val windows = b.getQueueWindows()
+        val totalDur = windows.sumOf { (it.mediaItem.metadata?.duration ?: 0).toLong() } * 1000L
         _state.value = _state.value.copy(
-            playerBMediaItem = item,
-            playerBError = null,
-            splitViewActive = true,
+            playerBQueueWindows = windows,
+            playerBQueueIndex = b.currentMediaItemIndex,
+            playerBQueueSongCount = windows.size,
+            playerBQueueDurationMs = totalDur,
         )
-        onSongBAdded()
+    }
+
+    private var playerBLikeJob: Job? = null
+    private val _playerBIsLiked = MutableStateFlow(false)
+    val playerBIsLiked: StateFlow<Boolean> = _playerBIsLiked.asStateFlow()
+
+    private fun observePlayerBLike(mediaId: String?) {
+        playerBLikeJob?.cancel()
+        if (mediaId.isNullOrBlank()) {
+            _playerBIsLiked.value = false
+            _state.value = _state.value.copy(playerBIsLiked = false)
+            return
+        }
+        playerBLikeJob = scope.launch(Dispatchers.IO) {
+            service.database.song(mediaId).collect { song ->
+                val liked = song?.song?.liked == true
+                withContext(Dispatchers.Main) {
+                    _playerBIsLiked.value = liked
+                    _state.value = _state.value.copy(playerBIsLiked = liked)
+                }
+            }
+        }
+    }
+
+    fun toggleLikeB() {
+        val item = _state.value.playerBMediaItem ?: return
+        val mediaId = item.mediaId
+        scope.launch(Dispatchers.IO) {
+            try {
+                val metadata = item.toMediaMetadata()
+                val songEntity = service.database.getSongById(mediaId) ?: run {
+                    service.database.insert(metadata) { it.copy(isLocal = mediaId.isLocalMediaId()) }
+                    service.database.getSongById(mediaId)
+                } ?: return@launch
+
+                val source = LikeSourceResolver.resolve(
+                    mediaId = mediaId,
+                    spotifyTrackId = metadata.spotifyTrackId,
+                    queue = null,
+                    isLocal = songEntity.song.isLocal,
+                )
+                val updated = songEntity.song.localToggleLike(source)
+                service.database.query {
+                    update(updated)
+                }
+                Timber.tag(TAG).i("toggleLikeB: song=$mediaId liked=${updated.liked}")
+                val spotifyId = if (!metadata.spotifyTrackId.isNullOrBlank()) {
+                    metadata.spotifyTrackId
+                } else if (LikeSourceResolver.isSpotifyId(updated.id, updated.isLocal)) {
+                    updated.id
+                } else null
+
+                service.syncUtils.likeSong(updated, source, spotifyId)
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "toggleLikeB failed for mediaId=$mediaId")
+            }
+        }
+    }
+
+    fun setVolumeB(v: Float) {
+        val clamped = v.coerceIn(0f, 1f)
+        scope.launch(Dispatchers.Main) {
+            playerB?.volume = clamped
+            _state.value = _state.value.copy(volumeB = clamped)
+        }
+    }
+
+    private fun updatePlayerBPositionPolling(isPlaying: Boolean) {
+        playerBPositionJob?.cancel()
+        if (isPlaying) {
+            playerBPositionJob = scope.launch {
+                while (isActive) {
+                    val b = playerB
+                    if (b != null) {
+                        _playerBPosition.value = b.currentPosition
+                    }
+                    delay(300L)
+                }
+            }
+        } else {
+            val b = playerB
+            if (b != null) {
+                _playerBPosition.value = b.currentPosition
+            }
+        }
+    }
+
+    /** Set the full queue for Player B and prepare (starting at startIndex). */
+    fun setQueueB(
+        items: List<MediaItem>,
+        startIndex: Int = 0,
+        startPositionMs: Long = 0L,
+        queue: Queue? = null,
+    ) {
+        scope.launch(Dispatchers.Main) {
+            val b = playerB ?: run {
+                Timber.tag(TAG).w("setQueueB: playerB is null")
+                return@launch
+            }
+            currentQueueB = queue
+            val validIndex = startIndex.coerceIn(0, (items.size - 1).coerceAtLeast(0))
+            Timber.tag(TAG).i("setQueueB: count=${items.size}, startIndex=$validIndex")
+            b.setMediaItems(items, validIndex, startPositionMs)
+            b.prepare()
+            val currentItem = items.getOrNull(validIndex)
+            _state.value = _state.value.copy(
+                playerBMediaItem = currentItem,
+                playerBError = null,
+            )
+            if (currentItem != null) {
+                observePlayerBLike(currentItem.mediaId)
+            }
+            updatePlayerBQueueWindows()
+        }
+    }
+
+    /** Append multiple media items to Player B's playlist without interrupting playback. */
+    fun addMediaItemsB(items: List<MediaItem>) {
+        if (items.isEmpty()) return
+        scope.launch(Dispatchers.Main) {
+            val b = playerB ?: run {
+                setQueueB(items, 0, 0L)
+                playB()
+                return@launch
+            }
+            b.addMediaItems(items)
+            updatePlayerBQueueWindows()
+        }
+    }
+
+    /** Set the media item for Player B and prepare (splitViewActive will be activated once ready/playing). */
+    fun setMediaItemB(item: MediaItem) {
+        scope.launch(Dispatchers.Main) {
+            val b = playerB ?: run {
+                Timber.tag(TAG).w("setMediaItemB: playerB is null")
+                return@launch
+            }
+            val uri = item.localConfiguration?.uri
+            Timber.tag(TAG).i("setMediaItemB: mediaId=${item.mediaId}, uri=$uri, hasUri=${uri != null}, state=${b.playbackState}")
+            b.setMediaItem(item)
+            b.prepare()
+            _state.value = _state.value.copy(
+                playerBMediaItem = item,
+                playerBError = null,
+            )
+            observePlayerBLike(item.mediaId)
+            updatePlayerBQueueWindows()
+        }
+    }
+
+    /** Append a media item to Player B's playlist without interrupting current playback. */
+    fun addMediaItemB(item: MediaItem) {
+        scope.launch(Dispatchers.Main) {
+            val b = playerB ?: run {
+                setMediaItemB(item)
+                playB()
+                return@launch
+            }
+            b.addMediaItem(item)
+            updatePlayerBQueueWindows()
+        }
     }
 
     // ── Ear selection ──────────────────────────────────────────────────────────
@@ -361,27 +725,170 @@ class DualPlayEngine(
      */
     fun interceptQueue(queue: Queue): Boolean {
         if (!isEnabled) return false
-        val title = queue.preloadItem?.title ?: "Unknown"
-        _state.value = _state.value.copy(
-            pendingInterceptQueue = PendingDualPlayQueue(queue = queue, songTitle = title)
-        )
-        Timber.tag(TAG).d("Song intercept: \"$title\"")
+        val preload = queue.preloadItem
+        if (preload != null) {
+            val mediaItem = preload.toMediaItem()
+            val title = preload.title
+            val artist = preload.artists.joinToString { it.name }
+            val artwork = preload.thumbnailUrl
+            Timber.tag(TAG).i("interceptQueue [PRELOAD]: mediaId=${preload.id}, title=\"$title\", artist=\"$artist\", hasUri=${mediaItem.localConfiguration?.uri != null}")
+            _state.value = _state.value.copy(
+                pendingInterceptQueue = PendingDualPlayQueue(
+                    queue = queue,
+                    songTitle = title,
+                    songArtist = artist,
+                    artworkUri = artwork,
+                    resolvedMediaItem = mediaItem,
+                )
+            )
+        } else {
+            Timber.tag(TAG).i("interceptQueue [ASYNC]: preloadItem is null, resolving via queue.getInitialStatus()")
+            _state.value = _state.value.copy(
+                pendingInterceptQueue = PendingDualPlayQueue(
+                    queue = queue,
+                    songTitle = "Loading...",
+                )
+            )
+            scope.launch(Dispatchers.IO) {
+                try {
+                    val status = queue.getInitialStatus()
+                    val target = status.items.getOrNull(status.mediaItemIndex) ?: status.items.firstOrNull()
+                    if (target != null) {
+                        val meta = target.mediaMetadata
+                        val title = meta.title?.toString() ?: status.title ?: "Unknown"
+                        val artist = meta.artist?.toString() ?: meta.subtitle?.toString()
+                        val artwork = meta.artworkUri?.toString()
+                        Timber.tag(TAG).i("interceptQueue resolved: mediaId=${target.mediaId}, title=\"$title\", artist=\"$artist\", hasUri=${target.localConfiguration?.uri != null}")
+                        withContext(Dispatchers.Main) {
+                            if (_state.value.pendingInterceptQueue?.queue === queue) {
+                                _state.value = _state.value.copy(
+                                    pendingInterceptQueue = PendingDualPlayQueue(
+                                        queue = queue,
+                                        songTitle = title,
+                                        songArtist = artist,
+                                        artworkUri = artwork,
+                                        resolvedMediaItem = target,
+                                    )
+                                )
+                            }
+                        }
+                    }
+                } catch (t: Throwable) {
+                    Timber.tag(TAG).w(t, "interceptQueue: failed to resolve initial status for queue")
+                }
+            }
+        }
         return true
     }
 
-    /** User chose "Add to Dual Play": load queue's first item into Player B. */
+    /** User chose "Add to Dual Play" (when B does not exist) or "Replace Song B" (when B exists). */
     fun acceptInterceptAsDualPlay() {
-        val pending = _state.value.pendingInterceptQueue ?: return
-        _state.value = _state.value.copy(pendingInterceptQueue = null)
-        val item = pending.queue.preloadItem?.toMediaItem() ?: run {
-            Timber.tag(TAG).w("acceptInterceptAsDualPlay: preloadItem has no MediaItem")
+        val pending = _state.value.pendingInterceptQueue ?: run {
+            Timber.tag(TAG).w("acceptInterceptAsDualPlay: no pending intercept queue")
             return
         }
-        setMediaItemB(item)
-        playB()
+        _state.value = _state.value.copy(pendingInterceptQueue = null)
+
+        scope.launch(Dispatchers.Main) {
+            val hideExplicit = service.dataStore.get(HideExplicitKey, false)
+            val hideVideo = service.dataStore.get(HideVideoKey, false)
+            val queue = pending.queue
+
+            // Fast-path: if preloadItem exists, start immediately
+            val preload = queue.preloadItem
+            if (preload != null) {
+                val fastItem = pending.resolvedMediaItem ?: preload.toMediaItem()
+                Timber.tag(TAG).i("acceptInterceptAsDualPlay [fast-path]: setting Player B with mediaId=${fastItem.mediaId}")
+                setMediaItemB(fastItem)
+                playB()
+            }
+
+            val initialStatus = withContext(Dispatchers.IO) {
+                try {
+                    queue.getInitialStatus().filterExplicit(hideExplicit).filterVideo(hideVideo)
+                } catch (t: Throwable) {
+                    Timber.tag(TAG).w(t, "acceptInterceptAsDualPlay: failed to resolve initial status")
+                    null
+                }
+            }
+
+            if (initialStatus == null || initialStatus.items.isEmpty()) {
+                if (preload == null) {
+                    Timber.tag(TAG).w("acceptInterceptAsDualPlay: unable to obtain MediaItem")
+                    Toast.makeText(service, "Failed to load song for Dual Play", Toast.LENGTH_SHORT).show()
+                }
+                return@launch
+            }
+
+            val items = initialStatus.items
+            val targetIndex = initialStatus.mediaItemIndex.coerceIn(0, items.lastIndex)
+
+            if (preload != null && playerB != null) {
+                val preloadMediaId = preload.id
+                val preloadIndexInItems = items.indexOfFirst { it.mediaId == preloadMediaId }.takeIf { it >= 0 } ?: targetIndex
+                val before = items.subList(0, preloadIndexInItems)
+                val after = items.subList(preloadIndexInItems + 1, items.size)
+                val b = playerB!!
+                if (before.isNotEmpty()) {
+                    b.addMediaItems(0, before)
+                }
+                if (after.isNotEmpty()) {
+                    b.addMediaItems(after)
+                }
+                currentQueueB = queue
+                updatePlayerBQueueWindows()
+            } else {
+                Timber.tag(TAG).i("acceptInterceptAsDualPlay: setting full queue of ${items.size} items at index $targetIndex")
+                setQueueB(
+                    items = items,
+                    startIndex = targetIndex,
+                    startPositionMs = initialStatus.position,
+                    queue = queue
+                )
+                playB()
+            }
+        }
     }
 
-    /** User chose "Play instead": let the service handle it normally. */
+    /** User chose "Add to Song B queue": append item(s) to Player B's playlist without interrupting playback. */
+    fun addInterceptToDualPlayQueue() {
+        val pending = _state.value.pendingInterceptQueue ?: return
+        _state.value = _state.value.copy(pendingInterceptQueue = null)
+
+        scope.launch(Dispatchers.Main) {
+            val hideExplicit = service.dataStore.get(HideExplicitKey, false)
+            val hideVideo = service.dataStore.get(HideVideoKey, false)
+            val initialStatus = withContext(Dispatchers.IO) {
+                try {
+                    pending.queue.getInitialStatus().filterExplicit(hideExplicit).filterVideo(hideVideo)
+                } catch (t: Throwable) {
+                    Timber.tag(TAG).w(t, "addInterceptToDualPlayQueue: failed to resolve initial status")
+                    null
+                }
+            }
+
+            val items = initialStatus?.items?.takeIf { it.isNotEmpty() }
+                ?: pending.resolvedMediaItem?.let { listOf(it) }
+
+            if (items.isNullOrEmpty()) {
+                Toast.makeText(service, "Failed to load song", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+
+            addMediaItemsB(items)
+            Toast.makeText(service, "Added to Song B queue", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /** User chose "Replace Song A" (when B exists): replaces only A's song, split stays, B keeps playing. */
+    fun replaceSongA() {
+        val pending = _state.value.pendingInterceptQueue ?: return
+        _state.value = _state.value.copy(pendingInterceptQueue = null)
+        Timber.tag(TAG).i("replaceSongA: playing new queue on Player A while keeping Player B playing in split view")
+        service.playQueue(pending.queue)
+    }
+
+    /** User chose "Play instead" (when B does not exist): normal playback on A, no split. */
     fun rejectInterceptAndPlay() {
         val pending = _state.value.pendingInterceptQueue ?: return
         _state.value = _state.value.copy(pendingInterceptQueue = null)
@@ -438,6 +945,8 @@ class DualPlayEngine(
                 AudioAttributes.Builder()
                     .setUsage(C.USAGE_MEDIA)
                     .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                    .setAllowedCapturePolicy(C.ALLOW_CAPTURE_BY_ALL)
+                    .setSpatializationBehavior(C.SPATIALIZATION_BEHAVIOR_NEVER)
                     .build(),
                 /* handleAudioFocus = */ false,   // Amendment 5: focus managed by DualPlayEngine
             )
@@ -448,18 +957,63 @@ class DualPlayEngine(
             .apply {
                 addListener(playerBListener)
                 volume = _state.value.volumeB
+                setOffloadEnabled(false)
             }
 
         playerB = b
         startForegroundKeepAlive()
-        Timber.tag(TAG).d("Player B created")
+        Timber.tag(TAG).d("Player B created (offload=false)")
     }
 
     // ── Private: Player B event listener ──────────────────────────────────────
 
     private val playerBListener = object : Player.Listener {
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            Timber.tag(TAG).d("Player B onMediaItemTransition: mediaId=${mediaItem?.mediaId}, reason=$reason")
+            val dur = playerB?.duration?.takeIf { it > 0 } ?: 0L
+            _state.value = _state.value.copy(
+                playerBMediaItem = mediaItem,
+                playerBDuration = dur,
+                playerBQueueIndex = playerB?.currentMediaItemIndex ?: -1,
+            )
+            observePlayerBLike(mediaItem?.mediaId)
+            updatePlayerBQueueWindows()
+
+            // Pagination continuation for Player B
+            val b = playerB
+            val q = currentQueueB
+            if (b != null && q != null && (b.mediaItemCount - b.currentMediaItemIndex) <= 5 && q.hasNextPage()) {
+                scope.launch(Dispatchers.IO) {
+                    try {
+                        val nextItems = q.nextPage()
+                        if (nextItems.isNotEmpty()) {
+                            withContext(Dispatchers.Main) {
+                                playerB?.addMediaItems(nextItems)
+                                updatePlayerBQueueWindows()
+                            }
+                        }
+                    } catch (t: Throwable) {
+                        Timber.tag(TAG).w(t, "Failed to load next page for Player B queue")
+                    }
+                }
+            }
+        }
+
+        override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+            Timber.tag(TAG).d("Player B onTimelineChanged: windowCount=${timeline.windowCount}, reason=$reason")
+            updatePlayerBQueueWindows()
+        }
+
+        override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+            Timber.tag(TAG).d("Player B onShuffleModeEnabledChanged: $shuffleModeEnabled")
+            _state.value = _state.value.copy(playerBShuffleModeEnabled = shuffleModeEnabled)
+            updatePlayerBQueueWindows()
+        }
+
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-            _state.value = _state.value.copy(playerBIsPlaying = playWhenReady)
+            val isPlayingNow = playerB?.let { it.playWhenReady && it.playbackState != Player.STATE_ENDED } ?: playWhenReady
+            _state.value = _state.value.copy(playerBIsPlaying = isPlayingNow)
+            Timber.tag(TAG).d("Player B playWhenReady changed: $playWhenReady, isPlayingNow=$isPlayingNow (reason=$reason)")
             if (playWhenReady) {
                 // Keep service alive while B is playing (Amendment 5).
                 service.cancelIdleStop()
@@ -471,13 +1025,54 @@ class DualPlayEngine(
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
-            _state.value = _state.value.copy(playerBPlaybackState = playbackState)
+            val dur = playerB?.duration?.takeIf { it > 0 } ?: 0L
+            val isPlayingNow = playerB?.let { it.playWhenReady && playbackState != Player.STATE_ENDED } ?: false
+            _state.value = _state.value.copy(
+                playerBPlaybackState = playbackState,
+                playerBDuration = dur,
+                playerBIsPlaying = isPlayingNow,
+            )
+            Timber.tag(TAG).i("Player B playbackState: $playbackState (READY=${Player.STATE_READY}, ENDED=${Player.STATE_ENDED})")
+            if (playbackState == Player.STATE_ENDED) {
+                Timber.tag(TAG).i("Player B queue ended. Stopping B and remaining paused at last song.")
+                playerB?.playWhenReady = false
+                _state.value = _state.value.copy(playerBIsPlaying = false)
+            } else if (playbackState == Player.STATE_READY && playerB?.playWhenReady == true) {
+                if (!_state.value.splitViewActive) {
+                    Timber.tag(TAG).i("Player B is READY and playing -> entering split view state")
+                    _state.value = _state.value.copy(splitViewActive = true)
+                    onSongBAdded()
+                }
+            }
+            updatePlayerBQueueWindows()
+        }
+
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            Timber.tag(TAG).d("Player B isPlaying changed: $isPlaying")
+            updatePlayerBPositionPolling(isPlaying)
+            if (isPlaying && !_state.value.splitViewActive) {
+                Timber.tag(TAG).i("Player B started playing -> entering split view state")
+                _state.value = _state.value.copy(splitViewActive = true)
+                onSongBAdded()
+            }
+        }
+
+        override fun onRepeatModeChanged(repeatMode: Int) {
+            _state.value = _state.value.copy(playerBRepeatMode = repeatMode)
         }
 
         override fun onPlayerError(error: PlaybackException) {
+            val errorMsg = error.localizedMessage ?: error.message ?: error.errorCodeName
             // Player B errors NEVER crash or stop Player A (Amendment safety).
-            Timber.tag(TAG).w(error, "Player B error (Player A unaffected)")
-            _state.value = _state.value.copy(playerBError = error.message ?: "Unknown error")
+            Timber.tag(TAG).e(error, "Player B error: %s (Player A unaffected)", errorMsg)
+            _state.value = _state.value.copy(
+                playerBError = errorMsg,
+                splitViewActive = false,
+                playerBMediaItem = null,
+            )
+            scope.launch(Dispatchers.Main) {
+                Toast.makeText(service, "Song B playback error: $errorMsg", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -549,6 +1144,13 @@ class DualPlayEngine(
     private fun pausePlayerA() { runCatching { service.player.pause() } }
 
     private fun releasePlayerB() {
+        playerBPositionJob?.cancel()
+        playerBPositionJob = null
+        playerBLikeJob?.cancel()
+        playerBLikeJob = null
+        currentQueueB = null
+        _playerBPosition.value = 0L
+        _playerBIsLiked.value = false
         val b = playerB ?: return
         playerB = null
         runCatching { b.removeListener(playerBListener) }

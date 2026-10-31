@@ -77,6 +77,13 @@ class SpatialProcessor : BaseAudioProcessor() {
     override fun queueInput(input: ByteBuffer) {
         val n = input.remaining()
         if (n == 0) return
+
+        if (!enabled || moe.rukamori.archivetune.playback.dualplay.DualPlayChannelState.mode != moe.rukamori.archivetune.playback.dualplay.ChannelMode.OFF) {
+            mix = 0f
+            passThrough(input)
+            return
+        }
+
         val out = replaceOutputBuffer(n)
         updateEq()
         val d = (delayMs * sr / 1000f).toInt().coerceIn(1, 63)
@@ -107,6 +114,15 @@ class SpatialProcessor : BaseAudioProcessor() {
             out.putShort((fl.coerceIn(-1f, 1f) * 32767f).toInt().toShort())
             out.putShort((fr.coerceIn(-1f, 1f) * 32767f).toInt().toShort())
         }
+        out.flip()
+    }
+
+    private fun passThrough(input: ByteBuffer) {
+        val n = input.remaining()
+        if (n == 0) return
+        val out = replaceOutputBuffer(n)
+        out.order(java.nio.ByteOrder.nativeOrder())
+        if (input !== out) out.put(input)
         out.flip()
     }
 

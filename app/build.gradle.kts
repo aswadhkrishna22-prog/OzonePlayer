@@ -49,6 +49,7 @@ val hasReleaseSigningConfig =
             releaseKeyPassword != null
 
 val isCanary = findProperty("canary")?.toString()?.toBoolean() == true
+val isDualPlay = findProperty("dualplay")?.toString()?.toBoolean() == true
 
 android {
     namespace = "moe.rukamori.archivetune"
@@ -211,6 +212,12 @@ android {
                 keyPassword = releaseKeyPassword
             }
         }
+        create("dualplay") {
+            storeFile = rootProject.file("app/keystore/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
 
     buildTypes {
@@ -246,6 +253,11 @@ android {
 
         debug {
             isDebuggable = true
+            if (isDualPlay) {
+                applicationIdSuffix = ".dualplay"
+                manifestPlaceholders["appName"] = "Ozone Dual Play"
+                signingConfig = signingConfigs.getByName("dualplay")
+            }
         }
     }
 
