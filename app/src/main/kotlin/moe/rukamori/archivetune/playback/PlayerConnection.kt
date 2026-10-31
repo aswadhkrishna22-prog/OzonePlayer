@@ -173,6 +173,7 @@ class PlayerConnection(
     fun playQueueIfCurrent(queue: Queue, generation: Long): Boolean {
         synchronized(this) {
             if (generation != playRequestGeneration) return false
+            if (service.dualPlayEngine.interceptQueue(queue)) return true
             playRequestGeneration++
             if (moe.rukamori.archivetune.BuildConfig.DEBUG) {
                 val mediaId = queue.preloadItem?.id

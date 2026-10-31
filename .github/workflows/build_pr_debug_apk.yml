@@ -33,7 +33,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleGmsMobileUniversalDebug --stacktrace
+        run: ./gradlew assembleGmsMobileUniversalDebug -Pdualplay=true --stacktrace
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4

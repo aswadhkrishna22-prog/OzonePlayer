@@ -63,6 +63,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.common.Timeline
 import moe.rukamori.archivetune.extensions.getQueueWindows
 import moe.rukamori.archivetune.extensions.metadata
+import moe.rukamori.archivetune.extensions.toMediaMetadata
 import moe.rukamori.archivetune.utils.isLocalMediaId
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.utils.LikeSourceResolver
@@ -483,13 +484,7 @@ class DualPlayEngine(
         val mediaId = item.mediaId
         scope.launch(Dispatchers.IO) {
             try {
-                val metadata = item.metadata ?: MediaMetadata(
-                    id = item.mediaId,
-                    title = item.mediaMetadata.title?.toString() ?: "",
-                    artists = listOf(MediaMetadata.Artist(id = null, name = item.mediaMetadata.artist?.toString() ?: "")),
-                    duration = 0,
-                    thumbnailUrl = item.mediaMetadata.artworkUri?.toString(),
-                )
+                val metadata = item.toMediaMetadata()
                 val songEntity = service.database.getSongById(mediaId) ?: run {
                     service.database.insert(metadata) { it.copy(isLocal = mediaId.isLocalMediaId()) }
                     service.database.getSongById(mediaId)

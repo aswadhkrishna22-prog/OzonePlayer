@@ -27,6 +27,7 @@ import kotlinx.coroutines.withContext
 import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.constants.FloatingToolbarHorizontalPadding
 import moe.rukamori.archivetune.extensions.metadata
+import moe.rukamori.archivetune.extensions.toMediaMetadata
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.playback.dualplay.DualPlaySheetTarget
 import moe.rukamori.archivetune.ui.player.player_0.MiniPlayerContentInternal
@@ -77,15 +78,8 @@ internal fun UnifiedPlayerSheetLayers(
     val dualPlayEngine = playerConnection?.dualPlayEngine
     val dualState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)
     val itemB = dualState?.playerBMediaItem
-    val metadataB = remember(itemB) {
-        if (itemB == null) null
-        else itemB.metadata ?: MediaMetadata(
-            id = itemB.mediaId,
-            title = itemB.mediaMetadata.title?.toString() ?: "",
-            artists = listOf(MediaMetadata.Artist(id = null, name = itemB.mediaMetadata.artist?.toString() ?: "")),
-            duration = 0,
-            thumbnailUrl = itemB.mediaMetadata.artworkUri?.toString(),
-        )
+    val metadataB = remember(itemB, dualState?.playerBDuration) {
+        itemB?.toMediaMetadata(dualState?.playerBDuration ?: 0L)
     }
     val database = playerConnection?.service?.database
     val lyricsBFlow = remember(itemB?.mediaId) {
