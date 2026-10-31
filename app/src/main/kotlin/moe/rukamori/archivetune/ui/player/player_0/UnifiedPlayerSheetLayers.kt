@@ -318,7 +318,6 @@ internal fun UnifiedPlayerSheetLayers(
                     dragHandler = dragHandler,
                     sheetTarget = sheetTarget,
                 )
-            }
         }
     }
 }
