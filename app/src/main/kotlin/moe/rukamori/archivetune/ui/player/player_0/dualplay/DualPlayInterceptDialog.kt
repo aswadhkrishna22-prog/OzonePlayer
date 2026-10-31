@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import moe.rukamori.archivetune.R
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.TextButton
 import moe.rukamori.archivetune.playback.dualplay.PendingDualPlayQueue
 
 @Composable
@@ -39,11 +41,10 @@ fun DualPlayInterceptDialog(
     pending: PendingDualPlayQueue,
     hasSongB: Boolean,
     onAddToDualPlay: () -> Unit,
+    onAddToSongBQueue: () -> Unit = {},
     onPlayInstead: () -> Unit,
     onCancel: () -> Unit,
 ) {
-    val addLabel = if (hasSongB) "Replace Song B" else "Add to Dual Play"
-
     AlertDialog(
         onDismissRequest = onCancel,
         icon = {
@@ -55,7 +56,7 @@ fun DualPlayInterceptDialog(
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -94,22 +95,58 @@ fun DualPlayInterceptDialog(
 
                 Text(
                     text = if (hasSongB) {
-                        "Do you want to replace Song B in Dual Play or play this song instead?"
+                        "Choose how to play this track in Dual Play:"
                     } else {
                         "Do you want to add this song to Dual Play or play it instead?"
                     },
                     fontSize = 14.sp,
                 )
+
+                if (hasSongB) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Button(
+                            onClick = onAddToDualPlay,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text("Replace Song B")
+                        }
+
+                        FilledTonalButton(
+                            onClick = onAddToSongBQueue,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text("Add to Song B queue")
+                        }
+
+                        OutlinedButton(
+                            onClick = onPlayInstead,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text("Replace Song A")
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
-            Button(onClick = onAddToDualPlay) {
-                Text(addLabel)
+            if (!hasSongB) {
+                Button(onClick = onAddToDualPlay) {
+                    Text("Add to Dual Play")
+                }
+            } else {
+                TextButton(onClick = onCancel) {
+                    Text("Cancel")
+                }
             }
         },
         dismissButton = {
-            OutlinedButton(onClick = onPlayInstead) {
-                Text("Play instead")
+            if (!hasSongB) {
+                OutlinedButton(onClick = onPlayInstead) {
+                    Text("Play instead")
+                }
             }
         },
     )

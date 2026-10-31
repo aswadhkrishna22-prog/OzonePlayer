@@ -17,7 +17,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.media3.common.Player
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import moe.rukamori.archivetune.db.entities.LyricsEntity
+import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.state.PlayerUiState
 
@@ -34,7 +38,10 @@ fun LyricsColumn(
     onAction: (PlayerAction) -> Unit,
     onLineClick: (Long) -> Unit,
     onSeek: (Float) -> Unit,
-    onSeekStarted: () -> Unit
+    onSeekStarted: () -> Unit,
+    playerOverride: Player? = null,
+    mediaMetadataOverride: MediaMetadata? = null,
+    lyricsOverride: Flow<LyricsEntity?>? = null,
 ) {
     val isReadyToParse by remember(animateProgressProvider) {
         derivedStateOf { animateProgressProvider() > 0.99f }
@@ -67,6 +74,9 @@ fun LyricsColumn(
             onSeekStarted = onSeekStarted,
             isReadyToParse = isReadyToParse,
             isVisible = isSheetActive,
+            playerOverride = playerOverride,
+            mediaMetadataOverride = mediaMetadataOverride,
+            lyricsOverride = lyricsOverride,
         )
     }
 }

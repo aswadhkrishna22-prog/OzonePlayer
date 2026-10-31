@@ -543,11 +543,19 @@ fun BoxScope.GlobalDialogsHost(
     val dualPlayState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)
     val pendingDualQueue = dualPlayState?.pendingInterceptQueue
     if (pendingDualQueue != null) {
+        val hasSongB = dualPlayState?.playerBMediaItem != null
         DualPlayInterceptDialog(
             pending = pendingDualQueue,
-            hasSongB = dualPlayState?.playerBMediaItem != null,
+            hasSongB = hasSongB,
             onAddToDualPlay = { dualPlayEngine?.acceptInterceptAsDualPlay() },
-            onPlayInstead = { dualPlayEngine?.rejectInterceptAndPlay() },
+            onAddToSongBQueue = { dualPlayEngine?.addInterceptToDualPlayQueue() },
+            onPlayInstead = {
+                if (hasSongB) {
+                    dualPlayEngine?.replaceSongA()
+                } else {
+                    dualPlayEngine?.rejectInterceptAndPlay()
+                }
+            },
             onCancel = { dualPlayEngine?.cancelIntercept() },
         )
     }

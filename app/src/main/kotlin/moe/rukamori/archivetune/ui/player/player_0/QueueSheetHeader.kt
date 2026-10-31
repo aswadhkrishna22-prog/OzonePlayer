@@ -69,6 +69,7 @@ internal fun QueueSheetHeader(
     state: PlayerUiState,
     isVisible: Boolean,
     modifier: Modifier = Modifier,
+    isAutoMixVisible: Boolean = true,
 ) {
     val haptics = rememberYumaHaptics()
 
@@ -152,23 +153,25 @@ internal fun QueueSheetHeader(
                     style = TextStyle(shadow = SoftTextShadow)
                 )
             }
-            Box(
-                modifier = Modifier
-                    .graphicsLayer { scaleX = autoMixScale; scaleY = autoMixScale }
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .clickable(interactionSource = autoMixInteractionSource, indication = null) {
-                        haptics.click()
-                        onToggleAutoMix()
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.auto_awesome),
-                    contentDescription = stringResource(R.string.automix),
-                    modifier = Modifier.size(20.dp),
-                    colorFilter = ColorFilter.tint(autoMixTint)
-                )
+            if (isAutoMixVisible) {
+                Box(
+                    modifier = Modifier
+                        .graphicsLayer { scaleX = autoMixScale; scaleY = autoMixScale }
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .clickable(interactionSource = autoMixInteractionSource, indication = null) {
+                            haptics.click()
+                            onToggleAutoMix()
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.auto_awesome),
+                        contentDescription = stringResource(R.string.automix),
+                        modifier = Modifier.size(20.dp),
+                        colorFilter = ColorFilter.tint(autoMixTint)
+                    )
+                }
             }
             Box(
                 modifier = Modifier

@@ -45,16 +45,20 @@ class ChannelSplitProcessor(
         val sr  = inputAudioFormat.sampleRate
         val supported =
             (enc == C.ENCODING_PCM_16BIT || enc == C.ENCODING_PCM_FLOAT) && ch == 2
+        val currentMode = when (assignedSide) {
+            ProcessorSide.LEFT  -> DualPlayChannelState.modeA
+            ProcessorSide.RIGHT -> DualPlayChannelState.modeB
+        }
         return if (supported) {
             encoding = enc
             val encName = if (enc == C.ENCODING_PCM_16BIT) "PCM_16BIT" else "PCM_FLOAT"
             Timber.tag(TAG).i(
-                "ChannelSplitProcessor[%s]: configured format successfully: encoding=%s ($enc), channels=%d, sampleRate=%d",
-                assignedSide, encName, ch, sr,
+                "ChannelSplitProcessor[%s]: onConfigure reconfigure: encoding=%s ($enc), channels=%d, sampleRate=%d, mode=%s",
+                assignedSide, encName, ch, sr, currentMode,
             )
             inputAudioFormat
         } else {
-            val desc = "encoding=$enc channelCount=$ch sampleRate=$sr (assignedSide=$assignedSide)"
+            val desc = "encoding=$enc channelCount=$ch sampleRate=$sr (assignedSide=$assignedSide, mode=$currentMode)"
             Timber.tag(TAG).w(
                 "ChannelSplitProcessor[%s]: unsupported format %s — bypassed",
                 assignedSide, desc,
@@ -64,8 +68,17 @@ class ChannelSplitProcessor(
         }
     }
 
-    override fun onFlush() = Unit
-    override fun onReset() = Unit
+    override fun onFlush() {
+        val currentMode = when (assignedSide) {
+            ProcessorSide.LEFT  -> DualPlayChannelState.modeA
+            ProcessorSide.RIGHT -> DualPlayChannelState.modeB
+        }
+        Timber.tag(TAG).d("ChannelSplitProcessor[%s]: onFlush called, activeMode=%s", assignedSide, currentMode)
+    }
+
+    override fun onReset() {
+        Timber.tag(TAG).d("ChannelSplitProcessor[%s]: onReset called", assignedSide)
+    }
 
     override fun queueInput(input: ByteBuffer) {
         val n = input.remaining()

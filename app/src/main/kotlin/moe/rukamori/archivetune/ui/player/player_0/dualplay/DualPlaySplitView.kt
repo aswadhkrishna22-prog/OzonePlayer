@@ -87,8 +87,15 @@ import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.state.PlayerUiState
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
 import moe.rukamori.archivetune.ui.utils.bounceClick
+import timber.log.Timber
 import kotlin.math.abs
 import kotlin.math.roundToInt
+
+private val zeroWidthRegex = Regex("[\\u200B-\\u200D\\uFEFF\\u2060\\u200E\\u200F\\u202A-\\u202E\\u2066-\\u2069]")
+
+private fun sanitizeTrackTitle(title: String): String {
+    return title.replace(zeroWidthRegex, "").trim()
+}
 
 @Composable
 fun DualPlaySplitView(
@@ -99,6 +106,9 @@ fun DualPlaySplitView(
     onCollapseClick: () -> Unit = {},
     onOpenSettingsMenu: (PlayerMenuScreen) -> Unit = {},
     onOpenQueue: () -> Unit = {},
+    onOpenQueueB: () -> Unit = {},
+    onOpenLyricsA: () -> Unit = {},
+    onOpenLyricsB: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val haptics = LocalYumaHaptics.current
@@ -109,9 +119,18 @@ fun DualPlaySplitView(
 
     // ── Song B state & dynamic palette extraction ──────────────────────────────
     val itemB = dualState.playerBMediaItem
-    val titleB = itemB?.mediaMetadata?.title?.toString() ?: "(No Song B)"
+    val rawTitleB = itemB?.mediaMetadata?.title?.toString() ?: "(No Song B)"
+    val titleB = remember(rawTitleB) {
+        val codePointsHex = rawTitleB.codePoints().toArray().joinToString(" ") { "U+%04X".format(it) }
+        Timber.tag("DualPlay").d("Title B raw code points: %s | text='%s'", codePointsHex, rawTitleB)
+        sanitizeTrackTitle(rawTitleB)
+    }
     val artistB = itemB?.mediaMetadata?.artist?.toString() ?: ""
     val artworkUriB = itemB?.mediaMetadata?.artworkUri?.toString()
+
+    val titleA = remember(state.title) {
+        sanitizeTrackTitle(state.title)
+    }
 
     var vibrantColorB by remember { mutableIntStateOf(0xFF4DD0E1.toInt()) }
     var gradientColorB by remember { mutableIntStateOf(0xFF1E1E24.toInt()) }
@@ -127,8 +146,9 @@ fun DualPlaySplitView(
         )
     }
 
-    val stateA = remember(state) {
+    val stateA = remember(state, titleA) {
         state.copy(
+            title = titleA,
             isImmersiveEnabled = true,
             isLyricsVisible = false,
             isQueueVisible = false,
@@ -137,10 +157,12 @@ fun DualPlaySplitView(
 
     val stateB = remember(
         itemB,
+        titleB,
         vibrantColorB,
         gradientColorB,
         dualState.playerBIsPlaying,
         dualState.playerBDuration,
+        dualState.playerBIsLiked,
         state.isBlurBackgroundEnabled,
         state.isAlbumCoverGlowEnabled,
     ) {
@@ -151,7 +173,7 @@ fun DualPlaySplitView(
             coverUrl = artworkUriB ?: "",
             isPlaying = dualState.playerBIsPlaying,
             durationMs = dualState.playerBDuration,
-            isLiked = false,
+            isLiked = dualState.playerBIsLiked,
             vibrantColor = vibrantColorB,
             gradientColor = gradientColorB,
             isImmersiveEnabled = true,
@@ -194,7 +216,7 @@ fun DualPlaySplitView(
             ImmersiveNowPlayingPane(
                 paneHeightDp = topPaneHeightDp,
                 paneState = stateA,
-                title = state.title,
+                title = titleA,
                 artist = state.artist,
                 isPlaying = state.isPlaying,
                 positionFlow = playbackProgress,
@@ -203,7 +225,13 @@ fun DualPlaySplitView(
                 disabledEar = dualState.earSelectionB,
                 onEarSelected = { engine.setEarA(it) },
                 isLikeEnabled = true,
-                onAction = onAction,
+                onAction = { action ->
+                    if (action is PlayerAction.Lyrics) {
+                        onOpenLyricsA()
+                    } else {
+                        onAction(action)
+                    }
+                },
                 onSeek = { onSeekA(it.toFloat()) },
                 onPlayPause = { onAction(PlayerAction.PlayPause) },
                 onPrev = { onAction(PlayerAction.Previous) },
@@ -228,8 +256,15 @@ fun DualPlaySplitView(
 
             // ── BOTTOM PANE: Song B ───────────────────────────────────────────
             val isRepeatOneB = dualState.playerBRepeatMode == Player.REPEAT_MODE_ONE
-            val repeatIconB = if (isRepeatOneB) R.drawable.ic_repeat_one else R.drawable.ic_repeat
-            val repeatTintB = if (isRepeatOneB) Color(vibrantColorB) else Color.White.copy(alpha = 0.5f)
+            val isRepeatAllB = dualState.playerBRepeatMode == Player.REPEAT_MODE_ALL
+            val repeatIconB = when {
+                isRepeatOneB -> R.drawable.ic_repeat_one
+                isRepeatAllB -> R.drawable.ic_repeat_on
+                else -> R.drawable.ic_repeat
+            }
+            val repeatTintB = if (isRepeatOneB || isRepeatAllB) Color(vibrantColorB) else Color.White.copy(alpha = 0.5f)
+
+            val hasNextItemB = dualState.playerBQueueWindows.size > 1 || (playerConnection.dualPlayEngine.getPlayerB()?.hasNextMediaItem() == true)
 
             ImmersiveNowPlayingPane(
                 paneHeightDp = bottomPaneHeightDp,
@@ -242,20 +277,34 @@ fun DualPlaySplitView(
                 currentEar = dualState.earSelectionB,
                 disabledEar = dualState.earSelectionA,
                 onEarSelected = { engine.setEarB(it) },
-                isLikeEnabled = false, // Heart dimmed and disabled for B
-                onAction = {},
+                isLikeEnabled = true,
+                onAction = { action ->
+                    when (action) {
+                        is PlayerAction.Like, is PlayerAction.ToggleLike -> {
+                            engine.toggleLikeB()
+                        }
+                        is PlayerAction.Lyrics -> {
+                            onOpenLyricsB()
+                        }
+                        else -> {}
+                    }
+                },
                 onSeek = { engine.seekB(it) },
                 onPlayPause = {
                     if (dualState.playerBIsPlaying) engine.pauseB() else engine.playB()
                 },
-                onPrev = { engine.seekB(0L) }, // Previous seeks to start
-                onNext = {},                   // Next disabled
-                isNextEnabled = false,         // Dimmed and disabled
+                onPrev = { engine.prevB() },
+                onNext = { engine.nextB() },
+                isNextEnabled = hasNextItemB,
                 isPrevEnabled = true,
                 shuffleContent = {
-                    // Dimmed and disabled Shuffle for B
+                    val isShuffleActiveB = dualState.playerBShuffleModeEnabled
+                    val shuffleColorB = if (isShuffleActiveB) Color(vibrantColorB) else Color.White.copy(alpha = 0.5f)
                     Box(
                         modifier = Modifier
+                            .bounceClick(pressedScale = 0.86f) {
+                                engine.toggleShuffleB()
+                            }
                             .size(44.dp)
                             .clip(CircleShape),
                         contentAlignment = Alignment.Center,
@@ -264,12 +313,11 @@ fun DualPlaySplitView(
                             painter = painterResource(id = R.drawable.ic_shuffle),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp),
-                            colorFilter = ColorFilter.tint(Color.White.copy(alpha = 0.38f)),
+                            colorFilter = ColorFilter.tint(shuffleColorB),
                         )
                     }
                 },
                 repeatContent = {
-                    // Repeat toggles OFF / ONE on Player B
                     Box(
                         modifier = Modifier
                             .bounceClick(pressedScale = 0.86f) {
@@ -287,8 +335,8 @@ fun DualPlaySplitView(
                         )
                     }
                 },
-                isBottomBarEnabled = false, // Lyrics & Queue dimmed and disabled
-                onOpenQueue = {},
+                isBottomBarEnabled = true,
+                onOpenQueue = onOpenQueueB,
                 isTopPane = false,
                 onCollapseClick = {},
                 onOpenSettingsMenu = null,

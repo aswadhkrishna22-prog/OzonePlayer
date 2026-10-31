@@ -42,6 +42,9 @@ import moe.rukamori.archivetune.lyrics.LrcParser.isLineSyncedLrc
 import moe.rukamori.archivetune.lyrics.LrcParser.isTtml
 import moe.rukamori.archivetune.lyrics.LrcParser.parseLyrics
 import moe.rukamori.archivetune.lyrics.LrcParser.parseTtml
+import androidx.media3.common.Player
+import kotlinx.coroutines.flow.Flow
+import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.lyrics.LyricsEntry
 import moe.rukamori.archivetune.ui.component.shareLyricsAsText
 
@@ -55,13 +58,17 @@ fun LyricsEnhanced(
     isReadyToParse: Boolean = true,
     isLyricsVisible: Boolean = true,
     lazyListState: LazyListState? = null,
+    playerOverride: Player? = null,
+    mediaMetadataOverride: MediaMetadata? = null,
+    lyricsOverride: Flow<LyricsEntity?>? = null,
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
-    val player = playerConnection.player
+    val player = playerOverride ?: playerConnection.player
     val context = LocalContext.current
     val animationsDisabled = LocalAnimationsDisabled.current
 
-    val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
+    val mainMetadata by playerConnection.mediaMetadata.collectAsState()
+    val mediaMetadata = mediaMetadataOverride ?: mainMetadata
     val playbackParameters by playerConnection.playbackParameters.collectAsState()
 
     val styleState = rememberLyricsStyleState(
@@ -73,7 +80,8 @@ fun LyricsEnhanced(
     var shareDialogData by remember { mutableStateOf<Triple<String, String, String>?>(null) }
     var showShareImageDialog by remember { mutableStateOf(false) }
 
-    val currentLyrics by playerConnection.currentLyrics.collectAsState(initial = null)
+    val activeLyricsFlow = lyricsOverride ?: playerConnection.currentLyrics
+    val currentLyrics by activeLyricsFlow.collectAsState(initial = null)
     val lyrics =
         remember(currentLyrics, mediaMetadata?.id) {
             currentLyrics

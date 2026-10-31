@@ -54,6 +54,9 @@ fun FullPlayer(
     lyricsFractionProvider: () -> Float = { if (state.isLyricsVisible) 1f else 0f },
     queueFractionProvider: () -> Float = { 0f },
     isVisible: Boolean = true,
+    onOpenQueueB: () -> Unit = {},
+    onOpenLyricsA: () -> Unit = {},
+    onOpenLyricsB: () -> Unit = {},
 ) {
     val motionState = rememberFullPlayerMotionState(
         state = state,
@@ -93,6 +96,9 @@ fun FullPlayer(
                 onCollapseClick = onCollapseClick,
                 onOpenSettingsMenu = onOpenSettingsMenu,
                 onOpenQueue = onOpenQueue,
+                onOpenQueueB = onOpenQueueB,
+                onOpenLyricsA = onOpenLyricsA,
+                onOpenLyricsB = onOpenLyricsB,
                 modifier = Modifier.fillMaxSize(),
             )
         } else {
