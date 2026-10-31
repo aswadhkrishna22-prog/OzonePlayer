@@ -36,6 +36,15 @@ import moe.rukamori.archivetune.ui.player.player_0.dualplay.rememberPaneSourceB
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.key
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.fillMaxWidth
+import moe.rukamori.archivetune.ui.player.player_0.dualplay.DualMiniPlayer
 import moe.rukamori.archivetune.ui.player.player_0.MiniPlayerContentInternal
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.player.player_0.scoped.FullPlayerVisualState
@@ -196,14 +205,35 @@ internal fun UnifiedPlayerSheetLayers(
                     }
                     .padding(horizontal = miniHorizontalInset)
             ) {
-                MiniPlayerContentInternal(
-                    state = state,
-                    expansionFractionProvider = expansionFractionProvider,
-                    playbackProgress = playbackProgress,
-                    onAction = onAction,
-                    onMediaAreaClick = onExpandClick,
-                    isVisible = isMiniPlayerVisible
-                )
+                val isDualMiniActive = dualState?.enabled == true && dualState?.playerBMediaItem != null
+                AnimatedContent(
+                    targetState = isDualMiniActive,
+                    transitionSpec = {
+                        (fadeIn(animationSpec = tween(250)) + scaleIn(initialScale = 0.95f, animationSpec = tween(250)))
+                            .togetherWith(fadeOut(animationSpec = tween(250)) + scaleOut(targetScale = 0.95f, animationSpec = tween(250)))
+                    },
+                    label = "MiniPlayerSwitch",
+                ) { dualActive ->
+                    if (dualActive && paneSourceB != null) {
+                        DualMiniPlayer(
+                            paneSourceA = paneSourceA,
+                            paneSourceB = paneSourceB,
+                            onExpandClick = onExpandClick,
+                            expansionFractionProvider = expansionFractionProvider,
+                            isVisible = isMiniPlayerVisible,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    } else {
+                        MiniPlayerContentInternal(
+                            state = state,
+                            expansionFractionProvider = expansionFractionProvider,
+                            playbackProgress = playbackProgress,
+                            onAction = onAction,
+                            onMediaAreaClick = onExpandClick,
+                            isVisible = isMiniPlayerVisible,
+                        )
+                    }
+                }
             }
         }
 
