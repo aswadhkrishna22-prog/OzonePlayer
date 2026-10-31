@@ -27,8 +27,9 @@ import kotlinx.coroutines.withContext
 import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.constants.FloatingToolbarHorizontalPadding
 import moe.rukamori.archivetune.extensions.metadata
-import moe.rukamori.archivetune.models.toMediaMetadata
+import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.playback.dualplay.DualPlaySheetTarget
+import moe.rukamori.archivetune.ui.player.player_0.MiniPlayerContentInternal
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.player.player_0.scoped.FullPlayerVisualState
 import moe.rukamori.archivetune.ui.player.player_0.scoped.SheetVerticalDragGestureHandler
@@ -76,7 +77,16 @@ internal fun UnifiedPlayerSheetLayers(
     val dualPlayEngine = playerConnection?.dualPlayEngine
     val dualState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)
     val itemB = dualState?.playerBMediaItem
-    val metadataB = remember(itemB) { itemB?.metadata ?: itemB?.toMediaMetadata() }
+    val metadataB = remember(itemB) {
+        if (itemB == null) null
+        else itemB.metadata ?: MediaMetadata(
+            id = itemB.mediaId,
+            title = itemB.mediaMetadata.title?.toString() ?: "",
+            artists = listOf(MediaMetadata.Artist(id = null, name = itemB.mediaMetadata.artist?.toString() ?: "")),
+            duration = 0,
+            thumbnailUrl = itemB.mediaMetadata.artworkUri?.toString(),
+        )
+    }
     val database = playerConnection?.service?.database
     val lyricsBFlow = remember(itemB?.mediaId) {
         if (itemB?.mediaId != null) database?.lyrics(itemB.mediaId) ?: flowOf(null) else flowOf(null)
@@ -143,24 +153,34 @@ internal fun UnifiedPlayerSheetLayers(
             )
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = miniHorizontalInset)
-        ) {
-            MiniPlayer(
-                state = state,
-                updateState = updateState,
-                playbackProgress = playbackProgress,
-                expansionFractionProvider = expansionFractionProvider,
-                onCollapseClick = onCollapseClick,
-                onExpandClick = onExpandClick,
-                onAction = onAction,
-                onSeek = onSeek,
-                onSeekStarted = onSeekStarted,
-                onOpenQueue = onOpenQueue,
-                isVisible = fullPlayerVisualState.isMiniPlayerVisible
-            )
+        val isMiniPlayerVisible by remember {
+            derivedStateOf { expansionFractionProvider() < 0.05f }
+        }
+
+        val showMiniPlayer by remember {
+            derivedStateOf { expansionFractionProvider() < 1f }
+        }
+
+        if (showMiniPlayer) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        val fraction = expansionFractionProvider()
+                        alpha = (1f - (fraction / 0.3f)).coerceIn(0f, 1f)
+                    }
+                    .padding(horizontal = miniHorizontalInset)
+            ) {
+                MiniPlayerContentInternal(
+                    state = state,
+                    expansionFractionProvider = expansionFractionProvider,
+                    playbackProgress = playbackProgress,
+                    onAction = onAction,
+                    onMediaAreaClick = onExpandClick,
+                    isVisible = isMiniPlayerVisible
+                )
+            }
+        }
 
             val isFullPlayerVisible by remember {
                 derivedStateOf { expansionFractionProvider() > 0.05f }
@@ -272,11 +292,11 @@ internal fun UnifiedPlayerSheetLayers(
                         if (sheetTarget == DualPlaySheetTarget.PLAYER_B && dualPlayEngine != null) {
                             when (action) {
                                 is PlayerAction.PlayQueueItem -> {
-                                    val idx = dualPlayEngine.findWindowIndexByUidB(action.uid)
+                                    val idx = dualPlayEngine.findWindowIndexByUidB(action.windowUid)
                                     if (idx >= 0) dualPlayEngine.playQueueItemB(idx)
                                 }
                                 is PlayerAction.RemoveQueueItem -> {
-                                    val idx = dualPlayEngine.findWindowIndexByUidB(action.uid)
+                                    val idx = dualPlayEngine.findWindowIndexByUidB(action.windowUid)
                                     if (idx >= 0) dualPlayEngine.removeQueueItemB(idx)
                                 }
                                 is PlayerAction.MoveQueueItem -> {
