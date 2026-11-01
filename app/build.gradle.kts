@@ -136,8 +136,19 @@ android {
         }
     }
 
-    flavorDimensions += listOf("distribution", "device", "abi")
+    flavorDimensions += listOf("flavor", "distribution", "device", "abi")
     productFlavors {
+        create("default") {
+            dimension = "flavor"
+            isDefault = true
+            applicationId = "com.ozone.player"
+            manifestPlaceholders["appName"] = "@string/app_name"
+        }
+        create("originTest") {
+            dimension = "flavor"
+            applicationId = "com.hiby.music"
+            manifestPlaceholders["appName"] = "Ozone (Origin test)"
+        }
         create("gms") {
             dimension = "distribution"
             isDefault = true
@@ -218,8 +229,6 @@ android {
             if (isCanary) {
                 applicationIdSuffix = ".canary"
                 manifestPlaceholders["appName"] = "@string/app_name_canary"
-            } else {
-                manifestPlaceholders["appName"] = "@string/app_name"
             }
 
             signingConfig = if (hasReleaseSigningConfig) {
@@ -467,4 +476,34 @@ configurations.configureEach {
         "androidx.compose.animation:animation-graphics:${libs.versions.compose.get()}",
         "org.jetbrains.kotlin:kotlin-metadata-jvm:${libs.versions.kotlinMetadata.get()}",
     )
+}
+
+tasks.register("assembleOriginTestDebug") {
+    group = "build"
+    description = "Assembles the originTest debug APK"
+    dependsOn("assembleOriginTestGmsMobileUniversalDebug")
+}
+
+tasks.register("assembleDefaultDebug") {
+    group = "build"
+    description = "Assembles the default debug APK"
+    dependsOn("assembleDefaultGmsMobileUniversalDebug")
+}
+
+tasks.register("assembleGmsMobileUniversalDebug") {
+    group = "build"
+    description = "Assembles the default GMS mobile universal debug APK (compatibility alias)"
+    dependsOn("assembleDefaultGmsMobileUniversalDebug")
+}
+
+tasks.register("assembleGmsMobileUniversalRelease") {
+    group = "build"
+    description = "Assembles the default GMS mobile universal release APK (compatibility alias)"
+    dependsOn("assembleDefaultGmsMobileUniversalRelease")
+}
+
+tasks.register("lintGmsMobileUniversalDebug") {
+    group = "verification"
+    description = "Lints default GMS mobile universal debug (compatibility alias)"
+    dependsOn("lintDefaultGmsMobileUniversalDebug")
 }

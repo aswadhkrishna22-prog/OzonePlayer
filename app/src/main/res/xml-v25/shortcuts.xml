@@ -7,8 +7,7 @@
         android:shortcutShortLabel="@string/search">
         <intent
             android:action="moe.rukamori.archivetune.action.SEARCH"
-            android:targetClass="moe.rukamori.archivetune.MainActivity"
-            android:targetPackage="com.ozone.player" />
+            android:targetClass="moe.rukamori.archivetune.MainActivity" />
     </shortcut>
     <shortcut
         android:enabled="true"
@@ -17,8 +16,7 @@
         android:shortcutShortLabel="@string/filter_library">
         <intent
             android:action="moe.rukamori.archivetune.action.LIBRARY"
-            android:targetClass="moe.rukamori.archivetune.MainActivity"
-            android:targetPackage="com.ozone.player" />
+            android:targetClass="moe.rukamori.archivetune.MainActivity" />
     </shortcut>
     <shortcut
         android:enabled="true"
@@ -27,7 +25,6 @@
         android:shortcutShortLabel="@string/music_recognition">
         <intent
             android:action="moe.rukamori.archivetune.action.MUSIC_RECOGNITION"
-            android:targetClass="moe.rukamori.archivetune.MainActivity"
-            android:targetPackage="com.ozone.player" />
+            android:targetClass="moe.rukamori.archivetune.MainActivity" />
     </shortcut>
 </shortcuts>

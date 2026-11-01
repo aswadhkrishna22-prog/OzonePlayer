@@ -88,6 +88,9 @@
                 <data
                     android:host="together"
                     android:scheme="ozoneplayer" />
+                <data
+                    android:host="together"
+                    android:scheme="${applicationId}" />
             </intent-filter>
 
             <!-- Youtube filter -->

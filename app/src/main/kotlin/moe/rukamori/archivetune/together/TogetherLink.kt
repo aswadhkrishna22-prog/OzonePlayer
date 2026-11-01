@@ -10,6 +10,7 @@ import java.net.URI
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import moe.rukamori.archivetune.BuildConfig
 
 data class TogetherJoinInfo(
     val host: String,
@@ -52,7 +53,12 @@ object TogetherLink {
     }
 
     private fun decodeDeepLink(uri: URI): TogetherJoinInfo? {
-        if (!uri.scheme.equals("archivetune", ignoreCase = true)) return null
+        val scheme = uri.scheme?.lowercase() ?: return null
+        if (!scheme.equals("archivetune", ignoreCase = true) &&
+            !scheme.equals("yumaplayer", ignoreCase = true) &&
+            !scheme.equals("ozoneplayer", ignoreCase = true) &&
+            !scheme.equals(BuildConfig.APPLICATION_ID, ignoreCase = true)
+        ) return null
         val authority = uri.host?.lowercase() ?: uri.authority?.lowercase() ?: return null
         if (authority != "together") return null
 
