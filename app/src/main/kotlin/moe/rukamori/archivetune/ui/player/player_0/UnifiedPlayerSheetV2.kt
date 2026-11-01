@@ -15,12 +15,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -170,8 +173,23 @@ fun UnifiedPlayerSheetV2(
             pillShape = pillShape,
             dropState = dropState,
             content = {
-                Box(
-                    modifier = Modifier
+                val isDualMiniActive by remember {
+                    derivedStateOf { dualPlayState.value.enabled && dualPlayState.value.playerBMediaItem != null }
+                }
+
+                val sheetBackdropModifier = if (isDualMiniActive) {
+                    Modifier.drawWithContent {
+                        val fraction = motionScope.expansionFraction.value
+                        if (fraction > 0f) {
+                            drawRect(
+                                brush = if (pureBlack) SolidColor(Color.Black) else backgroundGradient,
+                                alpha = fraction.coerceIn(0f, 1f)
+                            )
+                        }
+                        drawContent()
+                    }
+                } else {
+                    Modifier
                         .playerSheetBackdrop(
                             hazeState = hazeState,
                             hazeStyle = miniHazeStyle,
@@ -183,6 +201,10 @@ fun UnifiedPlayerSheetV2(
                             expansionFractionProvider = { motionScope.expansionFraction.value },
                             density = density
                         )
+                }
+
+                Box(
+                    modifier = sheetBackdropModifier
                 ) {
                     UnifiedPlayerSheetLayers(
                         state = state,
@@ -234,6 +256,7 @@ fun UnifiedPlayerSheetV2(
                         },
                         dualState = dualPlayState,
                         dualPlayEngine = dualPlayEngine,
+                        hazeState = hazeState,
                     )
                 }
             }

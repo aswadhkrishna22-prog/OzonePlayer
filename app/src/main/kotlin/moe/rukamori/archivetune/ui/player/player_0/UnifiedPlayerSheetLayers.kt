@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -89,6 +90,7 @@ internal fun UnifiedPlayerSheetLayers(
     onOpenLyricsB: () -> Unit = {},
     dualState: DualPlayState? = null,
     dualPlayEngine: DualPlayEngine? = null,
+    hazeState: HazeState? = null,
 ) {
     val density = LocalDensity.current.density
     val canvasState = rememberPlayerCanvasState(state.trackUrl, state.title, state.artist)
@@ -228,6 +230,7 @@ internal fun UnifiedPlayerSheetLayers(
                             expansionFractionProvider = expansionFractionProvider,
                             isVisible = isMiniPlayerVisible,
                             engine = effectiveEngine,
+                            hazeState = hazeState,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     } else {
