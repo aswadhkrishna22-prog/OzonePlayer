@@ -28,6 +28,7 @@ fun CompactMenuRow(
     subtitle: String,
     iconResId: Int? = null,
     leadingContent: (@Composable () -> Unit)? = null,
+    titleContent: (@Composable () -> Unit)? = null,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     showArrow: Boolean = false,
@@ -87,13 +88,17 @@ fun CompactMenuRow(
             Spacer(modifier = Modifier.width(10.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    color = if (isActive) activeIconTint else Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    fontFamily = LocalArchiveTuneFontFamily.current
-                )
+                if (titleContent != null) {
+                    titleContent()
+                } else {
+                    Text(
+                        text = title,
+                        color = if (isActive) activeIconTint else Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = LocalArchiveTuneFontFamily.current
+                    )
+                }
                 Spacer(modifier = Modifier.height(1.dp))
                 Text(
                     text = subtitle,

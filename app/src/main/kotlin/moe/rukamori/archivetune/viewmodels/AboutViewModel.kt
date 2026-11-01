@@ -35,7 +35,8 @@ class AboutViewModel @Inject constructor(
     private var translationContributorsJob: Job? = null
     private var dependencyLicensesJob: Job? = null
 
-    private var contributorsState: AboutContributorsUiState = AboutContributorsUiState.Loading
+    private var contributorsState: AboutContributorsUiState = AboutContributorsUiState.Empty
+
     private var translationContributorsState: AboutTranslationContributorsUiState =
         AboutTranslationContributorsUiState.Loading
     private var dependencyLicensesState: AboutDependencyLicensesUiState = AboutDependencyLicensesUiState.Loading
@@ -45,7 +46,6 @@ class AboutViewModel @Inject constructor(
 
     init {
         updateState()
-        loadContributors()
     }
 
     fun showOverflowMenu() { isOverflowMenuExpanded = true; updateState() }

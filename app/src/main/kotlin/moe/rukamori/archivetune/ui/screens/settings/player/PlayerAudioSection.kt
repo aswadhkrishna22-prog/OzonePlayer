@@ -6,13 +6,24 @@
 
 package moe.rukamori.archivetune.ui.screens.settings.player
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.ui.component.DualPlayBetaChip
+import moe.rukamori.archivetune.ui.component.DualPlayBetaDialog
+import moe.rukamori.archivetune.ui.component.DualPlayBetaInfoButton
 import moe.rukamori.archivetune.ui.component.PreferenceEntry
 import moe.rukamori.archivetune.ui.component.PreferenceGroup
 import moe.rukamori.archivetune.ui.component.SwitchPreference
@@ -61,8 +72,21 @@ internal fun PlayerAudioSection(
             )
         }
         item {
+            var showBetaDialog by remember { mutableStateOf(false) }
+            if (showBetaDialog) {
+                DualPlayBetaDialog(onDismiss = { showBetaDialog = false })
+            }
             PreferenceEntry(
-                title = { Text("Dual Play (Debug)") },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text("Dual Play")
+                        DualPlayBetaChip()
+                        DualPlayBetaInfoButton(onClick = { showBetaDialog = true })
+                    }
+                },
                 description = "Two independent songs simultaneously (Left/Right ear)",
                 icon = { Icon(painterResource(R.drawable.waves), null) },
                 onClick = actions.onDualPlayClick,

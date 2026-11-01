@@ -8,9 +8,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.flow.flowOf
 import moe.rukamori.archivetune.LocalPlayerConnection
+import moe.rukamori.archivetune.ui.component.DualPlayBetaChip
+import moe.rukamori.archivetune.ui.component.DualPlayBetaDialog
+import moe.rukamori.archivetune.ui.component.DualPlayBetaInfoButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -140,6 +145,11 @@ fun SettingsMenuContent(
         val isDualPlayEnabled = dualPlayState?.enabled == true
         val canEnableDualPlay = dualPlayEngine?.canEnable() == true
 
+        var showDualPlayBetaDialog by remember { mutableStateOf(false) }
+        if (showDualPlayBetaDialog) {
+            DualPlayBetaDialog(onDismiss = { showDualPlayBetaDialog = false })
+        }
+
         val totalRowCount = 9 +
             (if (hasCast) 1 else 0) +
             (if (hasArtistId) 1 else 0) +
@@ -150,6 +160,25 @@ fun SettingsMenuContent(
 
         CompactMenuRow(
             title = "Dual Play",
+            titleContent = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = "Dual Play",
+                        color = if (isDualPlayEnabled) Color(state.vibrantColor) else Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = LocalArchiveTuneFontFamily.current,
+                    )
+                    DualPlayBetaChip(isGlass = true)
+                    DualPlayBetaInfoButton(
+                        onClick = { showDualPlayBetaDialog = true },
+                        isGlass = true,
+                    )
+                }
+            },
             subtitle = when {
                 isDualPlayEnabled -> "Dual Play is active (split ears)"
                 canEnableDualPlay -> "Play two songs in Left / Right ears"
