@@ -1,0 +1,101 @@
+name: Build PR Debug APK
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "feat/slim-updates", "feat/dual-play-ui" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Upload Debug & R8 Test APKs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build Normal Debug APK
+        run: ./gradlew assembleGmsMobileUniversalDebug -Pdualplay=true --stacktrace
+
+      - name: Build R8 Release Test APK
+        run: ./gradlew assembleGmsMobileUniversalRelease -Prtest=true -PnightlyVersionName="1.2.${{ github.run_number }}" --stacktrace
+
+      - name: Analyze APK Sizes & Summary
+        run: |
+          DEBUG_APK=$(find app/build/outputs/apk/gmsMobileUniversal/debug -name "*.apk" | head -n 1)
+          R8_APK=$(find app/build/outputs/apk/gmsMobileUniversal/release -name "*.apk" | head -n 1)
+
+          DEBUG_SIZE=$(ls -lh "$DEBUG_APK" | awk '{print $5}')
+          R8_SIZE=$(ls -lh "$R8_APK" | awk '{print $5}')
+
+          echo "## 📊 APK Comparison: Debug vs R8 Release" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Variant | Compressed APK Size |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Normal Debug (Universal)** | $DEBUG_SIZE |" >> $GITHUB_STEP_SUMMARY
+          echo "| **R8 Minified Release (Universal)** | $R8_SIZE |" >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔍 R8 Release Breakdown" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Uncompressed Size |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+
+          unzip -l "$R8_APK" | awk '
+            /classes.*\.dex/ { dex += $1 }
+            /res\// { res += $1 }
+            /lib\// { lib += $1 }
+            /assets\// { assets += $1 }
+            /resources\.arsc/ { arsc += $1 }
+            END {
+              printf("| **DEX (Code)** | %.2f MB |\n", dex / (1024*1024));
+              printf("| **Resources (res/)** | %.2f MB |\n", res / (1024*1024));
+              printf("| **Resources Table (arsc)** | %.2f MB |\n", arsc / (1024*1024));
+              printf("| **Native Libraries (lib/)** | %.2f MB |\n", lib / (1024*1024));
+              printf("| **Assets** | %.2f MB |\n", assets / (1024*1024));
+            }
+          ' >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Native Libraries Breakdown" >> $GITHUB_STEP_SUMMARY
+          echo "| ABI | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          unzip -l "$R8_APK" | grep "lib/" | awk '
+            {
+              split($NF, a, "/");
+              if (a[2] != "") abi[a[2]] += $1;
+            }
+            END {
+              for (i in abi) {
+                printf("| %s | %.2f MB |\n", i, abi[i] / (1024*1024));
+              }
+            }
+          ' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Debug APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OzonePlayer-dualplay-debug
+          path: app/build/outputs/apk/gmsMobileUniversal/debug/*.apk
+
+      - name: Upload R8 Test Release APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OzonePlayer-rtest-release
+          path: app/build/outputs/apk/gmsMobileUniversal/release/*.apk
