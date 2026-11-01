@@ -74,6 +74,7 @@ android {
         manifestPlaceholders["appName"] = "@string/app_name"
 
         val nightlyVersionName = findProperty("nightlyVersionName")?.toString()?.trim()?.takeIf { it.isNotEmpty() }
+        val canaryDate = nightlyVersionName?.replace(Regex("[^0-9]"), "")?.takeIf { it.isNotEmpty() }
         if (nightlyVersionName != null) {
             versionName = nightlyVersionName
             val semVerMatch = Regex("""^v?(\d+)\.(\d+)\.(\d+)""").find(nightlyVersionName)
@@ -83,7 +84,6 @@ android {
                 val run = semVerMatch.groupValues[3].toInt()
                 versionCode = major * 1_000_000 + minor * 10_000 + run
             } else {
-                val canaryDate = nightlyVersionName.replace(Regex("[^0-9]"), "").takeIf { it.isNotEmpty() }
                 val dateCode = (if (canaryDate != null && canaryDate.length > 8) canaryDate.take(8) else canaryDate)
                     ?.toIntOrNull()
                     ?.takeIf { it > 5 }
