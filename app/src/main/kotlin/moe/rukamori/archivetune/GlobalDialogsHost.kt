@@ -553,7 +553,7 @@ fun BoxScope.GlobalDialogsHost(
     // ── Low Data Mode "Ask Me" Dialog ─────────────────────────────────────
     val showAskMe by moe.rukamori.archivetune.lowdata.LowDataManager.showAskMeDialog.collectAsState()
     val isDualPlaySplitForAskMe = playerConnection?.dualPlayEngine?.state?.value?.splitViewActive == true
-    val isBottomSheetOpenForAskMe = bottomSheetPageState.currentValue != BottomSheetValue.Collapsed || menuState.isExpanded
+    val isBottomSheetOpenForAskMe = bottomSheetPageState.isVisible || menuState.isVisible
 
     if (showAskMe && !isDualPlaySplitForAskMe && !isBottomSheetOpenForAskMe) {
         moe.rukamori.archivetune.ui.component.DefaultDialog(
