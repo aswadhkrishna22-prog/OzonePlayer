@@ -74,7 +74,7 @@ class DeepLinkHandler(
                 coroutineScope.launch {
                     resolveQueueMediaItemUseCase?.invoke(action.videoId, action.playlistId)?.onSuccess { mediaItem ->
                         withContext(Dispatchers.Main) {
-                            playerConnectionProvider()?.playQueue(ListQueue(items = listOf(mediaItem)))
+                            playerConnectionProvider()?.playQueue(ListQueue(items = listOf(mediaItem)), userInitiated = false)
                         }
                     }
                 }
@@ -84,7 +84,7 @@ class DeepLinkHandler(
                     resolveWatchPlaylistEndpointUseCase?.invoke(action.playlistId, action.shuffle)?.onSuccess { endpoint ->
                         withContext(Dispatchers.Main) {
                             if (endpoint != null) {
-                                playerConnectionProvider()?.playQueue(YouTubeQueue.playlist(endpoint))
+                                playerConnectionProvider()?.playQueue(YouTubeQueue.playlist(endpoint), userInitiated = false)
                             } else {
                                 requestSheetCollapse()
                                 sendEvent(PlayerEvent.Navigate("online_playlist/${action.playlistId}"))

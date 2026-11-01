@@ -2,7 +2,7 @@
 
   <img src="assets/ozone_logo.png" width="240" height="240" alt="Ozone Player Icon" style="border-radius: 28px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);" />
 
-  <h1>YumaPlayer (Yuma)</h1>
+  <h1>Ozone Player</h1>
 
   <p align="center">
     <a href="README.md">
@@ -17,7 +17,7 @@
   <p align="center">
     <strong>Гибридный музыкальный плеер для Android с акцентом на удобство, дизайн и качественный звук.</strong>
     <br />
-    <em>Spotify UI + Алгоритмы рекомендаций + База YouTube Music + Hi-Res Lossless (FLAC).</em>
+    <em>Spotify UI + Алгоритмы рекомендаций + База YouTube Music + Hi-Res Lossless (FLAC) + Dual Play.</em>
   </p>
 
   <p align="center">
@@ -30,29 +30,21 @@
   </p>
 
   <div>
-    <img src="https://img.shields.io/github/v/release/MuwMx/YumaPlayer?style=for-the-badge&color=6366f1&labelColor=1e1e2e&logo=github" alt="Latest Release" />
-    <img src="https://img.shields.io/github/stars/MuwMx/YumaPlayer?style=for-the-badge&color=6366f1&labelColor=1e1e2e&logo=github" alt="GitHub Stars" />
-    <img src="https://img.shields.io/github/downloads/MuwMx/YumaPlayer/total?style=for-the-badge&color=6366f1&labelColor=1e1e2e&logo=github" alt="Downloads" />
+    <img src="https://img.shields.io/github/v/release/aswadhkrishna22-prog/OzonePlayer?style=for-the-badge&color=6366f1&labelColor=1e1e2e&logo=github" alt="Latest Release" />
+    <img src="https://img.shields.io/github/stars/aswadhkrishna22-prog/OzonePlayer?style=for-the-badge&color=6366f1&labelColor=1e1e2e&logo=github" alt="GitHub Stars" />
     <img src="https://img.shields.io/badge/License-GPLv3-6366f1?style=for-the-badge&logo=gnu&logoColor=white&labelColor=1e1e2e" alt="License: GPLv3" />
     <img src="https://img.shields.io/badge/Platform-Android%208.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white&labelColor=1e1e2e" alt="Android 8.0+" />
-    <a href="https://t.me/yumaplayer"><img src="https://img.shields.io/badge/Telegram-Community-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white&labelColor=1e1e2e" alt="Telegram" /></a>
   </div>
 
 </div>
-
-<p align="center">
-  <a href="https://trendshift.io/repositories/202305?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-202305" target="_blank" rel="noopener noreferrer">
-    <img src="https://trendshift.io/api/badge/trendshift/repositories/202305/daily?language=Kotlin" alt="MuwMx%2FYumaPlayer | Trendshift" width="250" height="55"/>
-  </a>
-</p>
 
 ---
 
 ## 🌟 О проекте
 
-**YumaPlayer** — это независимый открытый музыкальный плеер для Android, объединяющий каталоги и функции двух ведущих платформ со стримингом и воспроизведением локальных треков в Hi-Res качестве.
+**Ozone Player** — это независимый открытый музыкальный плеер для Android, объединяющий каталоги и функции двух ведущих платформ со стримингом и воспроизведением локальных треков в Hi-Res качестве.
 
-Проект вырос как глубокая переработка **ArchiveTune** (с наработками от **Metrolist** и **SimpMusic**), вдохновлен механикой очередей **PixelPlayer**, сетевым взаимодействием со Spotify из **Meld** и стримингом FLAC из **Stash**. На этом фундаменте создана модульная архитектура из 18 модулей, собственная дизайн-система **YDS 2.1** и плавная жестовая модель с аппаратным ускорением.
+Проект создан на основе **ArchiveTune** (с наработками от **Metrolist** и **SimpMusic**), вдохновлен механикой очередей **PixelPlayer**, сетевым взаимодействием со Spotify из **Meld** и стримингом FLAC из **Stash**. На этом фундаменте создана модульная архитектура из 20 модулей, собственная дизайн-система **Ozone Design System** и плавная жестовая модель с аппаратным ускорением.
 
 Никаких платных подписок, встроенной рекламы, аналитики и закрытых трекеров. Учетные данные шифруются локально на устройстве (AES-256-GCM via Google Tink), а исходный код полностью открыт под лицензией GPL-3.0.
 
@@ -69,39 +61,39 @@
       </td>
       <td width="33%" align="center">
         <img src="assets/screenshots/lyrics_screen.png" alt="3-Tier Lyrics" width="100%" style="border-radius: 16px;" /><br />
-        <sub><b>Синхронная 3-уровневая Лирика</b></sub>
+        <sub><b>Синхронизированный текст</b></sub>
       </td>
       <td width="33%" align="center">
         <img src="assets/screenshots/queue.png" alt="Queue Management" width="100%" style="border-radius: 16px;" /><br />
-        <sub><b>Очередь (Dual-Sheet & Haptic)</b></sub>
+        <sub><b>Очередь воспроизведения</b></sub>
       </td>
     </tr>
     <tr>
       <td width="33%" align="center">
         <img src="assets/screenshots/artist_screen.png" alt="Artist Header" width="100%" style="border-radius: 16px;" /><br />
-        <sub><b>Иммерсивный постер артиста</b></sub>
+        <sub><b>Постер артиста</b></sub>
       </td>
       <td width="33%" align="center">
         <img src="assets/screenshots/artist_screen2.png" alt="Morphing Collapse" width="100%" style="border-radius: 16px;" /><br />
-        <sub><b>Telegram-морфинг в каплю</b></sub>
+        <sub><b>Morphing Header</b></sub>
       </td>
       <td width="33%" align="center">
         <img src="assets/screenshots/main_screen.png" alt="Home Screen" width="100%" style="border-radius: 16px;" /><br />
-        <sub><b>Главная (Quick Picks & YDS)</b></sub>
+        <sub><b>Главный экран</b></sub>
       </td>
     </tr>
     <tr>
       <td width="33%" align="center">
         <img src="assets/screenshots/spotify.png" alt="Spotify Screen" width="100%" style="border-radius: 16px;" /><br />
-        <sub><b>Spotify Feed & Рекомендации</b></sub>
+        <sub><b>Лента Spotify</b></sub>
       </td>
       <td width="33%" align="center">
         <img src="assets/screenshots/spotify_radio.png" alt="Spotify Radio" width="100%" style="border-radius: 16px;" /><br />
-        <sub><b>Spotify Radio & Подборки</b></sub>
+        <sub><b>Радио и Миксы Spotify</b></sub>
       </td>
       <td width="33%" align="center">
         <img src="assets/screenshots/spotify_dailymix.png" alt="Spotify Daily" width="100%" style="border-radius: 16px;" /><br />
-        <sub><b>Spotify Daily Mixes</b></sub>
+        <sub><b>Daily Mix</b></sub>
       </td>
     </tr>
   </table>
@@ -111,80 +103,54 @@
 
 ## ✨ Основные возможности
 
-### 🔄 Два режима работы (Spotify + YouTube Music)
-* **Spotify Home:** Персонализированный фид рекомендаций, миксы дня (Daily Mixes), Discover Weekly, подборки любимых исполнителей и прямой импорт ваших плейлистов/лайков из Spotify.
-* **YouTube Music Home:** Классический поиск по всей базе YT Music, чарты, тематические подборки, радиостанции и быстрое переключение каналов.
+### 🎛️ Аудиодвижок, Dual Play и Smart Automix
+* **Dual Play (Бета):** Воспроизведение двух аудиопотоков одновременно с разделением каналов (L/R) или общим микшированием и независимой регулировкой громкости.
+* **Dual-Deck бесшовный кроссфейд:** Настоящее непрерывное воспроизведение треков внахлест с двумя независимыми синхронизированными деками.
+* **DJ Transition Intelligence:** Автоматический анализ точек входа/выхода, BPM-сопоставление и частотная фильтрация баса.
+* **Аудиофильский тракт:** 24-битная упакованная обработка PCM, приоритетный Kopus декодер с fallback на MediaCodec.
+* **Smart Stall Recovery:** Автоматическая деградация кроссфейда при сетевых задержках и мгновенное возобновление потока.
+* **N+1 Prefetching:** Умная фоновая подгрузка следующих композиций в локальный кэш.
 
-### 🎧 Аудиофильский звук, FLAC и Воспроизведение
-* **Lossless FLAC:** Стриминг и загрузка треков в формате FLAC (через Qobuz / QBDLX бэкбон) с указанием личного токена или публичных резолверов.
+### 🔄 Гибридный режим (Spotify + YouTube Music)
+* **Каталог Spotify:** Нативный просмотр альбомов, Daily Mixes, Discover Weekly и плейлистов с дедупликацией треков.
+* **Каталог YouTube Music:** Полнотекстовый поиск, чарты, категории настроений и радиостанции.
+* **SponsorBlock:** Пропуск спонсорских вставок, интро и завершений.
+
+### 🎧 Lossless FLAC и Локальный звук
+* **Прямой FLAC:** Стриминг и загрузка оригинальных треков Hi-Res Lossless.
 * **Бесшовный фоллбэк:** При отсутствии Lossless-версии трек гладко воспроизводится из YouTube Music (Opus / AAC).
 * **Локальная музыка:** Полноценный встроенный плеер для аудиофайлов на памяти телефона (FLAC, MP3, AAC, OGG, WAV).
-* **Оффлайн и Кэш:** Автоматическое кэширование прослушанных треков из YouTube Music для автономного прослушивания без интернета *(кэширование FLAC в активной разработке)*.
-* **Тонкая настройка звука:** Встроенный 5-полосный эквалайзер + поддержка системных аудиоэффектов, нормализация громкости (EBU R128), плавный кроссфейд, изменение темпа и тональности, таймер сна.
+* **Тонкая настройка звука:** Встроенный 5-полосный эквалайзер, нормализация громкости (EBU R128), изменение темпа и тональности, таймер сна.
 
 ### 🎤 Продвинутая Лирика и AI-перевод
-* **3-уровневый синхрон:** Одновременный показ оригинального текста (Кандзи/Хангыль), транслитерации (Ромадзи) и перевода на русский язык.
+* **3-уровневый синхрон:** Одновременный показ оригинального текста (Кандзи/Хангыль), транслитерации (Ромадзи) и перевода.
 * **Караоке-скролл:** Точная синхронизация по времени через 6+ провайдеров (LRCLIB, Kugou, BetterLyrics, SimpMusic, Unison, YouLyPlus).
 * **AI-перевод на лету:** Мгновенный перевод текста песен прямо во время воспроизведения.
 * **Карточки цитат:** Возможность сохранить фрагмент текста как стильную картинку для соцсетей.
 
-### 🎨 Yuma Design System (YDS 2.1) и Плавность
-* **Стеклянный интерфейс (Glass UI):** Полупрозрачные карточки (`GlassScaffold`, тонкие рамки 0.5dp, выверенная геометрия скруглений 22dp / 5dp).
-* **Dual-Sheet жесты:** Независимые шторки плеера (свайп слева — Текст песни, свайп справа — Очередь) без конфликтов жестов и тряски списков.
-* **Telegram Morphing Header:** Плавное сжатие постера артиста или альбома в аккуратную каплю в строке состояния при скролле без растягивания картинки.
-* **Smart Freeze & Pre-warming:** Экраны открываются мгновенно, а невидимые анимации и фоновые процессы засыпают при сворачивании, сохраняя заряд аккумулятора и прохладу устройства.
+### 🎨 Ozone Design System и Плавность
+* **Стеклянный интерфейс (Glass UI):** Полупрозрачные карточки, тонкие рамки, выверенная геометрия скруглений.
+* **Dual-Sheet жесты:** Независимые шторки плеера без конфликтов жестов и тряски списков.
+* **Morphing Header:** Плавное сжатие постера артиста или альбома в строке состояния при скролле.
 * **Динамический Monet:** Адаптивная генерация темы и акцентов на основе палитры текущей обложки трека.
-
-### 🌐 Интеграции и Удобство
-* **Spotify Canvas & Apple Motion:** Зацикленные видео-фоны во время воспроизведения *(в разработке)*.
-* **Распознавание музыки (Shazam):** Встроенный поиск играющего рядом трека по акустическому отпечатку *(в разработке)*.
-* **Together (Совместное прослушивание):** Синхронное прослушивание музыки с друзьями через WebSockets.
-* **Скробблинг:** Нативная поддержка Last.fm и ListenBrainz.
-* **Discord Rich Presence:** Отображение играющего трека в статусе профиля Discord.
-* **Android Auto & Виджеты:** Поддержка воспроизведения в автомобиле и виджеты на рабочем столе (Glance).
-
----
-
-## 🌍 Локализация (Globalization)
-
-YumaPlayer переведен на множество языков благодаря помощи сообщества. Процесс перевода непрерывно синхронизируется с репозиторием через платформу [Hosted Weblate](https://hosted.weblate.org/).
-
-<div align="center">
-  <a href="https://hosted.weblate.org/engage/yumaplayer/">
-    <img src="https://hosted.weblate.org/widgets/yumaplayer/-/svg-badge.svg" alt="Статус перевода" />
-  </a>
-  <br /><br />
-  <a href="https://hosted.weblate.org/engage/yumaplayer/">
-    <img src="https://hosted.weblate.org/widgets/yumaplayer/-/multi-auto.svg" alt="Детальный прогресс локализации" />
-  </a>
-</div>
-
-<br />
-
-<div align="center">
-  <a href="https://hosted.weblate.org/engage/yumaplayer/">
-    <img src="https://img.shields.io/badge/Помочь_с_переводом-Weblate-00875A?style=for-the-badge&logo=weblate&logoColor=white" alt="Перевести на Weblate" />
-  </a>
-</div>
-
-> **Хотите помочь перевести Yuma?** Знания Git и программирования не нужны. Просто откройте [панель перевода на Weblate](https://hosted.weblate.org/engage/yumaplayer/), выберите язык и вносите правки прямо через браузер.
 
 ---
 
 ## 🏛️ Архитектура и Технологический стек
 
-YumaPlayer — многомодульный Android-проект, построенный по канонам Clean Architecture и однонаправленного потока данных (UDF):
+Ozone Player — многомодульный Android-проект, построенный по канонам Clean Architecture и однонаправленного потока данных (UDF):
 
-* **UI и Дизайн:** Jetpack Compose, дизайн-токены YDS 2.1, аппаратно-ускоренные Haze-оверлеи, плавная жестовая физика.
-* **Аудиодвижок:** Media3 (ExoPlayer), автономный конвейер локального аудио, Qobuz/FLAC resolver бэкбон.
+* **UI и Дизайн:** Jetpack Compose, дизайн-токены Ozone Design System, аппаратно-ускоренные Haze-оверлеи.
+* **Аудиодвижок:** Media3 (ExoPlayer), `:core:audio-dsp` (Dual Play, Smart Automix, DJ filter cascade).
 * **Данные и Хранилище:** Room ORM, шифрованные защищенные настройки (AES-256-GCM via Google Tink).
-* **Сеть и Прием данных:** Ktor/Retrofit, InnerTube (движок YouTube Music), собственные многоисточниковые скраперы лирики.
+* **Сеть и Прием данных:** Ktor/Retrofit, InnerTube (движок YouTube Music).
 
 📖 **Подробная документация для разработчиков:**
 * [Обзор архитектуры и граф модулей](docs/architecture/ARCHITECTURE.md)
 * [Архитектурные решения (ADR)](docs/architecture/DECISIONS.md)
-* [Спецификация дизайн-системы (YDS 2.1)](docs/design/YDS.md)
-* [Стандарты кода и правила](docs/development/YUMA_RULES.md)
+* [Руководство по компонентам](docs/design/COMPONENT_GUIDE.md)
+* [Стандарты кода и правила](docs/development/CODING_STANDARD.md)
+
 ---
 
 ## 📥 Установка и Загрузка
@@ -194,24 +160,18 @@ YumaPlayer — многомодульный Android-проект, построе
     <thead>
       <tr>
         <th align="center">GitHub Releases</th>
-        <th align="center">Telegram Channel</th>
         <th align="center">Obtainium</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <td align="center">
-          <a href="https://github.com/MuwMx/YumaPlayer/releases/latest">
+          <a href="https://github.com/aswadhkrishna22-prog/OzonePlayer/releases/latest">
             <img src="assets/badge_github.png" height="50" alt="Download on GitHub" />
           </a>
         </td>
         <td align="center">
-          <a href="https://t.me/yumaplayer">
-            <img src="https://img.shields.io/badge/Telegram-Channel-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" height="40" alt="Get in Telegram" />
-          </a>
-        </td>
-        <td align="center">
-          <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/MuwMx/YumaPlayer">
+          <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/aswadhkrishna22-prog/OzonePlayer">
             <img src="https://img.shields.io/badge/Obtainium-Auto_Updates-purple?style=for-the-badge" height="40" alt="Add to Obtainium" />
           </a>
         </td>
@@ -222,18 +182,18 @@ YumaPlayer — многомодульный Android-проект, построе
 
 ### Сборка из исходников
 ```bash
-git clone https://github.com/MuwMx/YumaPlayer.git
-cd YumaPlayer
+git clone https://github.com/aswadhkrishna22-prog/OzonePlayer.git
+cd OzonePlayer
 ./gradlew assembleRelease
 # Готовый APK появится в: app/build/outputs/apk/release/
 ```
-*Требования:* свежая версия Android Studio с поддержкой AGP 9.x, JDK 21, Android SDK 37 (compileSdk/targetSdk 37, minSdk 26).
+*Требования:* свежая версия Android Studio с поддержкой AGP, JDK 21, Android SDK 37 (compileSdk/targetSdk 37, minSdk 26).
 
 ---
 
 ## ⚙️ Подключение аккаунтов
 
-YumaPlayer полностью функционален без логина. Авторизация нужна только для подтягивания ваших личных плейлистов и рекомендаций:
+Ozone Player полностью функционален без логина. Авторизация нужна только для подтягивания ваших личных плейлистов и рекомендаций:
 
 <details>
 <summary><b>🎵 Подключение Spotify</b></summary>
@@ -255,36 +215,10 @@ YumaPlayer полностью функционален без логина. Ав
 
 ## ☕ Поддержать проект (Support)
 
-YumaPlayer распространяется бесплатно, не содержит рекламы и не продает подписки. Если плеер вам понравился и вы хотите поддержать автора:
+Ozone Player распространяется бесплатно, не содержит рекламы и не продает подписки. Если плеер вам понравился и вы хотите поддержать автора:
 
-<div align="center">
-  <a href="https://ko-fi.com/muwmix">
-    <img src="assets/buymeacoffee.png" height="45" alt="Support on Ko-fi" />
-  </a>
-  &nbsp;&nbsp;
-  <a href="https://patreon.com/MuwMix">
-    <img src="https://img.shields.io/badge/Patreon-Поддержать_на_Patreon-FF424D?style=for-the-badge&logo=patreon&logoColor=white" height="45" alt="Support on Patreon" />
-  </a>
-  <br /><br />
-  <p>
-    <b>Solana (SOL, USDT, USDC):</b><br />
-    <code>DT3ckdbNuiQMR1mrCpBXCMrhLB19GckVv3YfxsLLiF8z</code>
-  </p>
-  <p>
-    <b>PayPal / Email Transfer:</b><br />
-    <code>muwmix.coffee@gmail.com</code>
-  </p>
-</div>
-
----
-
-## 📈 История звезд
-
-<p align="center">
-  <a href="https://star-history.com/#MuwMx/YumaPlayer&Date">
-    <img src="https://api.star-history.com/svg?repos=MuwMx/YumaPlayer&type=Date&theme=dark" alt="Star History Chart" width="100%" />
-  </a>
-</p>
+- Поставьте звезду репозиторию на [GitHub](https://github.com/aswadhkrishna22-prog/OzonePlayer) ⭐
+- Отправляйте отзывы и отчеты об ошибках через экран «Сообщить о проблеме» в приложении!
 
 ---
 
@@ -293,13 +227,7 @@ YumaPlayer распространяется бесплатно, не содер�
 Мы рады любому вкладу сообщества — от исправления багов до предложений новых функций:
 
 * Ознакомьтесь с **[Правилами участия](CONTRIBUTING.md)** перед отправкой кода или созданием Pull Request.
-* Хотите перевести плеер? Переходите сразу на **[Hosted Weblate](https://hosted.weblate.org/engage/yumaplayer/)** — знание Git не требуется.
-
-### 👥 Контрибьюторы
-
-<a href="https://github.com/MuwMx/YumaPlayer/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=MuwMx/YumaPlayer" alt="Контрибьюторы" />
-</a>
+* Сообщайте о найденных багах через наш [трекер проблем GitHub](https://github.com/aswadhkrishna22-prog/OzonePlayer/issues).
 
 ---
 
@@ -320,15 +248,14 @@ YumaPlayer распространяется бесплатно, не содер�
 ## ⚖️ Лицензия и Отказ от ответственности
 
 ### Лицензия
-YumaPlayer распространяется под свободной лицензией **GNU General Public License v3.0 (GPLv3)**. 
+Ozone Player распространяется под свободной лицензией **GNU General Public License v3.0 (GPLv3)**. 
 Вы можете свободно использовать, изучать, модифицировать и распространять код при условии сохранения авторских прав и открытия производного кода под аналогичной лицензией GPL-3.0.
 
 ### Отказ от ответственности (Disclaimer)
-YumaPlayer — это независимый неофициальный сторонний клиент. Проект **не связан с Google LLC, YouTube Music или Spotify AB** и не одобрен ими. Приложение создано исключительно для личного использования и управления собственной медиатекой.
+Ozone Player — это независимый неофициальный сторонний клиент. Проект **не связан с Google LLC, YouTube Music или Spotify AB** и не одобрен ими. Приложение создано исключительно для личного использования и управления собственной медиатекой.
 
 ---
 
 <p align="center">
   Разработано с ❤️ и вниманием к каждому кадру. Enjoy the music! 🎵
 </p>
-

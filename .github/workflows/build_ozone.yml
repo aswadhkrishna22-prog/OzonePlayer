@@ -4,6 +4,12 @@ on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (build and upload artifact only; do not create release)'
+        required: true
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -30,15 +36,131 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Debug APK
-        run: ./gradlew assembleGmsMobileUniversalDebug -PnightlyVersionName="1.2.${{ github.run_number }}" --stacktrace
+      - name: Verify and Decode Release Signing Key
+        env:
+          SIGNING_KEY_BASE64: ${{ secrets.ANDROID_SIGNING_KEY }}
+          KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+        run: |
+          set -e
+          MISSING_SECRETS=""
+          if [ -z "$SIGNING_KEY_BASE64" ]; then MISSING_SECRETS="$MISSING_SECRETS ANDROID_SIGNING_KEY"; fi
+          if [ -z "$KEY_ALIAS" ]; then MISSING_SECRETS="$MISSING_SECRETS SIGNING_KEY_ALIAS"; fi
+          if [ -z "$KEY_PASSWORD" ]; then MISSING_SECRETS="$MISSING_SECRETS SIGNING_KEY_PASSWORD"; fi
+          if [ -z "$STORE_PASSWORD" ]; then MISSING_SECRETS="$MISSING_SECRETS SIGNING_STORE_PASSWORD"; fi
 
-      - name: Prepare Release Asset
+          if [ -n "$MISSING_SECRETS" ]; then
+            echo "::error::Release signing failed: Missing required secret(s):$MISSING_SECRETS"
+            echo "### ❌ Release Signing Failed: Missing Secrets" >> $GITHUB_STEP_SUMMARY
+            echo "The following secrets must be configured in repository settings to build a signed release:" >> $GITHUB_STEP_SUMMARY
+            for sec in $MISSING_SECRETS; do
+              echo "- \`$sec\`" >> $GITHUB_STEP_SUMMARY
+            done
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Release builds must be signed with the stable repository key and cannot fall back to debug key." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          echo "$SIGNING_KEY_BASE64" | base64 -d > /tmp/release.jks
+
+          # Validate store password and verify alias existence early to fail fast (seconds instead of 15m)
+          if ! keytool -list -keystore /tmp/release.jks -storepass "$STORE_PASSWORD" > /tmp/keystore_list.txt 2>&1; then
+            echo "::error::Failed to read keystore with provided SIGNING_STORE_PASSWORD!"
+            cat /tmp/keystore_list.txt
+            exit 1
+          fi
+
+          if ! grep -qi "^${KEY_ALIAS}," /tmp/keystore_list.txt && ! grep -qi "Alias name: ${KEY_ALIAS}" /tmp/keystore_list.txt; then
+            echo "::error::Key alias '${KEY_ALIAS}' was not found in keystore!"
+            echo "### ❌ Release Signing Failed: Key Alias Not Found" >> $GITHUB_STEP_SUMMARY
+            echo "The alias \`${KEY_ALIAS}\` specified in \`SIGNING_KEY_ALIAS\` does not match the keystore entries." >> $GITHUB_STEP_SUMMARY
+            echo "Available entry alias(es) detected in keystore:" >> $GITHUB_STEP_SUMMARY
+            grep "Entry," /tmp/keystore_list.txt | while read -r line; do
+              ENTRY_ALIAS=$(echo "$line" | cut -d',' -f1)
+              echo "- \`$ENTRY_ALIAS\`" >> $GITHUB_STEP_SUMMARY
+            done
+            exit 1
+          fi
+
+      - name: Build Universal Release APK (R8 Minified)
+        env:
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          ./gradlew assembleGmsMobileUniversalRelease \
+            -Pandroid.injected.signing.store.file=/tmp/release.jks \
+            -Pandroid.injected.signing.store.password="${SIGNING_STORE_PASSWORD}" \
+            -Pandroid.injected.signing.key.alias="${SIGNING_KEY_ALIAS}" \
+            -Pandroid.injected.signing.key.password="${SIGNING_KEY_PASSWORD}" \
+            -PnightlyVersionName="1.2.${{ github.run_number }}" \
+            --stacktrace
+
+      - name: Prepare Release Asset & Analyze Size
         run: |
           mkdir -p release_assets
-          APK_FILE=$(find app/build/outputs/apk/gmsMobileUniversal/debug -name "*.apk" | head -n 1)
+          APK_FILE=$(find app/build/outputs/apk/gmsMobileUniversal/release -name "*.apk" | head -n 1)
+          if [ -z "$APK_FILE" ] || [ ! -f "$APK_FILE" ]; then
+            echo "::error::Universal Release APK not found!"
+            exit 1
+          fi
+
           cp "$APK_FILE" "release_assets/OzonePlayer-v1.2.${{ github.run_number }}.apk"
           cp "$APK_FILE" "release_assets/app-gms-mobile-universal-release.apk"
+
+          APK_SIZE=$(ls -lh "$APK_FILE" | awk '{print $5}')
+          echo "### 📦 Ozone Player Universal Release APK: $APK_SIZE" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Uncompressed Size |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+
+          unzip -l "$APK_FILE" | awk '
+            /classes.*\.dex/ { dex += $1 }
+            /res\// { res += $1 }
+            /lib\// { lib += $1 }
+            /assets\// { assets += $1 }
+            /resources\.arsc/ { arsc += $1 }
+            END {
+              printf("| **DEX (Code)** | %.2f MB |\n", dex / (1024*1024));
+              printf("| **Resources (res/)** | %.2f MB |\n", res / (1024*1024));
+              printf("| **Resources Table (arsc)** | %.2f MB |\n", arsc / (1024*1024));
+              printf("| **Native Libraries (lib/)** | %.2f MB |\n", lib / (1024*1024));
+              printf("| **Assets** | %.2f MB |\n", assets / (1024*1024));
+            }
+          ' >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Native Libraries Breakdown" >> $GITHUB_STEP_SUMMARY
+          echo "| ABI | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          unzip -l "$APK_FILE" | grep "lib/" | awk '
+            {
+              split($NF, a, "/");
+              if (a[2] != "") abi[a[2]] += $1;
+            }
+            END {
+              for (i in abi) {
+                printf("| %s | %.2f MB |\n", i, abi[i] / (1024*1024));
+              }
+            }
+          ' >> $GITHUB_STEP_SUMMARY
+
+          # Verify certificate and extract SHA-256 fingerprint for stability proof
+          APKSIGNER_BIN=$(command -v apksigner || find "$ANDROID_HOME/build-tools" -name apksigner 2>/dev/null | sort -V | tail -n 1)
+          if [ -n "$APKSIGNER_BIN" ]; then
+            CERT_FINGERPRINT=$("$APKSIGNER_BIN" verify --print-certs "$APK_FILE" | grep -i "SHA-256 digest" | head -n 1 | sed 's/.*: //')
+          else
+            CERT_FINGERPRINT=$(keytool -printcert -jarfile "$APK_FILE" | grep -i "SHA256:" | head -n 1 | sed 's/.*: //')
+          fi
+
+          echo "Signing Certificate SHA-256: $CERT_FINGERPRINT"
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔑 Signing Certificate Fingerprint (SHA-256)" >> $GITHUB_STEP_SUMMARY
+          echo "\`$CERT_FINGERPRINT\`" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "> ℹ️ **Dry Run Mode Active**: APK built, signed, and verified. Release publication is skipped." >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Upload Ozone Player Artifact
         uses: actions/upload-artifact@v4
@@ -47,9 +169,21 @@ jobs:
           path: release_assets/*.apk
 
       - name: Publish GitHub Release for In-App Auto-Update
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && (!inputs.dry_run)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          cat << 'EOF' > /tmp/release_notes.md
+> [!IMPORTANT]
+> **One-Time Reinstall Required**: This release transitions to our official stable signing key for seamless future auto-updates. Because past builds were signed with ephemeral keys, you must perform a one-time manual reinstall:
+> 1. Back up your library first (**Settings → Backup and Restore**).
+> 2. Uninstall your current Ozone Player app.
+> 3. Install this new APK. All future updates will update in place automatically!
+
+---
+
+EOF
           gh release create "v1.2.${{ github.run_number }}" release_assets/*.apk \
             --title "Ozone Player v1.2.${{ github.run_number }}" \
+            --notes-file /tmp/release_notes.md \
             --generate-notes

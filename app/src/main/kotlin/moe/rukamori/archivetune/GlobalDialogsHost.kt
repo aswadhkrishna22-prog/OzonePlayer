@@ -15,6 +15,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Button
+import moe.rukamori.archivetune.ui.component.DefaultDialog
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -538,16 +542,47 @@ fun BoxScope.GlobalDialogsHost(
         )
     }
 
+    // ── Signature Conflict One-Time Reinstall Dialog ───────────────────────
+    val showSignatureConflict by moe.rukamori.archivetune.utils.AppUpdateInstaller.showSignatureConflictDialog.collectAsState()
+    if (showSignatureConflict) {
+        DefaultDialog(
+            onDismiss = { moe.rukamori.archivetune.utils.AppUpdateInstaller.dismissSignatureConflictDialog() },
+            title = { Text(stringResource(R.string.update_reinstall_title)) },
+            buttons = {
+                TextButton(onClick = { moe.rukamori.archivetune.utils.AppUpdateInstaller.dismissSignatureConflictDialog() }) {
+                    Text(stringResource(android.R.string.ok))
+                }
+                Spacer(Modifier.width(8.dp))
+                Button(onClick = {
+                    moe.rukamori.archivetune.utils.AppUpdateInstaller.dismissSignatureConflictDialog()
+                    navController.navigate("settings/backup_restore")
+                }) {
+                    Text(stringResource(R.string.action_backup))
+                }
+            },
+        ) {
+            Text(stringResource(R.string.update_reinstall_desc))
+        }
+    }
+
     // ── Dual Play Intercept Dialog ─────────────────────────────────────────
     val dualPlayEngine = playerConnection?.dualPlayEngine
     val dualPlayState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)
     val pendingDualQueue = dualPlayState?.pendingInterceptQueue
     if (pendingDualQueue != null) {
+        val hasSongB = dualPlayState?.playerBMediaItem != null
         DualPlayInterceptDialog(
             pending = pendingDualQueue,
-            hasSongB = dualPlayState?.playerBMediaItem != null,
+            hasSongB = hasSongB,
             onAddToDualPlay = { dualPlayEngine?.acceptInterceptAsDualPlay() },
-            onPlayInstead = { dualPlayEngine?.rejectInterceptAndPlay() },
+            onAddToSongBQueue = { dualPlayEngine?.addInterceptToDualPlayQueue() },
+            onPlayInstead = {
+                if (hasSongB) {
+                    dualPlayEngine?.replaceSongA()
+                } else {
+                    dualPlayEngine?.rejectInterceptAndPlay()
+                }
+            },
             onCancel = { dualPlayEngine?.cancelIntercept() },
         )
     }

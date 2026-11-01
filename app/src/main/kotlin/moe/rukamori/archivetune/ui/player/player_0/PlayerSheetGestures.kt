@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.geometry.Offset
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.player.player_0.scoped.PlayerSheetPredictiveBackHandler
@@ -34,9 +35,11 @@ internal fun rememberPlayerSheetGestures(
     onCloseLyricsClick: () -> Unit,
     view: View,
     hapticFeedbackEnabled: Boolean,
+    onDragStartedPosition: ((Offset) -> Unit)? = null,
 ): PlayerSheetGestures {
     val currentOnAction by rememberUpdatedState(onAction)
     val currentOnCloseLyricsClick by rememberUpdatedState(onCloseLyricsClick)
+    val currentOnDragStartedPosition by rememberUpdatedState(onDragStartedPosition)
 
     val miniDismissGestureHandler = rememberMiniPlayerDismissGestureHandler(
         scope = motionScope.scope,
@@ -94,7 +97,8 @@ internal fun rememberPlayerSheetGestures(
             },
             onCollapseQueue = {
                 motionScope.onCloseQueueClick()
-            }
+            },
+            onDragStartedPosition = { currentOnDragStartedPosition?.invoke(it) }
         )
     }
 
@@ -147,6 +151,7 @@ internal fun PlayerSheetGestures(
     onCloseLyricsClick: () -> Unit,
     view: View,
     hapticFeedbackEnabled: Boolean,
+    onDragStartedPosition: ((Offset) -> Unit)? = null,
 ): PlayerSheetGestures = rememberPlayerSheetGestures(
     motionScope = motionScope,
     state = state,
@@ -154,4 +159,5 @@ internal fun PlayerSheetGestures(
     onCloseLyricsClick = onCloseLyricsClick,
     view = view,
     hapticFeedbackEnabled = hapticFeedbackEnabled,
+    onDragStartedPosition = onDragStartedPosition,
 )

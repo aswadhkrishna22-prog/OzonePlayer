@@ -61,6 +61,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
@@ -76,6 +77,7 @@ internal fun AboutIdentityCard(
     model: AboutUiModel,
     onOpenUri: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onOpenGplLicense: () -> Unit = {},
 ) {
     val colors = LocalYumaColors.current
     val cardShape = MaterialTheme.shapes.extraLarge
@@ -183,13 +185,37 @@ internal fun AboutIdentityCard(
                 onOpenUri = onOpenUri,
             )
 
-            Text(
-                text = AboutContract.GPL_LICENSE_NOTICE,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
                 modifier = Modifier.padding(top = 8.dp),
-            )
+            ) {
+                Text(
+                    text = AboutContract.CREDITS_NOTICE,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Medium,
+                    ),
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Center,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .yumaClickable { onOpenUri(AboutContract.UPSTREAM_REPO_URL) }
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                )
+
+                Text(
+                    text = "Source code available under GPL-3.0",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .yumaClickable { onOpenGplLicense() }
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                )
+            }
         }
     }
 }

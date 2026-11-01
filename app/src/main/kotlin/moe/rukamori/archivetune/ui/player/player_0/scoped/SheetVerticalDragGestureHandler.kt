@@ -54,7 +54,8 @@ internal class SheetVerticalDragGestureHandler(
     private val onExpandLyrics: () -> Unit,
     private val onCollapseLyrics: () -> Unit,
     private val onExpandQueue: () -> Unit = {},
-    private val onCollapseQueue: () -> Unit = {}
+    private val onCollapseQueue: () -> Unit = {},
+    private val onDragStartedPosition: ((Offset) -> Unit)? = null,
 ) {
     private var initialFractionOnDragStart = 0f
     private var initialYOnDragStart = 0f
@@ -65,6 +66,7 @@ internal class SheetVerticalDragGestureHandler(
     private var activeDragSheet: ActiveDragSheet = ActiveDragSheet.LYRICS
 
     fun onDragStart(position: Offset = Offset.Zero) {
+        onDragStartedPosition?.invoke(position)
         dragSnapJob?.cancel()
         dragSnapJob = scope.launch(start = CoroutineStart.UNDISPATCHED) {
             sheetMotionController.stop()

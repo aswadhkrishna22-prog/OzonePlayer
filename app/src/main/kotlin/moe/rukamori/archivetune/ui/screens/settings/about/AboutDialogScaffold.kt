@@ -59,6 +59,7 @@ internal fun AboutFullScreenDialogs(
     onDismiss: () -> Unit,
     onRetryTranslationContributors: () -> Unit,
     onRetryDependencyLicenses: () -> Unit,
+    onOpenUri: (String) -> Unit = {},
 ) {
     when (model.activeDialog) {
         AboutDialog.NONE -> {}
@@ -84,6 +85,18 @@ internal fun AboutFullScreenDialogs(
                 DependencyLicensesDialogContent(
                     state = model.dependencyLicensesState,
                     onRetry = onRetryDependencyLicenses,
+                    modifier = modifier,
+                )
+            }
+        }
+
+        AboutDialog.GPL_LICENSE -> {
+            AboutFullScreenDialog(
+                title = "GNU General Public License v3.0",
+                onDismiss = onDismiss,
+            ) { modifier ->
+                GplLicenseDialogContent(
+                    onOpenWeb = { onOpenUri(AboutContract.GPL_LICENSE_URL) },
                     modifier = modifier,
                 )
             }

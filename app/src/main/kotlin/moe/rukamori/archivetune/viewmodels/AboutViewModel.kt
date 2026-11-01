@@ -35,7 +35,8 @@ class AboutViewModel @Inject constructor(
     private var translationContributorsJob: Job? = null
     private var dependencyLicensesJob: Job? = null
 
-    private var contributorsState: AboutContributorsUiState = AboutContributorsUiState.Loading
+    private var contributorsState: AboutContributorsUiState = AboutContributorsUiState.Empty
+
     private var translationContributorsState: AboutTranslationContributorsUiState =
         AboutTranslationContributorsUiState.Loading
     private var dependencyLicensesState: AboutDependencyLicensesUiState = AboutDependencyLicensesUiState.Loading
@@ -45,7 +46,6 @@ class AboutViewModel @Inject constructor(
 
     init {
         updateState()
-        loadContributors()
     }
 
     fun showOverflowMenu() { isOverflowMenuExpanded = true; updateState() }
@@ -67,6 +67,12 @@ class AboutViewModel @Inject constructor(
         activeDialog = AboutDialog.DEPENDENCY_LICENSES
         updateState()
         loadDependencyLicenses()
+    }
+
+    fun openGplLicense() {
+        isOverflowMenuExpanded = false
+        activeDialog = AboutDialog.GPL_LICENSE
+        updateState()
     }
 
     fun dismissDialog() { activeDialog = AboutDialog.NONE; updateState() }

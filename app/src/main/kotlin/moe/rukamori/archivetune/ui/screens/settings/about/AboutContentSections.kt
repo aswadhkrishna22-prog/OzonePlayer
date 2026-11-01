@@ -47,6 +47,7 @@ internal fun AboutOverflowMenu(
     onOpenTranslationContributors: () -> Unit,
     onOpenDependencyLicenses: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenGplLicense: () -> Unit = {},
 ) {
     Box(modifier = modifier) {
         IconButton(
@@ -63,6 +64,17 @@ internal fun AboutOverflowMenu(
             expanded = expanded,
             onDismissRequest = onDismissMenu,
         ) {
+            DropdownMenuItem(
+                text = { Text(text = "GPL-3.0 License") },
+                onClick = onOpenGplLicense,
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_about),
+                        contentDescription = null,
+                    )
+                },
+            )
+
             DropdownMenuItem(
                 text = { Text(text = stringResource(R.string.about_contributor_translation)) },
                 onClick = onOpenTranslationContributors,
@@ -123,6 +135,7 @@ internal fun AboutSuccessContent(
     contentPadding: PaddingValues,
     listState: LazyListState,
     onRetryContributors: () -> Unit = {},
+    onOpenGplLicense: () -> Unit = {},
 ) {
     LazyColumn(
         state = listState,
@@ -136,6 +149,7 @@ internal fun AboutSuccessContent(
                     model = model,
                     onOpenUri = onOpenUri,
                     modifier = Modifier.fillMaxWidth(),
+                    onOpenGplLicense = onOpenGplLicense,
                 )
             }
         }
@@ -145,18 +159,6 @@ internal fun AboutSuccessContent(
                 LeadDeveloperSection(
                     member = model.leadDeveloper,
                     onOpenUri = onOpenUri,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        }
-
-        item(key = "contributors", contentType = "about_contributors") {
-            AboutContentContainer {
-                ContributorsSection(
-                    state = model.contributorsState,
-                    readMoreUrl = model.contributorsReadMoreUrl,
-                    onOpenProfile = onOpenUri,
-                    onRetry = onRetryContributors,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }

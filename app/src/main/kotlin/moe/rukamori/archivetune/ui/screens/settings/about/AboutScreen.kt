@@ -78,6 +78,7 @@ fun AboutScreen(
             onDismissOverflowMenu = viewModel::dismissOverflowMenu,
             onOpenTranslationContributors = viewModel::openTranslationContributors,
             onOpenDependencyLicenses = viewModel::openDependencyLicenses,
+            onOpenGplLicense = viewModel::openGplLicense,
             onDismissDialog = viewModel::dismissDialog,
             onRetryTranslationContributors = viewModel::retryTranslationContributors,
             onRetryDependencyLicenses = viewModel::retryDependencyLicenses,
@@ -108,6 +109,7 @@ internal fun AboutScreenContent(
         onDismissOverflowMenu = actions.onDismissOverflowMenu,
         onOpenTranslationContributors = actions.onOpenTranslationContributors,
         onOpenDependencyLicenses = actions.onOpenDependencyLicenses,
+        onOpenGplLicense = actions.onOpenGplLicense,
         onDismissDialog = actions.onDismissDialog,
         onRetryTranslationContributors = actions.onRetryTranslationContributors,
         onRetryDependencyLicenses = actions.onRetryDependencyLicenses,
@@ -130,6 +132,7 @@ internal fun AboutScreenContent(
     onRetryTranslationContributors: () -> Unit,
     onRetryDependencyLicenses: () -> Unit,
     onRetryContributors: () -> Unit = {},
+    onOpenGplLicense: () -> Unit = {},
 ) {
     val listState = rememberLazyListState()
 
@@ -173,6 +176,7 @@ internal fun AboutScreenContent(
                                 onDismissMenu = onDismissOverflowMenu,
                                 onOpenTranslationContributors = onOpenTranslationContributors,
                                 onOpenDependencyLicenses = onOpenDependencyLicenses,
+                                onOpenGplLicense = onOpenGplLicense,
                             )
                         }
                     },
@@ -214,6 +218,7 @@ internal fun AboutScreenContent(
                         model = state.model,
                         onOpenUri = onOpenUri,
                         onRetryContributors = onRetryContributors,
+                        onOpenGplLicense = onOpenGplLicense,
                         modifier =
                             Modifier
                                 .fillMaxSize()
@@ -237,6 +242,7 @@ internal fun AboutScreenContent(
                 onDismiss = onDismissDialog,
                 onRetryTranslationContributors = onRetryTranslationContributors,
                 onRetryDependencyLicenses = onRetryDependencyLicenses,
+                onOpenUri = onOpenUri,
             )
         }
     }

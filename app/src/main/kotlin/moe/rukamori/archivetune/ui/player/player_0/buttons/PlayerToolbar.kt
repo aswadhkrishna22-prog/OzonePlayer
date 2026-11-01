@@ -77,14 +77,25 @@ fun PlayerToolbar(
             .fillMaxWidth()
             .height(56.dp)
     ) {
+        val playerConnection = LocalPlayerConnection.current
+        val dualPlayEngine = playerConnection?.dualPlayEngine
+        val dualPlayState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)
+        val isDualPlaySingle = dualPlayState?.enabled == true && dualPlayState?.splitViewActive != true
+
         if (!state.isImmersiveEnabled) {
             val subtitle = state.queueTitle?.takeIf { it.isNotBlank() } ?: state.album?.takeIf { it.isNotBlank() }
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.Center)
-                    .padding(horizontal = 48.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = if (isDualPlaySingle) {
+                    Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = 52.dp, end = 160.dp)
+                } else {
+                    Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.Center)
+                        .padding(horizontal = 48.dp)
+                },
+                horizontalAlignment = if (isDualPlaySingle) Alignment.Start else Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
@@ -93,7 +104,7 @@ fun PlayerToolbar(
                     fontSize = if (subtitle != null) 12.sp else 14.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = LocalArchiveTuneFontFamily.current,
-                    textAlign = TextAlign.Center,
+                    textAlign = if (isDualPlaySingle) TextAlign.Start else TextAlign.Center,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.graphicsLayer { alpha = 0.6f }
@@ -105,17 +116,13 @@ fun PlayerToolbar(
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                         fontFamily = LocalArchiveTuneFontFamily.current,
-                        textAlign = TextAlign.Center,
+                        textAlign = if (isDualPlaySingle) TextAlign.Start else TextAlign.Center,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.graphicsLayer { alpha = 0.9f }
                     )
                 }
             }
-
-            val playerConnection = LocalPlayerConnection.current
-            val dualPlayEngine = playerConnection?.dualPlayEngine
-            val dualPlayState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)
 
             Row(
                 modifier = Modifier
@@ -124,7 +131,7 @@ fun PlayerToolbar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.End
             ) {
-                if (dualPlayState?.enabled == true && dualPlayState?.splitViewActive != true) {
+                if (isDualPlaySingle) {
                     FullPlayerToolbarEarButtons(
                         currentEar = dualPlayState?.earSelectionA,
                         onEarSelected = { ear ->

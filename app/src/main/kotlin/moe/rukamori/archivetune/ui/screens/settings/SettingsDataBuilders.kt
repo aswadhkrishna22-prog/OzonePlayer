@@ -26,6 +26,7 @@ fun buildSettingsGroups(
     isAndroid12OrLater: Boolean,
     hasUpdate: Boolean,
     context: Context,
+    onOpenReportIssue: () -> Unit = {},
 ): List<SettingsGroup> =
     buildList {
         // Группа 1: Учётная запись и интеграции (2 элемента)
@@ -211,6 +212,16 @@ fun buildSettingsGroups(
                                 ),
                             )
                         }
+                        add(
+                            SettingsItem(
+                                key = "report_issue",
+                                icon = painterResource(R.drawable.ic_bug_report),
+                                title = stringResource(R.string.report_issue),
+                                subtitle = stringResource(R.string.report_issue_desc),
+                                accentColor = MaterialTheme.colorScheme.secondary,
+                                onClick = onOpenReportIssue,
+                            ),
+                        )
                         add(
                             SettingsItem(
                                 key = "about",

@@ -74,7 +74,7 @@ class MainIntentRouter(
         val pending = pendingDeepLinkQueue ?: return
         val connection = playerConnection ?: return
         pendingDeepLinkQueue = null
-        connection.playQueue(pending)
+        connection.playQueue(pending, userInitiated = false)
     }
 
     fun playPendingVoiceSearchIfReady() {

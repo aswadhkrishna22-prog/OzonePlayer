@@ -56,6 +56,7 @@ fun PlayerBackgroundLayers(
     lyricsFractionProvider: () -> Float = { if (state.isLyricsVisible) 1f else 0f },
     queueFractionProvider: () -> Float = { 0f },
     onColorsExtracted: (vibrant: Int, darkMuted: Int, gradient: Int) -> Unit = { _, _, _ -> },
+    clearArtworkFadeEndY: Float? = null,
 ) {
 
     val currentState by rememberUpdatedState(state)
@@ -223,7 +224,7 @@ fun PlayerBackgroundLayers(
                     .fillMaxWidth()
                     .aspectRatio(0.75f)
                     .align(Alignment.TopCenter)
-                    .artworkBottomFade(immersiveTransitionAlpha * queueArtworkFade),
+                    .artworkBottomFade(immersiveTransitionAlpha * queueArtworkFade, clearArtworkFadeEndY),
                 contentScale = ContentScale.Crop,
                 alignment = Alignment.TopCenter
             )
@@ -241,25 +242,29 @@ fun PlayerBackgroundLayers(
                     .fillMaxWidth()
                     .aspectRatio(0.75f)
                     .align(Alignment.TopCenter)
-                    .artworkBottomFade(immersiveTransitionAlpha * queueArtworkFade)
+                    .artworkBottomFade(immersiveTransitionAlpha * queueArtworkFade, clearArtworkFadeEndY)
             )
         }
     }
 }
 
-internal fun Modifier.artworkBottomFade(alpha: Float): Modifier = this
+internal fun Modifier.artworkBottomFade(
+    alpha: Float,
+    fadeEndY: Float? = null,
+): Modifier = this
     .graphicsLayer {
         this.alpha = alpha
         this.compositingStrategy = if (alpha > 0.01f) CompositingStrategy.Offscreen else CompositingStrategy.Auto
     }
     .drawWithCache {
+        val targetEndY = fadeEndY ?: size.height
         val maskBrush = Brush.verticalGradient(
             0.0f to Color.Black,
-            0.45f to Color.Black,
-            0.75f to Color.Black.copy(alpha = 0.4f),
+            0.35f to Color.Black,
+            0.70f to Color.Black.copy(alpha = 0.35f),
             1.0f to Color.Transparent,
             startY = 0f,
-            endY = size.height
+            endY = targetEndY
         )
         onDrawWithContent {
             if (alpha < 0.01f) return@onDrawWithContent

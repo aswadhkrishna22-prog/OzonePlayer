@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.LocalPlayerConnection
+import moe.rukamori.archivetune.playback.dualplay.DualPlaySheetTarget
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.player.player_0.scoped.ActiveDragSheet
 import moe.rukamori.archivetune.ui.player.player_0.scoped.SheetVerticalDragGestureHandler
@@ -44,6 +45,7 @@ internal fun PlayerQueueLayer(
     onMoreQueueClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     dragHandler: SheetVerticalDragGestureHandler? = null,
+    sheetTarget: DualPlaySheetTarget = DualPlaySheetTarget.PLAYER_A,
 ) {
     val playerConnection = LocalPlayerConnection.current
     var isQueueReordering by remember { mutableStateOf(false) }
@@ -105,6 +107,7 @@ internal fun PlayerQueueLayer(
                     isAutoMixEnabled = state.isAutoMixEnabled,
                     state = state,
                     isVisible = true,
+                    isAutoMixVisible = sheetTarget != DualPlaySheetTarget.PLAYER_B,
                     modifier = Modifier.align(Alignment.TopCenter),
                 )
             }

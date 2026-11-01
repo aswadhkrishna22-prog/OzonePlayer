@@ -124,7 +124,14 @@ fun SettingsScreen(
     val scrollBehavior = appBarScrollBehavior()
     val shouldShowPermissionHint = !isStorageGranted || !isNotificationGranted
     var isUpdateDismissed by remember { mutableStateOf(false) }
-    val settingsGroups = buildSettingsGroups(navController, isAndroid12OrLater, hasUpdate, context)
+    var showReportIssueSheet by remember { mutableStateOf(false) }
+    val settingsGroups = buildSettingsGroups(
+        navController = navController,
+        isAndroid12OrLater = isAndroid12OrLater,
+        hasUpdate = hasUpdate,
+        context = context,
+        onOpenReportIssue = { showReportIssueSheet = true },
+    )
 
     SettingsScreenBackground {
         Scaffold(
@@ -270,6 +277,10 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+
+    if (showReportIssueSheet) {
+        ReportIssueSheet(onDismissRequest = { showReportIssueSheet = false })
     }
 }
 }

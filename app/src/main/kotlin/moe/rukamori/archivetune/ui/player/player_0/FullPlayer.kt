@@ -54,6 +54,9 @@ fun FullPlayer(
     lyricsFractionProvider: () -> Float = { if (state.isLyricsVisible) 1f else 0f },
     queueFractionProvider: () -> Float = { 0f },
     isVisible: Boolean = true,
+    onOpenQueueB: () -> Unit = {},
+    onOpenLyricsA: () -> Unit = {},
+    onOpenLyricsB: () -> Unit = {},
 ) {
     val motionState = rememberFullPlayerMotionState(
         state = state,
@@ -77,42 +80,35 @@ fun FullPlayer(
             .onSizeChanged { rootHeightPx = it.height.toFloat() }
             .onGloballyPositioned { rootCoordinates = it }
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-        ) {
-            val playerConnection = LocalPlayerConnection.current
-            val dualPlayEngine = playerConnection?.dualPlayEngine
-            val dualPlayState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)
-            val isSplitActive = dualPlayState?.enabled == true &&
-                dualPlayState?.splitViewActive == true &&
-                dualPlayState?.playerBMediaItem != null
+        val playerConnection = LocalPlayerConnection.current
+        val dualPlayEngine = playerConnection?.dualPlayEngine
+        val dualPlayState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)
+        val isSplitActive = dualPlayState?.enabled == true &&
+            dualPlayState?.splitViewActive == true &&
+            dualPlayState?.playerBMediaItem != null
 
-            if (isSplitActive) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    FullPlayerToolbarSlot(
-                        state = state,
-                        updateState = updateState,
-                        rootCoordinates = rootCoordinates,
-                        queueFractionProvider = queueFractionProvider,
-                        onCollapseClick = onCollapseClick,
-                        onBackgroundStyleChanged = onBackgroundStyleChanged,
-                        onOpenSettingsMenu = onOpenSettingsMenu,
-                        onPositionedInRoot = { top, bottom ->
-                            toolbarTopInRoot = top
-                            toolbarBottomInRoot = bottom
-                        },
-                    )
-                    DualPlaySplitView(
-                        state = state,
-                        playbackProgress = playbackProgress,
-                        onAction = onAction,
-                        onSeekA = onSeek,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            } else {
+        if (isSplitActive) {
+            DualPlaySplitView(
+                state = state,
+                playbackProgress = playbackProgress,
+                onAction = onAction,
+                onSeekA = onSeek,
+                onCollapseClick = onCollapseClick,
+                onOpenSettingsMenu = onOpenSettingsMenu,
+                onOpenQueue = onOpenQueue,
+                onOpenQueueB = onOpenQueueB,
+                onOpenLyricsA = onOpenLyricsA,
+                onOpenLyricsB = onOpenLyricsB,
+                lyricsFractionProvider = lyricsFractionProvider,
+                queueFractionProvider = queueFractionProvider,
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
+            ) {
                 PlayerLayout(
                     modifier = Modifier
                         .fillMaxSize()

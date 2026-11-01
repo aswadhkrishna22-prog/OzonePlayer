@@ -17,7 +17,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.media3.common.Player
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import moe.rukamori.archivetune.db.entities.LyricsEntity
+import moe.rukamori.archivetune.models.MediaMetadata
+import moe.rukamori.archivetune.playback.dualplay.DualPlaySheetTarget
 import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
 import moe.rukamori.archivetune.ui.player.lyrics_0.LyricsColumn
 import moe.rukamori.archivetune.ui.player.lyrics_0.LyricsHeader
@@ -39,6 +44,10 @@ internal fun PlayerLyricsLayer(
     onSeekStarted: () -> Unit,
     modifier: Modifier = Modifier,
     dragHandler: SheetVerticalDragGestureHandler? = null,
+    playerOverride: Player? = null,
+    mediaMetadataOverride: MediaMetadata? = null,
+    lyricsOverride: Flow<LyricsEntity?>? = null,
+    sheetTarget: DualPlaySheetTarget = DualPlaySheetTarget.PLAYER_A,
 ) {
     val haptics = rememberYumaHaptics()
 
@@ -56,8 +65,6 @@ internal fun PlayerLyricsLayer(
             targetSheet = ActiveDragSheet.LYRICS
         )
     }
-
-
 
     PlayerOverlaySheet(
         fractionProvider = lyricsFractionProvider,
@@ -108,6 +115,9 @@ internal fun PlayerLyricsLayer(
                 onLineClick = { timeMs -> onSeek(timeMs.toFloat()) },
                 onSeek = onSeek,
                 onSeekStarted = onSeekStarted,
+                playerOverride = playerOverride,
+                mediaMetadataOverride = mediaMetadataOverride,
+                lyricsOverride = lyricsOverride,
                 modifier = Modifier.fillMaxSize(),
             )
         }

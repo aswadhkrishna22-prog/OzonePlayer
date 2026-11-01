@@ -58,6 +58,7 @@ import moe.rukamori.archivetune.innertube.models.SongItem
 import moe.rukamori.archivetune.innertube.models.WatchEndpoint
 import moe.rukamori.archivetune.innertube.pages.HomePage
 import moe.rukamori.archivetune.innertube.pages.toPlaylistItem
+import moe.rukamori.archivetune.models.toMediaMetadata
 import moe.rukamori.archivetune.playback.queues.YouTubeQueue
 import moe.rukamori.archivetune.ui.component.PlaylistThumbnail
 import moe.rukamori.archivetune.ui.component.YouTubeListItem
@@ -141,7 +142,12 @@ internal fun CommunityPlaylistSection(
                             val songEndpoint = song.endpoint?.let { endpoint ->
                                 endpoint.copy(playlistId = endpoint.playlistId ?: card.id, index = endpoint.index ?: index)
                             } ?: WatchEndpoint(videoId = song.id, playlistId = card.id, index = index)
-                            mediaContext.playerConnection.playQueue(YouTubeQueue.playlist(songEndpoint))
+                            mediaContext.playerConnection.playQueue(
+                                YouTubeQueue.playlist(
+                                    endpoint = songEndpoint,
+                                    preloadItem = song.toMediaMetadata(),
+                                )
+                            )
                         }
                     }
                 }

@@ -43,7 +43,11 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.Player
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import moe.rukamori.archivetune.db.entities.LyricsEntity
+import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.ShowLyricsPlayerControlsKey
 import moe.rukamori.archivetune.ui.component.lyrics.LyricsEnhanced
@@ -73,6 +77,9 @@ fun LyricsContentCard(
     onLineClick: (Long) -> Unit = {},
     isReadyToParse: Boolean = true,
     isVisible: Boolean = true,
+    playerOverride: Player? = null,
+    mediaMetadataOverride: MediaMetadata? = null,
+    lyricsOverride: Flow<LyricsEntity?>? = null,
 ) {
     val (showPlayerControls) = rememberPreference(ShowLyricsPlayerControlsKey, defaultValue = true)
 
@@ -84,6 +91,9 @@ fun LyricsContentCard(
             isReadyToParse = isReadyToParse,
             isLyricsVisible = isVisible,
             lazyListState = lazyListState,
+            playerOverride = playerOverride,
+            mediaMetadataOverride = mediaMetadataOverride,
+            lyricsOverride = lyricsOverride,
             modifier = Modifier.fillMaxSize(),
         )
 

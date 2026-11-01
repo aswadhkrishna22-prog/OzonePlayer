@@ -134,7 +134,7 @@ fun StarDialog(
                             .fillMaxWidth()
                             .height(52.dp)
                             .yumaClickable {
-                                uriHandler.openUri("https://github.com/MuwMx/YumaPlayer")
+                                uriHandler.openUri("https://github.com/aswadhkrishna22-prog/OzonePlayer")
                                 onSupport()
                             }
                             .clip(RoundedCornerShape(16.dp))
