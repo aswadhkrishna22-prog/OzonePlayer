@@ -44,9 +44,21 @@ jobs:
           STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
         run: |
           set -e
-          if [ -z "$SIGNING_KEY_BASE64" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ] || [ -z "$STORE_PASSWORD" ]; then
-            echo "::error::Release signing failed: Missing one or more required secrets (ANDROID_SIGNING_KEY, SIGNING_KEY_ALIAS, SIGNING_KEY_PASSWORD, SIGNING_STORE_PASSWORD)!"
-            echo "Release builds must be signed with the stable repository key and cannot fall back to debug key."
+          MISSING_SECRETS=""
+          if [ -z "$SIGNING_KEY_BASE64" ]; then MISSING_SECRETS="$MISSING_SECRETS ANDROID_SIGNING_KEY"; fi
+          if [ -z "$KEY_ALIAS" ]; then MISSING_SECRETS="$MISSING_SECRETS SIGNING_KEY_ALIAS"; fi
+          if [ -z "$KEY_PASSWORD" ]; then MISSING_SECRETS="$MISSING_SECRETS SIGNING_KEY_PASSWORD"; fi
+          if [ -z "$STORE_PASSWORD" ]; then MISSING_SECRETS="$MISSING_SECRETS SIGNING_STORE_PASSWORD"; fi
+
+          if [ -n "$MISSING_SECRETS" ]; then
+            echo "::error::Release signing failed: Missing required secret(s):$MISSING_SECRETS"
+            echo "### ❌ Release Signing Failed: Missing Secrets" >> $GITHUB_STEP_SUMMARY
+            echo "The following secrets must be configured in repository settings to build a signed release:" >> $GITHUB_STEP_SUMMARY
+            for sec in $MISSING_SECRETS; do
+              echo "- \`$sec\`" >> $GITHUB_STEP_SUMMARY
+            done
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Release builds must be signed with the stable repository key and cannot fall back to debug key." >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
           echo "$SIGNING_KEY_BASE64" | base64 -d > /tmp/release.jks
@@ -112,6 +124,24 @@ jobs:
               }
             }
           ' >> $GITHUB_STEP_SUMMARY
+
+          # Verify certificate and extract SHA-256 fingerprint for stability proof
+          APKSIGNER_BIN=$(command -v apksigner || find "$ANDROID_HOME/build-tools" -name apksigner 2>/dev/null | sort -V | tail -n 1)
+          if [ -n "$APKSIGNER_BIN" ]; then
+            CERT_FINGERPRINT=$("$APKSIGNER_BIN" verify --print-certs "$APK_FILE" | grep -i "SHA-256 digest" | head -n 1 | sed 's/.*: //')
+          else
+            CERT_FINGERPRINT=$(keytool -printcert -jarfile "$APK_FILE" | grep -i "SHA256:" | head -n 1 | sed 's/.*: //')
+          fi
+
+          echo "Signing Certificate SHA-256: $CERT_FINGERPRINT"
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔑 Signing Certificate Fingerprint (SHA-256)" >> $GITHUB_STEP_SUMMARY
+          echo "\`$CERT_FINGERPRINT\`" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "> ℹ️ **Dry Run Mode Active**: APK built, signed, and verified. Release publication is skipped." >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Upload Ozone Player Artifact
         uses: actions/upload-artifact@v4

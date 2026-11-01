@@ -69,6 +69,12 @@ class AboutViewModel @Inject constructor(
         loadDependencyLicenses()
     }
 
+    fun openGplLicense() {
+        isOverflowMenuExpanded = false
+        activeDialog = AboutDialog.GPL_LICENSE
+        updateState()
+    }
+
     fun dismissDialog() { activeDialog = AboutDialog.NONE; updateState() }
     fun retryTranslationContributors() { loadTranslationContributors(force = true) }
     fun retryDependencyLicenses() { loadDependencyLicenses(force = true) }

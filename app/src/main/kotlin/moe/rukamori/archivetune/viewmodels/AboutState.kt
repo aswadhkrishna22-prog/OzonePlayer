@@ -177,6 +177,7 @@ enum class AboutDialog {
     NONE,
     TRANSLATION_CONTRIBUTORS,
     DEPENDENCY_LICENSES,
+    GPL_LICENSE,
 }
 
 sealed interface AboutScreenEffect {
