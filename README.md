@@ -237,9 +237,9 @@ Contributions make open-source projects thrive! Whether you are fixing bugs, pro
 
 ## 🤝 Acknowledgments (Open-Source Credits)
 
-Ozone Player is built on the shoulders of the open-source community:
+Ozone Player is based on **[ArchiveTune](https://github.com/rukamori/ArchiveTune)** by Rukamori and contributors, and is built on the shoulders of the open-source community:
 
-- **[ArchiveTune](https://github.com/rukamori/ArchiveTune)** — for the solid playback foundations, rich settings base, and core architecture.
+- **[ArchiveTune](https://github.com/rukamori/ArchiveTune)** — by Rukamori and contributors, providing the solid playback foundations, rich settings base, and core architecture.
 - **[Meld](https://github.com/FrancescoGrazioso/Meld)** — for the conceptual breakthrough and implementation of the Spotify hybrid integration.
 - **[Stash](https://github.com/rawnaldclark/Stash)** — for inspiration in organizing lossless FLAC streaming and download pipelines.
 - **[Metrolist](https://github.com/mostafaalagamy/Metrolist)** & **[SimpMusic](https://github.com/maxrave-dev/SimpMusic)** — for early lyrics parsing and interface inspirations.
