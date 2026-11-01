@@ -4,7 +4,10 @@
  */
 package moe.rukamori.archivetune.ui.player.player_0.dualplay
 
-import androidx.compose.foundation.Canvas
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,6 +16,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,21 +28,22 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
@@ -49,8 +54,6 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.playback.dualplay.DualPlayEngine
 import moe.rukamori.archivetune.R
@@ -62,12 +65,13 @@ import moe.rukamori.archivetune.ui.utils.bounceClick
  * Compact, centered glass pill mini player shown when Dual Play is active and Player B has a song.
  *
  * Contains, from left to right:
- * 1. 44dp circular artwork of Song A with a thin 2dp progress ring.
+ * 1. 40dp circular artwork of Song A with 360° vinyl spin and CircularWavyProgressIndicator.
  * 2. Middle round play/pause button (pauses both if either is playing; plays both if both paused).
- * 3. 44dp circular artwork of Song B with a thin 2dp progress ring.
+ * 3. 40dp circular artwork of Song B with 360° vinyl spin and CircularWavyProgressIndicator.
  *
  * Tapping either artwork (or the pill background) expands the full player in split view.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DualMiniPlayer(
     paneSourceA: PaneSource,
@@ -105,7 +109,7 @@ fun DualMiniPlayer(
             .height(MiniPlayerHeight),
         contentAlignment = Alignment.Center,
     ) {
-        // Pill container: ~55% width, centered horizontally
+        // Pill container: ~56% width, centered horizontally
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.56f)
@@ -137,7 +141,7 @@ fun DualMiniPlayer(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // ── Left: Song A Artwork with 2dp Progress Ring ─────────────────
+                // ── Left: Song A Artwork with 360° spin & Wavy Progress ────────
                 DualMiniArtwork(
                     paneSource = paneSourceA,
                     onExpandClick = onExpandClick,
@@ -150,7 +154,7 @@ fun DualMiniPlayer(
                     onClick = onPlayPauseBoth,
                 )
 
-                // ── Right: Song B Artwork with 2dp Progress Ring ────────────────
+                // ── Right: Song B Artwork with 360° spin & Wavy Progress ───────
                 DualMiniArtwork(
                     paneSource = paneSourceB,
                     onExpandClick = onExpandClick,
@@ -162,12 +166,14 @@ fun DualMiniPlayer(
 }
 
 /**
- * 44dp circular artwork surrounded by a thin 2dp progress ring.
+ * Circular artwork surrounded by a CircularWavyProgressIndicator, exactly matching
+ * the standard mini player's visual style.
  *
- * Progress is read and drawn strictly during the draw phase from a state read,
- * updating at most 4 times per second (~250ms) only while that player is playing.
- * When paused, the artwork is dimmed to 60% and the progress ring is static.
+ * - Artwork spins 360° continuously when playing (15s per rotation, linear).
+ * - When paused, stops rotation and dims to 60% alpha.
+ * - CircularWavyProgressIndicator tracks that pane's playback progress with its vibrant tint.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DualMiniArtwork(
     paneSource: PaneSource,
@@ -181,22 +187,30 @@ private fun DualMiniArtwork(
     val durationMs = uiState.durationMs
     val positionFlow = paneSource.positionFlow
 
-    // State updated at most ~4 times/sec only while playing
-    val progressMsState = remember(positionFlow) { mutableLongStateOf(positionFlow.value) }
+    var progressMs by remember(positionFlow) { mutableLongStateOf(positionFlow.value) }
 
-    LaunchedEffect(isPlaying, isVisible, positionFlow) {
+    LaunchedEffect(isVisible, positionFlow) {
         if (!isVisible) return@LaunchedEffect
-        if (isPlaying) {
-            while (isActive) {
-                progressMsState.longValue = positionFlow.value
-                delay(250L) // 4 times per second
+        positionFlow.collect { progressMs = it }
+    }
+
+    // ── 360° Vinyl Continuous Rotation while Playing ────────────────────────
+    val rotation = remember { Animatable(0f) }
+
+    LaunchedEffect(isPlaying, isVisible) {
+        if (isPlaying && isVisible) {
+            while (true) {
+                val currentDegree = rotation.value % 360f
+                rotation.snapTo(currentDegree)
+                rotation.animateTo(
+                    targetValue = currentDegree + 360f,
+                    animationSpec = tween(durationMillis = 15000, easing = LinearEasing),
+                )
             }
-        } else {
-            progressMsState.longValue = positionFlow.value
         }
     }
 
-    val vibrantColor = if (uiState.vibrantColor != 0) Color(uiState.vibrantColor) else Color.White
+    val indicatorColor = if (uiState.vibrantColor != 0) Color(uiState.vibrantColor) else MaterialTheme.colorScheme.primary
 
     Box(
         modifier = modifier
@@ -208,74 +222,62 @@ private fun DualMiniArtwork(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        // ── 2dp Progress Ring drawn in draw phase ────────────────────────────
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val strokeWidth = 2.dp.toPx()
-            val diameter = size.minDimension - strokeWidth
-            val topLeft = Offset(strokeWidth / 2f, strokeWidth / 2f)
-            val arcSize = Size(diameter, diameter)
+        // ── Circular Wavy Progress Indicator (matching standard mini player) ──
+        CircularWavyProgressIndicator(
+            progress = {
+                if (durationMs > 0L) {
+                    (progressMs.toFloat() / durationMs).coerceIn(0f, 1f)
+                } else {
+                    0f
+                }
+            },
+            modifier = Modifier.fillMaxSize(),
+            color = indicatorColor,
+            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+        )
 
-            // Background track
-            drawArc(
-                color = Color.White.copy(alpha = 0.15f),
-                startAngle = -90f,
-                sweepAngle = 360f,
-                useCenter = false,
-                topLeft = topLeft,
-                size = arcSize,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
-            )
-
-            // Progress arc (read state in draw phase)
-            val currentPos = progressMsState.longValue
-            val fraction = if (durationMs > 0L) (currentPos.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
-            if (fraction > 0f) {
-                drawArc(
-                    color = vibrantColor.copy(alpha = if (isPlaying) 1f else 0.50f),
-                    startAngle = -90f,
-                    sweepAngle = fraction * 360f,
-                    useCenter = false,
-                    topLeft = topLeft,
-                    size = arcSize,
-                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
-                )
-            }
-        }
-
-        // ── 44dp Circular Artwork Image (dimmed to 60% when paused) ──────────
+        // ── 40dp Circular Artwork with 360° Vinyl Spin when Playing ─────────
         Box(
             modifier = Modifier
-                .size(44.dp)
+                .size(40.dp)
+                .aspectRatio(1f)
                 .graphicsLayer {
+                    rotationZ = rotation.value
                     alpha = if (isPlaying) 1f else 0.60f
                 }
                 .clip(CircleShape),
         ) {
             val coverUrl = uiState.coverUrl.takeIf { it.isNotBlank() }
-            if (coverUrl == null) {
-                Image(
-                    painter = painterResource(id = uiState.placeholderResId),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                )
-            } else {
-                val request = remember(coverUrl) {
-                    ImageRequest.Builder(context)
-                        .data(coverUrl)
-                        .size(96)
-                        .allowHardware(true)
-                        .memoryCacheKey("dual_mini:$coverUrl")
-                        .diskCacheKey("dual_mini:$coverUrl")
-                        .build()
+            Crossfade(
+                targetState = coverUrl,
+                animationSpec = tween(350),
+                label = "DualMiniCoverCrossfade",
+            ) { url ->
+                if (url == null) {
+                    Image(
+                        painter = painterResource(id = uiState.placeholderResId),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                    )
+                } else {
+                    val request = remember(url) {
+                        ImageRequest.Builder(context)
+                            .data(url)
+                            .size(96)
+                            .allowHardware(true)
+                            .memoryCacheKey("dual_mini:$url")
+                            .diskCacheKey("dual_mini:$url")
+                            .build()
+                    }
+                    AsyncImage(
+                        model = request,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        error = painterResource(id = uiState.placeholderResId),
+                    )
                 }
-                AsyncImage(
-                    model = request,
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                    error = painterResource(id = uiState.placeholderResId),
-                )
             }
         }
     }
