@@ -142,21 +142,7 @@ class BuildOnboardingUiStateUseCase
                         titleResId = R.string.support_development_star,
                         descriptionResId = R.string.onboarding_community_github_desc,
                         iconResId = R.drawable.ic_github,
-                        url = "https://github.com/MuwMx/YumaPlayer",
-                    ),
-                    OnboardingCommunityActionUiModel(
-                        id = "telegram",
-                        titleResId = R.string.onboarding_community_telegram_title,
-                        descriptionResId = R.string.onboarding_community_telegram_desc,
-                        iconResId = R.drawable.telegram,
-                        url = "https://t.me/yumaplayer",
-                    ),
-                    OnboardingCommunityActionUiModel(
-                        id = "donate",
-                        titleResId = R.string.about_content_desc_donate,
-                        descriptionResId = R.string.onboarding_community_donate_desc,
-                        iconResId = R.drawable.coffee,
-                        url = "https://ko-fi.com/muwmix",
+                        url = "https://github.com/aswadhkrishna22-prog/OzonePlayer",
                     ),
                 )
         }

@@ -52,15 +52,12 @@ internal fun buildAboutUiModel(
             ),
         ),
     ),
-    collaborators = TeamMemberCollection.empty(),
-    respecters = TeamMemberCollection.empty(),
+    collaborators = TeamMemberCollection.Empty,
+    respecters = TeamMemberCollection.Empty,
     contributorsState = AboutContributorsUiState.Empty,
     contributorsReadMoreUrl = ContributorsReadMoreUrl,
     dependencyLicensesState = dependencyLicensesState,
     translationContributorsState = translationContributorsState,
-    isOverflowMenuExpanded = isOverflowMenuExpanded,
-    activeDialog = activeDialog,
-)
     isOverflowMenuExpanded = isOverflowMenuExpanded,
     activeDialog = activeDialog,
 )
