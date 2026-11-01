@@ -519,8 +519,18 @@ fun BoxScope.GlobalDialogsHost(
         }
     }
 
+    var lowDataBannerState by remember { mutableStateOf<NetworkBannerUiState>(NetworkBannerUiState.Hidden) }
+    LaunchedEffect(Unit) {
+        moe.rukamori.archivetune.lowdata.LowDataManager.bannerEvent.collect { banner ->
+            lowDataBannerState = banner
+            delay(3500)
+            lowDataBannerState = NetworkBannerUiState.Hidden
+        }
+    }
+    val effectiveBannerState = if (lowDataBannerState != NetworkBannerUiState.Hidden) lowDataBannerState else networkBannerState
+
     NetworkStatusBanner(
-        state = networkBannerState,
+        state = effectiveBannerState,
         modifier =
             Modifier
                 .align(Alignment.TopCenter)
@@ -536,6 +546,29 @@ fun BoxScope.GlobalDialogsHost(
             uri = uri,
             onDismiss = onDismissBackupRestore,
         )
+    }
+
+    // ── Low Data Mode "Ask Me" Dialog ─────────────────────────────────────
+    val showAskMe by moe.rukamori.archivetune.lowdata.LowDataManager.showAskMeDialog.collectAsState()
+    val isDualPlaySplitForAskMe = playerConnection?.dualPlayEngine?.state?.value?.splitViewActive == true
+    val isBottomSheetOpenForAskMe = bottomSheetPageState.currentValue != BottomSheetValue.Collapsed || menuState.isExpanded
+
+    if (showAskMe && !isDualPlaySplitForAskMe && !isBottomSheetOpenForAskMe) {
+        moe.rukamori.archivetune.ui.component.DefaultDialog(
+            onDismiss = { moe.rukamori.archivetune.lowdata.LowDataManager.onDismissAskMe() },
+            title = { Text(stringResource(R.string.slow_network_detected_title)) },
+            buttons = {
+                TextButton(onClick = { moe.rukamori.archivetune.lowdata.LowDataManager.onDismissAskMe() }) {
+                    Text(stringResource(R.string.not_now))
+                }
+                androidx.compose.foundation.layout.Spacer(Modifier.width(8.dp))
+                androidx.compose.material3.Button(onClick = { moe.rukamori.archivetune.lowdata.LowDataManager.onConfirmAskMe(context) }) {
+                    Text(stringResource(R.string.turn_on))
+                }
+            },
+        ) {
+            Text(stringResource(R.string.slow_network_detected_desc))
+        }
     }
 
     // ── Dual Play Intercept Dialog ─────────────────────────────────────────

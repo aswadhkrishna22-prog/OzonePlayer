@@ -119,6 +119,13 @@ class SponsorBlockPlaybackController
                                     return@collectLatest
                                 }
 
+                                if (moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive.value && moe.rukamori.archivetune.lowdata.LowDataManager.isAudioBufferLow.value) {
+                                    while (moe.rukamori.archivetune.lowdata.LowDataManager.isAudioBufferLow.value && currentMediaId.value == activeMediaId) {
+                                        kotlinx.coroutines.delay(1000)
+                                    }
+                                    if (currentMediaId.value != activeMediaId) return@collectLatest
+                                }
+
                                 val segments =
                                     try {
                                         getSegments(

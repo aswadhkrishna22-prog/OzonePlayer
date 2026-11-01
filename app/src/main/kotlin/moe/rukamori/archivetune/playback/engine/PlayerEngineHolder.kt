@@ -72,6 +72,16 @@ class PlayerEngineHolder {
     val mediaOkHttpClient: OkHttpClient by lazy {
         OkHttpClient
             .Builder()
+            .eventListener(object : okhttp3.EventListener() {
+                private var startNs = 0L
+                override fun responseBodyStart(call: okhttp3.Call) {
+                    startNs = System.nanoTime()
+                }
+                override fun responseBodyEnd(call: okhttp3.Call, byteCount: Long) {
+                    val durationMs = (System.nanoTime() - startNs) / 1_000_000L
+                    moe.rukamori.archivetune.lowdata.LowDataManager.reportThroughputSample(byteCount, durationMs)
+                }
+            })
             .proxy(YouTube.streamOkHttpProxy)
             .proxyAuthenticator(ProxyAuth.proxyAuthenticator)
             .followRedirects(true)

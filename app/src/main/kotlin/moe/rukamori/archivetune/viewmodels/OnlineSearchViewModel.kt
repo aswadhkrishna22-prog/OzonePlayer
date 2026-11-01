@@ -7,6 +7,7 @@
 package moe.rukamori.archivetune.viewmodels
 
 import android.content.Context
+import android.util.LruCache
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -76,9 +77,16 @@ class OnlineSearchViewModel
             )
         private var isSummaryLoading = false
         private val loadingFilters = mutableSetOf<String>()
+        private var searchJob: kotlinx.coroutines.Job? = null
+
+        companion object {
+            private val summaryCache = LruCache<String, SearchSummaryPage>(50)
+            private val filterCache = LruCache<String, ItemsPage>(100)
+        }
 
         init {
-            viewModelScope.launch {
+            searchJob?.cancel()
+            searchJob = viewModelScope.launch {
                 filter.collect { selectedFilter ->
                     if (selectedFilter == null) {
                         viewModelScope.launch {
@@ -99,6 +107,11 @@ class OnlineSearchViewModel
         private suspend fun loadSummaryIfNeeded() {
             if (summaryPage != null || isSummaryLoading) return
 
+            summaryCache.get(query)?.let { cached ->
+                summaryPage = cached
+                return
+            }
+
             isSummaryLoading = true
             try {
                 YouTube
@@ -109,7 +122,7 @@ class OnlineSearchViewModel
                             it
                                 .filterExplicit(context.dataStore.get(HideExplicitKey, false))
                                 .filterVideo(context.dataStore.get(HideVideoKey, false))
-                        summaryPage =
+                        val processed =
                             contentFilteredPage.copy(
                                 summaries =
                                     contentFilteredPage.summaries.mapNotNull { summary ->
@@ -118,6 +131,8 @@ class OnlineSearchViewModel
                                             .takeIf { filteredSummary -> filteredSummary.items.isNotEmpty() }
                                     },
                             )
+                        summaryPage = processed
+                        summaryCache.put(query, processed)
                     }.onFailure {
                         reportException(it)
                     }
@@ -130,12 +145,19 @@ class OnlineSearchViewModel
             val filterKey = filter.value
             if (viewStateMap.containsKey(filterKey) || !loadingFilters.add(filterKey)) return
 
+            val cacheKey = "$query:$filterKey"
+            filterCache.get(cacheKey)?.let { cached ->
+                viewStateMap[filterKey] = cached
+                loadingFilters.remove(filterKey)
+                return
+            }
+
             try {
                 YouTube
                     .search(query, filter)
                     .onSuccess { result ->
                         val aiContentFilterPolicy = loadAiContentFilterPolicy()
-                        viewStateMap[filterKey] =
+                        val page =
                             ItemsPage(
                                 filterAiContent(
                                     result.items
@@ -150,6 +172,8 @@ class OnlineSearchViewModel
                                 ),
                                 result.continuation,
                             )
+                        viewStateMap[filterKey] = page
+                        filterCache.put(cacheKey, page)
                     }.onFailure {
                         reportException(it)
                     }
@@ -159,6 +183,10 @@ class OnlineSearchViewModel
         }
 
         fun loadMore() {
+            if (moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive.value) {
+                timber.log.Timber.tag("OnlineSearch").d("Low data mode: skipping pagination (first page only)")
+                return
+            }
             val filter = filter.value?.value
             viewModelScope.launch {
                 if (filter == null) return@launch

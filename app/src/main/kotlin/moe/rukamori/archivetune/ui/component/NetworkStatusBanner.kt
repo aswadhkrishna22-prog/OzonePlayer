@@ -78,6 +78,24 @@ fun NetworkStatusBanner(
                     contentColor = Color.White,
                 )
             }
+
+            NetworkBannerUiState.LowDataModeOn -> {
+                NetworkBannerVisuals(
+                    message = "Slow network, Low data mode is on",
+                    icon = Icons.Default.CloudOff,
+                    containerColor = Color(0xFFD97706),
+                    contentColor = Color.White,
+                )
+            }
+
+            NetworkBannerUiState.LowDataModeOff -> {
+                NetworkBannerVisuals(
+                    message = "Network is fast again, Low data mode is off",
+                    icon = Icons.Default.CloudDone,
+                    containerColor = Color(0xFF1E8E3E),
+                    contentColor = Color.White,
+                )
+            }
         }
 
     AnimatedVisibility(

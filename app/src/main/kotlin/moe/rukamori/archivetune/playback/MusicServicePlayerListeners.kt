@@ -249,6 +249,15 @@ internal class MusicServicePlayerListeners(
     ) {
         super.onPlaybackStateChanged(playbackState)
         playerStateHandler.onPlaybackStateChanged(playbackState)
+
+        val player = playerDelegate.player
+        val bufferedDuration = player.totalBufferedDuration
+        val isLow = playbackState == Player.STATE_BUFFERING || (bufferedDuration in 0..9_999L)
+        moe.rukamori.archivetune.lowdata.LowDataManager.setAudioBufferLow(isLow)
+
+        if (playbackState == Player.STATE_BUFFERING && player.currentPosition > 2000L) {
+            moe.rukamori.archivetune.lowdata.LowDataManager.reportBufferingStall()
+        }
     }
 
     override fun onPlayWhenReadyChanged(

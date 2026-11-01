@@ -102,12 +102,16 @@ fun ItemThumbnail(
             }
 
             if (shouldLoadImage && !thumbnailUrl.isNullOrBlank()) {
+                val isLowData = moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive.value
+                val effDim = if (isLowData) minOf(targetDim, 120) else targetDim
+                val effSizePx = if (isLowData) minOf(targetSizePx, 120) else targetSizePx
                 val request =
-                    remember(thumbnailUrl, targetDim, targetSizePx) {
+                    remember(thumbnailUrl, effDim, effSizePx, isLowData) {
                         ImageRequest
                             .Builder(context)
-                            .data(thumbnailUrl.resize(targetDim, targetDim))
-                            .size(targetSizePx, targetSizePx)
+                            .data(thumbnailUrl.resize(effDim, effDim))
+                            .size(effSizePx, effSizePx)
+                            .placeholder(placeholderIconRes ?: R.drawable.music_note)
                             .allowHardware(true)
                             .build()
                     }

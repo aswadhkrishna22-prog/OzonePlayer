@@ -111,6 +111,15 @@ internal class StreamPrefetcher(
         val activeNetwork = cm.activeNetwork ?: return
         val caps = cm.getNetworkCapabilities(activeNetwork) ?: return
         val isMetered = cm.isActiveNetworkMetered || caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+        val isLowData = moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive.value
+        if (isLowData) {
+            val currentItem = delegate.getMediaItemAt(currentIndex)
+            val currentMediaId = currentItem?.mediaId
+            if (currentMediaId != null && !delegate.isTrackFullyCached(currentMediaId)) {
+                Timber.tag(TAG).d("Low data mode: postponing next-track preload because current track %s is not fully buffered", currentMediaId)
+                return
+            }
+        }
         if (isMetered && delegate.isLowDataModeActive()) return
         if (activePrefetchMediaId == mediaId && prefetchJob?.isActive == true) return
 

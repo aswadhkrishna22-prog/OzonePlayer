@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.haptics.LocalYumaHaptics
 import moe.rukamori.archivetune.ui.player.CanvasArtworkPlayer
+import moe.rukamori.archivetune.ui.utils.resize
 import kotlin.math.abs
 
 @Composable
@@ -81,10 +82,16 @@ fun PlayerCoverCard(
     var activeVibrantColor by remember { mutableStateOf(Color.Transparent) }
 
     val cleanUrl = coverUrl?.trim()?.takeIf(String::isNotBlank)
+    val isLowData by moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive.collectAsState()
+    val targetData = remember(cleanUrl, isLowData) {
+        if (isLowData && cleanUrl != null) {
+            cleanUrl.resize(300, 300)
+        } else cleanUrl
+    }
 
-    val request = remember(cleanUrl) {
+    val request = remember(targetData) {
         ImageRequest.Builder(context)
-            .data(cleanUrl)
+            .data(targetData)
             .apply {
                 if (cleanUrl != null) {
                     memoryCacheKey(cleanUrl)

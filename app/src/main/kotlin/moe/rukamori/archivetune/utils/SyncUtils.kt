@@ -19,9 +19,15 @@ class SyncUtils
         private val ytmSync: YtmSync,
         private val spotifySyncOps: SpotifySyncOps,
     ) {
-        suspend fun performFullSync(authoritative: Boolean = false) = ytmSync.performFullSync(authoritative)
+        suspend fun performFullSync(authoritative: Boolean = false) {
+            if (moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive.value && moe.rukamori.archivetune.lowdata.LowDataManager.isAudioBufferLow.value) return
+            ytmSync.performFullSync(authoritative)
+        }
 
-        suspend fun cleanupDuplicatePlaylists() = ytmSync.cleanupDuplicatePlaylists()
+        suspend fun cleanupDuplicatePlaylists() {
+            if (moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive.value && moe.rukamori.archivetune.lowdata.LowDataManager.isAudioBufferLow.value) return
+            ytmSync.cleanupDuplicatePlaylists()
+        }
 
         fun likeSong(s: SongEntity, source: LikeSource, explicitSpotifyId: String? = null) {
             syncLikes.likeSong(s, source, explicitSpotifyId)

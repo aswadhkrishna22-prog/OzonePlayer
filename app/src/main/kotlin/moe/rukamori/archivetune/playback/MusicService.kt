@@ -488,10 +488,15 @@ class MusicService :
         }
 
         val localDjFilter = DjFilterAudioProcessor()
+        val bandwidthMeter = androidx.media3.exoplayer.upstream.DefaultBandwidthMeter.getSingletonInstance(this)
+        bandwidthMeter.addEventListener(android.os.Handler(android.os.Looper.getMainLooper())) { elapsedMs, bytesTransferred, _ ->
+            moe.rukamori.archivetune.lowdata.LowDataManager.reportThroughputSample(bytesTransferred, elapsedMs.toLong())
+        }
         playerListeners = createMusicServicePlayerListeners()
         localPlayer =
             ExoPlayer
                 .Builder(this)
+                .setBandwidthMeter(bandwidthMeter)
                 .setMediaSourceFactory(createMediaSourceFactory())
                 .setRenderersFactory(createRenderersFactory(localDjFilter))
                 .setLoadControl(createPrimaryLoadControl())
