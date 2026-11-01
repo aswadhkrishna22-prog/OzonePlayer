@@ -174,7 +174,7 @@ fun UnifiedPlayerSheetV2(
             dropState = dropState,
             content = {
                 val isDualMiniActive by remember {
-                    derivedStateOf { dualPlayState.value.enabled && dualPlayState.value.playerBMediaItem != null }
+                    derivedStateOf { dualPlayState.enabled && dualPlayState.playerBMediaItem != null }
                 }
 
                 val sheetBackdropModifier = if (isDualMiniActive) {
