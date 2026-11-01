@@ -29,6 +29,16 @@ import java.util.concurrent.TimeUnit
 import java.util.zip.ZipFile
 
 object AppUpdateInstaller {
+    val showSignatureConflictDialog = kotlinx.coroutines.flow.MutableStateFlow(false)
+
+    fun notifySignatureConflict() {
+        showSignatureConflictDialog.value = true
+    }
+
+    fun dismissSignatureConflictDialog() {
+        showSignatureConflictDialog.value = false
+    }
+
     data class Progress(
         val downloadedBytes: Long,
         val totalBytes: Long,

@@ -36,6 +36,16 @@ class AppUpdateInstallReceiver : BroadcastReceiver() {
             else -> {
                 val msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
                 Timber.w("AppUpdateInstallReceiver: Installation finished with status=$status, message=$msg")
+                val isSignatureMismatch =
+                    status == PackageInstaller.STATUS_FAILURE_CONFLICT ||
+                    status == PackageInstaller.STATUS_FAILURE_INCOMPATIBLE ||
+                    msg?.contains("signature", ignoreCase = true) == true ||
+                    msg?.contains("incompatible", ignoreCase = true) == true ||
+                    msg?.contains("INSTALL_FAILED_UPDATE_INCOMPATIBLE", ignoreCase = true) == true
+
+                if (isSignatureMismatch) {
+                    AppUpdateInstaller.notifySignatureConflict()
+                }
             }
         }
     }

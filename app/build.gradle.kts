@@ -31,16 +31,24 @@ val injectedStorePassword = findProperty("android.injected.signing.store.passwor
 val injectedKeyAlias = findProperty("android.injected.signing.key.alias")?.toString()?.takeIf { it.isNotBlank() }
 val injectedKeyPassword = findProperty("android.injected.signing.key.password")?.toString()?.takeIf { it.isNotBlank() }
 
-val releaseKeystoreFile = injectedStoreFile ?: rootProject.file("app/keystore/release.keystore")
+val releaseKeystoreFile = injectedStoreFile
+    ?: System.getenv("SIGNING_KEY_FILE")?.takeIf { it.isNotBlank() }?.let { file(it) }
+    ?: rootProject.file("app/keystore/release.keystore")
 val releaseStorePassword = injectedStorePassword
+    ?: localProperties.getProperty("SIGNING_STORE_PASSWORD")?.takeIf { it.isNotBlank() }
     ?: localProperties.getProperty("STORE_PASSWORD")?.takeIf { it.isNotBlank() }
-    ?: System.getenv("STORE_PASSWORD")?.takeIf { it.isNotBlank() } ?: "ozoneplayer"
+    ?: System.getenv("SIGNING_STORE_PASSWORD")?.takeIf { it.isNotBlank() }
+    ?: System.getenv("STORE_PASSWORD")?.takeIf { it.isNotBlank() }
 val releaseKeyAlias = injectedKeyAlias
+    ?: localProperties.getProperty("SIGNING_KEY_ALIAS")?.takeIf { it.isNotBlank() }
     ?: localProperties.getProperty("ALIAS")?.takeIf { it.isNotBlank() }
-    ?: System.getenv("ALIAS")?.takeIf { it.isNotBlank() } ?: "ozone"
+    ?: System.getenv("SIGNING_KEY_ALIAS")?.takeIf { it.isNotBlank() }
+    ?: System.getenv("ALIAS")?.takeIf { it.isNotBlank() }
 val releaseKeyPassword = injectedKeyPassword
+    ?: localProperties.getProperty("SIGNING_KEY_PASSWORD")?.takeIf { it.isNotBlank() }
     ?: localProperties.getProperty("KEY_PASSWORD")?.takeIf { it.isNotBlank() }
-    ?: System.getenv("KEY_PASSWORD")?.takeIf { it.isNotBlank() } ?: "ozoneplayer"
+    ?: System.getenv("SIGNING_KEY_PASSWORD")?.takeIf { it.isNotBlank() }
+    ?: System.getenv("KEY_PASSWORD")?.takeIf { it.isNotBlank() }
 
 val hasReleaseSigningConfig =
     releaseKeystoreFile.isFile &&
@@ -49,6 +57,7 @@ val hasReleaseSigningConfig =
             releaseKeyPassword != null
 
 val isCanary = findProperty("canary")?.toString()?.toBoolean() == true
+val isRTest = findProperty("rtest")?.toString()?.toBoolean() == true
 val isDualPlay = findProperty("dualplay")?.toString()?.toBoolean() == true
 
 android {
@@ -59,7 +68,7 @@ android {
     applicationId = "com.ozone.player"
         minSdk = 26
         targetSdk = 37
-        versionCode = 6
+        versionCode = 1_020_000
         versionName = "1.2.0-RC.1"
 
         manifestPlaceholders["appName"] = "@string/app_name"
@@ -68,11 +77,19 @@ android {
         val canaryDate = nightlyVersionName?.replace(Regex("[^0-9]"), "")?.takeIf { it.isNotEmpty() }
         if (nightlyVersionName != null) {
             versionName = nightlyVersionName
-            val dateCode = (if (canaryDate != null && canaryDate.length > 8) canaryDate.take(8) else canaryDate)
-                ?.toIntOrNull()
-                ?.takeIf { it > 5 }
-            if (dateCode != null) {
-                versionCode = dateCode
+            val semVerMatch = Regex("""^v?(\d+)\.(\d+)\.(\d+)""").find(nightlyVersionName)
+            if (semVerMatch != null) {
+                val major = semVerMatch.groupValues[1].toInt()
+                val minor = semVerMatch.groupValues[2].toInt()
+                val run = semVerMatch.groupValues[3].toInt()
+                versionCode = major * 1_000_000 + minor * 10_000 + run
+            } else {
+                val dateCode = (if (canaryDate != null && canaryDate.length > 8) canaryDate.take(8) else canaryDate)
+                    ?.toIntOrNull()
+                    ?.takeIf { it > 5 }
+                if (dateCode != null) {
+                    versionCode = 1_000_000 + dateCode
+                }
             }
         }
 
@@ -196,13 +213,11 @@ android {
     }
 
     signingConfigs {
-        getByName("debug") {
-            if (hasReleaseSigningConfig) {
-                storeFile = releaseKeystoreFile
-                storePassword = releaseStorePassword
-                keyAlias = releaseKeyAlias
-                keyPassword = releaseKeyPassword
-            }
+        create("testSign") {
+            storeFile = rootProject.file("app/keystore/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
         }
         create("release") {
             if (hasReleaseSigningConfig) {
@@ -212,27 +227,27 @@ android {
                 keyPassword = releaseKeyPassword
             }
         }
-        create("dualplay") {
-            storeFile = rootProject.file("app/keystore/debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
-        }
     }
 
     buildTypes {
         release {
-            if (isCanary) {
+            if (isRTest) {
+                applicationIdSuffix = ".rtest"
+                manifestPlaceholders["appName"] = "Ozone R8 test"
+                signingConfig = signingConfigs.getByName("testSign")
+            } else if (isCanary) {
                 applicationIdSuffix = ".canary"
                 manifestPlaceholders["appName"] = "@string/app_name_canary"
+                signingConfig = if (hasReleaseSigningConfig) {
+                    signingConfigs.getByName("release")
+                } else {
+                    signingConfigs.getByName("testSign")
+                }
             } else {
                 manifestPlaceholders["appName"] = "@string/app_name"
-            }
-
-            signingConfig = if (hasReleaseSigningConfig) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
+                if (hasReleaseSigningConfig) {
+                    signingConfig = signingConfigs.getByName("release")
+                }
             }
 
             isMinifyEnabled = true
@@ -256,7 +271,7 @@ android {
             if (isDualPlay) {
                 applicationIdSuffix = ".dualplay"
                 manifestPlaceholders["appName"] = "Ozone Dual Play"
-                signingConfig = signingConfigs.getByName("dualplay")
+                signingConfig = signingConfigs.getByName("testSign")
             }
         }
     }
