@@ -52,6 +52,7 @@ import moe.rukamori.archivetune.extensions.setOffloadEnabled
 import moe.rukamori.archivetune.playback.MusicService
 import moe.rukamori.archivetune.playback.applyEqSettingsToEffects
 import moe.rukamori.archivetune.playback.cancelCrossfade
+import moe.rukamori.archivetune.playback.closeAudioEffectSession
 import moe.rukamori.archivetune.playback.createMediaSourceFactory
 import moe.rukamori.archivetune.playback.playbackAudioAttributes
 import moe.rukamori.archivetune.playback.sendCloseAudioEffectSessionBroadcast
