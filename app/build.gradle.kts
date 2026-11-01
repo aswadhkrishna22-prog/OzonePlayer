@@ -146,7 +146,7 @@ android {
         }
         create("originTest") {
             dimension = "flavor"
-            applicationId = "com.hiby.music"
+            applicationId = "com.apple.android.music"
             manifestPlaceholders["appName"] = "Ozone (Origin test)"
         }
         create("gms") {
