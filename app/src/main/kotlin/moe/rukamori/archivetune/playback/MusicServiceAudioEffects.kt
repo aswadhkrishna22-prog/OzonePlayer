@@ -75,7 +75,7 @@ internal fun MusicService.releaseAudioEffects() {
 }
 
 internal fun MusicService.ensureAudioEffects(sessionId: Int) {
-    if (sessionId <= 0) return
+    if (sessionId <= 0 || dualPlayEngine.isEnabled) return
     if (audioEffectsSessionId == sessionId && equalizer != null) return
     audioEffectsInitializationJob?.cancel()
     audioEffectsInitializationJob = null
@@ -83,7 +83,7 @@ internal fun MusicService.ensureAudioEffects(sessionId: Int) {
     audioEffectsInitializationJob = scope.launch {
         repeat(AudioPolicyConstants.AUDIO_EFFECT_INITIALIZATION_MAX_ATTEMPTS - 1) {
             delay(AudioPolicyConstants.AUDIO_EFFECT_INITIALIZATION_RETRY_DELAY_MS)
-            if (localPlayer.audioSessionId != sessionId || !shouldKeepAudioEffectSessionOpen()) return@launch
+            if (localPlayer.audioSessionId != sessionId || !shouldKeepAudioEffectSessionOpen() || dualPlayEngine.isEnabled) return@launch
             if (initializeAudioEffects(sessionId)) return@launch
         }
     }
@@ -144,12 +144,13 @@ internal fun MusicService.applyEqSettingsToEffects(settings: EqSettings) {
 }
 
 internal fun MusicService.shouldKeepAudioEffectSessionOpen(): Boolean {
+    if (dualPlayEngine.isEnabled) return false
     val playbackState = localPlayer.playbackState
     return playbackState == Player.STATE_BUFFERING || playbackState == Player.STATE_READY
 }
 
 internal fun MusicService.reconcileAudioEffectSession() {
-    if (!shouldKeepAudioEffectSessionOpen()) {
+    if (!shouldKeepAudioEffectSessionOpen() || dualPlayEngine.isEnabled) {
         closeAudioEffectSession()
         return
     }
@@ -158,7 +159,7 @@ internal fun MusicService.reconcileAudioEffectSession() {
 }
 
 internal fun MusicService.openAudioEffectSession() {
-    if (isAudioEffectSessionOpened) return
+    if (isAudioEffectSessionOpened || dualPlayEngine.isEnabled) return
     val sessionId = localPlayer.audioSessionId
     if (sessionId <= 0) return
     isAudioEffectSessionOpened = true
@@ -178,7 +179,7 @@ internal fun MusicService.closeAudioEffectSession() {
 }
 
 internal fun MusicService.rebindAudioEffectSession(newSessionId: Int) {
-    if (newSessionId <= 0 || !shouldKeepAudioEffectSessionOpen()) return
+    if (newSessionId <= 0 || !shouldKeepAudioEffectSessionOpen() || dualPlayEngine.isEnabled) return
     val oldSessionId = openedAudioSessionId
     if (!isAudioEffectSessionOpened) {
         openAudioEffectSession()

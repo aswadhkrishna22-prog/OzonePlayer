@@ -238,6 +238,7 @@ class DualPlayEngine(
         service.audioNormalizationEnabled = false
 
         // Detach any system-level OEM audio effect sessions (e.g. Dolby Atmos / Dirac) from Player A
+        runCatching { service.closeAudioEffectSession() }
         runCatching { service.sendCloseAudioEffectSessionBroadcast(service.localPlayer.audioSessionId) }
 
         // ── 4. Opt out of platform spatialization for Player A ────────────────
@@ -252,8 +253,8 @@ class DualPlayEngine(
 
         // ── 5. Activate channel-split mode ────────────────────────────────────
         DualPlayChannelState.mode  = ChannelMode.ACTIVE
-        DualPlayChannelState.modeA = EarMode.STEREO   // Normal stereo until user picks L/R/M
-        DualPlayChannelState.modeB = EarMode.STEREO
+        DualPlayChannelState.modeA = EarMode.LEFT_ONLY
+        DualPlayChannelState.modeB = EarMode.RIGHT_ONLY
 
         // ── 6. Build Player B (with SPATIALIZATION_BEHAVIOR_NEVER) ────────────
         createAndConfigurePlayerB()
@@ -270,13 +271,13 @@ class DualPlayEngine(
 
         _state.value = _state.value.copy(
             enabled = true,
-            earSelectionA = null,
-            earSelectionB = null,
+            earSelectionA = EarSelection.L,
+            earSelectionB = EarSelection.R,
             splitViewActive = false,
             playerBMediaItem = null,
             playerBError = null,
         )
-        Timber.tag(TAG).i("Dual Play enabled (earSelectionA=null, splitViewActive=false)")
+        Timber.tag(TAG).i("Dual Play enabled (earSelectionA=L, earSelectionB=R, splitViewActive=false)")
         return true
     }
 
@@ -961,6 +962,7 @@ class DualPlayEngine(
             }
 
         playerB = b
+        runCatching { service.sendCloseAudioEffectSessionBroadcast(b.audioSessionId) }
         startForegroundKeepAlive()
         Timber.tag(TAG).d("Player B created (offload=false)")
     }
@@ -968,6 +970,11 @@ class DualPlayEngine(
     // ── Private: Player B event listener ──────────────────────────────────────
 
     private val playerBListener = object : Player.Listener {
+        override fun onAudioSessionIdChanged(audioSessionId: Int) {
+            Timber.tag(TAG).d("Player B onAudioSessionIdChanged: $audioSessionId")
+            runCatching { service.sendCloseAudioEffectSessionBroadcast(audioSessionId) }
+        }
+
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             Timber.tag(TAG).d("Player B onMediaItemTransition: mediaId=${mediaItem?.mediaId}, reason=$reason")
             val dur = playerB?.duration?.takeIf { it > 0 } ?: 0L
@@ -1222,23 +1229,23 @@ class DualPlayEngine(
     /**
      * Called immediately after Song B is loaded.
      * Rule D:
-     * - If A has no selection at split: A = M and B = M.
+     * - If A has no selection at split, default to L so B defaults to R.
      * - If A = L at split: A keeps L and B = R (auto). If A = R: B = L.
+     * - If A is explicitly M (stereo), B also defaults to M.
      */
     private fun onSongBAdded() {
-        val aEar = _state.value.earSelectionA
-        if (aEar == null || aEar == EarSelection.M) {
+        val aEar = _state.value.earSelectionA ?: EarSelection.L
+        if (aEar == EarSelection.M) {
             setEarA(EarSelection.M)
             setEarB(EarSelection.M)
-        } else if (AUTO_COMPLEMENT_EAR) {
+        } else {
+            setEarA(aEar)
             val bEar = when (aEar) {
                 EarSelection.L -> EarSelection.R
                 EarSelection.R -> EarSelection.L
                 else -> EarSelection.M
             }
             setEarB(bEar)
-        } else {
-            setEarB(EarSelection.M)
         }
         Timber.tag(TAG).d("Song B added: earA=${_state.value.earSelectionA} → earB=${_state.value.earSelectionB}")
     }

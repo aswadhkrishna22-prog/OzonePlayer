@@ -268,7 +268,7 @@ internal suspend fun MusicService.recoverAudioRouteAfterDeviceChange() {
 }
 
 internal suspend fun MusicService.rebindAudioEffectsAfterRouteChange() {
-    if (!isAudioEffectSessionOpened) return
+    if (!isAudioEffectSessionOpened || dualPlayEngine.isEnabled) return
     closeAudioEffectSession()
     if (!player.playWhenReady) return
     delay(AudioPolicyConstants.AUDIO_EFFECT_ROUTE_REBIND_DELAY_MS)
@@ -291,11 +291,7 @@ internal fun MusicService.playbackAudioAttributes(): androidx.media3.common.Audi
     .setUsage(androidx.media3.common.C.USAGE_MEDIA)
     .setContentType(androidx.media3.common.C.AUDIO_CONTENT_TYPE_MUSIC)
     .setAllowedCapturePolicy(androidx.media3.common.C.ALLOW_CAPTURE_BY_ALL)
-    .apply {
-        if (dualPlayEngine.isEnabled) {
-            setSpatializationBehavior(androidx.media3.common.C.SPATIALIZATION_BEHAVIOR_NEVER)
-        }
-    }
+    .setSpatializationBehavior(androidx.media3.common.C.SPATIALIZATION_BEHAVIOR_NEVER)
     .build()
 
 internal fun MusicService.bluetoothAutoStartEnabled(): Boolean = autoStartOnBluetoothEnabled
