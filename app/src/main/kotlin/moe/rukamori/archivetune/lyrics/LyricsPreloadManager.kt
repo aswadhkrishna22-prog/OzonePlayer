@@ -80,8 +80,8 @@ class LyricsPreloadManager
                         return@launch
                     }
 
-                    if (context.isLowDataModeActive(preferences[LowDataModeKey] ?: true)) {
-                        Log.d(TAG, "Low Data Mode active, skipping lyrics pre-load")
+                    if (context.isLowDataModeActive(preferences[LowDataModeKey] ?: false) || (moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive.value && moe.rukamori.archivetune.lowdata.LowDataManager.isAudioBufferLow.value)) {
+                        Log.d(TAG, "Low Data Mode active or audio buffer low, skipping lyrics pre-load")
                         return@launch
                     }
 

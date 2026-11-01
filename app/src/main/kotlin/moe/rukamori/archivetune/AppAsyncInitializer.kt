@@ -37,6 +37,25 @@ import kotlin.system.exitProcess
 
 internal fun App.initializeDeferredAsync() {
     applicationScope.launch(Dispatchers.IO) {
+        val connectivityManager = getSystemService(android.net.ConnectivityManager::class.java)
+        val callback = object : android.net.ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: android.net.Network) {
+                moe.rukamori.archivetune.lowdata.LowDataManager.isNetworkOnline = true
+            }
+            override fun onLost(network: android.net.Network) {
+                val active = connectivityManager?.activeNetwork
+                moe.rukamori.archivetune.lowdata.LowDataManager.isNetworkOnline = active != null
+            }
+        }
+        val request = android.net.NetworkRequest.Builder()
+            .addCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .build()
+        runCatching {
+            connectivityManager?.registerNetworkCallback(request, callback)
+        }
+    }
+
+    applicationScope.launch(Dispatchers.IO) {
         try {
             syncUtils.trySpotifyAutoSync()
         } catch (e: Exception) {

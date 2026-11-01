@@ -55,6 +55,8 @@ data class HomeUiState(
 sealed interface HomeAction {
     data object Refresh : HomeAction
 
+    data object LoadCommunityPreviews : HomeAction
+
     data class SelectChip(
         val chip: HomePage.Chip?,
     ) : HomeAction

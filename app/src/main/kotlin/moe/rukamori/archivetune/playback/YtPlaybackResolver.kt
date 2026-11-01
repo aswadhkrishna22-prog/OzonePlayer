@@ -21,12 +21,13 @@ internal fun MusicService.resolveYtPlaybackResponse(
     shouldBypassFlac: Boolean,
     isMeteredConnection: Boolean,
 ): YTPlayerUtils.PlaybackData {
+    val isLowData = moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive.value
     val playbackData =
         runBlocking(Dispatchers.IO) {
             retryWithoutPlaybackLoginContext {
                 YTPlayerUtils.playerResponseForPlayback(
                     mediaId,
-                    audioQuality = if (shouldBypassFlac) AudioQuality.LOW else audioQuality,
+                    audioQuality = if (shouldBypassFlac || isLowData) AudioQuality.LOW else audioQuality,
                     connectivityManager = connectivityManager,
                     preferredStreamClient = preferredStreamClient,
                     networkMetered = isMeteredConnection,

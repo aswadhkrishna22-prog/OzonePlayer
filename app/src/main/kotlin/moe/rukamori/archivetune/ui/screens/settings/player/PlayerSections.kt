@@ -17,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.lowdata.AutoLowDataMode
+import moe.rukamori.archivetune.ui.component.EnumListPreference
 import moe.rukamori.archivetune.ui.component.PreferenceGroup
 import moe.rukamori.archivetune.ui.component.SwitchPreference
 import moe.rukamori.archivetune.ui.screens.settings.playerAwareBottomPadding
@@ -74,6 +76,21 @@ internal fun PlayerBehaviorSection(
                 icon = { Icon(painterResource(R.drawable.android_cell), null) },
                 checked = state.lowDataMode,
                 onCheckedChange = actions.onLowDataModeChange,
+            )
+        }
+        item {
+            EnumListPreference(
+                title = { Text(stringResource(R.string.auto_low_data_mode_title)) },
+                icon = { Icon(painterResource(R.drawable.speed), null) },
+                selectedValue = state.autoLowDataMode,
+                onValueSelected = actions.onAutoLowDataModeChange,
+                valueText = { mode ->
+                    when (mode) {
+                        AutoLowDataMode.OFF -> stringResource(R.string.auto_low_data_mode_off)
+                        AutoLowDataMode.AUTOMATIC -> stringResource(R.string.auto_low_data_mode_automatic)
+                        AutoLowDataMode.ASK_ME -> stringResource(R.string.auto_low_data_mode_ask_me)
+                    }
+                },
             )
         }
         item {

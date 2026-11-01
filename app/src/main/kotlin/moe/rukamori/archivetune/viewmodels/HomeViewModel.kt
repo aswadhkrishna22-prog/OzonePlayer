@@ -240,12 +240,23 @@ constructor(
             _allYtItems.value = allItems
         }
 
-        private fun updateCommunitySection(section: HomePage.Section?) {
+        companion object {
+            private var cachedHomePage: HomePage? = null
+            private var cachedCommunitySection: HomePage.Section? = null
+        }
+
+        private fun updateCommunitySection(section: HomePage.Section?, forceLoadPreviews: Boolean = false) {
             val generation = communityPreviewGeneration.incrementAndGet()
             communityPreviewJob?.cancel()
             communityPreviewJob = null
             _communitySection.value = section
+            cachedCommunitySection = section
             if (section == null || section.featuredCards.all { card -> card.itemIds.isNotEmpty() }) return
+
+            if (moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive.value && !forceLoadPreviews) {
+                Timber.tag("HomeDebug").d("Low data mode: postponing community playlist preview loading until scrolled")
+                return
+            }
 
             communityPreviewJob =
                 viewModelScope.launch(Dispatchers.IO) {
@@ -256,6 +267,7 @@ constructor(
                             )
                         if (communityPreviewGeneration.get() == generation) {
                             _communitySection.value = enrichedSection
+                            cachedCommunitySection = enrichedSection
                             updateAllYtItems()
                         }
                     } catch (e: CancellationException) {
@@ -266,7 +278,12 @@ constructor(
                 }
         }
 
-    private suspend fun load() {
+        fun loadCommunityPreviewsOnScroll() {
+            val section = _communitySection.value ?: return
+            updateCommunitySection(section, forceLoadPreviews = true)
+        }
+
+    private suspend fun load(isPullToRefresh: Boolean = false) {
             delay(150.milliseconds)
             if (isLoading.value) return
             isLoading.value = true
@@ -284,16 +301,23 @@ constructor(
                         keepListening.value = localRecommendations.loadKeepListening()
                     }
                     launch {
-                        feedCoordinator.loadHome()
-                            .onSuccess { page ->
-                                val prepared = prepareCommunityHomePage(page, allowStructuralFallback = true)
-                                homePage.value = prepared.homePage
-                                updateCommunitySection(prepared.communitySection)
-                            }.onFailure {
-                                reportException(it)
-                                loadError.value = R.string.error_unknown
-                                updateCommunitySection(null)
-                            }
+                        if (moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive.value && !isPullToRefresh && cachedHomePage != null) {
+                            Timber.tag("HomeDebug").d("Low data mode: using cached feed without network request")
+                            homePage.value = cachedHomePage
+                            _communitySection.value = cachedCommunitySection
+                        } else {
+                            feedCoordinator.loadHome()
+                                .onSuccess { page ->
+                                    val prepared = prepareCommunityHomePage(page, allowStructuralFallback = true)
+                                    homePage.value = prepared.homePage
+                                    cachedHomePage = prepared.homePage
+                                    updateCommunitySection(prepared.communitySection)
+                                }.onFailure {
+                                    reportException(it)
+                                    loadError.value = R.string.error_unknown
+                                    updateCommunitySection(null)
+                                }
+                        }
                     }
                 }
 
@@ -405,6 +429,7 @@ constructor(
         fun onAction(action: HomeAction) {
             when (action) {
                 HomeAction.Refresh -> refresh()
+                HomeAction.LoadCommunityPreviews -> loadCommunityPreviewsOnScroll()
                 is HomeAction.SelectChip -> toggleChip(action.chip)
                 is HomeAction.LoadMore -> loadMoreYouTubeItems(action.continuation)
             }
@@ -416,7 +441,7 @@ constructor(
                 isRefreshing.value = true
                 try {
                     supervisorScope {
-                        launch { load() }
+                        launch { load(isPullToRefresh = true) }
                         launch {
                             quickPicksManager.refresh()
                             updateAllLocalItems()

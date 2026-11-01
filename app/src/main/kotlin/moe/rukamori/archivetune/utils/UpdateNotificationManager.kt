@@ -103,6 +103,9 @@ object UpdateNotificationManager {
             cancelUpdateNotification(context)
             return
         }
+        if (moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive.value && moe.rukamori.archivetune.lowdata.LowDataManager.isAudioBufferLow.value) {
+            return
+        }
 
         scope.launch {
             try {

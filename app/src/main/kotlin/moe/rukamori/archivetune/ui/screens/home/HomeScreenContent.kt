@@ -82,7 +82,7 @@ internal fun HomeContent(
                     }
 
                 val mediaContext =
-                    remember(mediaMetadata, isPlaying, navController, playerConnection, menuState, scope) {
+                    remember(mediaMetadata, isPlaying, navController, playerConnection, menuState, scope, onAction) {
                         HomeFeedMediaContext(
                             mediaMetadata = mediaMetadata,
                             isPlaying = isPlaying,
@@ -90,6 +90,7 @@ internal fun HomeContent(
                             playerConnection = playerConnection,
                             menuState = menuState,
                             scope = scope,
+                            onAction = onAction,
                         )
                     }
 

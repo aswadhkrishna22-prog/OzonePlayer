@@ -58,6 +58,7 @@ internal data class HomeFeedMediaContext(
     val playerConnection: PlayerConnection,
     val menuState: MenuState,
     val scope: CoroutineScope,
+    val onAction: (HomeAction) -> Unit = {},
 )
 
 @OptIn(
@@ -84,6 +85,9 @@ internal fun LazyListScope.homeCommunitySection(
             key = "home_community",
             contentType = "featured_playlist_shelf",
         ) {
+            androidx.compose.runtime.LaunchedEffect(section) {
+                mediaContext.onAction(HomeAction.LoadCommunityPreviews)
+            }
             CommunityPlaylistSection(
                 section = section,
                 mediaContext = mediaContext,

@@ -102,12 +102,15 @@ fun ItemThumbnail(
             }
 
             if (shouldLoadImage && !thumbnailUrl.isNullOrBlank()) {
+                val isLowData = moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive.value
+                val effDim = if (isLowData) kotlin.math.min(targetDim, 120) else targetDim
+                val effSizePx = if (isLowData) kotlin.math.min(targetSizePx, 120) else targetSizePx
                 val request =
-                    remember(thumbnailUrl, targetDim, targetSizePx) {
+                    remember(thumbnailUrl, effDim, effSizePx, isLowData) {
                         ImageRequest
                             .Builder(context)
-                            .data(thumbnailUrl.resize(targetDim, targetDim))
-                            .size(targetSizePx, targetSizePx)
+                            .data(thumbnailUrl.resize(effDim, effDim))
+                            .size(effSizePx, effSizePx)
                             .allowHardware(true)
                             .build()
                     }

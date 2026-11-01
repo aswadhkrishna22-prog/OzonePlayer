@@ -10,6 +10,7 @@ import androidx.compose.runtime.Immutable
 import moe.rukamori.archivetune.constants.AudioNormalizationKey
 import moe.rukamori.archivetune.constants.AudioQuality
 import moe.rukamori.archivetune.constants.AudioQualityKey
+import moe.rukamori.archivetune.constants.AutoLowDataModeKey
 import moe.rukamori.archivetune.constants.AutoSkipNextOnErrorKey
 import moe.rukamori.archivetune.constants.AutoStartOnBluetoothKey
 import moe.rukamori.archivetune.constants.AutomixEnabledKey
@@ -41,6 +42,7 @@ internal object PlayerContract {
     val FlacDownloadQuality = FlacDownloadQualityKey
     val AudioQuality = AudioQualityKey
     val LowDataMode = LowDataModeKey
+    val AutoLowDataMode = AutoLowDataModeKey
     val SkipSilence = SkipSilenceKey
     val AudioNormalization = AudioNormalizationKey
     val AutoSkipNextOnError = AutoSkipNextOnErrorKey
@@ -67,7 +69,8 @@ data class PlayerSettingsUiState(
     val flacStreamingQuality: FlacQuality = FlacQuality.CD,
     val flacDownloadQuality: FlacQuality = FlacQuality.HI_RES,
     val audioQuality: AudioQuality = AudioQuality.AUTO,
-    val lowDataMode: Boolean = true,
+    val lowDataMode: Boolean = false,
+    val autoLowDataMode: moe.rukamori.archivetune.lowdata.AutoLowDataMode = moe.rukamori.archivetune.lowdata.AutoLowDataMode.OFF,
     val skipSilence: Boolean = false,
     val audioNormalization: Boolean = true,
     val autoSkipNextOnError: Boolean = false,
@@ -98,6 +101,7 @@ data class PlayerSettingsUiActions(
     val onFlacDownloadQualityChange: (FlacQuality) -> Unit = {},
     val onAudioQualityChange: (AudioQuality) -> Unit = {},
     val onLowDataModeChange: (Boolean) -> Unit = {},
+    val onAutoLowDataModeChange: (moe.rukamori.archivetune.lowdata.AutoLowDataMode) -> Unit = {},
     val onSkipSilenceChange: (Boolean) -> Unit = {},
     val onAudioNormalizationChange: (Boolean) -> Unit = {},
     val onAutoSkipNextOnErrorChange: (Boolean) -> Unit = {},

@@ -12,6 +12,9 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -20,6 +23,7 @@ import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -105,6 +109,7 @@ fun ScaffoldSearchBarHost(
             },
             trailingIcon = {
                 val iconMotionDuration = if (disableAnimations) 0 else 300
+                val isLowDataActive by moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive.collectAsState()
                 AnimatedContent(
                     targetState = searchState.active,
                     transitionSpec = {
@@ -114,6 +119,14 @@ fun ScaffoldSearchBarHost(
                     label = "TrailingIconMorph",
                 ) { isExpanded ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (isLowDataActive) {
+                            Icon(
+                                painter = painterResource(R.drawable.android_cell),
+                                contentDescription = stringResource(R.string.low_data_mode_title),
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(end = 6.dp).size(20.dp),
+                            )
+                        }
                         if (isExpanded) {
                             if (searchState.query.text.isNotEmpty()) {
                                 IconButton(onClick = { searchState.onQueryChange(TextFieldValue("")) }) {

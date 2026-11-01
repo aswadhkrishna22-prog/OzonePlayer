@@ -45,8 +45,8 @@ class OnlineSearchSuggestionViewModel
             viewModelScope.launch {
                 query
                     .flatMapLatest { query ->
-                        if (query.isEmpty()) {
-                            database.searchHistory().map { history ->
+                        if (query.isEmpty() || moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive.value) {
+                            database.searchHistory(query).map { history ->
                                 SearchSuggestionViewState(
                                     history = history,
                                 )

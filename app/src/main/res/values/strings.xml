@@ -595,6 +595,14 @@
     <string name="audio_quality_low">Low (48 kbps)</string>
     <string name="low_data_mode_title">Low Data Mode</string>
     <string name="low_data_mode_description">Reduces mobile data usage by using low-quality streams and disabling playback cache, canvas, and background lyrics preloading on metered networks</string>
+    <string name="auto_low_data_mode_title">Auto low data mode</string>
+    <string name="auto_low_data_mode_automatic">Automatic</string>
+    <string name="auto_low_data_mode_ask_me">Ask me</string>
+    <string name="auto_low_data_mode_off">Off</string>
+    <string name="slow_network_detected_title">Slow network detected</string>
+    <string name="slow_network_detected_desc">Turn on Low data mode?</string>
+    <string name="turn_on">Turn on</string>
+    <string name="not_now">Not now</string>
     <string name="queue">Queue</string>
     <string name="clear_queue">Clear queue</string>
     <string name="clear_queue_desc">Keep only the currently playing track</string>

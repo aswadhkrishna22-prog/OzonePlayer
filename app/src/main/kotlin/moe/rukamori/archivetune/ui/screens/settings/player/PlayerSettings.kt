@@ -46,7 +46,9 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.AudioNormalizationKey
 import moe.rukamori.archivetune.constants.AudioQuality
 import moe.rukamori.archivetune.constants.AudioQualityKey
+import moe.rukamori.archivetune.constants.AutoLowDataModeKey
 import moe.rukamori.archivetune.constants.AutoSkipNextOnErrorKey
+import moe.rukamori.archivetune.lowdata.AutoLowDataMode
 import moe.rukamori.archivetune.constants.AutoStartOnBluetoothKey
 import moe.rukamori.archivetune.constants.AutomixEnabledKey
 import moe.rukamori.archivetune.constants.AutomixTransitionDuration
@@ -106,7 +108,11 @@ fun PlayerSettings(navController: NavController) {
     )
     val (lowDataMode, onLowDataModeChange) = rememberPreference(
         LowDataModeKey,
-        defaultValue = true,
+        defaultValue = false,
+    )
+    val (autoLowDataMode, onAutoLowDataModeChange) = rememberEnumPreference(
+        AutoLowDataModeKey,
+        defaultValue = AutoLowDataMode.OFF,
     )
     val (skipSilence, onSkipSilenceChange) = rememberPreference(
         SkipSilenceKey,
@@ -211,6 +217,7 @@ fun PlayerSettings(navController: NavController) {
         flacDownloadQuality = flacDownloadQuality,
         audioQuality = audioQuality,
         lowDataMode = lowDataMode,
+        autoLowDataMode = autoLowDataMode,
         skipSilence = skipSilence,
         audioNormalization = audioNormalization,
         autoSkipNextOnError = autoSkipNextOnError,
@@ -246,6 +253,7 @@ fun PlayerSettings(navController: NavController) {
             onFlacDownloadQualityChange = onFlacDownloadQualityChange,
             onAudioQualityChange = onAudioQualityChange,
             onLowDataModeChange = onLowDataModeChange,
+            onAutoLowDataModeChange = onAutoLowDataModeChange,
             onSkipSilenceChange = onSkipSilenceChange,
             onAudioNormalizationChange = onAudioNormalizationChange,
             onAutoSkipNextOnErrorChange = onAutoSkipNextOnErrorChange,

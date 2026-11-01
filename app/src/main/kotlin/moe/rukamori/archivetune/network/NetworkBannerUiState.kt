@@ -12,4 +12,8 @@ sealed interface NetworkBannerUiState {
     data object Offline : NetworkBannerUiState
 
     data object BackOnline : NetworkBannerUiState
+
+    data object LowDataModeOn : NetworkBannerUiState
+
+    data object LowDataModeOff : NetworkBannerUiState
 }
