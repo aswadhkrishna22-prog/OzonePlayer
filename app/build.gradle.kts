@@ -146,7 +146,7 @@ android {
         }
         create("originTest") {
             dimension = "flavor"
-            applicationId = "com.apple.android.music"
+            applicationId = "com.spotify.music"
             manifestPlaceholders["appName"] = "Ozone (Origin test)"
         }
         create("gms") {
