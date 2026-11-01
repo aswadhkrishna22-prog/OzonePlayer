@@ -63,6 +63,25 @@ jobs:
           fi
           echo "$SIGNING_KEY_BASE64" | base64 -d > /tmp/release.jks
 
+          # Validate store password and verify alias existence early to fail fast (seconds instead of 15m)
+          if ! keytool -list -keystore /tmp/release.jks -storepass "$STORE_PASSWORD" > /tmp/keystore_list.txt 2>&1; then
+            echo "::error::Failed to read keystore with provided SIGNING_STORE_PASSWORD!"
+            cat /tmp/keystore_list.txt
+            exit 1
+          fi
+
+          if ! grep -qi "^${KEY_ALIAS}," /tmp/keystore_list.txt && ! grep -qi "Alias name: ${KEY_ALIAS}" /tmp/keystore_list.txt; then
+            echo "::error::Key alias '${KEY_ALIAS}' was not found in keystore!"
+            echo "### ❌ Release Signing Failed: Key Alias Not Found" >> $GITHUB_STEP_SUMMARY
+            echo "The alias \`${KEY_ALIAS}\` specified in \`SIGNING_KEY_ALIAS\` does not match the keystore entries." >> $GITHUB_STEP_SUMMARY
+            echo "Available entry alias(es) detected in keystore:" >> $GITHUB_STEP_SUMMARY
+            grep "Entry," /tmp/keystore_list.txt | while read -r line; do
+              ENTRY_ALIAS=$(echo "$line" | cut -d',' -f1)
+              echo "- \`$ENTRY_ALIAS\`" >> $GITHUB_STEP_SUMMARY
+            done
+            exit 1
+          fi
+
       - name: Build Universal Release APK (R8 Minified)
         env:
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
