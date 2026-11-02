@@ -242,7 +242,7 @@ private fun GoogleSoundSearchRadarCard(
                     ),
             )
         }
-    val discShape = remember { MaterialShapes.Cookie9Sided.toShape() }
+    val discShape = MaterialShapes.Cookie9Sided.toShape()
 
     Box(
         modifier =

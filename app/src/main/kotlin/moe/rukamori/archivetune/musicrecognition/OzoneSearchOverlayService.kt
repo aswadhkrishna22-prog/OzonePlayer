@@ -24,10 +24,10 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
-import androidx.lifecycle.ViewTreeLifecycleOwner
-import androidx.lifecycle.ViewTreeViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.savedstate.ViewTreeSavedStateRegistryOwner
+import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.lifecycle.setViewTreeViewModelStoreOwner
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -115,9 +115,9 @@ class OzoneSearchOverlayService : Service() {
                 setViewCompositionStrategy(
                     ViewCompositionStrategy.DisposeOnDetachedFromWindowOrReleasedFromPool,
                 )
-                ViewTreeLifecycleOwner.set(this, owner)
-                ViewTreeViewModelStoreOwner.set(this, owner)
-                ViewTreeSavedStateRegistryOwner.set(this, owner)
+                setViewTreeLifecycleOwner(owner)
+                setViewTreeViewModelStoreOwner(owner)
+                setViewTreeSavedStateRegistryOwner(owner)
 
                 setContent {
                     ArchiveTuneTheme {
