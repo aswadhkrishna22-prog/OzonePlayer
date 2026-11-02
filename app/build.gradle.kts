@@ -268,11 +268,9 @@ android {
 
         debug {
             isDebuggable = true
-            if (isDualPlay) {
-                applicationIdSuffix = ".dualplay"
-                manifestPlaceholders["appName"] = "Ozone Dual Play"
-                signingConfig = signingConfigs.getByName("testSign")
-            }
+            applicationIdSuffix = ".dev"
+            manifestPlaceholders["appName"] = "Ozone for Dev"
+            signingConfig = signingConfigs.getByName("testSign")
         }
     }
 

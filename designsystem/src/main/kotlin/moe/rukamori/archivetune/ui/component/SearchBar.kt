@@ -125,8 +125,12 @@ fun TopSearch(
     pureBlack: Boolean = false,
     blurRadius: Float = SettingsDimensions.BlurRadiusDefault,
     showBorder: Boolean = true,
+    isLoading: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val isFocused by interactionSource.collectIsFocusedAsState()
+    val isBeamActive = isFocused || active || isLoading
+
     val animationProgress: Float by animateFloatAsState(
         targetValue = if (active) 1f else 0f,
         animationSpec = tween(durationMillis = AnimationDurationMillis),
@@ -258,6 +262,12 @@ fun TopSearch(
                         } else {
                             Modifier
                         },
+                    )
+                    .borderBeam(
+                        enabled = isBeamActive,
+                        shape = animatedShape,
+                        head = MaterialTheme.colorScheme.primary,
+                        tail = MaterialTheme.colorScheme.secondary,
                     ),
         ) {
             Column {

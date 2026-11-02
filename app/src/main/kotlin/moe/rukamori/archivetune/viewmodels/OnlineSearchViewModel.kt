@@ -18,6 +18,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.aicontentfilter.FilterAiContentUseCase
 import moe.rukamori.archivetune.aicontentfilter.LoadAiContentFilterPolicyUseCase
@@ -77,6 +78,8 @@ class OnlineSearchViewModel
             )
         private var isSummaryLoading = false
         private val loadingFilters = mutableSetOf<String>()
+        private val _isLoading = MutableStateFlow(false)
+        val isLoading = _isLoading.asStateFlow()
         private var searchJob: kotlinx.coroutines.Job? = null
 
         companion object {
@@ -113,6 +116,7 @@ class OnlineSearchViewModel
             }
 
             isSummaryLoading = true
+            _isLoading.value = true
             try {
                 YouTube
                     .searchSummary(query)
@@ -138,6 +142,7 @@ class OnlineSearchViewModel
                     }
             } finally {
                 isSummaryLoading = false
+                _isLoading.value = isSummaryLoading || loadingFilters.isNotEmpty()
             }
         }
 
@@ -152,6 +157,7 @@ class OnlineSearchViewModel
                 return
             }
 
+            _isLoading.value = true
             try {
                 YouTube
                     .search(query, filter)
@@ -179,6 +185,7 @@ class OnlineSearchViewModel
                     }
             } finally {
                 loadingFilters.remove(filterKey)
+                _isLoading.value = isSummaryLoading || loadingFilters.isNotEmpty()
             }
         }
 

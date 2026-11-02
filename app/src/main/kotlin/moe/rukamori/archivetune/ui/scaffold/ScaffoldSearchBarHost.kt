@@ -33,6 +33,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.util.fastAny
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.flowOf
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import dev.chrisbanes.haze.HazeState
@@ -62,6 +64,7 @@ fun ScaffoldSearchBarHost(
     val voiceSearchLauncher = rememberVoiceSearchLauncher(searchState)
     val (onlineSearchViewModel, onlineSearchSortState) = rememberOnlineSearchSort(navBackStackEntry)
     val onlineSearchSort by onlineSearchSortState
+    val isOnlineSearchLoading by (onlineSearchViewModel?.isLoading ?: flowOf(false)).collectAsStateWithLifecycle(false)
     val currentRoute = navBackStackEntry?.destination?.route
 
     AnimatedVisibility(
@@ -75,6 +78,7 @@ fun ScaffoldSearchBarHost(
             onSearch = searchState.onSearch,
             active = searchState.active,
             onActiveChange = searchState.onActiveChange,
+            isLoading = isOnlineSearchLoading,
             placeholder = {
                 Text(
                     text = stringResource(

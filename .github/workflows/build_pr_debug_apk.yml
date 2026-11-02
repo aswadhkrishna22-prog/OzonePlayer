@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ "main" ]
   push:
-    branches: [ "feat/dual-play-ui", "feat/slim-updates", "release/1.2-prep" ]
+    branches: [ "feat/dual-play-ui", "feat/slim-updates", "release/1.2-prep", "feat/search-beam" ]
   workflow_dispatch:
 
 permissions:
@@ -91,10 +91,10 @@ jobs:
             }
           ' | tee -a $GITHUB_STEP_SUMMARY
 
-      - name: Upload Debug APK Artifact
+      - name: Upload Debug APK Artifact (Ozone for Dev)
         uses: actions/upload-artifact@v4
         with:
-          name: OzonePlayer-dualplay-debug
+          name: Ozone-for-Dev-debug
           path: app/build/outputs/apk/gmsMobileUniversal/debug/*.apk
 
       - name: Upload R8 Test Release APK Artifact

@@ -87,6 +87,7 @@ fun SearchScreen(
             ) {
                 SearchEntryField(
                     onClick = onSearchClick,
+                    isLoading = state is SearchDiscoveryScreenState.Loading,
                     modifier =
                         Modifier
                             .fillMaxWidth()
