@@ -173,7 +173,7 @@ class OzoneSearchOverlayService : Service() {
         val layoutParams =
             WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
                 } else {
@@ -182,7 +182,6 @@ class OzoneSearchOverlayService : Service() {
                 },
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
                     WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 PixelFormat.TRANSLUCENT,
             ).apply {
@@ -191,6 +190,7 @@ class OzoneSearchOverlayService : Service() {
 
         try {
             windowManager?.addView(composeView, layoutParams)
+            owner.start()
             overlayComposeView = composeView
         } catch (e: Exception) {
             Timber.e(e, "Failed to add floating overlay view to WindowManager")
@@ -227,6 +227,7 @@ class OzoneSearchOverlayService : Service() {
                     result.fold(
                         onSuccess = { track ->
                             overlayState.value = OverlayState.Success(track)
+                            updateNotificationResult(track)
                             try {
                                 repository.saveToHistory(track)
                             } catch (e: Exception) {
@@ -234,24 +235,62 @@ class OzoneSearchOverlayService : Service() {
                             }
                         },
                         onFailure = { throwable ->
-                            val msg =
-                                if (
-                                    throwable.message?.contains("No match", ignoreCase = true) == true ||
-                                    throwable.message?.contains("404") == true
-                                ) {
-                                    getString(R.string.ozone_search_no_match)
-                                } else {
-                                    getString(R.string.ozone_search_no_match)
-                                }
+                            val msg = getString(R.string.ozone_search_no_match)
                             overlayState.value = OverlayState.Error(msg, canRetry = true)
+                            updateNotificationError(msg)
                         },
                     )
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
                     Timber.e(e, "Overlay audio recognition failed")
-                    overlayState.value = OverlayState.Error(getString(R.string.ozone_search_no_match), canRetry = true)
+                    val msg = getString(R.string.ozone_search_no_match)
+                    overlayState.value = OverlayState.Error(msg, canRetry = true)
+                    updateNotificationError(msg)
                 }
             }
+    }
+
+    private fun updateNotificationResult(track: RecognizedTrack) {
+        val notificationManager = getSystemService(NotificationManager::class.java) ?: return
+        val openIntent =
+            Intent(this, MainActivity::class.java).apply {
+                action = ACTION_SEARCH
+                putExtra("search_query", track.searchQuery)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+        val pendingIntent =
+            android.app.PendingIntent.getActivity(
+                this,
+                NOTIFICATION_ID,
+                openIntent,
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE,
+            )
+
+        val notification =
+            NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.search)
+                .setContentTitle(track.title)
+                .setContentText("${track.artist} • ${track.album}")
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .build()
+
+        notificationManager.notify(NOTIFICATION_ID, notification)
+    }
+
+    private fun updateNotificationError(message: String) {
+        val notificationManager = getSystemService(NotificationManager::class.java) ?: return
+        val notification =
+            NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.search)
+                .setContentTitle(getString(R.string.ozone_search))
+                .setContentText(message)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .build()
+
+        notificationManager.notify(NOTIFICATION_ID, notification)
     }
 
     private fun dismissOverlay() {

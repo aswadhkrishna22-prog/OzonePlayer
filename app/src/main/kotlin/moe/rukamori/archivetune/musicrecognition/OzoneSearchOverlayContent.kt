@@ -110,14 +110,8 @@ fun OzoneSearchOverlayContent(
     Box(
         modifier =
             modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onDismiss,
-                ),
+                .fillMaxWidth()
+                .navigationBarsPadding(),
         contentAlignment = Alignment.BottomCenter,
     ) {
         val phase =

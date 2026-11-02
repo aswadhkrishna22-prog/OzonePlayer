@@ -264,6 +264,7 @@
             android:name=".musicrecognition.OzoneSearchPermissionActivity"
             android:exported="false"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:noHistory="true"
             android:excludeFromRecents="true" />
 
         <service

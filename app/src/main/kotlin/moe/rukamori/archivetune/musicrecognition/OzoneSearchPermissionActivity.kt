@@ -9,6 +9,7 @@ package moe.rukamori.archivetune.musicrecognition
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -21,15 +22,7 @@ class OzoneSearchPermissionActivity : ComponentActivity() {
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
-                val overlayIntent =
-                    Intent(this, OzoneSearchOverlayService::class.java).apply {
-                        action = OzoneSearchOverlayService.ACTION_START_SEARCH
-                    }
-                try {
-                    ContextCompat.startForegroundService(this, overlayIntent)
-                } catch (e: Exception) {
-                    Toast.makeText(this, getString(R.string.ozone_search_no_match), Toast.LENGTH_SHORT).show()
-                }
+                startOverlayService()
             } else {
                 Toast.makeText(
                     this,
@@ -37,24 +30,46 @@ class OzoneSearchPermissionActivity : ComponentActivity() {
                     Toast.LENGTH_LONG,
                 ).show()
             }
-            finish()
+            closeActivity()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        disableTransitions()
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-            val overlayIntent =
-                Intent(this, OzoneSearchOverlayService::class.java).apply {
-                    action = OzoneSearchOverlayService.ACTION_START_SEARCH
-                }
-            try {
-                ContextCompat.startForegroundService(this, overlayIntent)
-            } catch (e: Exception) {
-                // ignore
-            }
-            finish()
+            startOverlayService()
+            closeActivity()
             return
         }
+
         requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+    }
+
+    private fun startOverlayService() {
+        val overlayIntent =
+            Intent(this, OzoneSearchOverlayService::class.java).apply {
+                action = OzoneSearchOverlayService.ACTION_START_SEARCH
+            }
+        try {
+            ContextCompat.startForegroundService(this, overlayIntent)
+        } catch (e: Exception) {
+            Toast.makeText(this, getString(R.string.ozone_search_no_match), Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun closeActivity() {
+        finish()
+        disableTransitions()
+    }
+
+    private fun disableTransitions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, 0, 0)
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
+        } else {
+            @Suppress("DEPRECATION")
+            overridePendingTransition(0, 0)
+        }
     }
 }

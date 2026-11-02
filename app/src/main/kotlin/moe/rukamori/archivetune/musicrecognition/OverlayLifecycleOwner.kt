@@ -21,10 +21,9 @@ class OverlayLifecycleOwner : LifecycleOwner, ViewModelStoreOwner, SavedStateReg
     private val controller = SavedStateRegistryController.create(this)
 
     init {
+        controller.performAttach()
         controller.performRestore(null)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
     }
 
     override val lifecycle: Lifecycle
@@ -35,6 +34,11 @@ class OverlayLifecycleOwner : LifecycleOwner, ViewModelStoreOwner, SavedStateReg
 
     override val savedStateRegistry: SavedStateRegistry
         get() = controller.savedStateRegistry
+
+    fun start() {
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+    }
 
     fun destroy() {
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
