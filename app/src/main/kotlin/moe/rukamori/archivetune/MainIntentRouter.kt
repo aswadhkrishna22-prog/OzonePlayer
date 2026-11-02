@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import moe.rukamori.archivetune.models.ParsedIntentAction
 import moe.rukamori.archivetune.musicrecognition.openMusicRecognition
+import moe.rukamori.archivetune.ui.screens.search.onlineSearchResultRoute
 import moe.rukamori.archivetune.playback.MusicService
 import moe.rukamori.archivetune.playback.PlayerConnection
 import moe.rukamori.archivetune.playback.joinTogether
@@ -165,6 +166,9 @@ class MainIntentRouter(
             }
             is ParsedIntentAction.MusicRecognition -> {
                 navController.openMusicRecognition()
+            }
+            is ParsedIntentAction.Search -> {
+                navController.navigate(onlineSearchResultRoute(action.query))
             }
             is ParsedIntentAction.AodMode -> {
                 requestAodMode()

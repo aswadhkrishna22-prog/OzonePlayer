@@ -247,12 +247,19 @@
             android:name=".musicrecognition.MusicRecognitionTileService"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true"
-            android:icon="@drawable/mic"
-            android:label="@string/music_recognition">
+            android:icon="@drawable/search"
+            android:label="@string/ozone_search">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
         </service>
+
+        <activity
+            android:name=".musicrecognition.OzoneSearchOverlayActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Ozone.Transparent"
+            android:launchMode="singleTop"
+            android:excludeFromRecents="true" />
 
         <service
             android:name=".aod.AodModeTileService"

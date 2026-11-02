@@ -159,6 +159,15 @@
     <string name="cast_no_network_desc">Connect to Wi-Fi to find Cast devices on your local network.</string>
     <string name="shuffle">Shuffle</string>
     <string name="music_recognition">Music Recognition</string>
+    <string name="ozone_search">Ozone Search</string>
+    <string name="ozone_search_listening">Listening to song…</string>
+    <string name="ozone_search_subtitle">Hold phone near audio to identify</string>
+    <string name="ozone_search_identifying">Identifying song…</string>
+    <string name="ozone_search_open_in_app">Open in Ozone</string>
+    <string name="ozone_search_play_preview">Play</string>
+    <string name="ozone_search_try_again">Try Again</string>
+    <string name="ozone_search_no_match">Could not find this song</string>
+    <string name="ozone_search_no_match_hint">Make sure the music is loud and clear, then try again</string>
     <string name="reset">Reset</string>
     <string name="details">Details</string>
     <string name="edit">Edit</string>

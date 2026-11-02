@@ -7,6 +7,7 @@ import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
 import androidx.core.content.IntentCompat
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.ACTION_SEARCH
 import moe.rukamori.archivetune.models.ParsedIntentAction
 import moe.rukamori.archivetune.musicrecognition.ACTION_MUSIC_RECOGNITION
 import moe.rukamori.archivetune.aod.ACTION_AOD_MODE
@@ -30,6 +31,17 @@ object IntentParser {
 
         if (intent.action == ACTION_MUSIC_RECOGNITION) {
             return ParsedIntentAction.MusicRecognition
+        }
+
+        if (intent.action == ACTION_SEARCH || intent.hasExtra("search_query")) {
+            val query = (
+                intent.getStringExtra("search_query")
+                    ?: intent.getStringExtra("query")
+                    ?: ""
+            ).trim()
+            if (query.isNotBlank()) {
+                return ParsedIntentAction.Search(query)
+            }
         }
 
         if (intent.action == ACTION_AOD_MODE) {

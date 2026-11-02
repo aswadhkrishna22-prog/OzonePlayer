@@ -5,6 +5,7 @@ import android.net.Uri
 sealed interface ParsedIntentAction {
     data class BackupRestore(val uri: Uri) : ParsedIntentAction
     data object MusicRecognition : ParsedIntentAction
+    data class Search(val query: String) : ParsedIntentAction
     data object AodMode : ParsedIntentAction
     data class VoiceSearch(val query: String) : ParsedIntentAction
     data class TogetherJoin(val uri: Uri) : ParsedIntentAction
