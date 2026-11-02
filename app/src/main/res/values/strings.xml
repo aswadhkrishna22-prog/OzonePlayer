@@ -168,6 +168,8 @@
     <string name="ozone_search_try_again">Try Again</string>
     <string name="ozone_search_no_match">Could not find this song</string>
     <string name="ozone_search_no_match_hint">Make sure the music is loud and clear, then try again</string>
+    <string name="ozone_search_overlay_permission_hint">Please allow \'Display over other apps\' to recognize songs without pausing Instagram</string>
+    <string name="ozone_search_mic_permission_required">Microphone permission is required to identify songs</string>
     <string name="reset">Reset</string>
     <string name="details">Details</string>
     <string name="edit">Edit</string>

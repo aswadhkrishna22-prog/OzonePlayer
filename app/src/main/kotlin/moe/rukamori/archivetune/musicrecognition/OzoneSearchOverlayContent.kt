@@ -13,11 +13,11 @@ package moe.rukamori.archivetune.musicrecognition
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.StartOffset
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -74,6 +74,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -83,6 +84,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.screens.musicrecognition.CoverArt
+
+private enum class OverlayPhase {
+    RADAR,
+    SUCCESS,
+    ERROR,
+}
 
 @Composable
 fun OzoneSearchOverlayContent(
@@ -113,11 +120,18 @@ fun OzoneSearchOverlayContent(
                 ),
         contentAlignment = Alignment.BottomCenter,
     ) {
+        val phase =
+            when (state) {
+                is OverlayState.Success -> OverlayPhase.SUCCESS
+                is OverlayState.Error -> OverlayPhase.ERROR
+                else -> OverlayPhase.RADAR
+            }
+
         AnimatedContent(
-            targetState = state,
+            targetState = phase,
             transitionSpec = {
                 (
-                    fadeIn(animationSpec = tween(350)) +
+                    fadeIn(animationSpec = tween(320)) +
                         scaleIn(
                             animationSpec =
                                 spring(
@@ -126,45 +140,39 @@ fun OzoneSearchOverlayContent(
                                 ),
                         )
                 ).togetherWith(
-                    fadeOut(animationSpec = tween(200)) +
-                        scaleOut(animationSpec = tween(200)),
+                    fadeOut(animationSpec = tween(180)) +
+                        scaleOut(animationSpec = tween(180)),
                 )
             },
             label = "OverlayContentMorph",
-        ) { targetState ->
-            when (targetState) {
-                OverlayState.Idle,
-                OverlayState.RequestingPermission,
-                OverlayState.Listening -> {
+        ) { targetPhase ->
+            when (targetPhase) {
+                OverlayPhase.RADAR -> {
                     GoogleSoundSearchRadarCard(
-                        isProcessing = false,
+                        isProcessing = state is OverlayState.Processing,
                         onCancel = onDismiss,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
                     )
                 }
 
-                OverlayState.Processing -> {
-                    GoogleSoundSearchRadarCard(
-                        isProcessing = true,
-                        onCancel = onDismiss,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
-                    )
+                OverlayPhase.SUCCESS -> {
+                    val track = (state as? OverlayState.Success)?.track
+                    if (track != null) {
+                        GlassmorphicResultCard(
+                            track = track,
+                            onClose = onDismiss,
+                            onPlay = { onPlayTrack(track) },
+                            onOpen = { onOpenInOzone(track) },
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
+                        )
+                    }
                 }
 
-                is OverlayState.Success -> {
-                    GlassmorphicResultCard(
-                        track = targetState.track,
-                        onClose = onDismiss,
-                        onPlay = { onPlayTrack(targetState.track) },
-                        onOpen = { onOpenInOzone(targetState.track) },
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
-                    )
-                }
-
-                is OverlayState.Error -> {
+                OverlayPhase.ERROR -> {
+                    val err = state as? OverlayState.Error
                     OverlayErrorCard(
-                        message = targetState.message,
-                        canRetry = targetState.canRetry,
+                        message = err?.message ?: stringResource(R.string.ozone_search_no_match),
+                        canRetry = err?.canRetry ?: true,
                         onRetry = onRetry,
                         onClose = onDismiss,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
@@ -183,55 +191,58 @@ private fun GoogleSoundSearchRadarCard(
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "RadarTransition")
 
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 0.94f,
-        targetValue = 1.08f,
-        animationSpec =
-            infiniteRepeatable(
-                animation = tween(durationMillis = 1100, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse,
-            ),
-        label = "CenterPulse",
-    )
+    val pulseScale =
+        infiniteTransition.animateFloat(
+            initialValue = 0.94f,
+            targetValue = 1.08f,
+            animationSpec =
+                infiniteRepeatable(
+                    animation = tween(durationMillis = 1100, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse,
+                ),
+            label = "CenterPulse",
+        )
 
-    val ring1Progress by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec =
-            infiniteRepeatable(
-                animation = tween(durationMillis = 2400, easing = LinearEasing),
-                repeatMode = RepeatMode.Restart,
-            ),
-        label = "Ring1",
-    )
-
-    val ring2Progress by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec =
-            infiniteRepeatable(
-                animation = tween(durationMillis = 2400, easing = LinearEasing),
-                repeatMode = RepeatMode.Restart,
-                initialStartOffset = StartOffset(800),
-            ),
-        label = "Ring2",
-    )
-
-    val ring3Progress by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec =
-            infiniteRepeatable(
-                animation = tween(durationMillis = 2400, easing = LinearEasing),
-                repeatMode = RepeatMode.Restart,
-                initialStartOffset = StartOffset(1600),
-            ),
-        label = "Ring3",
-    )
+    val radarProgress =
+        infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec =
+                infiniteRepeatable(
+                    animation = tween(durationMillis = 2400, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart,
+                ),
+            label = "RadarSweep",
+        )
 
     val primaryColor = MaterialTheme.colorScheme.primary
     val tertiaryColor = MaterialTheme.colorScheme.tertiary
     val secondaryColor = MaterialTheme.colorScheme.secondary
+    val surfaceElevated = MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp)
+    val surfaceColor = MaterialTheme.colorScheme.surface
+
+    val backgroundBrush =
+        remember(surfaceElevated, surfaceColor) {
+            Brush.verticalGradient(
+                colors =
+                    listOf(
+                        surfaceElevated.copy(alpha = 0.88f),
+                        surfaceColor.copy(alpha = 0.82f),
+                    ),
+            )
+        }
+    val borderBrush =
+        remember(primaryColor) {
+            Brush.verticalGradient(
+                colors =
+                    listOf(
+                        Color.White.copy(alpha = 0.40f),
+                        Color.White.copy(alpha = 0.10f),
+                        primaryColor.copy(alpha = 0.25f),
+                    ),
+            )
+        }
+    val discShape = remember { MaterialShapes.Cookie9Sided.toShape() }
 
     Box(
         modifier =
@@ -247,25 +258,10 @@ private fun GoogleSoundSearchRadarCard(
                     shape = RoundedCornerShape(32.dp),
                     spotColor = Color.Black.copy(alpha = 0.5f),
                 ).clip(RoundedCornerShape(32.dp))
-                .background(
-                    Brush.verticalGradient(
-                        colors =
-                            listOf(
-                                MaterialTheme.colorScheme.surfaceColorAtElevation(10.dp).copy(alpha = 0.88f),
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.82f),
-                            ),
-                    ),
-                ).border(
+                .background(backgroundBrush)
+                .border(
                     width = 1.2.dp,
-                    brush =
-                        Brush.verticalGradient(
-                            colors =
-                                listOf(
-                                    Color.White.copy(alpha = 0.40f),
-                                    Color.White.copy(alpha = 0.10f),
-                                    primaryColor.copy(alpha = 0.25f),
-                                ),
-                        ),
+                    brush = borderBrush,
                     shape = RoundedCornerShape(32.dp),
                 ).padding(24.dp),
         contentAlignment = Alignment.Center,
@@ -323,31 +319,42 @@ private fun GoogleSoundSearchRadarCard(
                 contentAlignment = Alignment.Center,
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
+                    val progress = radarProgress.value
                     val centerOffset = center
                     val minRadius = 40.dp.toPx()
-                    val maxRadius = 90.dp.toPx()
+                    val maxRadius = 88.dp.toPx()
+                    val radiusSpan = maxRadius - minRadius
+                    val baseStroke = 2.5.dp.toPx()
 
-                    listOf(
-                        ring1Progress to primaryColor,
-                        ring2Progress to tertiaryColor,
-                        ring3Progress to secondaryColor,
-                    ).forEach { (progress, ringColor) ->
-                        val currentRadius = minRadius + (maxRadius - minRadius) * progress
-                        val alpha = ((1f - progress) * 0.75f).coerceIn(0f, 1f)
+                    for (i in 0..2) {
+                        val ringP = (progress + i * 0.333f) % 1f
+                        val ringColor =
+                            when (i) {
+                                0 -> primaryColor
+                                1 -> tertiaryColor
+                                else -> secondaryColor
+                            }
+                        val currentRadius = minRadius + radiusSpan * ringP
+                        val ringAlpha = ((1f - ringP) * 0.70f).coerceIn(0f, 1f)
+                        val stroke = baseStroke * (1f - ringP * 0.4f)
                         drawCircle(
-                            color = ringColor.copy(alpha = alpha),
+                            color = ringColor.copy(alpha = ringAlpha),
                             radius = currentRadius,
                             center = centerOffset,
-                            style = Stroke(width = (2.5.dp.toPx() * (1f - progress * 0.4f))),
+                            style = Stroke(width = stroke),
                         )
                     }
                 }
 
-                val discShape = MaterialShapes.Cookie9Sided.toShape()
                 Surface(
                     modifier =
                         Modifier
-                            .size(88.dp * pulseScale),
+                            .size(88.dp)
+                            .graphicsLayer {
+                                val s = pulseScale.value
+                                scaleX = s
+                                scaleY = s
+                            },
                     shape = discShape,
                     color =
                         if (isProcessing) {
@@ -358,22 +365,27 @@ private fun GoogleSoundSearchRadarCard(
                     shadowElevation = 12.dp,
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            painter =
-                                if (isProcessing) {
-                                    painterResource(R.drawable.search)
-                                } else {
-                                    painterResource(R.drawable.mic)
-                                },
-                            contentDescription = null,
-                            tint =
-                                if (isProcessing) {
-                                    MaterialTheme.colorScheme.onTertiary
-                                } else {
-                                    MaterialTheme.colorScheme.onPrimary
-                                },
-                            modifier = Modifier.size(38.dp),
-                        )
+                        Crossfade(
+                            targetState = isProcessing,
+                            label = "CenterIconFade",
+                        ) { processing ->
+                            Icon(
+                                painter =
+                                    if (processing) {
+                                        painterResource(R.drawable.search)
+                                    } else {
+                                        painterResource(R.drawable.mic)
+                                    },
+                                contentDescription = null,
+                                tint =
+                                    if (processing) {
+                                        MaterialTheme.colorScheme.onTertiary
+                                    } else {
+                                        MaterialTheme.colorScheme.onPrimary
+                                    },
+                                modifier = Modifier.size(38.dp),
+                            )
+                        }
                     }
                 }
             }
@@ -382,17 +394,22 @@ private fun GoogleSoundSearchRadarCard(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text(
-                    text =
-                        if (isProcessing) {
-                            stringResource(R.string.ozone_search_identifying)
-                        } else {
-                            stringResource(R.string.ozone_search_listening)
-                        },
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+                Crossfade(
+                    targetState = isProcessing,
+                    label = "StatusTitleFade",
+                ) { processing ->
+                    Text(
+                        text =
+                            if (processing) {
+                                stringResource(R.string.ozone_search_identifying)
+                            } else {
+                                stringResource(R.string.ozone_search_listening)
+                            },
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
                 Text(
                     text = stringResource(R.string.ozone_search_subtitle),
                     style = MaterialTheme.typography.bodySmall,

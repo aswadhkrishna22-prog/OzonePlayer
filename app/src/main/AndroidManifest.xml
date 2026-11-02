@@ -24,6 +24,7 @@
         android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <queries>
         <intent>
@@ -254,12 +255,10 @@
             </intent-filter>
         </service>
 
-        <activity
-            android:name=".musicrecognition.OzoneSearchOverlayActivity"
+        <service
+            android:name=".musicrecognition.OzoneSearchOverlayService"
             android:exported="false"
-            android:theme="@style/Theme.Ozone.Transparent"
-            android:launchMode="singleTop"
-            android:excludeFromRecents="true" />
+            android:foregroundServiceType="microphone" />
 
         <service
             android:name=".aod.AodModeTileService"
