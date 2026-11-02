@@ -74,13 +74,17 @@ class OzoneSearchOverlayService : Service() {
             return START_NOT_STICKY
         }
 
-        startForegroundSilently()
+        if (!startForegroundSilently()) {
+            dismissOverlay()
+            return START_NOT_STICKY
+        }
+
         showFloatingOverlay()
         startRecognition()
         return START_NOT_STICKY
     }
 
-    private fun startForegroundSilently() {
+    private fun startForegroundSilently(): Boolean {
         val notification: Notification =
             NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.search)
@@ -91,16 +95,27 @@ class OzoneSearchOverlayService : Service() {
                 .setSilent(true)
                 .build()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val foregroundServiceType =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
-                } else {
-                    0
-                }
-            ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, foregroundServiceType)
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val hasMicPerm =
+                    androidx.core.content.ContextCompat.checkSelfPermission(
+                        this,
+                        android.Manifest.permission.RECORD_AUDIO,
+                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                val foregroundServiceType =
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && hasMicPerm) {
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                    } else {
+                        0
+                    }
+                ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, foregroundServiceType)
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+            true
+        } catch (e: Throwable) {
+            Timber.e(e, "Failed to start foreground service silently")
+            false
         }
     }
 

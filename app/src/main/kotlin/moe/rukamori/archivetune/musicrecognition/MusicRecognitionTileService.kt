@@ -63,11 +63,24 @@ class MusicRecognitionTileService : TileService() {
         }
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(
-                this,
-                getString(R.string.ozone_search_mic_permission_required),
-                Toast.LENGTH_LONG,
-            ).show()
+            val permissionIntent =
+                Intent(this, OzoneSearchPermissionActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                val pendingIntent =
+                    PendingIntent.getActivity(
+                        this,
+                        1,
+                        permissionIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                    )
+                startActivityAndCollapse(pendingIntent)
+            } else {
+                @Suppress("DEPRECATION")
+                startActivityAndCollapse(permissionIntent)
+            }
+            return
         }
 
         val overlayIntent =
