@@ -524,7 +524,7 @@ fun KemoOverlay(
             return@BoxWithConstraints
         }
 
-        val dockBottomPx = animatedDockBottomDp.toPx()
+        val dockBottomPx = with(LocalDensity.current) { animatedDockBottomDp.toPx() }
         val mascotTopY = parentHeightPx - dockBottomPx - spriteHeightPx + (effectiveDySpritePx * pixelScale)
 
         // 1. Floating Particles Layer (never consumes touches, drawn in parent coordinate space)
