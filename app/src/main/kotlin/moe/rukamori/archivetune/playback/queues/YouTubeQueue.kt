@@ -9,10 +9,12 @@ package moe.rukamori.archivetune.playback.queues
 import androidx.media3.common.MediaItem
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.withContext
+import moe.rukamori.archivetune.beastmode.BeastModeManager
 import moe.rukamori.archivetune.extensions.toMediaItem
 import moe.rukamori.archivetune.innertube.YouTube
 import moe.rukamori.archivetune.innertube.models.WatchEndpoint
 import moe.rukamori.archivetune.models.MediaMetadata
+import moe.rukamori.archivetune.playback.queue.SongVibeMatcher
 
 class YouTubeQueue(
     internal var endpoint: WatchEndpoint,
@@ -34,9 +36,16 @@ class YouTubeQueue(
             }
         endpoint = nextResult.endpoint
         continuation = nextResult.continuation
+        val mappedItems = nextResult.items.map { it.toMediaItem() }
+        val reorderedItems = SongVibeMatcher.reorderQueue(
+            items = mappedItems,
+            seed = preloadItem,
+            isBeastMode = BeastModeManager.isBeastModeActive.value,
+            enabled = SongVibeMatcher.isEnabled,
+        )
         return Queue.Status(
             title = nextResult.title,
-            items = nextResult.items.map { it.toMediaItem() },
+            items = reorderedItems,
             mediaItemIndex = nextResult.currentIndex ?: 0,
         )
     }
@@ -57,7 +66,13 @@ class YouTubeQueue(
             }
         endpoint = nextResult.endpoint
         continuation = nextResult.continuation
-        return nextResult.items.map { it.toMediaItem() }
+        val mappedItems = nextResult.items.map { it.toMediaItem() }
+        return SongVibeMatcher.reorderQueue(
+            items = mappedItems,
+            seed = preloadItem,
+            isBeastMode = BeastModeManager.isBeastModeActive.value,
+            enabled = SongVibeMatcher.isEnabled,
+        )
     }
 
     companion object {

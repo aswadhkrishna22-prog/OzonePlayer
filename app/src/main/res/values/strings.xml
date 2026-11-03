@@ -1342,4 +1342,8 @@
     <string name="beast_mode_auto_prompt_desc">Ask to activate Beast Mode when Bluetooth or wired speakers connect</string>
     <string name="beast_mode_activated">Beast Mode Activated! Full Power Audio</string>
     <string name="beast_mode_deactivated">Beast Mode Deactivated</string>
+
+    <!-- Smart Vibe & Energy Queue Engine -->
+    <string name="smart_vibe_queue_title">Smart Vibe Queue</string>
+    <string name="smart_vibe_queue_desc">Keep queue songs in the same energy vibe (Power, Love, Emotional) when starting radio</string>
 </resources>

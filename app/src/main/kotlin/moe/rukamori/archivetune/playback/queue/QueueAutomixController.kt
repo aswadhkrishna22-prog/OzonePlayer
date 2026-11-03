@@ -133,6 +133,7 @@ internal class QueueAutomixController(
             val radioQueue =
                 YouTubeQueue(
                     endpoint = WatchEndpoint(videoId = currentMediaId),
+                    preloadItem = currentMediaMetadata,
                     followAutomixPreview = true,
                 )
             val ds = effectiveDataStore
@@ -229,7 +230,7 @@ internal class QueueAutomixController(
         val job =
             scope.launch(start = CoroutineStart.LAZY, context = SilentHandler) {
                 try {
-                    val radioQueue = YouTubeQueue(WatchEndpoint(videoId = currentMeta.id), followAutomixPreview = true)
+                    val radioQueue = YouTubeQueue(WatchEndpoint(videoId = currentMeta.id), preloadItem = currentMeta, followAutomixPreview = true)
                     val status = withContext(ioDispatcher) { radioQueue.getInitialStatus() }
                     if (!isActive) return@launch
                     val ds = effectiveDataStore

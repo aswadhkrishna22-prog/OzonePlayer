@@ -55,6 +55,15 @@ internal fun PlayerBehaviorSection(
         }
         item {
             SwitchPreference(
+                title = { Text(stringResource(R.string.smart_vibe_queue_title)) },
+                description = stringResource(R.string.smart_vibe_queue_desc),
+                icon = { Icon(painterResource(R.drawable.auto_awesome), null) },
+                checked = state.smartVibeQueue,
+                onCheckedChange = actions.onSmartVibeQueueChange,
+            )
+        }
+        item {
+            SwitchPreference(
                 title = { Text(stringResource(R.string.pause_on_device_mute)) },
                 icon = { Icon(painterResource(R.drawable.volume_off), null) },
                 checked = state.pauseOnDeviceMute,
