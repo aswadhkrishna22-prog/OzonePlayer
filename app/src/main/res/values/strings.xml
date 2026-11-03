@@ -1326,4 +1326,9 @@
     <string name="kemo_off">Off</string>
     <string name="kemo_always">Always</string>
     <string name="kemo_while_music">While music plays</string>
+    <string name="kemo_size_title">Kemo size</string>
+    <string name="kemo_size_desc">Sprite pixel scale</string>
+    <string name="kemo_size_small">Small (1x)</string>
+    <string name="kemo_size_normal">Normal (2x)</string>
+    <string name="kemo_size_large">Large (3x)</string>
 </resources>

@@ -11,6 +11,8 @@ import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.KemoDisplayMode
 import moe.rukamori.archivetune.constants.KemoDisplayModeKey
+import moe.rukamori.archivetune.constants.KemoSize
+import moe.rukamori.archivetune.constants.KemoSizeKey
 import moe.rukamori.archivetune.ui.component.EnumListPreference
 import moe.rukamori.archivetune.utils.rememberEnumPreference
 
@@ -20,6 +22,11 @@ fun KemoSettingsItem() {
         rememberEnumPreference(
             KemoDisplayModeKey,
             defaultValue = KemoDisplayMode.WHILE_MUSIC_PLAYS,
+        )
+    val (kemoSize, onKemoSizeChange) =
+        rememberEnumPreference(
+            KemoSizeKey,
+            defaultValue = KemoSize.NORMAL,
         )
 
     EnumListPreference(
@@ -36,4 +43,21 @@ fun KemoSettingsItem() {
             }
         },
     )
+
+    if (kemoMode != KemoDisplayMode.OFF) {
+        EnumListPreference(
+            title = { Text(stringResource(R.string.kemo_size_title)) },
+            description = stringResource(R.string.kemo_size_desc),
+            icon = { Icon(painterResource(R.drawable.style), null, modifier = Modifier.size(24.dp)) },
+            selectedValue = kemoSize,
+            onValueSelected = onKemoSizeChange,
+            valueText = {
+                when (it) {
+                    KemoSize.SMALL -> stringResource(R.string.kemo_size_small)
+                    KemoSize.NORMAL -> stringResource(R.string.kemo_size_normal)
+                    KemoSize.LARGE -> stringResource(R.string.kemo_size_large)
+                }
+            },
+        )
+    }
 }
