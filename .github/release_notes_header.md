@@ -1,10 +1,11 @@
 ### ✨ What's New in This Release
 
-- 🐱 **Kemo Mascot (Pixel-Art Companion)**:
-  - Introducing Kemo, an interactive animated mascot that walks along the player dock.
-  - Reacts to playback states: dances while music is playing, curls up to sleep when paused, hops when tapped, and emits particle effects (notes, hearts, zzz).
-  - Configurable in **Settings → Appearance → Kemo**: choose between *Always*, *While music plays*, or *Off*, plus adjust size (*Small 1x*, *Normal 2x*, *Large 3x*).
-  - Smooth 60fps dock tracking with full touch pass-through and battery saver awareness.
+- 🐱 **Kemo Interactive Drag & Drop (Free Roam)**:
+  - You can now touch and pick up Kemo to place her anywhere on the screen!
+  - **Pick-up Animation & Particles**: Shows cute raised paws, tactile scaling, and a sweat particle when lifted.
+  - **Free Roam Placement**: Drop Kemo anywhere on the screen (top, middle, sides); she will stroll, dance, and sleep at that custom height!
+  - **Smart Dock Snap**: Dropping her near the bottom player dock snaps her back to dynamic dock-anchored mode.
+  - **Double-Tap Reset**: Double-tap Kemo while she is at a custom position to immediately snap her back to the dock lane with a spark particle! Single tap triggers the heart particle and happy hop.
 
 - ⚡ **Ultra-Fast Offline Downloads**:
   - Overhauled download stream resolution with unthrottled VisionOS fast path (~200ms resolution, eliminating long 15–30s fallback lags).

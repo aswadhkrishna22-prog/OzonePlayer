@@ -19,13 +19,16 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -236,6 +239,11 @@ fun KemoOverlay(
     var isMovingHop by remember { mutableStateOf(false) }
     var isTapReaction by remember { mutableStateOf(false) }
     var hopsRemainingInWalk by remember { mutableIntStateOf(0) }
+
+    // Drag & Free Placement state
+    var isDragging by remember { mutableStateOf(false) }
+    var customYPosPx by remember { mutableStateOf<Float?>(null) }
+    var lastTapTimeEpochMs by remember { mutableLongStateOf(0L) }
 
     // Timers
     var idleTimeMs by remember { mutableLongStateOf(0L) }
@@ -476,7 +484,7 @@ fun KemoOverlay(
                 currentStepFlip = activeStep.flip
 
                 // 4. Horizontal movement during moving hop
-                if (currentState == KemoState.HOP && isMovingHop && totalAnimDurationMs > 0) {
+                if (currentState == KemoState.HOP && isMovingHop && totalAnimDurationMs > 0 && !isDragging) {
                     val hopDistancePx = (KemoConfig.HOP_WALK_DISTANCE_SPRITE_PX * pixelScale).toFloat()
                     val dx = (hopDistancePx / totalAnimDurationMs) * dt
                     if (facingLeft) {
@@ -490,9 +498,18 @@ fun KemoOverlay(
     }
 
     // Static frame when animation disabled (battery saver, animator duration scale 0)
-    val effectiveFrameIndex = if (canAnimate) currentFrameIndex else 0
-    val effectiveDySpritePx = if (canAnimate) currentDySpritePx else 0
-    val effectiveStepFlip = if (canAnimate) currentStepFlip else false
+    // Frame 1 (happy/paws up) while being held by user
+    val effectiveFrameIndex = when {
+        isDragging -> 1
+        canAnimate -> currentFrameIndex
+        else -> 0
+    }
+    val effectiveDySpritePx = when {
+        isDragging -> -3
+        canAnimate -> currentDySpritePx
+        else -> 0
+    }
+    val effectiveStepFlip = if (canAnimate && !isDragging) currentStepFlip else false
 
     // ── 8. Layout & Draw Phase ─────────────────────────────────────────────────────
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
@@ -512,16 +529,40 @@ fun KemoOverlay(
             hopsRemainingInWalk = 0
         }
 
+        val densityScope = LocalDensity.current
+        val statusBarTopPx = WindowInsets.statusBars.getTop(densityScope).toFloat()
+        val navBarBottomPx = WindowInsets.navigationBars.getBottom(densityScope).toFloat()
+        val minYPx = statusBarTopPx + with(densityScope) { 8.dp.toPx() }
+        val maxYPx = (parentHeightPx - spriteHeightPx - maxOf(bottomInset.value * density, navBarBottomPx) - with(densityScope) { 8.dp.toPx() })
+            .coerceAtLeast(minYPx)
+
+        val dockBottomPx = with(densityScope) { animatedDockBottomDp.toPx() }
+        val defaultLaneYPx = parentHeightPx - dockBottomPx - spriteHeightPx
+        val currentBaseYPx = customYPosPx ?: defaultLaneYPx
+        val mascotTopY = currentBaseYPx + (effectiveDySpritePx * pixelScale)
+
         val triggerTap: () -> Unit = {
             if (animatedAlpha > 0.05f) {
-                // Heart particle on tap
-                spawnParticle(0)
-                isMovingHop = false
-                hopsRemainingInWalk = 0
-                isTapReaction = true
-                isWakingUp = false
-                currentState = KemoState.HOP
-                animElapsedTimeMs = 0L
+                val now = SystemClock.uptimeMillis()
+                if (customYPosPx != null && (now - lastTapTimeEpochMs) < 400L) {
+                    // Double tap while at custom position: snap back down to dock lane!
+                    customYPosPx = null
+                    spawnParticle(4) // spark particle
+                    isMovingHop = false
+                    hopsRemainingInWalk = 0
+                    currentState = KemoState.HOP
+                    animElapsedTimeMs = 0L
+                } else {
+                    // Single tap: heart particle + happy hop
+                    spawnParticle(0) // heart
+                    isMovingHop = false
+                    hopsRemainingInWalk = 0
+                    isTapReaction = true
+                    isWakingUp = false
+                    currentState = KemoState.HOP
+                    animElapsedTimeMs = 0L
+                }
+                lastTapTimeEpochMs = now
             }
         }
 
@@ -529,9 +570,6 @@ fun KemoOverlay(
         if (animatedAlpha <= 0.001f) {
             return@BoxWithConstraints
         }
-
-        val dockBottomPx = with(LocalDensity.current) { animatedDockBottomDp.toPx() }
-        val mascotTopY = parentHeightPx - dockBottomPx - spriteHeightPx + (effectiveDySpritePx * pixelScale)
 
         // 1. Floating Particles Layer (never consumes touches, drawn in parent coordinate space)
         val pBitmap = assets.particlesBitmap
@@ -568,18 +606,82 @@ fun KemoOverlay(
             }
         }
 
-        // 2. Mascot Hit-Box Box: exact sprite dimensions, pointerInput detects taps without ripple
+        // 2. Mascot Hit-Box Box: exact sprite dimensions, supports both tap & drag-and-drop
         Box(
             modifier = Modifier
                 .size(spriteWidthDp, spriteHeightDp)
                 .graphicsLayer {
                     translationX = xPosPx
-                    translationY = parentHeightPx - dockBottomPx - spriteHeightPx
+                    translationY = currentBaseYPx
                     alpha = animatedAlpha
+                    val dragScale = if (isDragging) 1.15f else 1f
+                    scaleX = dragScale
+                    scaleY = dragScale
                 }
-                .pointerInput(Unit) {
-                    detectTapGestures {
-                        triggerTap()
+                .pointerInput(spriteWidthPx, spriteHeightPx, parentWidthPx, parentHeightPx) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        var isDrag = false
+                        var dragAccumulated = Offset.Zero
+                        val touchSlop = viewConfiguration.touchSlop
+                        val pointerId = down.id
+
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull { it.id == pointerId } ?: break
+
+                            if (!change.pressed) {
+                                if (isDrag) {
+                                    change.consume()
+                                    isDragging = false
+                                    // Drop logic: check if near dock lane
+                                    val snapDistancePx = with(densityScope) { 64.dp.toPx() }
+                                    val currentY = customYPosPx ?: defaultLaneYPx
+                                    if (kotlin.math.abs(currentY - defaultLaneYPx) < snapDistancePx) {
+                                        customYPosPx = null // return to dynamic dock tracking
+                                    }
+                                    isMovingHop = false
+                                    hopsRemainingInWalk = 0
+                                    currentState = KemoState.HOP
+                                    animElapsedTimeMs = 0L
+                                } else {
+                                    triggerTap()
+                                }
+                                break
+                            }
+
+                            val posChange = change.position - change.previousPosition
+                            dragAccumulated += posChange
+
+                            if (!isDrag) {
+                                if (dragAccumulated.getDistance() > touchSlop) {
+                                    isDrag = true
+                                    isDragging = true
+                                    change.consume()
+                                    if (customYPosPx == null) {
+                                        customYPosPx = defaultLaneYPx
+                                    }
+                                    isMovingHop = false
+                                    hopsRemainingInWalk = 0
+                                    spawnParticle(5) // sweat drop particle on pickup
+
+                                    xPosPx = (xPosPx + dragAccumulated.x).coerceIn(minXPx, maxXPx)
+                                    val newY = ((customYPosPx ?: defaultLaneYPx) + dragAccumulated.y).coerceIn(minYPx, maxYPx)
+                                    customYPosPx = newY
+
+                                    if (dragAccumulated.x > 2f) facingLeft = false
+                                    else if (dragAccumulated.x < -2f) facingLeft = true
+                                }
+                            } else {
+                                change.consume()
+                                xPosPx = (xPosPx + posChange.x).coerceIn(minXPx, maxXPx)
+                                val newY = ((customYPosPx ?: defaultLaneYPx) + posChange.y).coerceIn(minYPx, maxYPx)
+                                customYPosPx = newY
+
+                                if (posChange.x > 2f) facingLeft = false
+                                else if (posChange.x < -2f) facingLeft = true
+                            }
+                        }
                     }
                 }
                 .semantics { invisibleToUser() },
