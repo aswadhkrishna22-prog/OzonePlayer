@@ -66,19 +66,13 @@ object PlaybackClientSelector {
         )
 
     internal val downloadPreferredStreamClientAttempts: List<PlayerStreamClient> =
-        buildList {
-            add(PlayerStreamClient.WEB_REMIX)
-            addAll(
-                PlayerStreamClient
-                    .values()
-                    .filterNot {
-                        it == PlayerStreamClient.WEB_REMIX ||
-                            it == PlayerStreamClient.ANDROID_VR ||
-                            it == PlayerStreamClient.ARCHIVETUNE_EXTRACTOR
-                    },
-            )
-            add(PlayerStreamClient.ANDROID_VR)
-        }.distinct()
+        listOf(
+            PlayerStreamClient.ANDROID_VR,
+            PlayerStreamClient.IOS,
+            PlayerStreamClient.ANDROID_MUSIC,
+            PlayerStreamClient.WEB_REMIX,
+            PlayerStreamClient.TVHTML5,
+        )
 
     fun resolveMetadataClient(authState: PlaybackAuthState): YouTubeClient =
         if (authState.hasPlaybackLoginContext) {

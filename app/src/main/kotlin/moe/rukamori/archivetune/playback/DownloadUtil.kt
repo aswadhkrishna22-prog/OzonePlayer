@@ -16,6 +16,7 @@ import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheDataSink
 import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.cache.ContentMetadata
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadManager
@@ -47,6 +48,7 @@ import moe.rukamori.archivetune.playback.formatIdForSource
 import moe.rukamori.archivetune.utils.AuthScopedCacheValue
 import moe.rukamori.archivetune.utils.ProxyAuth
 import moe.rukamori.archivetune.utils.StreamClientUtils
+import moe.rukamori.archivetune.utils.StreamUrlCache
 import moe.rukamori.archivetune.utils.YTPlayerUtils
 import moe.rukamori.archivetune.utils.dataStore
 import moe.rukamori.archivetune.utils.getAsync
@@ -132,12 +134,36 @@ class DownloadUtil
                 context.dataStore.getAsync(AudioQualityKey, AudioQuality.AUTO.name).toEnum(AudioQuality.AUTO)
             }
 
+        private fun ensureSongDownloadedTimestamp(mediaId: String) {
+            downloadScope.launch {
+                runCatching {
+                    database.query {
+                        val existing = getSongByIdBlocking(mediaId)?.song
+                        if (existing != null && existing.dateDownload == null) {
+                            upsert(existing.copy(dateDownload = LocalDateTime.now()))
+                        }
+                    }
+                }
+            }
+        }
+
         private suspend fun resolveDownloadDataSpec(dataSpec: DataSpec): DataSpec {
             val mediaId = dataSpec.key ?: error("No media id")
             val length = if (dataSpec.length >= 0) dataSpec.length else 1
-            if (playerCache.isCached(mediaId, dataSpec.position, length)) {
+            val hasValidScheme = dataSpec.uri.scheme == "http" || dataSpec.uri.scheme == "https"
+            if (hasValidScheme && playerCache.isCached(mediaId, dataSpec.position, length)) {
+                ensureSongDownloadedTimestamp(mediaId)
                 return dataSpec
             }
+
+            val contentLength = runCatching {
+                playerCache.getContentMetadata(mediaId).get(ContentMetadata.KEY_CONTENT_LENGTH, -1L)
+            }.getOrDefault(-1L)
+            if (contentLength > 0L && playerCache.isCached(mediaId, 0L, contentLength)) {
+                ensureSongDownloadedTimestamp(mediaId)
+                return dataSpec
+            }
+
             val lowDataModeActive = context.isLowDataModeActive()
             val requestedAudioQuality = resolveDownloadAudioQuality(lowDataModeActive)
             val streamCacheKey = buildSongUrlCacheKey(mediaId, requestedAudioQuality)
@@ -149,8 +175,20 @@ class DownloadUtil
                         minimumRemainingMs = YTPlayerUtils.STREAM_URL_EXPIRY_SAFETY_MS,
                     )
                 }?.let {
+                    ensureSongDownloadedTimestamp(mediaId)
                     return dataSpec.withUri(it.url.toUri())
                 }
+
+            StreamUrlCache.getValidCachedStreamUrl(
+                mediaId = mediaId,
+                authFingerprint = authFingerprint,
+                minimumRemainingMs = YTPlayerUtils.STREAM_URL_EXPIRY_SAFETY_MS,
+            )?.let { cachedStreamUrl ->
+                songUrlCache[streamCacheKey] = cachedStreamUrl.toAuthScopedCacheValue()
+                ensureSongDownloadedTimestamp(mediaId)
+                return dataSpec.withUri(cachedStreamUrl.url.toUri())
+            }
+
             val playbackData =
                 withContext(Dispatchers.IO) {
                     context.retryWithoutPlaybackLoginContext {
@@ -172,6 +210,15 @@ class DownloadUtil
                     expiresAtMs = System.currentTimeMillis() + (playbackData.streamExpiresInSeconds * 1000L),
                     authFingerprint = playbackData.authFingerprint,
                 )
+
+            StreamUrlCache.putCachedStreamUrl(
+                mediaId = mediaId,
+                url = streamUrl,
+                itag = playbackData.format.itag,
+                expiresInSeconds = playbackData.streamExpiresInSeconds,
+                authFingerprint = playbackData.authFingerprint,
+            )
+
             return dataSpec.withUri(streamUrl.toUri())
         }
 
