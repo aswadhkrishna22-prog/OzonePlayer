@@ -1335,7 +1335,7 @@
     <!-- Beast Mode Audio Engine -->
     <string name="beast_mode">Beast Mode</string>
     <string name="beast_mode_dialog_title">Activate Beast Mode?</string>
-    <string name="beast_mode_dialog_desc">Connected to %1$s. Turn on Beast Mode (+2.5 dB Pre-amp, Deep Sub-Bass &amp; Clarity V-Curve) for bus speakers?</string>
+    <string name="beast_mode_dialog_desc">Connected to %1$s. Turn on Beast Mode (Max Power Drive, 3-Way Crossover Sub-Bass &amp; Vocal Clarity) for bus speakers?</string>
     <string name="beast_mode_turn_on">Turn On</string>
     <string name="beast_mode_speaker">external speaker</string>
     <string name="beast_mode_auto_prompt_title">Beast Mode speaker prompt</string>

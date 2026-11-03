@@ -112,15 +112,21 @@ object BeastModeManager {
      */
     fun calculateBeastCurve(bandCount: Int): List<Int> {
         if (bandCount <= 0) return emptyList()
-        if (bandCount == 1) return listOf(250)
+        if (bandCount == 1) return listOf(350)
         if (bandCount == 5) {
-            // Standard 5-band EQ: 60Hz, 230Hz, 910Hz, 3.6kHz, 14kHz
-            return listOf(250, 150, 0, 150, 250)
+            // Standard 5-band 3-Way Crossover EQ:
+            // Subwoofer (60Hz): +3.5 dB, Punch (230Hz): +1.6 dB, Vocals (910Hz): +0.5 dB, Presence (3.6kHz): +2.4 dB, Tweeters (14kHz): +3.5 dB
+            return listOf(350, 162, 50, 237, 350)
         }
 
-        // Base 10-band reference V-curve:
+        // 3-Way Crossover Base 10-band reference curve:
         // [31Hz, 62Hz, 125Hz, 250Hz, 500Hz, 1kHz, 2kHz, 4kHz, 8kHz, 16kHz]
-        val referenceCurve = listOf(250, 200, 150, 80, 0, 0, 80, 150, 200, 250)
+        // Subwoofer (31-62Hz): +3.5dB / +3.0dB
+        // Bass punch (125Hz): +2.0dB
+        // Mid scoop (250-500Hz): +0.5dB / 0dB (anti-muddle)
+        // Vocal presence (1-2kHz): +1.0dB / +2.0dB
+        // Treble & Tweeter presence (4-16kHz): +2.5dB / +3.0dB / +3.5dB
+        val referenceCurve = listOf(350, 300, 200, 50, 0, 100, 200, 250, 300, 350)
         if (bandCount == referenceCurve.size) return referenceCurve
 
         val lastIndex = (referenceCurve.size - 1).toFloat()
@@ -201,7 +207,7 @@ object BeastModeManager {
                     prefs[EqualizerSelectedProfileIdKey] = "beast_mode"
                     prefs[EqualizerBandLevelsMbKey] = encodedCurve
                     prefs[EqualizerOutputGainEnabledKey] = true
-                    prefs[EqualizerOutputGainMbKey] = 250 // +2.5 dB clean pre-amp boost
+                    prefs[EqualizerOutputGainMbKey] = 550 // +5.5 dB high-power pre-amp boost (user can customize up to +15.0 dB)
                     prefs[EqualizerBassBoostEnabledKey] = false // Disabled to avoid Android OEM ducking/limiter compressor
                     prefs[EqualizerBassBoostStrengthKey] = 0
                     prefs[EqualizerVirtualizerEnabledKey] = false // Disabled to avoid phase cancellation on speakers

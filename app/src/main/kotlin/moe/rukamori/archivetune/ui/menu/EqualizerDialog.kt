@@ -209,34 +209,48 @@ fun EqualizerDialog(
                     },
                     onBandLevelsChange = { bandLevelsMb = it },
                     onBandLevelsChangeFinished = {
-                        eqState.setSelectedProfileId("manual")
+                        if (eqState.selectedProfileId != "beast_mode") {
+                            eqState.setSelectedProfileId("manual")
+                        }
                         eqState.setBandLevelsRaw(encodeBandLevelsMb(bandLevelsMb))
                     },
                     onOutputGainEnabledChange = {
-                        eqState.setSelectedProfileId("manual")
+                        if (eqState.selectedProfileId != "beast_mode") {
+                            eqState.setSelectedProfileId("manual")
+                        }
                         eqState.setOutputGainEnabled(it)
                     },
                     onOutputGainLocalChange = { outputGainLocal = it },
                     onOutputGainFinished = {
-                        eqState.setSelectedProfileId("manual")
+                        if (eqState.selectedProfileId != "beast_mode") {
+                            eqState.setSelectedProfileId("manual")
+                        }
                         eqState.setOutputGainMb(it)
                     },
                     onBassBoostEnabledChange = {
-                        eqState.setSelectedProfileId("manual")
+                        if (eqState.selectedProfileId != "beast_mode") {
+                            eqState.setSelectedProfileId("manual")
+                        }
                         eqState.setBassBoostEnabled(it)
                     },
                     onBassBoostStrengthChange = { bassBoostStrengthLocal = it },
                     onBassBoostFinished = {
-                        eqState.setSelectedProfileId("manual")
+                        if (eqState.selectedProfileId != "beast_mode") {
+                            eqState.setSelectedProfileId("manual")
+                        }
                         eqState.setBassBoostStrength(it)
                     },
                     onVirtualizerEnabledChange = {
-                        eqState.setSelectedProfileId("manual")
+                        if (eqState.selectedProfileId != "beast_mode") {
+                            eqState.setSelectedProfileId("manual")
+                        }
                         eqState.setVirtualizerEnabled(it)
                     },
                     onVirtualizerStrengthChange = { virtualizerStrengthLocal = it },
                     onVirtualizerFinished = {
-                        eqState.setSelectedProfileId("manual")
+                        if (eqState.selectedProfileId != "beast_mode") {
+                            eqState.setSelectedProfileId("manual")
+                        }
                         eqState.setVirtualizerStrength(it)
                     },
                 )
