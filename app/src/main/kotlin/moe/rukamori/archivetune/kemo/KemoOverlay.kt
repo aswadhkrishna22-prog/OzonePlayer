@@ -57,7 +57,7 @@ import kotlinx.coroutines.flow.flowOf
 import moe.rukamori.archivetune.LocalAnimationsDisabled
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.LocalPlayerConnection
-import moe.rukamori.archivetune.LocalPlayerIsExpanded
+import moe.rukamori.archivetune.ui.utils.LocalPlayerIsExpanded
 import moe.rukamori.archivetune.PlayerDockGeometry
 import moe.rukamori.archivetune.constants.KemoDisplayMode
 import moe.rukamori.archivetune.constants.KemoDisplayModeKey
