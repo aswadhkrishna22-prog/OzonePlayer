@@ -1,0 +1,57 @@
+{
+  "frameWidth": 32,
+  "frameHeight": 32,
+  "fps": 10,
+  "animations": {
+    "idle": {
+      "frames": [
+        0,
+        1,
+        0,
+        2,
+        0,
+        3
+      ],
+      "loop": true,
+      "durationMs": 1000
+    },
+    "walk": {
+      "frames": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "loop": true,
+      "durationMs": 400
+    },
+    "dance": {
+      "frames": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "loop": true,
+      "durationMs": 400
+    },
+    "sleep": {
+      "frames": [
+        12,
+        13
+      ],
+      "loop": true,
+      "durationMs": 1200
+    },
+    "hop": {
+      "frames": [
+        14,
+        15,
+        15,
+        14
+      ],
+      "loop": false,
+      "durationMs": 350
+    }
+  }
+}
