@@ -54,10 +54,11 @@ internal class MusicServiceWidgetUpdater(
     private val loadWidgetInsights: LoadWidgetInsightsUseCase,
 ) {
     private var progressJob: Job? = null
+    private var wavePhase: Float = 0f
 
-    fun update() {
+    fun update(optimisticLiked: Boolean? = null) {
         scope.launch(SilentHandler) {
-            pushState()
+            pushState(optimisticLiked)
         }
     }
 
@@ -67,18 +68,26 @@ internal class MusicServiceWidgetUpdater(
             progressJob =
                 scope.launch(SilentHandler) {
                     while (isActive && player.isPlaying) {
-                        updateProgress(player.playbackProgress())
+                        wavePhase = (wavePhase + 0.35f) % (2f * Math.PI.toFloat())
+                        val progress = player.playbackProgress()
+                        val pos = player.currentPosition.coerceAtLeast(0L)
+                        val dur = if (player.duration > 0) player.duration else 0L
+                        updateProgress(progress, pos, dur, wavePhase)
                         delay(1_000)
                     }
                 }
         }
     }
 
-    private suspend fun pushState() {
+    private suspend fun pushState(optimisticLiked: Boolean? = null) {
         val mediaItem = player.currentMediaItem
         val meta = mediaItem?.mediaMetadata
         val artFile = meta?.artworkUri?.let { cacheAlbumArt(it) }
         val dominantColor = artFile?.let { extractDominantColor(it) }
+        val isLiked = optimisticLiked ?: (service.currentSong.value?.song?.liked == true)
+        val pos = player.currentPosition.coerceAtLeast(0L)
+        val dur = if (player.duration > 0) player.duration else 0L
+
         val snapshot =
             WidgetSnapshot(
                 title = meta?.title?.toString() ?: service.getString(R.string.no_track_playing),
@@ -89,6 +98,10 @@ internal class MusicServiceWidgetUpdater(
                 artPath = artFile?.absolutePath,
                 dominantColor = dominantColor,
                 insights = WidgetInsightsSnapshot.Empty,
+                isLiked = isLiked,
+                positionMs = pos,
+                durationMs = dur,
+                wavePhase = wavePhase,
             )
 
         playbackWidgets.forEach { target ->
@@ -96,13 +109,21 @@ internal class MusicServiceWidgetUpdater(
         }
     }
 
-    private suspend fun updateProgress(progress: Float) {
+    private suspend fun updateProgress(
+        progress: Float,
+        positionMs: Long,
+        durationMs: Long,
+        wavePhase: Float,
+    ) {
         progressWidgets.forEach { target ->
             val ids = GlanceAppWidgetManager(service).getGlanceIds(target.widgetClass)
             ids.forEach { id ->
                 updateAppWidgetState(service, PreferencesGlanceStateDefinition, id) { prefs ->
                     prefs.toMutableWidgetPreferences().apply {
                         this[MusicWidgetKeys.PLAYBACK_POSITION] = progress
+                        this[MusicWidgetKeys.PLAYBACK_POSITION_MS] = positionMs
+                        this[MusicWidgetKeys.DURATION_MS] = durationMs
+                        this[MusicWidgetKeys.WAVE_PHASE] = wavePhase
                     }
                 }
                 target.widget.update(service, id)
@@ -143,6 +164,10 @@ internal class MusicServiceWidgetUpdater(
             this[MusicWidgetKeys.IS_AVAILABLE]?.let { mutable[MusicWidgetKeys.IS_AVAILABLE] = it }
             this[MusicWidgetKeys.DOMINANT_COLOR]?.let { mutable[MusicWidgetKeys.DOMINANT_COLOR] = it }
             this[MusicWidgetKeys.PLAYBACK_POSITION]?.let { mutable[MusicWidgetKeys.PLAYBACK_POSITION] = it }
+            this[MusicWidgetKeys.IS_LIKED]?.let { mutable[MusicWidgetKeys.IS_LIKED] = it }
+            this[MusicWidgetKeys.PLAYBACK_POSITION_MS]?.let { mutable[MusicWidgetKeys.PLAYBACK_POSITION_MS] = it }
+            this[MusicWidgetKeys.DURATION_MS]?.let { mutable[MusicWidgetKeys.DURATION_MS] = it }
+            this[MusicWidgetKeys.WAVE_PHASE]?.let { mutable[MusicWidgetKeys.WAVE_PHASE] = it }
             this[MusicWidgetKeys.LISTENING_TIME]?.let { mutable[MusicWidgetKeys.LISTENING_TIME] = it }
             this[MusicWidgetKeys.TOTAL_PLAYS]?.let { mutable[MusicWidgetKeys.TOTAL_PLAYS] = it }
             this[MusicWidgetKeys.RECENT_SONGS]?.let { mutable[MusicWidgetKeys.RECENT_SONGS] = it }
@@ -157,6 +182,10 @@ internal class MusicServiceWidgetUpdater(
         this[MusicWidgetKeys.IS_PLAYING] = snapshot.isPlaying
         this[MusicWidgetKeys.IS_AVAILABLE] = snapshot.isAvailable
         this[MusicWidgetKeys.PLAYBACK_POSITION] = snapshot.playbackPosition
+        this[MusicWidgetKeys.IS_LIKED] = snapshot.isLiked
+        this[MusicWidgetKeys.PLAYBACK_POSITION_MS] = snapshot.positionMs
+        this[MusicWidgetKeys.DURATION_MS] = snapshot.durationMs
+        this[MusicWidgetKeys.WAVE_PHASE] = snapshot.wavePhase
 
         val artPath = snapshot.artPath
         if (artPath != null) {
@@ -241,7 +270,7 @@ internal class MusicServiceWidgetUpdater(
                         ImageRequest
                             .Builder(service.applicationContext)
                             .data(uri.toString())
-                            .size(512, 512)
+                            .size(256, 256)
                             .allowHardware(false)
                             .build()
                     val result = loader.execute(request)
@@ -287,6 +316,10 @@ internal class MusicServiceWidgetUpdater(
         val artPath: String?,
         val dominantColor: Int?,
         val insights: WidgetInsightsSnapshot,
+        val isLiked: Boolean = false,
+        val positionMs: Long = 0L,
+        val durationMs: Long = 0L,
+        val wavePhase: Float = 0f,
     )
 
     private data class WidgetTarget(

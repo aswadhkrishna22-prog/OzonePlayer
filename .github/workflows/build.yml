@@ -1,40 +1,39 @@
-name: Build APK
+name: Build Debug APK
 
 on:
+  push:
+    branches:
+      - '**'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
+    name: Build Debug APK
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
 
-      - uses: gradle/actions/setup-gradle@v4
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Decode keystore
-        run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > $RUNNER_TEMP/release.jks
+      - name: Build Debug APK
+        run: ./gradlew assembleGmsMobileUniversalDebug -Pdualplay=true --stacktrace
 
-      - name: Build
-        run: >
-          ./gradlew assembleGmsMobileUniversalRelease
-          -Pandroid.injected.signing.store.file=$RUNNER_TEMP/release.jks
-          -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }}
-          -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }}
-          -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
-
-      - uses: actions/upload-artifact@v4
+      - name: Upload Debug APK Artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: app-release
-          path: |
-            app/build/outputs/apk/**/release/*.apk
-            app/build/outputs/apk/release/*.apk
+          name: Ozone-debug-apk
+          path: app/build/outputs/apk/gmsMobileUniversal/debug/*.apk

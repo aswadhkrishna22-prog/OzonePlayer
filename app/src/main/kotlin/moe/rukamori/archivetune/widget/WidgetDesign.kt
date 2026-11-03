@@ -57,6 +57,10 @@ internal data class WidgetPlaybackState(
     val isAvailable: Boolean,
     val dominantColor: Int?,
     val playbackPosition: Float,
+    val isLiked: Boolean = false,
+    val positionMs: Long = 0L,
+    val durationMs: Long = 0L,
+    val wavePhase: Float = 0f,
 )
 
 @Immutable
@@ -77,6 +81,10 @@ internal fun Preferences.toWidgetPlaybackState(context: Context): WidgetPlayback
     val isAvailable = this[MusicWidgetKeys.IS_AVAILABLE] ?: false
     val rawTitle = this[MusicWidgetKeys.TRACK_TITLE].orEmpty()
     val rawArtist = this[MusicWidgetKeys.TRACK_ARTIST].orEmpty()
+    val isLiked = this[MusicWidgetKeys.IS_LIKED] ?: false
+    val positionMs = this[MusicWidgetKeys.PLAYBACK_POSITION_MS] ?: 0L
+    val durationMs = this[MusicWidgetKeys.DURATION_MS] ?: 0L
+    val wavePhase = this[MusicWidgetKeys.WAVE_PHASE] ?: 0f
 
     return WidgetPlaybackState(
         title =
@@ -93,6 +101,10 @@ internal fun Preferences.toWidgetPlaybackState(context: Context): WidgetPlayback
         isAvailable = isAvailable,
         dominantColor = this[MusicWidgetKeys.DOMINANT_COLOR],
         playbackPosition = (this[MusicWidgetKeys.PLAYBACK_POSITION] ?: 0f).coerceIn(0f, 1f),
+        isLiked = isLiked,
+        positionMs = positionMs,
+        durationMs = durationMs,
+        wavePhase = wavePhase,
     )
 }
 
@@ -235,6 +247,8 @@ internal fun skipNextAction(): Action = actionRunCallback<SkipNextAction>()
 
 internal fun skipPreviousAction(): Action = actionRunCallback<SkipPrevAction>()
 
+internal fun toggleLikeAction(): Action = actionRunCallback<ToggleLikeAction>()
+
 internal object ArchiveTuneWidgetColors {
     val providers =
         ColorProviders(
@@ -353,7 +367,7 @@ private object WidgetArtworkCache {
         val targetPx =
             (targetSize.value * context.resources.displayMetrics.density)
                 .toInt()
-                .coerceAtLeast(64)
+                .coerceIn(64, 256)
         val cacheKey = "${file.absolutePath}:${file.lastModified()}:$targetPx"
         cache.get(cacheKey)?.let { return it }
 

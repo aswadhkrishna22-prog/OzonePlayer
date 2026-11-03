@@ -9,6 +9,7 @@ package moe.rukamori.archivetune.widget
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 
 object MusicWidgetKeys {
@@ -19,6 +20,10 @@ object MusicWidgetKeys {
     val IS_AVAILABLE = booleanPreferencesKey("widget_is_available")
     val DOMINANT_COLOR = intPreferencesKey("widget_dominant_color")
     val PLAYBACK_POSITION = floatPreferencesKey("widget_position")
+    val IS_LIKED = booleanPreferencesKey("widget_is_liked")
+    val PLAYBACK_POSITION_MS = longPreferencesKey("widget_position_ms")
+    val DURATION_MS = longPreferencesKey("widget_duration_ms")
+    val WAVE_PHASE = floatPreferencesKey("widget_wave_phase")
     val LISTENING_TIME = stringPreferencesKey("widget_listening_time")
     val TOTAL_PLAYS = stringPreferencesKey("widget_total_plays")
     val RECENT_SONGS = stringPreferencesKey("widget_recent_songs")

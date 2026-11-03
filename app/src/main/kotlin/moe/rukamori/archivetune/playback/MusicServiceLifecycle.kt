@@ -211,6 +211,8 @@ class MusicServiceLifecycle(
         fun isTogetherSessionIdle(): Boolean
         fun resetTogetherSessionState()
         fun stopAndClearPlaybackSession(clearPersistentState: Boolean)
+        fun toggleLike()
+        fun updateWidget(optimisticLiked: Boolean? = null)
     }
 
     var autoStartOnBluetoothEnabled: Boolean = false
@@ -417,6 +419,7 @@ class MusicServiceLifecycle(
 
         delegate.currentSong.collect(scope) { song ->
             delegate.updateNotification()
+            delegate.updateWidget()
             delegate.dispatchDiscordSync(
                 reason =
                     if (song == null) {
@@ -883,6 +886,12 @@ class MusicServiceLifecycle(
                     player.prepare()
                     player.play()
                 }
+            }
+
+            "moe.rukamori.archivetune.WIDGET_LIKE" -> {
+                val currentLiked = delegate.currentSong.value?.song?.liked == true
+                delegate.toggleLike()
+                delegate.updateWidget(!currentLiked)
             }
         }
         callSuper()

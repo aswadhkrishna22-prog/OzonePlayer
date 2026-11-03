@@ -9,6 +9,7 @@ package moe.rukamori.archivetune.widget
 import android.content.Context
 import android.os.Build
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -16,11 +17,11 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalSize
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
-import androidx.glance.appwidget.LinearProgressIndicator
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
@@ -29,6 +30,7 @@ import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.ContentScale
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
@@ -79,15 +81,22 @@ private fun PlaybackCommandContent(context: Context) {
             modifier =
                 GlanceModifier
                     .fillMaxSize()
-                    .background(ImageProvider(R.drawable.widget_glass_bg))
-                    .cornerRadius(28.dp)
-                    .padding(14.dp)
-                    .clickable(openArchiveTuneAction(context)),
+                    .padding(6.dp),
         ) {
-            if (compact) {
-                PlaybackCommandCompact(state = state, palette = palette, context = context)
-            } else {
-                PlaybackCommandPanel(state = state, palette = palette, context = context)
+            Box(
+                modifier =
+                    GlanceModifier
+                        .fillMaxSize()
+                        .background(ImageProvider(R.drawable.widget_liquid_glass_bg))
+                        .cornerRadius(32.dp)
+                        .padding(14.dp)
+                        .clickable(openArchiveTuneAction(context)),
+            ) {
+                if (compact) {
+                    PlaybackCommandCompact(state = state, palette = palette, context = context)
+                } else {
+                    PlaybackCommandPanel(state = state, palette = palette, context = context)
+                }
             }
         }
     }
@@ -103,15 +112,24 @@ private fun PlaybackCommandCompact(
         modifier = GlanceModifier.fillMaxSize(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        WidgetArtwork(
-            artPath = state.artPath,
-            context = context,
-            contentDescription = context.getString(R.string.album_cover_desc),
-            targetSize = 56.dp,
-            cornerRadius = 16.dp,
-            palette = palette,
-            modifier = GlanceModifier.size(56.dp),
-        )
+        Box(
+            modifier =
+                GlanceModifier
+                    .size(52.dp)
+                    .background(ImageProvider(R.drawable.widget_art_border))
+                    .cornerRadius(16.dp)
+                    .padding(1.dp),
+        ) {
+            WidgetArtwork(
+                artPath = state.artPath,
+                context = context,
+                contentDescription = context.getString(R.string.album_cover_desc),
+                targetSize = 50.dp,
+                cornerRadius = 15.dp,
+                palette = palette,
+                modifier = GlanceModifier.fillMaxSize(),
+            )
+        }
 
         Spacer(GlanceModifier.width(12.dp))
 
@@ -144,16 +162,16 @@ private fun PlaybackCommandCompact(
         if (state.isAvailable) {
             Spacer(GlanceModifier.width(10.dp))
             WidgetControlButton(
-                modifier = GlanceModifier.size(50.dp),
+                modifier = GlanceModifier.size(48.dp),
                 action = playPauseAction(),
                 icon = if (state.isPlaying) R.drawable.pause else R.drawable.play,
                 contentDescription =
                     context.getString(
                         if (state.isPlaying) R.string.widget_pause else R.string.play,
                     ),
-                backgroundColor = ColorProvider(Color.White.copy(alpha = 0.18f)),
+                backgroundColor = ColorProvider(Color.White.copy(alpha = 0.20f)),
                 contentColor = ColorProvider(Color.White),
-                cornerRadius = 25.dp,
+                cornerRadius = 24.dp,
                 iconSize = 26.dp,
             )
         }
@@ -167,20 +185,29 @@ private fun PlaybackCommandPanel(
     context: Context,
 ) {
     Column(modifier = GlanceModifier.fillMaxSize()) {
-        // Top row: Artwork (56dp, rounded) + Title (white, bold) & Artist (white 60%)
+        // Top row: Rounded square Artwork with 1dp border + Title & Artist
         Row(
             modifier = GlanceModifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            WidgetArtwork(
-                artPath = state.artPath,
-                context = context,
-                contentDescription = context.getString(R.string.album_cover_desc),
-                targetSize = 56.dp,
-                cornerRadius = 16.dp,
-                palette = palette,
-                modifier = GlanceModifier.size(56.dp),
-            )
+            Box(
+                modifier =
+                    GlanceModifier
+                        .size(56.dp)
+                        .background(ImageProvider(R.drawable.widget_art_border))
+                        .cornerRadius(16.dp)
+                        .padding(1.dp),
+            ) {
+                WidgetArtwork(
+                    artPath = state.artPath,
+                    context = context,
+                    contentDescription = context.getString(R.string.album_cover_desc),
+                    targetSize = 54.dp,
+                    cornerRadius = 15.dp,
+                    palette = palette,
+                    modifier = GlanceModifier.fillMaxSize(),
+                )
+            }
 
             Spacer(GlanceModifier.width(12.dp))
 
@@ -213,12 +240,42 @@ private fun PlaybackCommandPanel(
 
         Spacer(GlanceModifier.height(10.dp))
 
-        // Progress row: Elapsed time (left) + Progress Bar (middle) + "-Remaining" (right)
-        val progress = state.playbackPosition.coerceIn(0f, 1f)
-        val elapsedSec = if (state.isAvailable && progress > 0f) (progress * 210f).toInt().coerceAtLeast(0) else 0
-        val remainingSec = if (state.isAvailable && progress > 0f) ((1f - progress) * 210f).toInt().coerceAtLeast(0) else 0
+        // Progress row: Elapsed time (left) + Wavy progress bar (middle) + "-Remaining" (right)
+        val positionMs =
+            if (state.positionMs > 0L) {
+                state.positionMs
+            } else if (state.durationMs > 0L) {
+                (state.playbackPosition * state.durationMs).toLong()
+            } else {
+                (state.playbackPosition * 210_000f).toLong()
+            }
+
+        val durationMs =
+            if (state.durationMs > 0L) {
+                state.durationMs
+            } else {
+                210_000L
+            }
+
+        val elapsedSec = if (state.isAvailable) (positionMs / 1000).toInt().coerceAtLeast(0) else 0
+        val remainingSec =
+            if (state.isAvailable && durationMs > positionMs) {
+                ((durationMs - positionMs) / 1000).toInt().coerceAtLeast(0)
+            } else {
+                0
+            }
+
         val elapsedStr = "%d:%02d".format(elapsedSec / 60, elapsedSec % 60)
         val remainingStr = "-%d:%02d".format(remainingSec / 60, remainingSec % 60)
+
+        val waveBitmap =
+            remember(state.playbackPosition, state.wavePhase, state.isPlaying) {
+                WavyProgressRenderer.render(
+                    progress = state.playbackPosition,
+                    phase = state.wavePhase,
+                    isPlaying = state.isPlaying,
+                )
+            }
 
         Row(
             modifier = GlanceModifier.fillMaxWidth(),
@@ -234,15 +291,14 @@ private fun PlaybackCommandPanel(
                     ),
             )
             Spacer(GlanceModifier.width(8.dp))
-            LinearProgressIndicator(
-                progress = progress,
-                color = ColorProvider(Color.White),
-                backgroundColor = ColorProvider(Color.White.copy(alpha = 0.25f)),
+            Image(
+                provider = ImageProvider(waveBitmap),
+                contentDescription = null,
+                contentScale = ContentScale.FillBounds,
                 modifier =
                     GlanceModifier
                         .defaultWeight()
-                        .height(4.dp)
-                        .cornerRadius(2.dp),
+                        .height(20.dp),
             )
             Spacer(GlanceModifier.width(8.dp))
             Text(
@@ -264,14 +320,19 @@ private fun PlaybackCommandPanel(
                 modifier = GlanceModifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Heart / Favorite
+                // Heart / Favorite toggle
                 WidgetControlButton(
                     modifier = GlanceModifier.size(42.dp),
-                    action = openArchiveTuneAction(context),
-                    icon = R.drawable.ic_heart_outline,
+                    action = toggleLikeAction(),
+                    icon = if (state.isLiked) R.drawable.ic_heart_filled else R.drawable.ic_heart_outline,
                     contentDescription = context.getString(R.string.action_like),
                     backgroundColor = ColorProvider(Color.Transparent),
-                    contentColor = ColorProvider(Color.White),
+                    contentColor =
+                        if (state.isLiked) {
+                            ColorProvider(Color(0xFFFF3B30))
+                        } else {
+                            ColorProvider(Color.White.copy(alpha = 0.8f))
+                        },
                     cornerRadius = 21.dp,
                     iconSize = 22.dp,
                 )
@@ -292,7 +353,7 @@ private fun PlaybackCommandPanel(
 
                 Spacer(GlanceModifier.defaultWeight())
 
-                // Play / Pause (largest)
+                // Play / Pause (largest circular glass button)
                 WidgetControlButton(
                     modifier = GlanceModifier.size(56.dp),
                     action = playPauseAction(),
@@ -301,7 +362,7 @@ private fun PlaybackCommandPanel(
                         context.getString(
                             if (state.isPlaying) R.string.widget_pause else R.string.play,
                         ),
-                    backgroundColor = ColorProvider(Color.White.copy(alpha = 0.18f)),
+                    backgroundColor = ColorProvider(Color.White.copy(alpha = 0.20f)),
                     contentColor = ColorProvider(Color.White),
                     cornerRadius = 28.dp,
                     iconSize = 30.dp,

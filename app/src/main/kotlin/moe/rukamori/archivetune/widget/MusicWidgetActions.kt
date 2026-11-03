@@ -44,9 +44,20 @@ class SkipPrevAction : ActionCallback {
     }
 }
 
+class ToggleLikeAction : ActionCallback {
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters,
+    ) {
+        sendWidgetAction(context, ACTION_LIKE)
+    }
+}
+
 private const val ACTION_PLAY_PAUSE = "moe.rukamori.archivetune.WIDGET_PLAY_PAUSE"
 private const val ACTION_SKIP_NEXT = "moe.rukamori.archivetune.WIDGET_SKIP_NEXT"
 private const val ACTION_SKIP_PREV = "moe.rukamori.archivetune.WIDGET_SKIP_PREV"
+private const val ACTION_LIKE = "moe.rukamori.archivetune.WIDGET_LIKE"
 private const val TAG = "MusicWidgetActions"
 
 private fun sendWidgetAction(

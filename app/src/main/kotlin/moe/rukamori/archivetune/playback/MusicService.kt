@@ -668,7 +668,7 @@ class MusicService :
     fun addToQueue(items: List<MediaItem>) = addToQueueInternal(items)
     fun playFromVoiceSearch(query: String) = playFromVoiceSearchInternal(query)
     internal fun toggleLibrary() = toggleLibraryInternal()
-    fun toggleLike() = toggleLikeInternal()
+    override fun toggleLike() = toggleLikeInternal()
     fun toggleStartRadio() = toggleStartRadioInternal()
 
     internal fun decodeBandLevelsMb(raw: String?): List<Int> = audioPolicyHolder.decodeBandLevelsMb(raw)
@@ -862,7 +862,7 @@ class MusicService :
 
     // ── Widget Support ────────────────────────────────────────────────────────────
 
-    fun updateWidget() = widgetUpdater.update()
+    override fun updateWidget(optimisticLiked: Boolean?) = widgetUpdater.update(optimisticLiked)
 
     inner class MusicBinder : Binder() {
         val service: MusicService get() = this@MusicService
