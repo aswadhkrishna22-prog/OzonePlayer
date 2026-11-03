@@ -1,6 +1,5 @@
 package moe.rukamori.archivetune.kemo
 
-import android.content.Context
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -11,8 +10,9 @@ import kotlinx.serialization.json.Json
 import timber.log.Timber
 
 data class LoadedKemoAssets(
-    val bitmap: ImageBitmap,
-    val spec: KemoSpriteSpec,
+    val spriteSheet: ImageBitmap,
+    val particlesBitmap: ImageBitmap?,
+    val spec: KemoSpec,
 )
 
 private val jsonParser = Json {
@@ -25,12 +25,23 @@ fun rememberKemoAssets(): LoadedKemoAssets? {
     val context = LocalContext.current
     return remember(context) {
         try {
-            val bitmap = context.assets.open("kemo/kemo_spritesheet.png").use { stream ->
-                BitmapFactory.decodeStream(stream).asImageBitmap()
+            val options = BitmapFactory.Options().apply { inScaled = false }
+            val spriteBitmap = context.assets.open("kemo/kemo_spritesheet.png").use { stream ->
+                BitmapFactory.decodeStream(stream, null, options)?.asImageBitmap()
+            } ?: return@remember null
+
+            val particlesBitmap = try {
+                context.assets.open("kemo/kemo_particles.png").use { stream ->
+                    BitmapFactory.decodeStream(stream, null, options)?.asImageBitmap()
+                }
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to load kemo_particles.png")
+                null
             }
+
             val jsonText = context.assets.open("kemo/kemo_spec.json").bufferedReader().use { it.readText() }
-            val spec = jsonParser.decodeFromString<KemoSpriteSpec>(jsonText)
-            LoadedKemoAssets(bitmap, spec)
+            val spec = jsonParser.decodeFromString<KemoSpec>(jsonText)
+            LoadedKemoAssets(spriteBitmap, particlesBitmap, spec)
         } catch (e: Exception) {
             Timber.e(e, "Failed to load Kemo assets from assets/kemo")
             null
