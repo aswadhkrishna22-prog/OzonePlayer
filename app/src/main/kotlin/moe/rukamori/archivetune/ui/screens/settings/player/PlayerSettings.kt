@@ -50,6 +50,7 @@ import moe.rukamori.archivetune.constants.AutoLowDataModeKey
 import moe.rukamori.archivetune.constants.AutoSkipNextOnErrorKey
 import moe.rukamori.archivetune.lowdata.AutoLowDataMode
 import moe.rukamori.archivetune.constants.AutoStartOnBluetoothKey
+import moe.rukamori.archivetune.constants.BeastModeAutoPromptKey
 import moe.rukamori.archivetune.constants.AutomixEnabledKey
 import moe.rukamori.archivetune.constants.AutomixTransitionDuration
 import moe.rukamori.archivetune.constants.AutomixTransitionDurationKey
@@ -133,6 +134,10 @@ fun PlayerSettings(navController: NavController) {
     val (autoStartOnBluetooth, onAutoStartOnBluetoothChange) = rememberPreference(
         AutoStartOnBluetoothKey,
         defaultValue = false,
+    )
+    val (beastModeAutoPrompt, onBeastModeAutoPromptChange) = rememberPreference(
+        BeastModeAutoPromptKey,
+        defaultValue = true,
     )
     val (stopMusicOnTaskClear, onStopMusicOnTaskClearChange) = rememberPreference(
         StopMusicOnTaskClearKey,
@@ -223,6 +228,7 @@ fun PlayerSettings(navController: NavController) {
         autoSkipNextOnError = autoSkipNextOnError,
         pauseOnDeviceMute = pauseOnDeviceMute,
         autoStartOnBluetooth = autoStartOnBluetooth,
+        beastModeAutoPrompt = beastModeAutoPrompt,
         stopMusicOnTaskClear = stopMusicOnTaskClear,
         wakelockEnabled = wakelockEnabled,
         crossfadeEnabled = crossfadeEnabled,
@@ -259,6 +265,7 @@ fun PlayerSettings(navController: NavController) {
             onAutoSkipNextOnErrorChange = onAutoSkipNextOnErrorChange,
             onPauseOnDeviceMuteChange = onPauseOnDeviceMuteChange,
             onAutoStartOnBluetoothChange = onAutoStartOnBluetoothChange,
+            onBeastModeAutoPromptChange = onBeastModeAutoPromptChange,
             onStopMusicOnTaskClearChange = onStopMusicOnTaskClearChange,
             onWakelockChange = onWakelockChange,
             onCrossfadeEnabledChange = onCrossfadeEnabledChange,

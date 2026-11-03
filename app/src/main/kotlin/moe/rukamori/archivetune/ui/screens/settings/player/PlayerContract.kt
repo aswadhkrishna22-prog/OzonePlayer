@@ -48,6 +48,7 @@ internal object PlayerContract {
     val AutoSkipNextOnError = AutoSkipNextOnErrorKey
     val PauseOnDeviceMute = PauseOnDeviceMuteKey
     val AutoStartOnBluetooth = AutoStartOnBluetoothKey
+    val BeastModeAutoPrompt = BeastModeAutoPromptKey
     val StopMusicOnTaskClear = StopMusicOnTaskClearKey
     val Wakelock = WakelockKey
     val CrossfadeEnabled = CrossfadeEnabledKey
@@ -76,6 +77,7 @@ data class PlayerSettingsUiState(
     val autoSkipNextOnError: Boolean = false,
     val pauseOnDeviceMute: Boolean = false,
     val autoStartOnBluetooth: Boolean = false,
+    val beastModeAutoPrompt: Boolean = true,
     val stopMusicOnTaskClear: Boolean = false,
     val wakelockEnabled: Boolean = false,
     val crossfadeEnabled: Boolean = false,
@@ -107,6 +109,7 @@ data class PlayerSettingsUiActions(
     val onAutoSkipNextOnErrorChange: (Boolean) -> Unit = {},
     val onPauseOnDeviceMuteChange: (Boolean) -> Unit = {},
     val onAutoStartOnBluetoothChange: (Boolean) -> Unit = {},
+    val onBeastModeAutoPromptChange: (Boolean) -> Unit = {},
     val onStopMusicOnTaskClearChange: (Boolean) -> Unit = {},
     val onWakelockChange: (Boolean) -> Unit = {},
     val onCrossfadeEnabledChange: (Boolean) -> Unit = {},

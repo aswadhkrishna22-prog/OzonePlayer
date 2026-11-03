@@ -46,6 +46,15 @@ internal fun PlayerBehaviorSection(
         }
         item {
             SwitchPreference(
+                title = { Text(stringResource(R.string.beast_mode_auto_prompt_title)) },
+                description = { Text(stringResource(R.string.beast_mode_auto_prompt_desc)) },
+                icon = { Icon(painterResource(R.drawable.volume_up), null) },
+                checked = state.beastModeAutoPrompt,
+                onCheckedChange = actions.onBeastModeAutoPromptChange,
+            )
+        }
+        item {
+            SwitchPreference(
                 title = { Text(stringResource(R.string.pause_on_device_mute)) },
                 icon = { Icon(painterResource(R.drawable.volume_off), null) },
                 checked = state.pauseOnDeviceMute,

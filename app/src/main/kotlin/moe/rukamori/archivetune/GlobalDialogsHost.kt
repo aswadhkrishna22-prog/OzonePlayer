@@ -598,6 +598,51 @@ fun BoxScope.GlobalDialogsHost(
         }
     }
 
+    // ── Beast Mode Speaker / External Audio Prompt Dialog ─────────────────
+    val showBeastPrompt by moe.rukamori.archivetune.beastmode.BeastModeManager.showPromptDialog.collectAsState()
+    val beastDeviceName by moe.rukamori.archivetune.beastmode.BeastModeManager.promptDeviceName.collectAsState()
+
+    if (showBeastPrompt && !isDualPlaySplitForAskMe && !isBottomSheetOpenForAskMe) {
+        moe.rukamori.archivetune.ui.component.DefaultDialog(
+            onDismiss = { moe.rukamori.archivetune.beastmode.BeastModeManager.onDismissPrompt() },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(R.drawable.volume_up),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.beast_mode_dialog_title))
+                }
+            },
+            buttons = {
+                TextButton(onClick = { moe.rukamori.archivetune.beastmode.BeastModeManager.onDismissPrompt() }) {
+                    Text(stringResource(R.string.not_now))
+                }
+                Spacer(Modifier.width(8.dp))
+                Button(
+                    onClick = {
+                        val bandCount = playerConnection?.service?.eqCapabilities?.value?.bandCount ?: 5
+                        moe.rukamori.archivetune.beastmode.BeastModeManager.onConfirmPrompt(context, bandCount)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                    ),
+                ) {
+                    Text(stringResource(R.string.beast_mode_turn_on))
+                }
+            },
+        ) {
+            Text(
+                stringResource(
+                    R.string.beast_mode_dialog_desc,
+                    beastDeviceName.ifBlank { stringResource(R.string.beast_mode_speaker) },
+                )
+            )
+        }
+    }
+
     // ── Dual Play Intercept Dialog ─────────────────────────────────────────
     val dualPlayEngine = playerConnection?.dualPlayEngine
     val dualPlayState by (dualPlayEngine?.state ?: flowOf(null)).collectAsState(null)

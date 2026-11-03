@@ -71,9 +71,29 @@ class ServiceAudioPolicyHolder(
     var lastAudioOutputDeviceSignature: String? = null
     var lastAudioRouteRecoveryRealtimeMs: Long = 0L
 
+    private fun isExternalAudioSink(type: Int): Boolean {
+        if (type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP) return true
+        if (type == AudioDeviceInfo.TYPE_WIRED_HEADSET) return true
+        if (type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES) return true
+        if (type == AudioDeviceInfo.TYPE_USB_HEADSET) return true
+        if (type == AudioDeviceInfo.TYPE_USB_DEVICE) return true
+        if (type == AudioDeviceInfo.TYPE_LINE_ANALOG) return true
+        if (type == AudioDeviceInfo.TYPE_LINE_DIGITAL) return true
+        if (type == AudioDeviceInfo.TYPE_HDMI) return true
+        if (android.os.Build.VERSION.SDK_INT >= 31) {
+            if (type == AudioDeviceInfo.TYPE_BLE_HEADSET || type == AudioDeviceInfo.TYPE_BLE_SPEAKER) return true
+        }
+        return false
+    }
+
     val audioDeviceCallback =
         object : AudioDeviceCallback() {
             override fun onAudioDevicesAdded(addedDevices: Array<AudioDeviceInfo>) {
+                val externalSink = addedDevices.firstOrNull { it.isSink && isExternalAudioSink(it.type) }
+                if (externalSink != null) {
+                    val name = externalSink.productName?.toString().takeIf { !it.isNullOrBlank() } ?: "External Audio"
+                    moe.rukamori.archivetune.beastmode.BeastModeManager.onDeviceConnected(name, externalSink.type)
+                }
                 if (addedDevices.any { it.isSink }) onAudioOutputDeviceChanged()
             }
 

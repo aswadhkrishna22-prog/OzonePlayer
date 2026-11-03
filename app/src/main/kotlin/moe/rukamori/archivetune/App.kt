@@ -99,6 +99,7 @@ class App :
 
     private fun initializeCriticalSync() {
         moe.rukamori.archivetune.lowdata.LowDataManager.initialize(this)
+        moe.rukamori.archivetune.beastmode.BeastModeManager.initialize(this)
         ProxyAuth.init()
         CanvasArtworkPlaybackCache.init(this)
         CipherBootstrap.init(this, CipherEngineType.QUICKJS)

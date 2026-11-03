@@ -120,6 +120,7 @@ internal fun resolveProfileTitleAndSubtitle(
 
     val title =
         when {
+            selectedProfileId == "beast_mode" -> "Beast Mode"
             selectedProfileId == "flat" -> flatString
             selectedSystemPresetName != null -> selectedSystemPresetName
             activeProfile != null -> activeProfile.name
@@ -128,6 +129,7 @@ internal fun resolveProfileTitleAndSubtitle(
 
     val subtitle =
         when {
+            selectedProfileId == "beast_mode" -> "Max Power & Deep Bass"
             activeProfile != null -> customProfileString
             selectedSystemPresetName != null -> systemPresetString
             else -> profileHintString

@@ -318,6 +318,10 @@ val EqualizerVirtualizerStrengthKey = intPreferencesKey("equalizerVirtualizerStr
 val EqualizerSelectedProfileIdKey = stringPreferencesKey("equalizerSelectedProfileId")
 val EqualizerCustomProfilesJsonKey = stringPreferencesKey("equalizerCustomProfilesJson")
 
+val BeastModeActiveKey = booleanPreferencesKey("beastModeActive")
+val BeastModeAutoPromptKey = booleanPreferencesKey("beastModeAutoPrompt")
+val BeastModePrevStateKey = stringPreferencesKey("beastModePrevState")
+
 val MaxImageCacheSizeKey = intPreferencesKey("maxImageCacheSize")
 val SmartTrimmerKey = booleanPreferencesKey("smartTrimmer")
 val MaxSongCacheSizeKey = intPreferencesKey("maxSongCacheSize")

@@ -50,9 +50,34 @@ internal fun EqualizerPresetsSection(
                     .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val isBeastModeActive by moe.rukamori.archivetune.beastmode.BeastModeManager.isBeastModeActive.collectAsState()
+            val isBeastSelected = isBeastModeActive || selectedProfileId == "beast_mode"
+
             FilterChip(
-                selected = selectedProfileId == "flat",
+                selected = isBeastSelected,
                 onClick = {
+                    moe.rukamori.archivetune.beastmode.BeastModeManager.toggleBeastMode(context, caps.bandCount)
+                    if (!isBeastModeActive) {
+                        onSelectProfileId("beast_mode")
+                    } else {
+                        onSelectProfileId("flat")
+                    }
+                },
+                label = { Text(text = stringResource(R.string.beast_mode)) },
+                colors =
+                    FilterChipDefaults.filterChipColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        selectedContainerColor = MaterialTheme.colorScheme.errorContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onErrorContainer,
+                    ),
+                border = null,
+            )
+
+            FilterChip(
+                selected = selectedProfileId == "flat" && !isBeastModeActive,
+                onClick = {
+                    moe.rukamori.archivetune.beastmode.BeastModeManager.setBeastModeActiveDirect(false)
                     playerConnection.service.applyEqFlatPreset()
                     onSelectProfileId("flat")
                 },
@@ -68,8 +93,9 @@ internal fun EqualizerPresetsSection(
 
             caps.systemPresets.forEachIndexed { index, name ->
                 FilterChip(
-                    selected = selectedProfileId == "system:$index",
+                    selected = selectedProfileId == "system:$index" && !isBeastModeActive,
                     onClick = {
+                        moe.rukamori.archivetune.beastmode.BeastModeManager.setBeastModeActiveDirect(false)
                         playerConnection.service.applySystemEqPreset(index)
                         onSelectProfileId("system:$index")
                     },

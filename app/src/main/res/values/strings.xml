@@ -1331,4 +1331,15 @@
     <string name="kemo_size_small">Small (1x)</string>
     <string name="kemo_size_normal">Normal (2x)</string>
     <string name="kemo_size_large">Large (3x)</string>
+
+    <!-- Beast Mode Audio Engine -->
+    <string name="beast_mode">Beast Mode</string>
+    <string name="beast_mode_dialog_title">Activate Beast Mode?</string>
+    <string name="beast_mode_dialog_desc">Connected to %1$s. Turn on Beast Mode (+4.5 dB Pre-amp, Deep Sub-Bass, 3D Surround &amp; V-Curve) for bus speakers?</string>
+    <string name="beast_mode_turn_on">Turn On</string>
+    <string name="beast_mode_speaker">external speaker</string>
+    <string name="beast_mode_auto_prompt_title">Beast Mode speaker prompt</string>
+    <string name="beast_mode_auto_prompt_desc">Ask to activate Beast Mode when Bluetooth or wired speakers connect</string>
+    <string name="beast_mode_activated">Beast Mode Activated! Full Power Audio</string>
+    <string name="beast_mode_deactivated">Beast Mode Deactivated</string>
 </resources>
