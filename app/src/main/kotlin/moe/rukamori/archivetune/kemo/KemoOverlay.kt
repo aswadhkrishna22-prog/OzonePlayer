@@ -62,6 +62,8 @@ import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.PlayerDockGeometry
 import moe.rukamori.archivetune.constants.KemoDisplayMode
 import moe.rukamori.archivetune.constants.KemoDisplayModeKey
+import moe.rukamori.archivetune.constants.KemoSize
+import moe.rukamori.archivetune.constants.KemoSizeKey
 import moe.rukamori.archivetune.constants.MiniPlayerBottomSpacing
 import moe.rukamori.archivetune.playback.dualplay.DualPlayState
 import moe.rukamori.archivetune.ui.utils.LocalPlayerIsExpanded
@@ -98,6 +100,12 @@ fun KemoOverlay(
 
     // Mode OFF: absolutely nothing is composed or rendered.
     if (kemoMode == KemoDisplayMode.OFF) return
+
+    val (kemoSize, _) =
+        rememberEnumPreference(
+            KemoSizeKey,
+            defaultValue = KemoSize.NORMAL,
+        )
 
     val assets = rememberKemoAssets() ?: return
     val context = LocalContext.current
@@ -185,9 +193,7 @@ fun KemoOverlay(
     val canAnimate = isAppResumed && !isPowerSaveMode && animatorScale > 0f && !animationsDisabled
 
     // ── 4. Integer Pixel Scaling ───────────────────────────────────────────────────
-    val pixelScale = remember(density) {
-        maxOf(1, density.toInt())
-    }
+    val pixelScale = kemoSize.scale
     val frameWidth = assets.spec.frameWidth
     val frameHeight = assets.spec.frameHeight
     val spriteWidthPx = frameWidth * pixelScale
