@@ -260,6 +260,10 @@ fun AppearanceThemeSection(
         }
 
         item {
+            moe.rukamori.archivetune.kemo.KemoSettingsItem()
+        }
+
+        item {
             PreferenceEntry(
                 title = { Text(stringResource(R.string.archivetune_canvas)) },
                 description = stringResource(R.string.canvas_settings_subtitle),

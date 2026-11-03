@@ -1,0 +1,147 @@
+{
+  "frameWidth": 64,
+  "frameHeight": 96,
+  "anchor": "bottomCenter",
+  "facing": "right",
+  "frames": {
+    "idle": 0,
+    "happy": 1,
+    "smile": 2,
+    "sleep": 3
+  },
+  "animations": {
+    "idle": {
+      "loop": true,
+      "steps": [
+        {
+          "f": 0,
+          "ms": 900,
+          "dy": 0
+        },
+        {
+          "f": 0,
+          "ms": 900,
+          "dy": -1
+        }
+      ]
+    },
+    "blink": {
+      "loop": false,
+      "steps": [
+        {
+          "f": 2,
+          "ms": 120,
+          "dy": 0
+        }
+      ]
+    },
+    "hop": {
+      "loop": false,
+      "steps": [
+        {
+          "f": 0,
+          "ms": 70,
+          "dy": 0
+        },
+        {
+          "f": 1,
+          "ms": 70,
+          "dy": -3
+        },
+        {
+          "f": 1,
+          "ms": 90,
+          "dy": -8
+        },
+        {
+          "f": 0,
+          "ms": 70,
+          "dy": -3
+        },
+        {
+          "f": 0,
+          "ms": 70,
+          "dy": 0
+        }
+      ]
+    },
+    "dance": {
+      "loop": true,
+      "steps": [
+        {
+          "f": 1,
+          "ms": 240,
+          "dy": -2
+        },
+        {
+          "f": 0,
+          "ms": 240,
+          "dy": 0,
+          "flip": true
+        },
+        {
+          "f": 2,
+          "ms": 240,
+          "dy": -2
+        },
+        {
+          "f": 0,
+          "ms": 240,
+          "dy": 0
+        }
+      ]
+    },
+    "sleep": {
+      "loop": true,
+      "steps": [
+        {
+          "f": 3,
+          "ms": 1000,
+          "dy": 0
+        },
+        {
+          "f": 3,
+          "ms": 1000,
+          "dy": 1
+        }
+      ]
+    },
+    "happy": {
+      "loop": false,
+      "steps": [
+        {
+          "f": 1,
+          "ms": 120,
+          "dy": -4
+        },
+        {
+          "f": 1,
+          "ms": 120,
+          "dy": 0
+        },
+        {
+          "f": 1,
+          "ms": 120,
+          "dy": -4
+        },
+        {
+          "f": 1,
+          "ms": 120,
+          "dy": 0
+        }
+      ]
+    }
+  },
+  "particles": {
+    "file": "kemo_particles.png",
+    "cell": 16,
+    "items": [
+      "heart",
+      "note",
+      "note2",
+      "zzz",
+      "spark",
+      "sweat"
+    ]
+  }
+}
