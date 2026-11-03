@@ -61,7 +61,7 @@ object BeastModeManager {
         encodeDefaults = true
     }
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val scope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
 
     private val _isBeastModeActive = MutableStateFlow(false)
     val isBeastModeActive: StateFlow<Boolean> = _isBeastModeActive.asStateFlow()
@@ -211,8 +211,10 @@ object BeastModeManager {
                 }
             }.onSuccess {
                 _isBeastModeActive.value = true
-                scope.launch(Dispatchers.Main) {
-                    Toast.makeText(appContext, appContext.getString(R.string.beast_mode_activated), Toast.LENGTH_SHORT).show()
+                runCatching {
+                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                        Toast.makeText(appContext, appContext.getString(R.string.beast_mode_activated), Toast.LENGTH_SHORT).show()
+                    }
                 }
                 Timber.tag(TAG).i("Beast Mode enabled with bandCount=%d", bandCount)
             }.onFailure { e ->
@@ -257,8 +259,10 @@ object BeastModeManager {
                 }
             }.onSuccess {
                 _isBeastModeActive.value = false
-                scope.launch(Dispatchers.Main) {
-                    Toast.makeText(appContext, appContext.getString(R.string.beast_mode_deactivated), Toast.LENGTH_SHORT).show()
+                runCatching {
+                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                        Toast.makeText(appContext, appContext.getString(R.string.beast_mode_deactivated), Toast.LENGTH_SHORT).show()
+                    }
                 }
                 Timber.tag(TAG).i("Beast Mode disabled and state restored")
             }.onFailure { e ->
