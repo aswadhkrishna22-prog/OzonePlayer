@@ -39,6 +39,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Modifier
@@ -59,6 +60,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.Player
 import kotlinx.coroutines.flow.flowOf
 import moe.rukamori.archivetune.LocalAnimationsDisabled
 import moe.rukamori.archivetune.LocalPlayerConnection
@@ -123,8 +125,15 @@ fun KemoOverlay(
     // ── 2. Playback State (Player A or Dual Play Player B) ─────────────────────────
     val playerConnection = LocalPlayerConnection.current
     val isPlayerAPlaying by (playerConnection?.isPlaying ?: flowOf(false)).collectAsStateWithLifecycle(false)
+    val isDirectPlayerPlaying = playerConnection?.player?.isPlaying == true
+    val isDirectPlayWhenReady = (playerConnection?.player?.playWhenReady == true &&
+        playerConnection?.player?.playbackState != Player.STATE_ENDED &&
+        playerConnection?.player?.playbackState != Player.STATE_IDLE)
     val dualPlayState by (playerConnection?.dualPlayEngine?.state ?: flowOf(DualPlayState())).collectAsStateWithLifecycle(DualPlayState())
-    val isMusicPlaying = isPlayerAPlaying || (dualPlayState.enabled && dualPlayState.playerBIsPlaying)
+    val isMusicPlaying = isPlayerAPlaying || isDirectPlayerPlaying || isDirectPlayWhenReady || (dualPlayState.enabled && dualPlayState.playerBIsPlaying)
+
+    val currentIsMusicPlaying by rememberUpdatedState(isMusicPlaying)
+    val currentKemoMode by rememberUpdatedState(kemoMode)
 
     // ── 3. System Animation Scale & Battery Saver Observers ────────────────────────
     val animationsDisabled = LocalAnimationsDisabled.current
@@ -228,10 +237,23 @@ fun KemoOverlay(
     )
 
     // ── 6. State Machine & Timers ──────────────────────────────────────────────────
-    var currentState by remember { mutableStateOf(if (isMusicPlaying) KemoState.DANCE else KemoState.IDLE) }
-    var previousPlaybackState by remember { mutableStateOf(isMusicPlaying) }
+    var isDragging by remember { mutableStateOf(false) }
+    var activeOneShot by remember { mutableStateOf<KemoState?>(null) }
+    var customYPosPx by remember { mutableStateOf<Float?>(null) }
+    var lastTapTimeEpochMs by remember { mutableLongStateOf(0L) }
     var noPlaybackStartEpochMs by remember { mutableLongStateOf(SystemClock.uptimeMillis()) }
-    var isWakingUp by remember { mutableStateOf(false) }
+
+    var currentState by remember {
+        mutableStateOf(
+            nextKemoState(
+                mode = kemoMode,
+                isDragging = false,
+                activeOneShot = null,
+                isMusicPlaying = isMusicPlaying,
+                isSleepTimeoutReached = false,
+            ) ?: KemoState.IDLE,
+        )
+    }
 
     // Movement & Hop state
     var xPosPx by remember { mutableFloatStateOf(64f * density) }
@@ -239,11 +261,6 @@ fun KemoOverlay(
     var isMovingHop by remember { mutableStateOf(false) }
     var isTapReaction by remember { mutableStateOf(false) }
     var hopsRemainingInWalk by remember { mutableIntStateOf(0) }
-
-    // Drag & Free Placement state
-    var isDragging by remember { mutableStateOf(false) }
-    var customYPosPx by remember { mutableStateOf<Float?>(null) }
-    var lastTapTimeEpochMs by remember { mutableLongStateOf(0L) }
 
     // Timers
     var idleTimeMs by remember { mutableLongStateOf(0L) }
@@ -264,26 +281,9 @@ fun KemoOverlay(
 
     // Track playback changes
     LaunchedEffect(isMusicPlaying) {
-        val now = SystemClock.uptimeMillis()
-        if (isMusicPlaying && !previousPlaybackState) {
-            // Music started: wake-up hop, then dance!
-            isWakingUp = true
-            isMovingHop = false
-            hopsRemainingInWalk = 0
-            isTapReaction = false
-            currentState = KemoState.HOP
-            animElapsedTimeMs = 0L
-        } else if (!isMusicPlaying && previousPlaybackState) {
-            noPlaybackStartEpochMs = now
-            if (kemoMode == KemoDisplayMode.WHILE_MUSIC_PLAYS) {
-                currentState = KemoState.SLEEP
-                animElapsedTimeMs = 0L
-            } else {
-                currentState = KemoState.IDLE
-                animElapsedTimeMs = 0L
-            }
+        if (!isMusicPlaying) {
+            noPlaybackStartEpochMs = SystemClock.uptimeMillis()
         }
-        previousPlaybackState = isMusicPlaying
     }
 
     // Target Alpha for Sleep / Fade
@@ -291,7 +291,7 @@ fun KemoOverlay(
         if (isSuppressed) {
             0f
         } else if (kemoMode == KemoDisplayMode.WHILE_MUSIC_PLAYS) {
-            if (isMusicPlaying || isWakingUp) {
+            if (isMusicPlaying || currentState == KemoState.DANCE || currentState == KemoState.HELD || currentState == KemoState.HOP || currentState == KemoState.HAPPY) {
                 1f
             } else {
                 val elapsedSinceStop = SystemClock.uptimeMillis() - noPlaybackStartEpochMs
@@ -334,7 +334,7 @@ fun KemoOverlay(
     }
 
     // ── 7. Single Ticker Loop (Only while resumed & active) ─────────────────────────
-    LaunchedEffect(canAnimate, isSuppressed, kemoMode) {
+    LaunchedEffect(canAnimate, isSuppressed, kemoMode, isMusicPlaying) {
         if (!canAnimate || isSuppressed) return@LaunchedEffect
 
         var lastFrameTime = withFrameMillis { it }
@@ -350,61 +350,59 @@ fun KemoOverlay(
                 activeParticles.removeAll { nowUptime - it.spawnTimeEpochMs >= it.durationMs }
             }
 
-            // 2. State Machine Transitions & Particle Generation
-            if (isMusicPlaying) {
-                if (currentState != KemoState.DANCE && currentState != KemoState.HOP && currentState != KemoState.HAPPY) {
-                    currentState = KemoState.DANCE
-                    animElapsedTimeMs = 0L
-                }
-                if (currentState == KemoState.DANCE) {
-                    danceParticleTimerMs += dt
-                    if (danceParticleTimerMs >= KemoConfig.DANCE_NOTE_INTERVAL_MS) {
-                        danceParticleTimerMs = 0L
-                        danceNoteToggle = !danceNoteToggle
-                        spawnParticle(if (danceNoteToggle) 1 else 2) // alternate note and note2
-                    }
-                }
+            // 2. State Machine Transitions via ONE pure function
+            val timeWithoutMusic = nowUptime - noPlaybackStartEpochMs
+            val sleepTimeout = if (currentKemoMode == KemoDisplayMode.WHILE_MUSIC_PLAYS) {
+                KemoConfig.FADE_OUT_DURATION_WHILE_PLAYING_MS
             } else {
-                val timeWithoutMusic = nowUptime - noPlaybackStartEpochMs
-                if (kemoMode == KemoDisplayMode.WHILE_MUSIC_PLAYS) {
-                    if (currentState != KemoState.SLEEP && currentState != KemoState.HOP && currentState != KemoState.HAPPY) {
-                        currentState = KemoState.SLEEP
-                        animElapsedTimeMs = 0L
-                    }
-                } else if (kemoMode == KemoDisplayMode.ALWAYS) {
-                    if (timeWithoutMusic >= KemoConfig.SLEEP_TIMEOUT_ALWAYS_MS) {
-                        if (currentState != KemoState.SLEEP && currentState != KemoState.HOP && currentState != KemoState.HAPPY) {
-                            currentState = KemoState.SLEEP
-                            animElapsedTimeMs = 0L
-                        }
-                    } else if (currentState == KemoState.SLEEP) {
-                        currentState = KemoState.IDLE
-                        animElapsedTimeMs = 0L
-                    }
-                }
+                KemoConfig.SLEEP_TIMEOUT_ALWAYS_MS
+            }
+            val isSleepTimeoutReached = !currentIsMusicPlaying && timeWithoutMusic >= sleepTimeout
 
-                if (currentState == KemoState.SLEEP) {
-                    sleepParticleTimerMs += dt
-                    if (sleepParticleTimerMs >= KemoConfig.SLEEP_ZZZ_INTERVAL_MS) {
-                        sleepParticleTimerMs = 0L
-                        spawnParticle(3) // zzz
-                    }
+            val targetState = nextKemoState(
+                KemoStateInputs(
+                    mode = currentKemoMode,
+                    isDragging = isDragging,
+                    activeOneShot = activeOneShot,
+                    isMusicPlaying = currentIsMusicPlaying,
+                    isSleepTimeoutReached = isSleepTimeoutReached,
+                ),
+            ) ?: KemoState.IDLE
+
+            if (targetState != currentState) {
+                currentState = targetState
+                animElapsedTimeMs = 0L
+            }
+
+            // Particles generation
+            if (currentState == KemoState.DANCE) {
+                danceParticleTimerMs += dt
+                if (danceParticleTimerMs >= KemoConfig.DANCE_NOTE_INTERVAL_MS) {
+                    danceParticleTimerMs = 0L
+                    danceNoteToggle = !danceNoteToggle
+                    spawnParticle(if (danceNoteToggle) 1 else 2) // alternate note and note2
+                }
+            } else if (currentState == KemoState.SLEEP) {
+                sleepParticleTimerMs += dt
+                if (sleepParticleTimerMs >= KemoConfig.SLEEP_ZZZ_INTERVAL_MS) {
+                    sleepParticleTimerMs = 0L
+                    spawnParticle(3) // zzz
                 }
             }
 
-            // Handle IDLE state timers (Blink & Move-Hops)
-            if (currentState == KemoState.IDLE) {
+            // Handle IDLE state timers (Blink & Move-Hops) - only when music is NOT playing
+            if (!currentIsMusicPlaying && currentState == KemoState.IDLE) {
                 idleTimeMs += dt
                 if (idleTimeMs >= nextBlinkTimeMs && hopsRemainingInWalk == 0) {
-                    currentState = KemoState.BLINK
+                    activeOneShot = KemoState.BLINK
                     animElapsedTimeMs = 0L
                     nextBlinkTimeMs = idleTimeMs + Random.nextLong(KemoConfig.BLINK_MIN_INTERVAL_MS, KemoConfig.BLINK_MAX_INTERVAL_MS)
-                } else if (idleTimeMs >= nextMoveTimeMs && hopsRemainingInWalk == 0) {
-                    // Start hop-walk sequence
+                } else if (idleTimeMs >= nextMoveTimeMs && hopsRemainingInWalk == 0 && customYPosPx == null) {
+                    // Start hop-walk sequence ONLY when in dock lane (never walk away when manually placed!)
                     hopsRemainingInWalk = Random.nextInt(2, 5) // 2 to 4 hops
                     facingLeft = Random.nextBoolean()
                     isMovingHop = true
-                    currentState = KemoState.HOP
+                    activeOneShot = KemoState.HOP
                     animElapsedTimeMs = 0L
                     nextMoveTimeMs = idleTimeMs + Random.nextLong(KemoConfig.IDLE_MIN_INTERVAL_MS, KemoConfig.IDLE_MAX_INTERVAL_MS)
                 }
@@ -417,7 +415,7 @@ fun KemoOverlay(
                 KemoState.HOP -> "hop"
                 KemoState.DANCE -> "dance"
                 KemoState.SLEEP -> "sleep"
-                KemoState.HAPPY -> "happy"
+                KemoState.HAPPY, KemoState.HELD -> "happy"
             }
             val animSpec = assets.spec.animations[animKey] ?: assets.spec.animations["idle"]
             if (animSpec != null && animSpec.steps.isNotEmpty()) {
@@ -426,9 +424,9 @@ fun KemoOverlay(
 
                 if (!animSpec.loop && animElapsedTimeMs >= totalAnimDurationMs) {
                     // Non-looping animation completed
-                    when (currentState) {
+                    when (activeOneShot) {
                         KemoState.BLINK -> {
-                            currentState = KemoState.IDLE
+                            activeOneShot = null
                             animElapsedTimeMs = 0L
                         }
                         KemoState.HOP -> {
@@ -439,24 +437,24 @@ fun KemoOverlay(
                                     animElapsedTimeMs = 0L
                                 } else {
                                     isMovingHop = false
-                                    currentState = if (isMusicPlaying) KemoState.DANCE else KemoState.IDLE
+                                    activeOneShot = null
                                     animElapsedTimeMs = 0L
                                 }
                             } else if (isTapReaction) {
                                 isTapReaction = false
-                                currentState = KemoState.HAPPY
+                                activeOneShot = KemoState.HAPPY
                                 animElapsedTimeMs = 0L
                             } else {
-                                isWakingUp = false
-                                currentState = if (isMusicPlaying) KemoState.DANCE else KemoState.IDLE
+                                activeOneShot = null
                                 animElapsedTimeMs = 0L
                             }
                         }
                         KemoState.HAPPY -> {
-                            currentState = if (isMusicPlaying) KemoState.DANCE else KemoState.IDLE
+                            activeOneShot = null
                             animElapsedTimeMs = 0L
                         }
                         else -> {
+                            activeOneShot = null
                             animElapsedTimeMs = 0L
                         }
                     }
@@ -483,8 +481,8 @@ fun KemoOverlay(
                 currentDySpritePx = activeStep.dy
                 currentStepFlip = activeStep.flip
 
-                // 4. Horizontal movement during moving hop
-                if (currentState == KemoState.HOP && isMovingHop && totalAnimDurationMs > 0 && !isDragging) {
+                // 4. Horizontal movement during moving hop (only in dock lane when customYPosPx == null)
+                if (currentState == KemoState.HOP && isMovingHop && customYPosPx == null && totalAnimDurationMs > 0 && !isDragging) {
                     val hopDistancePx = (KemoConfig.HOP_WALK_DISTANCE_SPRITE_PX * pixelScale).toFloat()
                     val dx = (hopDistancePx / totalAnimDurationMs) * dt
                     if (facingLeft) {
@@ -497,19 +495,21 @@ fun KemoOverlay(
         }
     }
 
+
+
     // Static frame when animation disabled (battery saver, animator duration scale 0)
     // Frame 1 (happy/paws up) while being held by user
     val effectiveFrameIndex = when {
-        isDragging -> 1
+        currentState == KemoState.HELD || isDragging -> 1
         canAnimate -> currentFrameIndex
         else -> 0
     }
     val effectiveDySpritePx = when {
-        isDragging -> -3
+        currentState == KemoState.HELD || isDragging -> -3
         canAnimate -> currentDySpritePx
         else -> 0
     }
-    val effectiveStepFlip = if (canAnimate && !isDragging) currentStepFlip else false
+    val effectiveStepFlip = if (canAnimate && !isDragging && currentState != KemoState.HELD) currentStepFlip else false
 
     // ── 8. Layout & Draw Phase ─────────────────────────────────────────────────────
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
@@ -550,7 +550,7 @@ fun KemoOverlay(
                     spawnParticle(4) // spark particle
                     isMovingHop = false
                     hopsRemainingInWalk = 0
-                    currentState = KemoState.HOP
+                    activeOneShot = KemoState.HOP
                     animElapsedTimeMs = 0L
                 } else {
                     // Single tap: heart particle + happy hop
@@ -558,8 +558,7 @@ fun KemoOverlay(
                     isMovingHop = false
                     hopsRemainingInWalk = 0
                     isTapReaction = true
-                    isWakingUp = false
-                    currentState = KemoState.HOP
+                    activeOneShot = KemoState.HOP
                     animElapsedTimeMs = 0L
                 }
                 lastTapTimeEpochMs = now
@@ -642,7 +641,7 @@ fun KemoOverlay(
                                     }
                                     isMovingHop = false
                                     hopsRemainingInWalk = 0
-                                    currentState = KemoState.HOP
+                                    activeOneShot = KemoState.HOP
                                     animElapsedTimeMs = 0L
                                 } else {
                                     triggerTap()
@@ -657,6 +656,7 @@ fun KemoOverlay(
                                 if (dragAccumulated.getDistance() > touchSlop) {
                                     isDrag = true
                                     isDragging = true
+                                    activeOneShot = null
                                     change.consume()
                                     if (customYPosPx == null) {
                                         customYPosPx = defaultLaneYPx
