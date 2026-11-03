@@ -107,20 +107,20 @@ object BeastModeManager {
 
     /**
      * Calculates the optimal V-shaped club / bus party equalizer curve for [bandCount] bands.
-     * Sub-bass and Kick (40Hz-80Hz) are boosted (+5.0 dB), punch is present, mids are neutral,
-     * and crisp highs are boosted (+5.0 dB) for synth / percussion clarity.
+     * Clean sub-bass (+2.5 dB) and crisp treble (+2.5 dB) are boosted without triggering
+     * Android's internal negative pre-cut attenuation.
      */
     fun calculateBeastCurve(bandCount: Int): List<Int> {
         if (bandCount <= 0) return emptyList()
-        if (bandCount == 1) return listOf(500)
+        if (bandCount == 1) return listOf(250)
         if (bandCount == 5) {
             // Standard 5-band EQ: 60Hz, 230Hz, 910Hz, 3.6kHz, 14kHz
-            return listOf(500, 300, 0, 300, 500)
+            return listOf(250, 150, 0, 150, 250)
         }
 
         // Base 10-band reference V-curve:
         // [31Hz, 62Hz, 125Hz, 250Hz, 500Hz, 1kHz, 2kHz, 4kHz, 8kHz, 16kHz]
-        val referenceCurve = listOf(500, 450, 350, 150, 0, 0, 150, 300, 450, 500)
+        val referenceCurve = listOf(250, 200, 150, 80, 0, 0, 80, 150, 200, 250)
         if (bandCount == referenceCurve.size) return referenceCurve
 
         val lastIndex = (referenceCurve.size - 1).toFloat()
@@ -201,12 +201,12 @@ object BeastModeManager {
                     prefs[EqualizerSelectedProfileIdKey] = "beast_mode"
                     prefs[EqualizerBandLevelsMbKey] = encodedCurve
                     prefs[EqualizerOutputGainEnabledKey] = true
-                    prefs[EqualizerOutputGainMbKey] = 450 // +4.5 dB pre-amp boost
-                    prefs[EqualizerBassBoostEnabledKey] = true
-                    prefs[EqualizerBassBoostStrengthKey] = 450 // 45% subwoofer punch
-                    prefs[EqualizerVirtualizerEnabledKey] = true
-                    prefs[EqualizerVirtualizerStrengthKey] = 500 // 50% 3D cabin surround
-                    prefs[AudioNormalizationKey] = false // uncompressed dynamic slam!
+                    prefs[EqualizerOutputGainMbKey] = 250 // +2.5 dB clean pre-amp boost
+                    prefs[EqualizerBassBoostEnabledKey] = false // Disabled to avoid Android OEM ducking/limiter compressor
+                    prefs[EqualizerBassBoostStrengthKey] = 0
+                    prefs[EqualizerVirtualizerEnabledKey] = false // Disabled to avoid phase cancellation on speakers
+                    prefs[EqualizerVirtualizerStrengthKey] = 0
+                    prefs[AudioNormalizationKey] = true // Keep TRUE to preserve YouTube 1.414x (+3 dB) dynamic volume boost
                     prefs[BeastModeActiveKey] = true
                 }
             }.onSuccess {
