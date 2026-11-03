@@ -47,7 +47,7 @@ internal fun PlayerBehaviorSection(
         item {
             SwitchPreference(
                 title = { Text(stringResource(R.string.beast_mode_auto_prompt_title)) },
-                description = { Text(stringResource(R.string.beast_mode_auto_prompt_desc)) },
+                description = stringResource(R.string.beast_mode_auto_prompt_desc),
                 icon = { Icon(painterResource(R.drawable.volume_up), null) },
                 checked = state.beastModeAutoPrompt,
                 onCheckedChange = actions.onBeastModeAutoPromptChange,

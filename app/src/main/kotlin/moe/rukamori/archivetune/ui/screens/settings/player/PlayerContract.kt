@@ -13,6 +13,7 @@ import moe.rukamori.archivetune.constants.AudioQualityKey
 import moe.rukamori.archivetune.constants.AutoLowDataModeKey
 import moe.rukamori.archivetune.constants.AutoSkipNextOnErrorKey
 import moe.rukamori.archivetune.constants.AutoStartOnBluetoothKey
+import moe.rukamori.archivetune.constants.BeastModeAutoPromptKey
 import moe.rukamori.archivetune.constants.AutomixEnabledKey
 import moe.rukamori.archivetune.constants.AutomixTransitionDuration
 import moe.rukamori.archivetune.constants.AutomixTransitionDurationKey
