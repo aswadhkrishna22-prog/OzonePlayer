@@ -1319,4 +1319,11 @@
     <string name="update_reinstall_desc">This update needs a one-time reinstall because the app release signing key was upgraded for future seamless updates. Back up your library first in Settings &gt; Backup and restore, then uninstall this version and install the new APK.</string>
     <string name="report_issue">Report an issue</string>
     <string name="report_issue_desc">Found a bug? Tell me, every report helps</string>
+
+    <!-- Kemo Mascot -->
+    <string name="kemo_title">Kemo</string>
+    <string name="kemo_desc">Pixel-art mascot who walks around the app</string>
+    <string name="kemo_off">Off</string>
+    <string name="kemo_always">Always</string>
+    <string name="kemo_while_music">While music plays</string>
 </resources>

@@ -178,6 +178,17 @@ fun ScaffoldShell(
                         )
                     }
 
+                    moe.rukamori.archivetune.kemo.KemoOverlay(
+                        bottomInset = appState.bottomInset,
+                        floatingToolbarBottomPadding = appState.floatingToolbarBottomPadding,
+                        navVisibleHeight = appState.navVisibleHeight,
+                        shouldShowNav = appState.shouldShowNavigationBar,
+                        isMiniPlayerVisible = appState.isMiniPlayerVisible,
+                        useRail = appState.useRail,
+                        scrollVisibilityFactor = barScrollVisibility.scrollVisibilityFactor,
+                        playerExpansionFraction = playerExpansionFraction,
+                    )
+
                     PlayerOverlayHost(
                         modifier = Modifier.fillMaxSize(), navController = navController,
                         maxHeight = this@BoxWithConstraints.maxHeight, bottomInset = appState.bottomInset,
