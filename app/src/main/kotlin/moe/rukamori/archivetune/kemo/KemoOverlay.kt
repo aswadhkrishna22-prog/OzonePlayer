@@ -33,12 +33,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -55,19 +58,25 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.flowOf
 import moe.rukamori.archivetune.LocalAnimationsDisabled
-import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.LocalPlayerConnection
-import moe.rukamori.archivetune.ui.utils.LocalPlayerIsExpanded
 import moe.rukamori.archivetune.PlayerDockGeometry
 import moe.rukamori.archivetune.constants.KemoDisplayMode
 import moe.rukamori.archivetune.constants.KemoDisplayModeKey
 import moe.rukamori.archivetune.constants.MiniPlayerBottomSpacing
 import moe.rukamori.archivetune.playback.dualplay.DualPlayState
+import moe.rukamori.archivetune.ui.utils.LocalPlayerIsExpanded
 import moe.rukamori.archivetune.utils.rememberEnumPreference
-import kotlin.math.PI
 import kotlin.math.roundToInt
-import kotlin.math.sin
 import kotlin.random.Random
+
+private class KemoParticle(
+    val cellIndex: Int,
+    val spawnTimeEpochMs: Long,
+    val startXPx: Float,
+    var startYPx: Float = -1f,
+    val durationMs: Long,
+    val floatDistancePx: Float,
+)
 
 @Composable
 fun KemoOverlay(
@@ -177,10 +186,12 @@ fun KemoOverlay(
 
     // ── 4. Integer Pixel Scaling ───────────────────────────────────────────────────
     val pixelScale = remember(density) {
-        maxOf(2, (density * 1.25f).roundToInt())
+        maxOf(1, density.toInt())
     }
-    val spriteWidthPx = assets.spec.frameWidth * pixelScale
-    val spriteHeightPx = assets.spec.frameHeight * pixelScale
+    val frameWidth = assets.spec.frameWidth
+    val frameHeight = assets.spec.frameHeight
+    val spriteWidthPx = frameWidth * pixelScale
+    val spriteHeightPx = frameHeight * pixelScale
     val spriteWidthDp = with(LocalDensity.current) { spriteWidthPx.toDp() }
     val spriteHeightDp = with(LocalDensity.current) { spriteHeightPx.toDp() }
 
@@ -207,36 +218,55 @@ fun KemoOverlay(
         label = "KemoDockSpring",
     )
 
-    // ── 6. State Machine & Sleep/Fade Timers ────────────────────────────────────────
+    // ── 6. State Machine & Timers ──────────────────────────────────────────────────
     var currentState by remember { mutableStateOf(if (isMusicPlaying) KemoState.DANCE else KemoState.IDLE) }
     var previousPlaybackState by remember { mutableStateOf(isMusicPlaying) }
     var noPlaybackStartEpochMs by remember { mutableLongStateOf(SystemClock.uptimeMillis()) }
     var isWakingUp by remember { mutableStateOf(false) }
 
-    // Hop state
-    var isHopping by remember { mutableStateOf(false) }
-    var hopStartEpochMs by remember { mutableLongStateOf(0L) }
-    var stateBeforeHop by remember { mutableStateOf(KemoState.IDLE) }
-
-    // Position state
+    // Movement & Hop state
     var xPosPx by remember { mutableFloatStateOf(64f * density) }
-    var facingDirection by remember { mutableFloatStateOf(1f) } // 1f = right, -1f = left
-    var stateTimerRemainingMs by remember { mutableLongStateOf(KemoConfig.IDLE_MIN_DURATION_MS) }
+    var facingLeft by remember { mutableStateOf(false) }
+    var isMovingHop by remember { mutableStateOf(false) }
+    var isTapReaction by remember { mutableStateOf(false) }
+    var hopsRemainingInWalk by remember { mutableIntStateOf(0) }
+
+    // Timers
+    var idleTimeMs by remember { mutableLongStateOf(0L) }
+    var nextBlinkTimeMs by remember { mutableLongStateOf(Random.nextLong(KemoConfig.BLINK_MIN_INTERVAL_MS, KemoConfig.BLINK_MAX_INTERVAL_MS)) }
+    var nextMoveTimeMs by remember { mutableLongStateOf(Random.nextLong(KemoConfig.IDLE_MIN_INTERVAL_MS, KemoConfig.IDLE_MAX_INTERVAL_MS)) }
+    var animElapsedTimeMs by remember { mutableLongStateOf(0L) }
+
+    // Particles
+    val activeParticles = remember { mutableStateListOf<KemoParticle>() }
+    var danceParticleTimerMs by remember { mutableLongStateOf(0L) }
+    var danceNoteToggle by remember { mutableStateOf(false) }
+    var sleepParticleTimerMs by remember { mutableLongStateOf(0L) }
+
+    // Frame attributes for draw phase
+    var currentFrameIndex by remember { mutableIntStateOf(0) }
+    var currentDySpritePx by remember { mutableIntStateOf(0) }
+    var currentStepFlip by remember { mutableStateOf(false) }
 
     // Track playback changes
     LaunchedEffect(isMusicPlaying) {
         val now = SystemClock.uptimeMillis()
         if (isMusicPlaying && !previousPlaybackState) {
-            // Wake up!
+            // Music started: wake-up hop, then dance!
             isWakingUp = true
-            isHopping = true
-            hopStartEpochMs = now
-            stateBeforeHop = KemoState.DANCE
+            isMovingHop = false
+            hopsRemainingInWalk = 0
+            isTapReaction = false
             currentState = KemoState.HOP
+            animElapsedTimeMs = 0L
         } else if (!isMusicPlaying && previousPlaybackState) {
             noPlaybackStartEpochMs = now
             if (kemoMode == KemoDisplayMode.WHILE_MUSIC_PLAYS) {
                 currentState = KemoState.SLEEP
+                animElapsedTimeMs = 0L
+            } else {
+                currentState = KemoState.IDLE
+                animElapsedTimeMs = 0L
             }
         }
         previousPlaybackState = isMusicPlaying
@@ -267,9 +297,27 @@ fun KemoOverlay(
         label = "KemoAlpha",
     )
 
-    // Current frame index
-    var currentFrameIndex by remember { mutableIntStateOf(0) }
-    var animFrameProgressMs by remember { mutableLongStateOf(0L) }
+    // Helper to spawn particles
+    val spawnParticle: (Int) -> Unit = { cellIndex ->
+        if (assets.particlesBitmap != null) {
+            val mascotCenterX = xPosPx + (spriteWidthPx / 2f)
+            val pCellSize = assets.spec.particles.cell
+            val particleWidthPx = pCellSize * pixelScale
+            val jitterSpritePx = if (cellIndex == 0) 0 else Random.nextInt(-4, 5)
+            val startX = mascotCenterX - (particleWidthPx / 2f) + (jitterSpritePx * pixelScale)
+
+            activeParticles.add(
+                KemoParticle(
+                    cellIndex = cellIndex,
+                    spawnTimeEpochMs = SystemClock.uptimeMillis(),
+                    startXPx = startX,
+                    startYPx = -1f,
+                    durationMs = KemoConfig.PARTICLE_DURATION_MS,
+                    floatDistancePx = (KemoConfig.PARTICLE_FLOAT_SPRITE_PX * pixelScale).toFloat(),
+                ),
+            )
+        }
+    }
 
     // ── 7. Single Ticker Loop (Only while resumed & active) ─────────────────────────
     LaunchedEffect(canAnimate, isSuppressed, kemoMode) {
@@ -281,83 +329,164 @@ fun KemoOverlay(
             val dt = (now - lastFrameTime).coerceIn(1L, 100L)
             lastFrameTime = now
 
-            // 1. Update State Transitions
             val nowUptime = SystemClock.uptimeMillis()
-            if (isHopping) {
-                val elapsedHop = nowUptime - hopStartEpochMs
-                if (elapsedHop >= KemoConfig.HOP_DURATION_MS) {
-                    isHopping = false
-                    isWakingUp = false
-                    currentState = if (isMusicPlaying) KemoState.DANCE else stateBeforeHop
-                }
-            } else if (isMusicPlaying) {
-                if (currentState != KemoState.DANCE) {
+
+            // 1. Clean up expired particles
+            if (activeParticles.isNotEmpty()) {
+                activeParticles.removeAll { nowUptime - it.spawnTimeEpochMs >= it.durationMs }
+            }
+
+            // 2. State Machine Transitions & Particle Generation
+            if (isMusicPlaying) {
+                if (currentState != KemoState.DANCE && currentState != KemoState.HOP && currentState != KemoState.HAPPY) {
                     currentState = KemoState.DANCE
+                    animElapsedTimeMs = 0L
+                }
+                if (currentState == KemoState.DANCE) {
+                    danceParticleTimerMs += dt
+                    if (danceParticleTimerMs >= KemoConfig.DANCE_NOTE_INTERVAL_MS) {
+                        danceParticleTimerMs = 0L
+                        danceNoteToggle = !danceNoteToggle
+                        spawnParticle(if (danceNoteToggle) 1 else 2) // alternate note and note2
+                    }
                 }
             } else {
                 val timeWithoutMusic = nowUptime - noPlaybackStartEpochMs
                 if (kemoMode == KemoDisplayMode.WHILE_MUSIC_PLAYS) {
-                    currentState = KemoState.SLEEP
+                    if (currentState != KemoState.SLEEP && currentState != KemoState.HOP && currentState != KemoState.HAPPY) {
+                        currentState = KemoState.SLEEP
+                        animElapsedTimeMs = 0L
+                    }
                 } else if (kemoMode == KemoDisplayMode.ALWAYS) {
                     if (timeWithoutMusic >= KemoConfig.SLEEP_TIMEOUT_ALWAYS_MS) {
-                        currentState = KemoState.SLEEP
+                        if (currentState != KemoState.SLEEP && currentState != KemoState.HOP && currentState != KemoState.HAPPY) {
+                            currentState = KemoState.SLEEP
+                            animElapsedTimeMs = 0L
+                        }
                     } else if (currentState == KemoState.SLEEP) {
                         currentState = KemoState.IDLE
+                        animElapsedTimeMs = 0L
                     }
                 }
 
-                if (currentState != KemoState.SLEEP && !isHopping) {
-                    stateTimerRemainingMs -= dt
-                    if (stateTimerRemainingMs <= 0) {
-                        if (currentState == KemoState.IDLE) {
-                            currentState = KemoState.WALK
-                            facingDirection = if (Random.nextBoolean()) 1f else -1f
-                            stateTimerRemainingMs = Random.nextLong(
-                                KemoConfig.WALK_MIN_DURATION_MS,
-                                KemoConfig.WALK_MAX_DURATION_MS,
-                            )
-                        } else if (currentState == KemoState.WALK) {
+                if (currentState == KemoState.SLEEP) {
+                    sleepParticleTimerMs += dt
+                    if (sleepParticleTimerMs >= KemoConfig.SLEEP_ZZZ_INTERVAL_MS) {
+                        sleepParticleTimerMs = 0L
+                        spawnParticle(3) // zzz
+                    }
+                }
+            }
+
+            // Handle IDLE state timers (Blink & Move-Hops)
+            if (currentState == KemoState.IDLE) {
+                idleTimeMs += dt
+                if (idleTimeMs >= nextBlinkTimeMs && hopsRemainingInWalk == 0) {
+                    currentState = KemoState.BLINK
+                    animElapsedTimeMs = 0L
+                    nextBlinkTimeMs = idleTimeMs + Random.nextLong(KemoConfig.BLINK_MIN_INTERVAL_MS, KemoConfig.BLINK_MAX_INTERVAL_MS)
+                } else if (idleTimeMs >= nextMoveTimeMs && hopsRemainingInWalk == 0) {
+                    // Start hop-walk sequence
+                    hopsRemainingInWalk = Random.nextInt(2, 5) // 2 to 4 hops
+                    facingLeft = Random.nextBoolean()
+                    isMovingHop = true
+                    currentState = KemoState.HOP
+                    animElapsedTimeMs = 0L
+                    nextMoveTimeMs = idleTimeMs + Random.nextLong(KemoConfig.IDLE_MIN_INTERVAL_MS, KemoConfig.IDLE_MAX_INTERVAL_MS)
+                }
+            }
+
+            // 3. Step Through Current Animation Spec
+            val animKey = when (currentState) {
+                KemoState.IDLE -> "idle"
+                KemoState.BLINK -> "blink"
+                KemoState.HOP -> "hop"
+                KemoState.DANCE -> "dance"
+                KemoState.SLEEP -> "sleep"
+                KemoState.HAPPY -> "happy"
+            }
+            val animSpec = assets.spec.animations[animKey] ?: assets.spec.animations["idle"]
+            if (animSpec != null && animSpec.steps.isNotEmpty()) {
+                val totalAnimDurationMs = animSpec.steps.sumOf { it.ms }
+                animElapsedTimeMs += dt
+
+                if (!animSpec.loop && animElapsedTimeMs >= totalAnimDurationMs) {
+                    // Non-looping animation completed
+                    when (currentState) {
+                        KemoState.BLINK -> {
                             currentState = KemoState.IDLE
-                            stateTimerRemainingMs = Random.nextLong(
-                                KemoConfig.IDLE_MIN_DURATION_MS,
-                                KemoConfig.IDLE_MAX_DURATION_MS,
-                            )
+                            animElapsedTimeMs = 0L
+                        }
+                        KemoState.HOP -> {
+                            if (isMovingHop) {
+                                hopsRemainingInWalk--
+                                if (hopsRemainingInWalk > 0) {
+                                    // Continue next hop in walk series
+                                    animElapsedTimeMs = 0L
+                                } else {
+                                    isMovingHop = false
+                                    currentState = if (isMusicPlaying) KemoState.DANCE else KemoState.IDLE
+                                    animElapsedTimeMs = 0L
+                                }
+                            } else if (isTapReaction) {
+                                isTapReaction = false
+                                currentState = KemoState.HAPPY
+                                animElapsedTimeMs = 0L
+                            } else {
+                                isWakingUp = false
+                                currentState = if (isMusicPlaying) KemoState.DANCE else KemoState.IDLE
+                                animElapsedTimeMs = 0L
+                            }
+                        }
+                        KemoState.HAPPY -> {
+                            currentState = if (isMusicPlaying) KemoState.DANCE else KemoState.IDLE
+                            animElapsedTimeMs = 0L
+                        }
+                        else -> {
+                            animElapsedTimeMs = 0L
                         }
                     }
                 }
-            }
 
-            // 2. Advance Sprite Animation Frame
-            val animKey = when (currentState) {
-                KemoState.IDLE -> "idle"
-                KemoState.WALK -> "walk"
-                KemoState.DANCE -> "dance"
-                KemoState.SLEEP -> "sleep"
-                KemoState.HOP -> "hop"
-            }
-            val animSpec = assets.spec.animations[animKey] ?: assets.spec.animations["idle"]
-            if (animSpec != null && animSpec.frames.isNotEmpty()) {
-                animFrameProgressMs += dt
-                val frameDuration = (animSpec.durationMs / animSpec.frames.size).coerceAtLeast(40L)
-                val frameStep = (animFrameProgressMs / frameDuration).toInt()
-                val frameIdx = if (animSpec.loop) {
-                    animSpec.frames[frameStep % animSpec.frames.size]
+                // Determine active step
+                val effectiveTimeMs = if (animSpec.loop && totalAnimDurationMs > 0) {
+                    animElapsedTimeMs % totalAnimDurationMs
                 } else {
-                    animSpec.frames[minOf(frameStep, animSpec.frames.size - 1)]
+                    animElapsedTimeMs.coerceAtMost(totalAnimDurationMs - 1)
                 }
-                currentFrameIndex = frameIdx
-            }
 
-            // 3. Move along lane when walking
-            if (currentState == KemoState.WALK && !isHopping) {
-                val speedPx = KemoConfig.WALK_SPEED_DP_PER_SEC * density
-                xPosPx += facingDirection * speedPx * (dt / 1000f)
+                var accumulated = 0L
+                var activeStep = animSpec.steps.first()
+                for (step in animSpec.steps) {
+                    accumulated += step.ms
+                    if (effectiveTimeMs < accumulated) {
+                        activeStep = step
+                        break
+                    }
+                }
+
+                currentFrameIndex = activeStep.f
+                currentDySpritePx = activeStep.dy
+                currentStepFlip = activeStep.flip
+
+                // 4. Horizontal movement during moving hop
+                if (currentState == KemoState.HOP && isMovingHop && totalAnimDurationMs > 0) {
+                    val hopDistancePx = (KemoConfig.HOP_WALK_DISTANCE_SPRITE_PX * pixelScale).toFloat()
+                    val dx = (hopDistancePx / totalAnimDurationMs) * dt
+                    if (facingLeft) {
+                        xPosPx -= dx
+                    } else {
+                        xPosPx += dx
+                    }
+                }
             }
         }
     }
 
-    // If animations disabled / battery saver / 0 animator scale: freeze at idle frame 0
+    // Static frame when animation disabled (battery saver, animator duration scale 0)
     val effectiveFrameIndex = if (canAnimate) currentFrameIndex else 0
+    val effectiveDySpritePx = if (canAnimate) currentDySpritePx else 0
+    val effectiveStepFlip = if (canAnimate) currentStepFlip else false
 
     // ── 8. Layout & Draw Phase ─────────────────────────────────────────────────────
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
@@ -366,31 +495,27 @@ fun KemoOverlay(
         val minXPx = with(LocalDensity.current) { KemoConfig.HORIZONTAL_PADDING_DP.toPx() }
         val maxXPx = (parentWidthPx - spriteWidthPx - minXPx).coerceAtLeast(minXPx)
 
-        // Keep inside screen bounds
+        // Boundary reflection: change direction if hitting edges
         if (xPosPx > maxXPx) {
             xPosPx = maxXPx
-            facingDirection = -1f
+            facingLeft = true
+            hopsRemainingInWalk = 0
         } else if (xPosPx < minXPx) {
             xPosPx = minXPx
-            facingDirection = 1f
+            facingLeft = false
+            hopsRemainingInWalk = 0
         }
 
-        val hopProgress = if (isHopping) {
-            val elapsed = SystemClock.uptimeMillis() - hopStartEpochMs
-            (elapsed.toFloat() / KemoConfig.HOP_DURATION_MS).coerceIn(0f, 1f)
-        } else 0f
-        val hopOffsetPx = if (isHopping) {
-            val hopHeightPx = with(LocalDensity.current) { KemoConfig.HOP_HEIGHT_DP.toPx() }
-            sin(hopProgress * PI).toFloat() * hopHeightPx
-        } else 0f
-
-        val triggerHop: () -> Unit = {
-            if (!isHopping && animatedAlpha > 0.05f) {
-                isHopping = true
-                hopStartEpochMs = SystemClock.uptimeMillis()
-                stateBeforeHop = currentState
+        val triggerTap: () -> Unit = {
+            if (animatedAlpha > 0.05f) {
+                // Heart particle on tap
+                spawnParticle(0)
+                isMovingHop = false
+                hopsRemainingInWalk = 0
+                isTapReaction = true
+                isWakingUp = false
                 currentState = KemoState.HOP
-                animFrameProgressMs = 0L
+                animElapsedTimeMs = 0L
             }
         }
 
@@ -399,20 +524,56 @@ fun KemoOverlay(
             return@BoxWithConstraints
         }
 
-        // Mascot Hit-Box Box: Only sized to exact sprite, pointerInput detects taps without ripple
+        val dockBottomPx = animatedDockBottomDp.toPx()
+        val mascotTopY = parentHeightPx - dockBottomPx - spriteHeightPx + (effectiveDySpritePx * pixelScale)
+
+        // 1. Floating Particles Layer (never consumes touches, drawn in parent coordinate space)
+        val pBitmap = assets.particlesBitmap
+        if (pBitmap != null && activeParticles.isNotEmpty()) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val pCellSize = assets.spec.particles.cell
+                val pDstSize = IntSize(pCellSize * pixelScale, pCellSize * pixelScale)
+                val pSrcSize = IntSize(pCellSize, pCellSize)
+                val nowUptime = SystemClock.uptimeMillis()
+
+                for (i in 0 until activeParticles.size) {
+                    val p = activeParticles.getOrNull(i) ?: continue
+                    val elapsed = nowUptime - p.spawnTimeEpochMs
+                    if (elapsed in 0..p.durationMs) {
+                        val progress = elapsed.toFloat() / p.durationMs
+                        val pAlpha = (1f - progress) * animatedAlpha
+                        if (p.startYPx < 0f) {
+                            p.startYPx = mascotTopY - pDstSize.height + (2 * pixelScale)
+                        }
+                        val curY = p.startYPx - (p.floatDistancePx * progress)
+                        val curX = p.startXPx
+
+                        drawImage(
+                            image = pBitmap,
+                            srcOffset = IntOffset(p.cellIndex * pCellSize, 0),
+                            srcSize = pSrcSize,
+                            dstOffset = IntOffset(curX.roundToInt(), curY.roundToInt()),
+                            dstSize = pDstSize,
+                            alpha = pAlpha,
+                            filterQuality = FilterQuality.None,
+                        )
+                    }
+                }
+            }
+        }
+
+        // 2. Mascot Hit-Box Box: exact sprite dimensions, pointerInput detects taps without ripple
         Box(
             modifier = Modifier
                 .size(spriteWidthDp, spriteHeightDp)
                 .graphicsLayer {
-                    val dockBottomPx = animatedDockBottomDp.toPx()
                     translationX = xPosPx
-                    translationY = parentHeightPx - dockBottomPx - spriteHeightPx - hopOffsetPx
-                    scaleX = facingDirection
+                    translationY = parentHeightPx - dockBottomPx - spriteHeightPx
                     alpha = animatedAlpha
                 }
                 .pointerInput(Unit) {
                     detectTapGestures {
-                        triggerHop()
+                        triggerTap()
                     }
                 }
                 .semantics { invisibleToUser() },
@@ -420,19 +581,30 @@ fun KemoOverlay(
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val fWidth = assets.spec.frameWidth
                 val fHeight = assets.spec.frameHeight
-                val sheetCols = assets.bitmap.width / fWidth
-                val safeSheetCols = if (sheetCols > 0) sheetCols else 1
-                val srcX = (effectiveFrameIndex % safeSheetCols) * fWidth
-                val srcY = (effectiveFrameIndex / safeSheetCols) * fHeight
+                val dyOffsetPx = effectiveDySpritePx * pixelScale
+                val shouldMirror = facingLeft xor effectiveStepFlip
 
-                drawImage(
-                    image = assets.bitmap,
-                    srcOffset = IntOffset(srcX, srcY),
-                    srcSize = IntSize(fWidth, fHeight),
-                    dstOffset = IntOffset.Zero,
-                    dstSize = IntSize(size.width.toInt(), size.height.toInt()),
-                    filterQuality = FilterQuality.None,
-                )
+                if (shouldMirror) {
+                    scale(scaleX = -1f, scaleY = 1f, pivot = Offset(size.width / 2f, size.height / 2f)) {
+                        drawImage(
+                            image = assets.spriteSheet,
+                            srcOffset = IntOffset(effectiveFrameIndex * fWidth, 0),
+                            srcSize = IntSize(fWidth, fHeight),
+                            dstOffset = IntOffset(0, dyOffsetPx),
+                            dstSize = IntSize(size.width.toInt(), size.height.toInt()),
+                            filterQuality = FilterQuality.None,
+                        )
+                    }
+                } else {
+                    drawImage(
+                        image = assets.spriteSheet,
+                        srcOffset = IntOffset(effectiveFrameIndex * fWidth, 0),
+                        srcSize = IntSize(fWidth, fHeight),
+                        dstOffset = IntOffset(0, dyOffsetPx),
+                        dstSize = IntSize(size.width.toInt(), size.height.toInt()),
+                        filterQuality = FilterQuality.None,
+                    )
+                }
             }
         }
     }
