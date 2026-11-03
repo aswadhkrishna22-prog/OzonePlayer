@@ -26,15 +26,15 @@ class SpatialProcessorTest {
 
         // Mono 16-bit should be rejected
         val monoFormat = AudioFormat(44100, 1, C.ENCODING_PCM_16BIT)
-        assertEquals(AudioFormat.NOT_SET, processor.onConfigure(monoFormat))
+        assertEquals(AudioFormat.NOT_SET, processor.configure(monoFormat))
 
         // Stereo 24-bit PCM should be rejected
         val pcm24Format = AudioFormat(44100, 2, C.ENCODING_PCM_24BIT)
-        assertEquals(AudioFormat.NOT_SET, processor.onConfigure(pcm24Format))
+        assertEquals(AudioFormat.NOT_SET, processor.configure(pcm24Format))
 
         // Stereo Float PCM should be rejected
         val floatFormat = AudioFormat(44100, 2, C.ENCODING_PCM_FLOAT)
-        assertEquals(AudioFormat.NOT_SET, processor.onConfigure(floatFormat))
+        assertEquals(AudioFormat.NOT_SET, processor.configure(floatFormat))
     }
 
     @Test
@@ -42,7 +42,7 @@ class SpatialProcessorTest {
         val processor = SpatialProcessor()
         val validFormat = AudioFormat(48000, 2, C.ENCODING_PCM_16BIT)
 
-        val outputFormat = processor.onConfigure(validFormat)
+        val outputFormat = processor.configure(validFormat)
         assertEquals(validFormat, outputFormat)
         assertTrue(processor.isActive)
     }
@@ -108,7 +108,7 @@ class SpatialProcessorTest {
     fun `queueInput processes 16-bit stereo PCM without buffer overflow or allocations`() {
         val processor = SpatialProcessor()
         val format = AudioFormat(44100, 2, C.ENCODING_PCM_16BIT)
-        processor.onConfigure(format)
+        processor.configure(format)
         processor.enabled = true
         processor.crossfeed = 0.3f
         processor.delayMs = 0.25f
@@ -131,7 +131,7 @@ class SpatialProcessorTest {
     fun `smooth bypass transition prevents audio clicks when disabled`() {
         val processor = SpatialProcessor()
         val format = AudioFormat(44100, 2, C.ENCODING_PCM_16BIT)
-        processor.onConfigure(format)
+        processor.configure(format)
         processor.enabled = false
 
         val sampleCount = 128
