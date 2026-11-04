@@ -281,7 +281,12 @@ fun KemoOverlay(
 
     // Track playback changes
     LaunchedEffect(isMusicPlaying) {
-        if (!isMusicPlaying) {
+        if (isMusicPlaying) {
+            isMovingHop = false
+            hopsRemainingInWalk = 0
+            isTapReaction = false
+            activeOneShot = null
+        } else {
             noPlaybackStartEpochMs = SystemClock.uptimeMillis()
         }
     }
