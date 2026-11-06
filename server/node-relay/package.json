@@ -1,0 +1,12 @@
+{
+  "name": "ozone-together-relay",
+  "version": "1.0.0",
+  "description": "Together Online Relay Server for Ozone Player",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

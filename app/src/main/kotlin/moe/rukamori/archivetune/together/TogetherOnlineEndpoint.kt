@@ -21,7 +21,10 @@ import java.util.concurrent.TimeUnit
 
 object TogetherOnlineEndpoint {
     private const val EndpointSourceUrl =
-        "https://raw.githubusercontent.com/MuwMx/YumaPlayer/refs/heads/dev/ArchiveTuneKoiverseServer.txt" // TODO: legacy server file not yet migrated; falls back to cached value if 404
+        "https://raw.githubusercontent.com/aswadhkrishna22-prog/OzonePlayer/main/OzoneTogetherServer.txt"
+
+    private const val DefaultFallbackServerUrl =
+        "https://ozone-together.rukamori.workers.dev"
 
     private const val CacheTtlMs: Long = 6 * 60 * 60 * 1000L
 
@@ -61,9 +64,10 @@ object TogetherOnlineEndpoint {
         }
 
         dataStore.edit { prefs ->
+            prefs[TogetherOnlineEndpointCacheKey] = DefaultFallbackServerUrl
             prefs[TogetherOnlineEndpointLastCheckedAtKey] = now
         }
-        return null
+        return DefaultFallbackServerUrl
     }
 
     private suspend fun fetchEndpointFromSourceOrNull(): String? {

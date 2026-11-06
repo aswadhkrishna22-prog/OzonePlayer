@@ -110,7 +110,7 @@ android {
         val togetherBearerToken =
             localProperties.getProperty("TOGETHER_BEARER_TOKEN")
                 ?: System.getenv("TOGETHER_BEARER_TOKEN")
-                ?: ""
+                ?: "ozone_together_public_token"
         buildConfigField("String", "TOGETHER_BEARER_TOKEN", "\"$togetherBearerToken\"")
 
         val canvasBearerToken =
