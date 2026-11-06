@@ -24,7 +24,7 @@ object TogetherOnlineEndpoint {
         "https://raw.githubusercontent.com/aswadhkrishna22-prog/OzonePlayer/main/OzoneTogetherServer.txt"
 
     private const val DefaultFallbackServerUrl =
-        "https://ozone-together.rukamori.workers.dev"
+        "https://ozoneplayer.onrender.com"
 
     private const val CacheTtlMs: Long = 6 * 60 * 60 * 1000L
 
