@@ -237,10 +237,10 @@ class PlayerEngineHolder {
                 .Builder(context)
                 .setEnableFloatOutput(false)
                 .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
-                // Amendment 1 & 2: One ChannelSplitProcessor instance per sink (never shared).
+                // One SpatialProcessor, DjFilter, and ChannelSplitProcessor instance per sink (never shared between decks).
                 // Always active; mode = OFF → transparent passthrough (no seek/re-prepare needed).
                 // Placed at the END of the audio processor array so no downstream processor can re-mix or bleed channels.
-                .setAudioProcessors(arrayOf(SpatialProcessor.instance, djFilter, ChannelSplitProcessor(ProcessorSide.LEFT)))
+                .setAudioProcessors(arrayOf(SpatialProcessor(), djFilter, ChannelSplitProcessor(ProcessorSide.LEFT)))
                 .build()
         }
 

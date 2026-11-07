@@ -21,16 +21,40 @@ import kotlin.math.sqrt
 class SpatialProcessor : BaseAudioProcessor() {
 
     companion object {
+        @Volatile var globalEnabled = false
+        @Volatile var globalCrossfeed = 0.3f      // 0..0.6
+        @Volatile var globalDelayMs = 0.25f       // 0.1..0.4
+        @Volatile var globalBassDb = 0f           // -6..+6
+        @Volatile var globalMidDb = 0f            // -6..+6
+        @Volatile var globalTrebleDb = 0f         // -6..+6
+
         val instance: SpatialProcessor by lazy { SpatialProcessor() }
     }
 
-    // Live-tweakable from debug screen
-    @Volatile var enabled = false
-    @Volatile var crossfeed = 0.3f      // 0..0.6
-    @Volatile var delayMs = 0.25f       // 0.1..0.4
-    @Volatile var bassDb = 0f           // -6..+6
-    @Volatile var midDb = 0f            // -6..+6
-    @Volatile var trebleDb = 0f         // -6..+6
+    // Live-tweakable settings forwarded to thread-safe global configuration
+    var enabled: Boolean
+        get() = globalEnabled
+        set(value) { globalEnabled = value }
+
+    var crossfeed: Float
+        get() = globalCrossfeed
+        set(value) { globalCrossfeed = value }
+
+    var delayMs: Float
+        get() = globalDelayMs
+        set(value) { globalDelayMs = value }
+
+    var bassDb: Float
+        get() = globalBassDb
+        set(value) { globalBassDb = value }
+
+    var midDb: Float
+        get() = globalMidDb
+        set(value) { globalMidDb = value }
+
+    var trebleDb: Float
+        get() = globalTrebleDb
+        set(value) { globalTrebleDb = value }
 
     private var sr = 44100
     private var mix = 0f                 // smoothed bypass crossfade 0..1
@@ -84,14 +108,17 @@ class SpatialProcessor : BaseAudioProcessor() {
             return
         }
 
-        val out = replaceOutputBuffer(n)
+        val frames = n / 4
+        if (frames == 0) return
+        val out = replaceOutputBuffer(frames * 4)
+        out.order(java.nio.ByteOrder.nativeOrder())
         updateEq()
         val d = (delayMs * sr / 1000f).toInt().coerceIn(1, 63)
         val a = exp(-2.0 * PI * 700.0 / sr).toFloat()   // 700Hz lowpass for crossfeed
         val target = if (enabled) 1f else 0f
         val g = crossfeed
 
-        while (input.remaining() >= 4) {
+        for (frame in 0 until frames) {
             val l = input.short / 32768f
             val r = input.short / 32768f
             dl[wp] = l
