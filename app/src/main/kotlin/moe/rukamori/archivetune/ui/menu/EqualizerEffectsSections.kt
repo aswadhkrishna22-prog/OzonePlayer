@@ -94,7 +94,7 @@ internal fun EqualizerEffectsSections(
             onEnabledChange = onOutputGainEnabledChange,
             value = outputGainLocal,
             onValueChange = onOutputGainLocalChange,
-            valueRange = -1500..1500,
+            valueRange = 0..3000,
             formatValue = { formatDb(it / 100f) },
             onValueChangeFinished = { onOutputGainFinished(outputGainLocal) },
         )

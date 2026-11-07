@@ -371,6 +371,10 @@ class MusicService :
 
     internal fun transferAudioEffects(to: ExoPlayer) {
         playerEngineHolder.transferAudioEffects(to, audioEffectPlayerListener)
+        val newSessionId = to.audioSessionId
+        if (newSessionId > 0) {
+            rebindAudioEffectSession(newSessionId)
+        }
     }
     private lateinit var castPlaybackRepository: CastPlaybackRepository
     internal val mediaSession: MediaLibrarySession get() = serviceSessionHolder.mediaSession

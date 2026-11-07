@@ -76,7 +76,7 @@ internal fun MusicService.releaseAudioEffects() {
 
 internal fun MusicService.ensureAudioEffects(sessionId: Int) {
     if (sessionId <= 0 || dualPlayEngine.isEnabled) return
-    if (audioEffectsSessionId == sessionId && equalizer != null) return
+    if (audioEffectsSessionId == sessionId && equalizer != null && loudnessEnhancer != null) return
     audioEffectsInitializationJob?.cancel()
     audioEffectsInitializationJob = null
     if (initializeAudioEffects(sessionId)) return
@@ -98,7 +98,7 @@ internal fun MusicService.initializeAudioEffects(sessionId: Int): Boolean {
     loudnessEnhancer = createAudioEffect("LoudnessEnhancer", sessionId) { LoudnessEnhancer(sessionId) }
     equalizer?.let(::updateEqCapabilitiesFromEffect)
     applyEqSettingsToEffects(desiredEqSettings.value)
-    return equalizer != null
+    return equalizer != null || loudnessEnhancer != null
 }
 
 internal inline fun <T> MusicService.createAudioEffect(
@@ -117,16 +117,17 @@ internal fun MusicService.applyEqSettingsToEffects(settings: EqSettings) {
         runCatching { loudnessEnhancer?.enabled = false }
         return
     }
-    val eq = equalizer ?: return
-    val caps = eqCapabilities.value
-    val bandCount = caps?.bandCount ?: readAudioEffectValue("equalizer band count") { eq.numberOfBands.toInt() } ?: 0
-    val minMb = caps?.minBandLevelMb ?: readAudioEffectValue("equalizer minimum band level") { eq.bandLevelRange.getOrNull(0)?.toInt() } ?: -1500
-    val maxMb = caps?.maxBandLevelMb ?: readAudioEffectValue("equalizer maximum band level") { eq.bandLevelRange.getOrNull(1)?.toInt() } ?: 1500
-    val levels = resampleLevelsByIndex(settings.bandLevelsMb, bandCount)
-    runCatching { eq.enabled = settings.enabled }
-    for (band in 0 until bandCount) {
-        val levelMb = levels.getOrNull(band)?.coerceIn(minMb, maxMb) ?: 0
-        runCatching { eq.setBandLevel(band.toShort(), levelMb.toShort()) }
+    equalizer?.let { eq ->
+        val caps = eqCapabilities.value
+        val bandCount = caps?.bandCount ?: readAudioEffectValue("equalizer band count") { eq.numberOfBands.toInt() } ?: 0
+        val minMb = caps?.minBandLevelMb ?: readAudioEffectValue("equalizer minimum band level") { eq.bandLevelRange.getOrNull(0)?.toInt() } ?: -1500
+        val maxMb = caps?.maxBandLevelMb ?: readAudioEffectValue("equalizer maximum band level") { eq.bandLevelRange.getOrNull(1)?.toInt() } ?: 1500
+        val levels = resampleLevelsByIndex(settings.bandLevelsMb, bandCount)
+        runCatching { eq.enabled = settings.enabled }
+        for (band in 0 until bandCount) {
+            val levelMb = levels.getOrNull(band)?.coerceIn(minMb, maxMb) ?: 0
+            runCatching { eq.setBandLevel(band.toShort(), levelMb.toShort()) }
+        }
     }
     bassBoost?.let { bb ->
         runCatching { bb.enabled = settings.bassBoostEnabled }
@@ -137,9 +138,10 @@ internal fun MusicService.applyEqSettingsToEffects(settings: EqSettings) {
         runCatching { v.setStrength(settings.virtualizerStrength.toShort()) }
     }
     loudnessEnhancer?.let { le ->
-        val gainMb = if (settings.outputGainEnabled) settings.outputGainMb.coerceIn(-1500, 1500) else 0
+        val isEnabled = settings.outputGainEnabled && settings.outputGainMb > 0
+        val gainMb = if (isEnabled) settings.outputGainMb.coerceIn(0, 3000) else 0
+        runCatching { le.enabled = isEnabled }
         runCatching { le.setTargetGain(gainMb) }
-        runCatching { le.enabled = settings.outputGainEnabled }
     }
 }
 

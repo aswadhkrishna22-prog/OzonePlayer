@@ -17,7 +17,7 @@ internal object AudioPolicyConstants {
     const val DEVICE_MUTE_PLAYBACK_NOTICE_INTERVAL_MS = 1_200L
 
     const val MIN_AUDIO_FOCUS_VOLUME_FACTOR = 0.2f
-    const val MIN_AUDIO_NORMALIZATION_FACTOR = 0.25f
+    const val MIN_AUDIO_NORMALIZATION_FACTOR = 0.5f
     const val MAX_AUDIO_NORMALIZATION_FACTOR = 1.414f
 
     const val EFFECTIVE_VOLUME_RAMP_FRAME_MS = 16L
