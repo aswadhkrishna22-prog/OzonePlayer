@@ -50,10 +50,15 @@ data class HomeUiState(
     val isRefreshing: Boolean,
     val isLoadingMore: Boolean,
     val communitySection: HomePage.Section? = null,
+    val trendingState: moe.rukamori.archivetune.home.trending.TrendingUiState? = null,
 )
 
 sealed interface HomeAction {
     data object Refresh : HomeAction
+
+    data class SelectTrendingSource(
+        val source: moe.rukamori.archivetune.home.trending.TrendingSource,
+    ) : HomeAction
 
     data object LoadCommunityPreviews : HomeAction
 

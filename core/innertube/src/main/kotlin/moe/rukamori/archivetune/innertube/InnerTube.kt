@@ -446,14 +446,16 @@ class InnerTube {
         params: String? = null,
         continuation: String? = null,
         setLogin: Boolean = false,
+        countryCode: String? = null,
     ) = withRetry {
         httpClient.post("browse") {
             ytClient(client, setLogin = setLogin || useLoginForBrowse)
+            val effectiveLocale = if (countryCode != null) locale.copy(gl = countryCode) else locale
             setBody(
                 BrowseBody(
                     context =
                         client.toContext(
-                            locale,
+                            effectiveLocale,
                             visitorData,
                             if (setLogin || useLoginForBrowse) dataSyncId else null,
                         ),
