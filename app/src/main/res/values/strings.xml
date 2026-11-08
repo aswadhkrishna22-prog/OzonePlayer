@@ -553,7 +553,6 @@
     <string name="show_trending_on_home_summary">Show top trending songs section on the Home screen</string>
     <string name="trending_region">Trending region</string>
     <string name="trending_region_auto">Auto (Content country)</string>
-    <string name="trending">Trending</string>
     <string name="youtube_music">YouTube Music</string>
     <string name="trending_in">Trending in %1$s</string>
     <string name="source_apple_music">Source: Apple Music</string>
