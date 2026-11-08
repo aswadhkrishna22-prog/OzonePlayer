@@ -176,11 +176,14 @@ constructor(
             combine(
                 homePage,
                 similarRecommendations,
-                accountCoordinator.accountPlaylists,
-                combine(accountCoordinator.accountName, accountCoordinator.accountImageUrl) { name, img -> name to img },
+                combine(
+                    accountCoordinator.accountPlaylists,
+                    accountCoordinator.accountName,
+                    accountCoordinator.accountImageUrl,
+                ) { playlists, name, img -> Triple(playlists, name, img) },
                 _communitySection,
                 _trendingUiState,
-            ) { homePage, similarRecommendations, accountPlaylists, (accountName, accountImageUrl), communitySection, trendingState ->
+            ) { homePage, similarRecommendations, (accountPlaylists, accountName, accountImageUrl), communitySection, trendingState ->
                 HomeRemoteContent(
                     homePage = homePage,
                     similarRecommendations = similarRecommendations.orEmpty(),
