@@ -272,9 +272,9 @@ object YouTube {
     suspend fun libraryRecentActivity(): Result<LibraryPage> =
         BrowseClient.libraryRecentActivity()
 
-    override suspend fun getChartsPage(
-        continuation: String?,
-        countryCode: String?,
+    suspend fun getChartsPage(
+        continuation: String? = null,
+        countryCode: String? = null,
     ): Result<ChartsPage> =
         BrowseClient.getChartsPage(continuation, countryCode)
 
