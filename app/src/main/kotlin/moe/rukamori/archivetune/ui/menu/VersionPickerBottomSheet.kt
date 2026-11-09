@@ -231,7 +231,7 @@ fun VersionPickerBottomSheet(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = stringResource(R.string.no_results),
+                    text = stringResource(R.string.no_results_found),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
