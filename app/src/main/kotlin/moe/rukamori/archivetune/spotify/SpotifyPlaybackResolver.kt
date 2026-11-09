@@ -125,6 +125,16 @@ object SpotifyPlaybackResolver {
                 "isrc=${track.externalIds?.isrc}, explicit=${track.explicit}",
             )
 
+            val trackQuery =
+                TrackQuery(
+                    artist = queryArtist,
+                    title = track.name,
+                    album = track.album?.name,
+                    isrc = track.externalIds?.isrc,
+                    durationMs = track.durationMs.toLong(),
+                    explicit = track.explicit,
+                )
+
             val primaryArtistName = track.artists.firstOrNull()?.name.orEmpty()
             val cleanTitle = SpotifyQueryBuilder.cleanTrackTitle(track.name).ifBlank { track.name }
             val standardQuery = SpotifyQueryBuilder.buildSearchQuery(track)
