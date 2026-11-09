@@ -17,7 +17,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -110,17 +114,30 @@ fun FloatingNavigationToolbar(
 
     val selectedIndex = items.indexOfFirst { isSelected(it) }
 
+    var isFirstComposition by remember { mutableStateOf(true) }
+    var lastKnownRowWidthPx by remember { mutableFloatStateOf(0f) }
+    var lastKnownIndex by remember { mutableIntStateOf(-1) }
+
     androidx.compose.runtime.LaunchedEffect(
         selectedIndex,
         gestureState.selectorState.rowWidthPx,
         gestureState.isDragging,
     ) {
-        if (
-            selectedIndex >= 0 &&
-            !gestureState.isDragging &&
-            gestureState.selectorState.tabWidthPx > 0f
-        ) {
-            gestureState.selectorState.syncToTab(selectedIndex)
+        val rowWidth = gestureState.selectorState.rowWidthPx
+        if (selectedIndex >= 0 && gestureState.selectorState.tabWidthPx > 0f) {
+            if (isFirstComposition) {
+                gestureState.selectorState.snapToTab(selectedIndex)
+                isFirstComposition = false
+                lastKnownIndex = selectedIndex
+                lastKnownRowWidthPx = rowWidth
+            } else if (rowWidth != lastKnownRowWidthPx && selectedIndex == lastKnownIndex) {
+                gestureState.selectorState.snapToTab(selectedIndex)
+                lastKnownRowWidthPx = rowWidth
+            } else if (selectedIndex != lastKnownIndex && !gestureState.isDragging) {
+                lastKnownIndex = selectedIndex
+                lastKnownRowWidthPx = rowWidth
+                gestureState.selectorState.animateToTab(selectedIndex)
+            }
         }
     }
 
@@ -183,11 +200,13 @@ fun FloatingNavigationToolbar(
             ) {
                 items.forEach { screen ->
                     val selected = isSelected(screen)
+                    val proximity = gestureState.selectorState.getTabProximity(screen)
                     NavigationTabItem(
                         screen = screen,
                         selected = selected,
                         pureBlack = pureBlack,
                         drawSelector = false,
+                        proximity = proximity,
                         onClick = {
                             gestureState.selectorState.onTabTap(screen, selected)
                         },

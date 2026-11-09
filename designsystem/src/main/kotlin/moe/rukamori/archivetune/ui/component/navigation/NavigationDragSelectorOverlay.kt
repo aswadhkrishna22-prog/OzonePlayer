@@ -1,15 +1,17 @@
 package moe.rukamori.archivetune.ui.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
 import moe.rukamori.archivetune.constants.NavigationTabSelectorAlpha
 import moe.rukamori.archivetune.constants.NavigationTabSlotPaddingVertical
 
@@ -18,31 +20,52 @@ internal fun NavigationDragSelectorOverlay(
     selectorState: NavigationTabSelectorState,
     modifier: Modifier = Modifier,
 ) {
+    if (selectorState.tabWidthPx <= 0f) return
+
     val selectorColor = MaterialTheme.colorScheme.primary.copy(alpha = NavigationTabSelectorAlpha)
-    val density = LocalDensity.current
-    val verticalPaddingPx = with(density) { NavigationTabSlotPaddingVertical.toPx() }
+    val animationsDisabled = selectorState.animationsDisabledProvider()
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .drawWithContent {
-                if (selectorState.tabWidthPx > 0f && selectorState.selectorWidthAnimatable.value > 0f) {
-                    val currentWidth = selectorState.selectorWidthAnimatable.value
-                    val currentX = selectorState.selectorXAnimatable.value
-                    val height = size.height - (verticalPaddingPx * 2)
-                    val top = verticalPaddingPx
-                    val left = currentX - currentWidth / 2f
-                    val cornerRadius = CornerRadius(height / 2f, height / 2f)
-
-                    drawRoundRect(
-                        color = selectorColor,
-                        topLeft = Offset(left, top),
-                        size = Size(currentWidth, height),
-                        cornerRadius = cornerRadius,
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .padding(vertical = NavigationTabSlotPaddingVertical)
+                .layout { measurable, constraints ->
+                    val w = selectorState.tabWidthPx.toInt()
+                    val placeable = measurable.measure(
+                        constraints.copy(minWidth = w, maxWidth = w),
                     )
+                    layout(placeable.width, placeable.height) {
+                        placeable.place(0, 0)
+                    }
                 }
-            },
-    )
+                .graphicsLayer {
+                    val x = selectorState.selectorXAnimatable.value
+                    val v = selectorState.selectorXAnimatable.velocity
+                    val stretch = if (animationsDisabled) {
+                        0f
+                    } else {
+                        NavHighlightStretchFactor * kotlin.math.min(
+                            kotlin.math.abs(v) / NavHighlightVelocityDivisor,
+                            NavHighlightMaxStretch,
+                        )
+                    }
+                    val sX = 1f + stretch
+                    val sY = 1f / kotlin.math.sqrt(sX)
+
+                    translationX = x - (selectorState.tabWidthPx / 2f)
+                    scaleX = sX
+                    scaleY = sY
+                }
+                .background(
+                    color = selectorColor,
+                    shape = RoundedCornerShape(percent = 50),
+                ),
+        )
+    }
 }
 
 @Composable
