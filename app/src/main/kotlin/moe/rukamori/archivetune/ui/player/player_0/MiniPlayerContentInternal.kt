@@ -72,21 +72,6 @@ internal fun MiniPlayerContentInternal(
         playbackProgress.collect { progressMs = it }
     }
 
-    val rotation = remember { Animatable(0f) }
-
-    LaunchedEffect(state.isPlaying, isVisible) {
-        if (state.isPlaying && isVisible) {
-            while (true) {
-                val currentDegree = rotation.value % 360f
-                rotation.snapTo(currentDegree)
-                rotation.animateTo(
-                    targetValue = currentDegree + 360f,
-                    animationSpec = tween(durationMillis = 15000, easing = LinearEasing)
-                )
-            }
-        }
-    }
-
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -116,46 +101,14 @@ internal fun MiniPlayerContentInternal(
                 trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
             )
 
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .aspectRatio(1f)
-                    .graphicsLayer { rotationZ = rotation.value }
-                    .clip(CircleShape)
-            ) {
-                val targetUrl = state.coverUrl.takeIf { it.isNotBlank() }
-                Crossfade(
-                    targetState = targetUrl,
-                    animationSpec = tween(350),
-                    label = "MiniCoverCrossfade"
-                ) { url ->
-                    if (url == null) {
-                        Image(
-                            painter = painterResource(id = state.placeholderResId),
-                            contentDescription = stringResource(R.string.mini_album_art),
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        val request = remember(url) {
-                            ImageRequest.Builder(context)
-                                .data(url)
-                                .size(96)
-                                .allowHardware(true)
-                                .memoryCacheKey("mini:$url")
-                                .diskCacheKey("mini:$url")
-                                .build()
-                        }
-                        AsyncImage(
-                            model = request,
-                            contentDescription = stringResource(R.string.mini_album_art),
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop,
-                            error = painterResource(id = state.placeholderResId)
-                        )
-                    }
-                }
-            }
+            RollingMiniAlbumArt(
+                coverUrl = state.coverUrl,
+                placeholderResId = state.placeholderResId,
+                isPlaying = state.isPlaying,
+                trackKey = state.trackUrl.ifBlank { state.title + state.artist },
+                size = 40.dp,
+                isVisible = isVisible,
+            )
         }
 
         Column(
