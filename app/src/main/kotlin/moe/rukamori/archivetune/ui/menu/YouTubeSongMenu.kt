@@ -65,9 +65,9 @@ fun YouTubeSongMenu(
             database.getSpotifyMatchByYouTubeId(song.id)
         }
     }
-    val effectiveSpotifyId = remember(spotifyTrackId, playerConnection.currentMediaMetadata.value, dbMatch) {
+    val effectiveSpotifyId = remember(spotifyTrackId, playerConnection.mediaMetadata.value, dbMatch) {
         spotifyTrackId
-            ?: (if (playerConnection.currentMediaMetadata.value?.id == song.id) playerConnection.currentMediaMetadata.value?.spotifyTrackId else null)
+            ?: (if (playerConnection.mediaMetadata.value?.id == song.id) playerConnection.mediaMetadata.value?.spotifyTrackId else null)
             ?: dbMatch?.spotifyId
     }
     val librarySong by database.song(song.id).collectAsState(initial = null)
