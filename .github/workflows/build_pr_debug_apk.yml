@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ "main" ]
   push:
-    branches: [ "feat/dual-play-ui", "feat/slim-updates", "release/1.2-prep", "feat/kemo" ]
+    branches: [ "feat/dual-play-ui", "feat/slim-updates", "release/1.2-prep", "feat/kemo", "feat/mini-roll" ]
   workflow_dispatch:
 
 permissions:
@@ -32,27 +32,20 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Unit Tests
-        run: ./gradlew testGmsMobileUniversalDebugUnitTest --tests "moe.rukamori.archivetune.kemo.KemoStateTest" --tests "moe.rukamori.archivetune.beastmode.BeastModeTest" --tests "moe.rukamori.archivetune.playback.queue.SongVibeMatcherTest" --stacktrace
-
-      - name: Build Normal Debug APK
-        run: ./gradlew assembleGmsMobileUniversalDebug -Pdualplay=true --stacktrace
+        run: ./gradlew testGmsMobileUniversalDebugUnitTest --tests "moe.rukamori.archivetune.kemo.KemoStateTest" --tests "moe.rukamori.archivetune.beastmode.BeastModeTest" --tests "moe.rukamori.archivetune.playback.queue.SongVibeMatcherTest" --tests "moe.rukamori.archivetune.ui.player.player_0.MiniPlayerRollingArtworkTest" --stacktrace
 
       - name: Build R8 Release Test APK
         run: ./gradlew assembleGmsMobileUniversalRelease -Prtest=true -PnightlyVersionName="1.2.${{ github.run_number }}" --stacktrace
 
       - name: Analyze APK Sizes & Summary
         run: |
-          DEBUG_APK=$(find app/build/outputs/apk/gmsMobileUniversal/debug -name "*.apk" | head -n 1)
           R8_APK=$(find app/build/outputs/apk/gmsMobileUniversal/release -name "*.apk" | head -n 1)
-
-          DEBUG_SIZE=$(ls -lh "$DEBUG_APK" | awk '{print $5}')
           R8_SIZE=$(ls -lh "$R8_APK" | awk '{print $5}')
 
           {
-            echo "## 📊 APK Comparison: Debug vs R8 Release"
+            echo "## 📊 APK Summary: R8 Release"
             echo "| Build Variant | Compressed APK Size |"
             echo "| :--- | :--- |"
-            echo "| **Normal Debug (Universal)** | $DEBUG_SIZE |"
             echo "| **R8 Minified Release (Universal)** | $R8_SIZE |"
             echo ""
             echo "### 🔍 R8 Release Breakdown"
@@ -93,12 +86,6 @@ jobs:
               }
             }
           ' | tee -a $GITHUB_STEP_SUMMARY
-
-      - name: Upload Debug APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: OzonePlayer-dualplay-debug
-          path: app/build/outputs/apk/gmsMobileUniversal/debug/*.apk
 
       - name: Upload R8 Test Release APK Artifact
         uses: actions/upload-artifact@v4
