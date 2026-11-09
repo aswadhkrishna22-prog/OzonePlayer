@@ -47,4 +47,21 @@ class SpotifyPlaybackResolverTest {
         assertEquals("Shape of You", SpotifyPlaybackResolver.extractBaseTitle("Shape of You"))
         assertEquals("Believer", SpotifyPlaybackResolver.extractBaseTitle("Believer"))
     }
+
+    @Test
+    fun detectLanguage_detectsTargetLanguages() {
+        assertEquals("malayalam", SpotifyPlaybackResolver.detectLanguage("Samajavaragamana [Malayalam]"))
+        assertEquals("malayalam", SpotifyPlaybackResolver.detectLanguage("Samajavaragamana - Malayalam"))
+        assertEquals("kannada", SpotifyPlaybackResolver.detectLanguage("Samajavaragamana (Kannada)"))
+        assertEquals("telugu", SpotifyPlaybackResolver.detectLanguage("Samajavaragamana Telugu Song"))
+        assertEquals("tamil", SpotifyPlaybackResolver.detectLanguage("Katchi Sera - Tamil"))
+        assertEquals("hindi", SpotifyPlaybackResolver.detectLanguage("Chaleya (Hindi)"))
+    }
+
+    @Test
+    fun detectLanguage_ignoresEnglishSubtitles() {
+        assertEquals("malayalam", SpotifyPlaybackResolver.detectLanguage("Samajavaragamana Malayalam Song (English Subtitles)"))
+        assertEquals("malayalam", SpotifyPlaybackResolver.detectLanguage("Samajavaragamana Malayalam [Eng Sub]"))
+        assertEquals(null, SpotifyPlaybackResolver.detectLanguage("Shape of You"))
+    }
 }

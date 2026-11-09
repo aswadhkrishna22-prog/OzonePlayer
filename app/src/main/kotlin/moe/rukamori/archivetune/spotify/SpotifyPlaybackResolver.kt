@@ -138,14 +138,18 @@ object SpotifyPlaybackResolver {
             val primaryArtistName = track.artists.firstOrNull()?.name.orEmpty()
             val cleanTitle = SpotifyQueryBuilder.cleanTrackTitle(track.name).ifBlank { track.name }
             val baseTitle = extractBaseTitle(track.name).ifBlank { cleanTitle }
+            val targetLang = detectLanguage("${track.name} ${track.album?.name.orEmpty()}")
+            val langQuery = if (targetLang != null) " $targetLang" else ""
+
             val standardQuery = SpotifyQueryBuilder.buildSearchQuery(track)
-            val baseArtistQuery = "$baseTitle $primaryArtistName".trim()
-            val cleanQuery = "$cleanTitle $primaryArtistName".trim()
+            val baseArtistQuery = "$baseTitle$langQuery $primaryArtistName".trim()
+            val cleanQuery = "$cleanTitle$langQuery $primaryArtistName".trim()
+            val baseTitleQuery = "$baseTitle$langQuery".trim()
             val rawQuery = "${track.name} $primaryArtistName".trim()
             val albumName = track.album?.name.orEmpty()
             val baseAlbumQuery =
                 if (albumName.isNotBlank() && !baseTitle.contains(albumName, ignoreCase = true)) {
-                    "$baseTitle $albumName".trim()
+                    "$baseTitle$langQuery $albumName".trim()
                 } else {
                     ""
                 }
@@ -304,6 +308,24 @@ object SpotifyPlaybackResolver {
         val method: String,
     )
 
+    private val KNOWN_LANGUAGES =
+        listOf(
+            "malayalam", "tamil", "telugu", "kannada", "hindi",
+            "bengali", "marathi", "punjabi", "gujarati", "bhojpuri",
+            "urdu", "japanese", "korean", "spanish", "french", "german",
+        )
+
+    internal fun detectLanguage(text: String): String? {
+        val sanitized =
+            text
+                .replace(Regex("""(?i)\benglish\s+sub(?:titles?)?\b"""), "")
+                .replace(Regex("""(?i)\beng\s+sub\b"""), "")
+        val lower = sanitized.lowercase()
+        return KNOWN_LANGUAGES.firstOrNull { lang ->
+            Regex("""\b${lang}\b""", RegexOption.IGNORE_CASE).containsMatchIn(lower)
+        }
+    }
+
     internal fun extractBaseTitle(title: String): String {
         val cleaned =
             title
@@ -353,6 +375,7 @@ object SpotifyPlaybackResolver {
     ): SongItem? {
         if (candidates.isEmpty()) return null
 
+        val targetLang = detectLanguage("${track.name} ${track.album?.name.orEmpty()}")
         val baseTitle = extractBaseTitle(track.name).ifBlank { track.name }
         val normBaseTitle = matcher.canonicalTitle(baseTitle).ifBlank { matcher.canonicalTitle(track.name) }
         val cleanTitle = SpotifyQueryBuilder.cleanTrackTitle(track.name).ifBlank { track.name }
@@ -380,6 +403,14 @@ object SpotifyPlaybackResolver {
                         cand.title.contains(token, ignoreCase = true) && !track.name.contains(token, ignoreCase = true)
                     }
                 if (hasUnwanted) return@mapNotNull null
+
+                val candLang = detectLanguage("${cand.title} ${cand.artists.joinToString(" ") { it.name }}")
+
+                // Strict language conflict gate:
+                // If target specifies a language (e.g. Malayalam) and candidate specifies a DIFFERENT language (e.g. Kannada), REJECT!
+                if (targetLang != null && candLang != null && targetLang != candLang) {
+                    return@mapNotNull null
+                }
 
                 val candDurSec = cand.duration ?: 0
                 val durDelta = if (targetDurSec > 0 && candDurSec > 0) kotlin.math.abs(targetDurSec - candDurSec) else 0
@@ -460,6 +491,13 @@ object SpotifyPlaybackResolver {
                 }
                 score += wordOverlapRatio * 20.0
 
+                // Language match bonus or explicit dub penalty
+                if (targetLang != null && candLang == targetLang) {
+                    score += 35.0
+                } else if (targetLang == null && candLang != null) {
+                    score -= 25.0
+                }
+
                 if (targetDurSec > 0 && candDurSec > 0) {
                     val durScore = (25.0 - (durDelta * 0.5)).coerceAtLeast(0.0)
                     score += durScore
@@ -476,6 +514,7 @@ object SpotifyPlaybackResolver {
         candidates: List<SongItem>,
     ): SongItem? {
         if (candidates.isEmpty()) return null
+        val targetLang = detectLanguage("${track.name} ${track.album?.name.orEmpty()}")
         val baseTitle = extractBaseTitle(track.name).ifBlank { track.name }
         val normBaseTitle = matcher.canonicalTitle(baseTitle).ifBlank { matcher.canonicalTitle(track.name) }
         val targetDurSec = if (track.durationMs > 0) track.durationMs / 1000 else 0
@@ -484,10 +523,25 @@ object SpotifyPlaybackResolver {
 
         val nonUnwanted =
             candidates.filter { cand ->
-                !UNWANTED_TOKENS.any { token ->
-                    cand.title.contains(token, ignoreCase = true) && !track.name.contains(token, ignoreCase = true)
-                }
+                val hasUnwanted =
+                    UNWANTED_TOKENS.any { token ->
+                        cand.title.contains(token, ignoreCase = true) && !track.name.contains(token, ignoreCase = true)
+                    }
+                val candLang = detectLanguage("${cand.title} ${cand.artists.joinToString(" ") { it.name }}")
+                val hasLangConflict = targetLang != null && candLang != null && targetLang != candLang
+
+                !hasUnwanted && !hasLangConflict
             }.ifEmpty { candidates }
+
+        // If target has language, first try candidates matching that exact language
+        if (targetLang != null) {
+            val matchingLangCandidate =
+                nonUnwanted.firstOrNull { cand ->
+                    val candLang = detectLanguage("${cand.title} ${cand.artists.joinToString(" ") { it.name }}")
+                    candLang == targetLang
+                }
+            if (matchingLangCandidate != null) return matchingLangCandidate
+        }
 
         // Try candidate sharing words or high title similarity and duration delta <= 60s
         val matchWithDuration =
