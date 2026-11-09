@@ -44,6 +44,7 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.component.MarqueeText
 import moe.rukamori.archivetune.ui.player.player_0.CapsuleDefaults
 import moe.rukamori.archivetune.ui.player.player_0.OverlayCapsuleShell
+import moe.rukamori.archivetune.ui.player.player_0.RollingMiniAlbumArt
 import moe.rukamori.archivetune.ui.state.PlayerUiState
 import moe.rukamori.archivetune.ui.theme.SoftTextShadow
 
@@ -64,19 +65,6 @@ fun LyricsHeader(
     val moreInteractionSource = remember { MutableInteractionSource() }
     val morePressed by moreInteractionSource.collectIsPressedAsState()
     val moreScale by animateFloatAsState(if (morePressed) 0.92f else 1f, spring(dampingRatio = 0.5f))
-
-    // Изолированная анимация вращения пластинки
-    val rotation = remember { Animatable(0f) }
-    LaunchedEffect(state.isPlaying, isVisible) {
-        if (state.isPlaying && isVisible) {
-            while (true) {
-                rotation.animateTo(
-                    targetValue = rotation.value + 360f,
-                    animationSpec = tween(durationMillis = 15000, easing = LinearEasing)
-                )
-            }
-        }
-    }
 
     OverlayCapsuleShell(
         isBlurBackgroundEnabled = state.isBlurBackgroundEnabled,
@@ -108,26 +96,14 @@ fun LyricsHeader(
                     .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val albumArtModifier = Modifier
-                    .size(40.dp)
-                    .graphicsLayer { rotationZ = rotation.value }
-                    .clip(CircleShape)
-
-                if (state.coverUrl.isNotEmpty()) {
-                    AsyncImage(
-                        model = state.coverUrl,
-                        contentDescription = null,
-                        modifier = albumArtModifier,
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Image(
-                        painter = painterResource(id = state.placeholderResId),
-                        contentDescription = null,
-                        modifier = albumArtModifier,
-                        contentScale = ContentScale.Crop
-                    )
-                }
+                RollingMiniAlbumArt(
+                    coverUrl = state.coverUrl,
+                    placeholderResId = state.placeholderResId,
+                    isPlaying = state.isPlaying,
+                    trackKey = state.trackUrl.ifBlank { state.title + state.artist },
+                    size = 40.dp,
+                    isVisible = isVisible,
+                )
 
                 Column(
                     modifier = Modifier
