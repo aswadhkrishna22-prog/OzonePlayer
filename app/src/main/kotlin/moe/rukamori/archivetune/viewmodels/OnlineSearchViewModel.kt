@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,10 +20,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.aicontentfilter.FilterAiContentUseCase
 import moe.rukamori.archivetune.aicontentfilter.LoadAiContentFilterPolicyUseCase
 import moe.rukamori.archivetune.constants.HideExplicitKey
 import moe.rukamori.archivetune.constants.HideVideoKey
+import moe.rukamori.archivetune.constants.UseSpotifySearchKey
 import moe.rukamori.archivetune.innertube.YouTube
 import moe.rukamori.archivetune.innertube.SearchFilter.Companion.FILTER_ALBUM
 import moe.rukamori.archivetune.innertube.SearchFilter.Companion.FILTER_ARTIST
@@ -36,12 +39,27 @@ import moe.rukamori.archivetune.innertube.models.filterExplicit
 import moe.rukamori.archivetune.innertube.models.filterVideo
 import moe.rukamori.archivetune.innertube.pages.SearchSummaryPage
 import moe.rukamori.archivetune.models.ItemsPage
+import moe.rukamori.archivetune.spotify.Spotify
+import moe.rukamori.archivetune.spotify.models.SpotifySearchResult
+import moe.rukamori.archivetune.spotify.sync.SpotifyTokenManager
 import moe.rukamori.archivetune.ui.screens.search.OnlineSearchResultArgument
 import moe.rukamori.archivetune.ui.screens.search.decodeOnlineSearchQuery
 import moe.rukamori.archivetune.utils.dataStore
 import moe.rukamori.archivetune.utils.get
 import moe.rukamori.archivetune.utils.reportException
 import javax.inject.Inject
+
+enum class OnlineSearchSource {
+    YOUTUBE,
+    SPOTIFY,
+}
+
+enum class SpotifySearchFilter {
+    SONGS,
+    ALBUMS,
+    ARTISTS,
+    PLAYLISTS,
+}
 
 enum class OnlineSearchSort {
     DEFAULT,
@@ -63,7 +81,12 @@ class OnlineSearchViewModel
             )
         val filter = MutableStateFlow<YouTube.SearchFilter?>(null)
         val sort = MutableStateFlow(OnlineSearchSort.DEFAULT)
+        val searchSource = MutableStateFlow(OnlineSearchSource.YOUTUBE)
+        val spotifyFilter = MutableStateFlow<SpotifySearchFilter?>(null)
         var summaryPage by mutableStateOf<SearchSummaryPage?>(null)
+        var spotifyResult by mutableStateOf<SpotifySearchResult?>(null)
+        var isSpotifyLoading by mutableStateOf(false)
+        var spotifyError by mutableStateOf<Int?>(null)
         val viewStateMap = mutableStateMapOf<String, ItemsPage?>()
 
         private val allModeFilters =
@@ -82,9 +105,26 @@ class OnlineSearchViewModel
         companion object {
             private val summaryCache = LruCache<String, SearchSummaryPage>(50)
             private val filterCache = LruCache<String, ItemsPage>(100)
+            private val spotifyCache = LruCache<String, SpotifySearchResult>(50)
         }
 
         init {
+            viewModelScope.launch {
+                val useSpotify = context.dataStore.get(UseSpotifySearchKey, false)
+                if (useSpotify) {
+                    searchSource.value = OnlineSearchSource.SPOTIFY
+                    loadSpotifySearchIfNeeded()
+                }
+            }
+
+            viewModelScope.launch {
+                searchSource.collect { source ->
+                    if (source == OnlineSearchSource.SPOTIFY) {
+                        loadSpotifySearchIfNeeded()
+                    }
+                }
+            }
+
             searchJob?.cancel()
             searchJob = viewModelScope.launch {
                 filter.collect { selectedFilter ->
@@ -235,4 +275,74 @@ class OnlineSearchViewModel
                         ).map { it.value }
                 }
             }
+
+        fun setSearchSource(source: OnlineSearchSource) {
+            if (searchSource.value != source) {
+                searchSource.value = source
+                viewModelScope.launch {
+                    context.dataStore.edit { prefs ->
+                        prefs[UseSpotifySearchKey] = (source == OnlineSearchSource.SPOTIFY)
+                    }
+                }
+                if (source == OnlineSearchSource.SPOTIFY) {
+                    viewModelScope.launch {
+                        loadSpotifySearchIfNeeded()
+                    }
+                }
+            }
+        }
+
+        fun setSpotifyFilter(filter: SpotifySearchFilter?) {
+            spotifyFilter.value = filter
+        }
+
+        fun retrySpotify() {
+            viewModelScope.launch {
+                loadSpotifySearchIfNeeded(force = true)
+            }
+        }
+
+        suspend fun loadSpotifySearchIfNeeded(force: Boolean = false) {
+            if (query.isBlank()) return
+            if (!force && (spotifyResult != null || isSpotifyLoading)) return
+
+            if (!force) {
+                spotifyCache.get(query)?.let { cached ->
+                    spotifyResult = cached
+                    return
+                }
+            }
+
+            isSpotifyLoading = true
+            spotifyError = null
+            try {
+                val hasToken = SpotifyTokenManager.ensureToken(context)
+                if (!hasToken) {
+                    spotifyError = R.string.spotify_not_connected
+                    return
+                }
+
+                val limit = if (moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive.value) 10 else 25
+                Spotify.search(
+                    query = query,
+                    types = listOf("track", "album", "artist", "playlist"),
+                    limit = limit,
+                ).onSuccess { res ->
+                    spotifyResult = res
+                    spotifyCache.put(query, res)
+                }.onFailure { err ->
+                    if (err is Spotify.SpotifyException && err.statusCode == 401) {
+                        spotifyError = R.string.spotify_not_connected
+                    } else {
+                        reportException(err)
+                        spotifyError = R.string.error_unknown
+                    }
+                }
+            } catch (e: Exception) {
+                reportException(e)
+                spotifyError = R.string.error_unknown
+            } finally {
+                isSpotifyLoading = false
+            }
+        }
     }
