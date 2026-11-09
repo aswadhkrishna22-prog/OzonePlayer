@@ -110,24 +110,28 @@ class SpotifyPlaybackResolverTest {
             title = "Samajavaragamana - Telugu Audio",
             artists = listOf(Artist(name = "Sid Sriram", id = null), Artist(name = "Thaman S", id = null)),
             duration = 214,
+            thumbnail = "https://example.com/telugu.jpg",
         )
         val candMalayalam = SongItem(
             id = "yt_malayalam",
             title = "Samajavaragamana - Malayalam Audio",
             artists = listOf(Artist(name = "Vijay Yesudas", id = null), Artist(name = "Thaman S", id = null)),
             duration = 214,
+            thumbnail = "https://example.com/malayalam.jpg",
         )
         val candTamil = SongItem(
             id = "yt_tamil",
             title = "Samajavaragamana - Tamil",
             artists = listOf(Artist(name = "Haricharan", id = null), Artist(name = "Thaman S", id = null)),
             duration = 214,
+            thumbnail = "https://example.com/tamil.jpg",
         )
         val candHindi = SongItem(
             id = "yt_hindi",
             title = "Samajavaragamana Hindi Version",
             artists = listOf(Artist(name = "Jubin Nautiyal", id = null), Artist(name = "Thaman S", id = null)),
             duration = 214,
+            thumbnail = "https://example.com/hindi.jpg",
         )
         val fixtures = listOf(candTelugu, candMalayalam, candTamil, candHindi)
 
@@ -219,12 +223,14 @@ class SpotifyPlaybackResolverTest {
             title = "Track Title",
             artists = listOf(Artist(name = "Performer A", id = null)),
             duration = 180,
+            thumbnail = "https://example.com/1.jpg",
         )
         val cand2 = SongItem(
             id = "yt_2",
             title = "Track Title",
             artists = listOf(Artist(name = "Performer B", id = null)),
             duration = 180,
+            thumbnail = "https://example.com/2.jpg",
         )
 
         val scored = listOf(
