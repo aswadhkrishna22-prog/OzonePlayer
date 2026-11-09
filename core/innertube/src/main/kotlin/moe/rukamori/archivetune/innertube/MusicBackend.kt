@@ -132,7 +132,7 @@ interface MusicBackend {
         params: String?,
     ): Result<BrowseResult>
 
-    suspend fun getChartsPage(continuation: String? = null): Result<ChartsPage>
+    suspend fun getChartsPage(continuation: String? = null, countryCode: String? = null): Result<ChartsPage>
 
     // Library
     suspend fun library(

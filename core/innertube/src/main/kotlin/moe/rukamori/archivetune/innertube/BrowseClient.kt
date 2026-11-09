@@ -1179,7 +1179,7 @@ object BrowseClient {
             )
         }
 
-    suspend fun getChartsPage(continuation: String? = null): Result<ChartsPage> =
+    suspend fun getChartsPage(continuation: String? = null, countryCode: String? = null): Result<ChartsPage> =
         runCatching {
             val response =
                 innerTube
@@ -1188,6 +1188,7 @@ object BrowseClient {
                         browseId = "FEmusic_charts",
                         params = "ggMGCgQIgAQ%3D",
                         continuation = continuation,
+                        countryCode = countryCode,
                     ).body<BrowseResponse>()
 
             val sections = mutableListOf<ChartsPage.ChartSection>()

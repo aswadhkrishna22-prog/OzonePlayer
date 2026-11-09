@@ -153,6 +153,7 @@ fun HomeScreen(
                     lazyListState = lazyListState,
                     forgottenFavoritesGridState = forgottenFavoritesGridState,
                     onAction = viewModel::onAction,
+                    trendingRepository = viewModel.trendingRepository,
                 )
             }
         }

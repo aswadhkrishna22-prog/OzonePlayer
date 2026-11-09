@@ -60,6 +60,7 @@ data class HomeRemoteContent(
     val accountName: String,
     val accountImageUrl: String?,
     val communitySection: HomePage.Section? = null,
+    val trendingState: moe.rukamori.archivetune.home.trending.TrendingUiState? = null,
 )
 
 data class HomeContent(
@@ -76,7 +77,8 @@ data class HomeContent(
                 remote.similarRecommendations.isNotEmpty() ||
                 remote.accountPlaylists.isNotEmpty() ||
                 remote.communitySection?.featuredCards?.isNotEmpty() == true ||
-                remote.homePage?.sections?.any { it.items.isNotEmpty() } == true
+                remote.homePage?.sections?.any { it.items.isNotEmpty() } == true ||
+                remote.trendingState?.isVisible == true
 }
 
 data class HomeStateInputs(
@@ -118,6 +120,7 @@ data class HomeStateInputs(
                 isRefreshing = isRefreshing,
                 isLoadingMore = isLoadingMore,
                 communitySection = content.remote.communitySection,
+                trendingState = content.remote.trendingState,
             ),
         )
     }

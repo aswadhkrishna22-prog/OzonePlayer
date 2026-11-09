@@ -215,6 +215,14 @@ internal fun AboutIdentityCard(
                         .yumaClickable { onOpenGplLicense() }
                         .padding(horizontal = 8.dp, vertical = 4.dp),
                 )
+
+                Text(
+                    text = AboutContract.DISCLAIMER_NOTICE,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                )
             }
         }
     }

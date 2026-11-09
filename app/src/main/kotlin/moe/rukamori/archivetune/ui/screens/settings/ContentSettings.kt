@@ -63,6 +63,10 @@ fun ContentSettings(navController: NavController) {
 
     val (contentLanguage, onContentLanguageChange) = rememberPreference(key = ContentLanguageKey, defaultValue = "system")
     val (contentCountry, onContentCountryChange) = rememberPreference(key = ContentCountryKey, defaultValue = "system")
+    val (showTrendingOnHome, onShowTrendingOnHomeChange) =
+        rememberPreference(key = ShowTrendingOnHomeKey, defaultValue = true)
+    val (trendingRegion, onTrendingRegionChange) =
+        rememberPreference(key = TrendingRegionKey, defaultValue = "auto")
     val (playlistSuggestionSource, onPlaylistSuggestionSourceChange) =
         rememberEnumPreference(
             key = PlaylistSuggestionSourceKey,
@@ -133,6 +137,35 @@ fun ContentSettings(navController: NavController) {
                         onContentCountryChange(newValue)
                     },
                 )
+            }
+
+            item {
+                SwitchPreference(
+                    title = { Text(stringResource(R.string.show_trending_on_home)) },
+                    description = stringResource(R.string.show_trending_on_home_summary),
+                    icon = { Icon(painterResource(R.drawable.trending_up), null) },
+                    checked = showTrendingOnHome,
+                    onCheckedChange = onShowTrendingOnHomeChange,
+                )
+            }
+
+            if (showTrendingOnHome) {
+                item {
+                    ListPreference(
+                        title = { Text(stringResource(R.string.trending_region)) },
+                        icon = { Icon(painterResource(R.drawable.location_on), null) },
+                        selectedValue = trendingRegion,
+                        values = listOf("auto") + CountryCodeToName.keys.toList(),
+                        valueText = {
+                            if (it == "auto" || it == SYSTEM_DEFAULT) {
+                                stringResource(R.string.trending_region_auto)
+                            } else {
+                                CountryCodeToName.getOrElse(it) { it }
+                            }
+                        },
+                        onValueSelected = onTrendingRegionChange,
+                    )
+                }
             }
 
             item {

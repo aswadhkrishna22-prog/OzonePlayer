@@ -549,6 +549,15 @@
     <string name="playback_error_cause">Cause</string>
     <string name="content_language">Default content language</string>
     <string name="content_country">Default content country</string>
+    <string name="show_trending_on_home">Show trending on Home</string>
+    <string name="show_trending_on_home_summary">Show top trending songs section on the Home screen</string>
+    <string name="trending_region">Trending region</string>
+    <string name="trending_region_auto">Auto (Content country)</string>
+    <string name="youtube_music">YouTube Music</string>
+    <string name="trending_in">Trending in %1$s</string>
+    <string name="source_apple_music">Source: Apple Music</string>
+    <string name="apple_music_top_songs">Apple Music Top Songs</string>
+    <string name="could_not_find_song_try_searching">Couldn\'t find this song, try searching</string>
     <string name="system_default">System default</string>
     <string name="enable_proxy">Enable proxy</string>
     <string name="internet">Internet</string>

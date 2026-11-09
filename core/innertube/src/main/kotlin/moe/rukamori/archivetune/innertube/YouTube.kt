@@ -272,8 +272,11 @@ object YouTube {
     suspend fun libraryRecentActivity(): Result<LibraryPage> =
         BrowseClient.libraryRecentActivity()
 
-    suspend fun getChartsPage(continuation: String? = null): Result<ChartsPage> =
-        BrowseClient.getChartsPage(continuation)
+    suspend fun getChartsPage(
+        continuation: String? = null,
+        countryCode: String? = null,
+    ): Result<ChartsPage> =
+        BrowseClient.getChartsPage(continuation, countryCode)
 
     suspend fun musicHistory(): Result<HistoryPage> =
         BrowseClient.musicHistory()

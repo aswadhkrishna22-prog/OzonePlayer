@@ -15,6 +15,7 @@ internal object AboutContract {
     const val UPSTREAM_REPO_URL = "https://github.com/Rukamori/ArchiveTune"
     const val GPL_LICENSE_URL = "https://www.gnu.org/licenses/gpl-3.0.html"
     const val CREDITS_NOTICE = "Based on ArchiveTune by Rukamori and contributors"
+    const val DISCLAIMER_NOTICE = "Unofficial app, not affiliated with YouTube, Google, Spotify or Apple."
     const val GPL_LICENSE_NOTICE = "Based on ArchiveTune by Rukamori and contributors.\nSource code available under GPL-3.0."
 
     const val GPL_V3_NOTICE_TEXT = """GNU GENERAL PUBLIC LICENSE

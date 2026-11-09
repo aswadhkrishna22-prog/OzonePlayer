@@ -34,6 +34,7 @@ import kotlinx.coroutines.CoroutineScope
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.home.HomeAction
+import moe.rukamori.archivetune.home.trending.TrendingRepository
 import moe.rukamori.archivetune.home.HomeUiState
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.playback.PlayerConnection
@@ -61,6 +62,7 @@ internal fun HomeContent(
     forgottenFavoritesGridState: LazyGridState,
     onAction: (HomeAction) -> Unit,
     modifier: Modifier = Modifier,
+    trendingRepository: TrendingRepository? = null,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         ExpressivePullToRefreshBox(
@@ -137,6 +139,12 @@ internal fun HomeContent(
                             )
                         }
                     }
+
+                    homeTrendingSection(
+                        trendingState = uiState.trendingState,
+                        mediaContext = mediaContext,
+                        trendingRepository = trendingRepository,
+                    )
 
                     homeCommunitySection(
                         uiState = uiState,

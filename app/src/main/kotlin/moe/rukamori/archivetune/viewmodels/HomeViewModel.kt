@@ -18,6 +18,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import timber.log.Timber
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.update
+import moe.rukamori.archivetune.constants.ContentCountryKey
+import moe.rukamori.archivetune.constants.ShowTrendingOnHomeKey
+import moe.rukamori.archivetune.constants.TrendingRegionKey
+import moe.rukamori.archivetune.home.trending.TrendingRepository
+import moe.rukamori.archivetune.home.trending.TrendingSource
+import moe.rukamori.archivetune.home.trending.TrendingUiState
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -126,6 +134,10 @@ constructor(
         private val homePage = MutableStateFlow<HomePage?>(null)
         private val _communitySection = MutableStateFlow<HomePage.Section?>(null)
         val communitySection: StateFlow<HomePage.Section?> = _communitySection.asStateFlow()
+        val trendingRepository = TrendingRepository(context)
+        private val _trendingUiState = MutableStateFlow<TrendingUiState?>(null)
+        val trendingUiState: StateFlow<TrendingUiState?> = _trendingUiState.asStateFlow()
+        private var trendingJob: Job? = null
         private val selectedChip = MutableStateFlow<HomePage.Chip?>(null)
         private val previousHomePage = MutableStateFlow<HomePage?>(null)
         private val previousCommunitySection = MutableStateFlow<HomePage.Section?>(null)
@@ -164,10 +176,14 @@ constructor(
             combine(
                 homePage,
                 similarRecommendations,
-                accountCoordinator.accountPlaylists,
-                combine(accountCoordinator.accountName, accountCoordinator.accountImageUrl) { name, img -> name to img },
+                combine(
+                    accountCoordinator.accountPlaylists,
+                    accountCoordinator.accountName,
+                    accountCoordinator.accountImageUrl,
+                ) { playlists, name, img -> Triple(playlists, name, img) },
                 _communitySection,
-            ) { homePage, similarRecommendations, accountPlaylists, (accountName, accountImageUrl), communitySection ->
+                _trendingUiState,
+            ) { homePage, similarRecommendations, (accountPlaylists, accountName, accountImageUrl), communitySection, trendingState ->
                 HomeRemoteContent(
                     homePage = homePage,
                     similarRecommendations = similarRecommendations.orEmpty(),
@@ -175,6 +191,7 @@ constructor(
                     accountName = accountName,
                     accountImageUrl = accountImageUrl,
                     communitySection = communitySection,
+                    trendingState = trendingState,
                 )
             }
 
@@ -428,10 +445,52 @@ constructor(
 
         fun onAction(action: HomeAction) {
             when (action) {
-                HomeAction.Refresh -> refresh()
+                HomeAction.Refresh -> {
+                    refresh()
+                    val state = _trendingUiState.value
+                    if (state != null) {
+                        loadTrendingData(state.regionCode, state.regionDisplayName, forceRefresh = true)
+                    }
+                }
+                is HomeAction.SelectTrendingSource -> {
+                    _trendingUiState.update { current ->
+                        current?.copy(selectedSource = action.source)
+                    }
+                }
                 HomeAction.LoadCommunityPreviews -> loadCommunityPreviewsOnScroll()
                 is HomeAction.SelectChip -> toggleChip(action.chip)
                 is HomeAction.LoadMore -> loadMoreYouTubeItems(action.continuation)
+            }
+        }
+
+        private fun loadTrendingData(regionCode: String, regionDisplayName: String, forceRefresh: Boolean) {
+            trendingJob?.cancel()
+            trendingJob = viewModelScope.launch(Dispatchers.IO) {
+                val current = _trendingUiState.value ?: TrendingUiState()
+                _trendingUiState.value =
+                    current.copy(
+                        regionCode = regionCode,
+                        regionDisplayName = regionDisplayName,
+                        isLoading = current.currentTracks.isEmpty(),
+                    )
+
+                val ytDeferred = async { trendingRepository.getYouTubeTrending(regionCode, forceRefresh) }
+                val appleDeferred = async { trendingRepository.getAppleTrending(regionCode, forceRefresh) }
+
+                val ytTracks = ytDeferred.await()
+                val appleTracks = appleDeferred.await()
+
+                _trendingUiState.value =
+                    TrendingUiState(
+                        selectedSource = _trendingUiState.value?.selectedSource ?: TrendingSource.YOUTUBE,
+                        youtubeTracks = ytTracks,
+                        appleTracks = appleTracks,
+                        isAppleAvailable = appleTracks.isNotEmpty(),
+                        regionCode = regionCode,
+                        regionDisplayName = regionDisplayName,
+                        isLoading = false,
+                    )
+                updateAllYtItems()
             }
         }
 
@@ -476,6 +535,25 @@ constructor(
         }
 
     init {
+        viewModelScope.launch(Dispatchers.IO) {
+            combine(
+                context.dataStore.data.map { it[ShowTrendingOnHomeKey] ?: true },
+                context.dataStore.data.map { it[TrendingRegionKey] ?: "auto" },
+                context.dataStore.data.map { it[ContentCountryKey] ?: "system" },
+            ) { showTrending, trendingRegion, contentCountry ->
+                Triple(showTrending, trendingRegion, contentCountry)
+            }.distinctUntilChanged().collectLatest { (showTrending, trendingRegion, contentCountry) ->
+                if (!showTrending) {
+                    trendingJob?.cancel()
+                    _trendingUiState.value = null
+                    return@collectLatest
+                }
+                val (regionCode, regionDisplayName) =
+                    trendingRepository.resolveEffectiveRegion(trendingRegion, contentCountry)
+                loadTrendingData(regionCode, regionDisplayName, forceRefresh = false)
+            }
+        }
+
         viewModelScope.launch(Dispatchers.IO) {
             quickPicks.collect {
                 updateAllLocalItems()
