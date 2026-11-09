@@ -25,25 +25,35 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
+import androidx.media3.common.Player
+import kotlinx.coroutines.flow.MutableStateFlow
+import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.models.MediaMetadata
+import moe.rukamori.archivetune.playback.dualplay.DualPlaySheetTarget
 import moe.rukamori.archivetune.ui.component.MarqueeText
 import moe.rukamori.archivetune.ui.player.player_0.CapsuleDefaults
 import moe.rukamori.archivetune.ui.player.player_0.OverlayCapsuleShell
+import moe.rukamori.archivetune.ui.player.player_0.RollingArtwork
+import moe.rukamori.archivetune.ui.player.player_0.RollingArtworkMath
 import moe.rukamori.archivetune.ui.state.PlayerUiState
 import moe.rukamori.archivetune.ui.theme.SoftTextShadow
 
@@ -54,9 +64,12 @@ fun LyricsHeader(
     onCloseClick: () -> Unit,
     onMoreClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isVisible: Boolean = true
+    isVisible: Boolean = true,
+    sheetTarget: DualPlaySheetTarget = DualPlaySheetTarget.PLAYER_A,
+    mediaMetadataOverride: MediaMetadata? = null,
+    playerOverride: Player? = null,
 ) {
-    // Пружинные отскоки кнопок
+    // Spring button click responses
     val closeInteractionSource = remember { MutableInteractionSource() }
     val closePressed by closeInteractionSource.collectIsPressedAsState()
     val closeScale by animateFloatAsState(if (closePressed) 0.92f else 1f, spring(dampingRatio = 0.5f))
@@ -65,17 +78,67 @@ fun LyricsHeader(
     val morePressed by moreInteractionSource.collectIsPressedAsState()
     val moreScale by animateFloatAsState(if (morePressed) 0.92f else 1f, spring(dampingRatio = 0.5f))
 
-    // Изолированная анимация вращения пластинки
+    // Isolated vinyl record spin animation (15s continuous)
     val rotation = remember { Animatable(0f) }
     LaunchedEffect(state.isPlaying, isVisible) {
         if (state.isPlaying && isVisible) {
             while (true) {
+                val currentDegree = rotation.value % 360f
+                rotation.snapTo(currentDegree)
                 rotation.animateTo(
-                    targetValue = rotation.value + 360f,
+                    targetValue = currentDegree + 360f,
                     animationSpec = tween(durationMillis = 15000, easing = LinearEasing)
                 )
             }
         }
+    }
+
+    val playerConnection = LocalPlayerConnection.current
+    val currentMediaMetadata by (playerConnection?.mediaMetadata ?: MutableStateFlow(null)).collectAsState()
+    val defaultQueueIndex by (playerConnection?.currentMediaItemIndex ?: MutableStateFlow(-1)).collectAsState()
+
+    val currentMediaId = when {
+        mediaMetadataOverride?.id?.isNotBlank() == true -> mediaMetadataOverride.id
+        playerOverride?.currentMediaItem?.mediaId?.isNotBlank() == true -> playerOverride.currentMediaItem?.mediaId ?: ""
+        sheetTarget == DualPlaySheetTarget.PLAYER_A && !currentMediaMetadata?.id.isNullOrBlank() -> currentMediaMetadata?.id ?: ""
+        else -> state.trackUrl.takeIf { it.isNotBlank() } ?: ""
+    }
+
+    val currentQueueIndex = if (playerOverride != null) playerOverride.currentMediaItemIndex else defaultQueueIndex
+
+    val sheetProgress = animateProgressProvider()
+    val isSheetVisible = isVisible && sheetProgress > 0.05f
+
+    var wasSheetVisible by remember { mutableStateOf(false) }
+    var isFirstComposition by remember { mutableStateOf(true) }
+    var lastMediaId by remember { mutableStateOf<String?>(null) }
+    var lastSheetTarget by remember { mutableStateOf(sheetTarget) }
+    var previousQueueIndex by remember { mutableIntStateOf(-1) }
+
+    val isTargetSwitched = sheetTarget != lastSheetTarget
+
+    val isForward = remember(currentMediaId) {
+        RollingArtworkMath.isForwardDirection(previousQueueIndex, currentQueueIndex)
+    }
+
+    val allowAnimation = remember(currentMediaId, isSheetVisible, isTargetSwitched) {
+        RollingArtworkMath.shouldAnimateLyricsRoll(
+            isFirstComposition = isFirstComposition,
+            isSheetVisible = isSheetVisible,
+            wasSheetVisible = wasSheetVisible,
+            isTargetSwitched = isTargetSwitched,
+            animationsDisabled = false,
+            previousMediaId = lastMediaId,
+            currentMediaId = currentMediaId,
+        )
+    }
+
+    SideEffect {
+        isFirstComposition = false
+        wasSheetVisible = isSheetVisible
+        lastMediaId = currentMediaId
+        lastSheetTarget = sheetTarget
+        previousQueueIndex = currentQueueIndex
     }
 
     OverlayCapsuleShell(
@@ -108,26 +171,17 @@ fun LyricsHeader(
                     .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val albumArtModifier = Modifier
-                    .size(40.dp)
-                    .graphicsLayer { rotationZ = rotation.value }
-                    .clip(CircleShape)
-
-                if (state.coverUrl.isNotEmpty()) {
-                    AsyncImage(
-                        model = state.coverUrl,
-                        contentDescription = null,
-                        modifier = albumArtModifier,
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Image(
-                        painter = painterResource(id = state.placeholderResId),
-                        contentDescription = null,
-                        modifier = albumArtModifier,
-                        contentScale = ContentScale.Crop
-                    )
-                }
+                RollingArtwork(
+                    mediaId = currentMediaId,
+                    model = state.coverUrl,
+                    placeholderResId = state.placeholderResId,
+                    size = 40.dp,
+                    slotPaddingExtra = 10.dp,
+                    isForward = isForward,
+                    isRollingAllowed = allowAnimation,
+                    spinRotationProvider = { rotation.value },
+                    contentDescription = stringResource(R.string.mini_album_art),
+                )
 
                 Column(
                     modifier = Modifier
@@ -148,7 +202,6 @@ fun LyricsHeader(
                         isVisible = isVisible
                     )
 
-                    // Исполнитель
                     MarqueeText(
                         text = state.artist,
                         style = TextStyle(
