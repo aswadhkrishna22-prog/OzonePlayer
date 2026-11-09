@@ -21,23 +21,26 @@ import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.models.toMediaMetadata
 import moe.rukamori.archivetune.spotify.mapping.SpotifyEntityMapper
 import moe.rukamori.archivetune.spotify.mapping.SpotifyQueryBuilder
-import moe.rukamori.archivetune.spotify.matching.SpotifySearchScorer
-import moe.rukamori.archivetune.spotify.matching.TrackMatcher
-import moe.rukamori.archivetune.spotify.matching.TrackQuery
+import moe.rukamori.archivetune.spotify.matching.SpotifyTrackScorer
+import moe.rukamori.archivetune.spotify.matching.SpotifyTrackScorer.AmbiguityResult
+import moe.rukamori.archivetune.spotify.matching.SpotifyTrackScorer.ScoredCandidate
 import moe.rukamori.archivetune.spotify.models.SpotifyTrack
 import timber.log.Timber
+
+sealed interface PlaybackResolutionDecision {
+    data class Resolved(val metadata: MediaMetadata) : PlaybackResolutionDecision
+    data class Ambiguous(
+        val topCandidates: List<SongItem>,
+        val spotifyTrack: SpotifyTrack,
+        val bestMetadata: MediaMetadata,
+    ) : PlaybackResolutionDecision
+    data object NotFound : PlaybackResolutionDecision
+}
 
 object SpotifyPlaybackResolver {
     private const val CACHE_MAX_SIZE = 512
 
-    private val matcher = TrackMatcher()
-    private val scorer = SpotifySearchScorer(matcher)
     private val searchSemaphore = kotlinx.coroutines.sync.Semaphore(3)
-
-    private val UNWANTED_TOKENS = listOf(
-        "karaoke", "tribute", "instrumental", "backing track", "cover", "parody",
-        "reaction", "slowed", "sped up", "nightcore", "8d audio", "ringtone", "bass boosted"
-    )
 
     private val mutex = Mutex()
     private val cache =
@@ -58,30 +61,41 @@ object SpotifyPlaybackResolver {
         track: SpotifyTrack,
         database: MusicDatabase? = null,
         contextQuery: String? = null,
-    ): MediaMetadata? =
+    ): MediaMetadata? {
+        return when (val decision = resolveCandidateDecision(track, database, contextQuery)) {
+            is PlaybackResolutionDecision.Resolved -> decision.metadata
+            is PlaybackResolutionDecision.Ambiguous -> decision.bestMetadata
+            is PlaybackResolutionDecision.NotFound -> null
+        }
+    }
+
+    suspend fun resolveCandidateDecision(
+        track: SpotifyTrack,
+        database: MusicDatabase? = null,
+        contextQuery: String? = null,
+    ): PlaybackResolutionDecision =
         withContext(Dispatchers.IO) {
             val db = database ?: databaseRef
             if (database != null && databaseRef == null) {
                 databaseRef = database
             }
 
-            val rawSpotifyId = track.id.removePrefix("spotify:track:").removePrefix("spotify:")
+            val cacheKey = SpotifyTrackScorer.cacheKey(track.id)
+            val rawSpotifyId = track.id.removePrefix("spotify:track:").removePrefix("spotify:").trim()
             val targetLang = detectLanguage("${track.name} ${track.album?.name.orEmpty()} ${contextQuery.orEmpty()}")
 
             mutex.withLock {
-                (cache[rawSpotifyId] ?: cache[track.id])?.let { cached ->
-                    Timber.tag("SpotifyMatching").d("CACHE HIT: '${track.name}' -> YT ${cached.id}")
-                    return@withContext cached
+                cache[cacheKey]?.let { cached ->
+                    Timber.tag("SpotifyMatching").d("CACHE HIT: '${track.name}' (key=$cacheKey) -> YT ${cached.id}")
+                    return@withContext PlaybackResolutionDecision.Resolved(cached)
                 }
             }
 
             if (db != null) {
                 val match =
-                    if (rawSpotifyId.isNotBlank()) {
-                        db.getSpotifyMatch(rawSpotifyId) ?: db.getSpotifyMatch(track.id)
-                    } else {
-                        db.getSpotifyMatch(track.id)
-                    }
+                    db.getSpotifyMatch(cacheKey)
+                        ?: db.getSpotifyMatch(rawSpotifyId)?.takeIf { it.isManualOverride }
+                        ?: db.getSpotifyMatch(track.id)?.takeIf { it.isManualOverride }
                 if (match != null) {
                     val dbSong = db.getSongByIdBlocking(match.youtubeId)
                     val cachedTitle = dbSong?.song?.title ?: match.title
@@ -121,13 +135,10 @@ object SpotifyPlaybackResolver {
                             }
 
                         mutex.withLock {
-                            cache[track.id] = metadata
-                            if (rawSpotifyId.isNotBlank()) {
-                                cache[rawSpotifyId] = metadata
-                            }
+                            cache[cacheKey] = metadata
                         }
-                        Timber.tag("SpotifyMatching").d("DB MATCH HIT: '${track.name}' -> YT ${metadata.id}")
-                        return@withContext metadata
+                        Timber.tag("SpotifyMatching").d("DB MATCH HIT: '${track.name}' (key=$cacheKey) -> YT ${metadata.id}")
+                        return@withContext PlaybackResolutionDecision.Resolved(metadata)
                     } else {
                         Timber.tag("SpotifyMatching").w(
                             "INVALIDATING STALE DB MATCH: '${track.name}' (target=$targetLang) was cached to YT ${match.youtubeId} (cached=$cachedLang)",
@@ -142,16 +153,6 @@ object SpotifyPlaybackResolver {
                 "INPUT: title='${track.name}', artists=[$queryArtist], dur=${track.durationMs}ms, " +
                 "isrc=${track.externalIds?.isrc}, explicit=${track.explicit}",
             )
-
-            val trackQuery =
-                TrackQuery(
-                    artist = queryArtist,
-                    title = track.name,
-                    album = track.album?.name,
-                    isrc = track.externalIds?.isrc,
-                    durationMs = track.durationMs.toLong(),
-                    explicit = track.explicit,
-                )
 
             val primaryArtistName = track.artists.firstOrNull()?.name.orEmpty()
             val cleanTitle = SpotifyQueryBuilder.cleanTrackTitle(track.name).ifBlank { track.name }
@@ -171,200 +172,267 @@ object SpotifyPlaybackResolver {
                     ""
                 }
 
-            val resolutionResult =
+            val decisionResult =
                 searchSemaphore.withPermit {
                     val gatheredCandidates = mutableListOf<SongItem>()
+                    val officialSongIds = mutableSetOf<String>()
 
-                    fun evaluateCandidates(
-                        candidates: List<SongItem>,
-                        tierName: String,
-                    ): ResolutionResult? {
-                        if (candidates.isEmpty()) return null
-                        gatheredCandidates.addAll(candidates)
-
-                        // 1. Filter out unwanted tokens (karaoke, instrumental, etc.)
-                        val cleanCandidates =
-                            candidates.filter { cand ->
-                                !UNWANTED_TOKENS.any { token ->
-                                    cand.title.contains(token, ignoreCase = true) && !track.name.contains(token, ignoreCase = true)
-                                }
-                            }
-
-                        // 2. Reject candidates that specify a CONFLICTING language
-                        val nonConflicting =
-                            if (targetLang != null) {
-                                cleanCandidates.filter { cand ->
-                                    val candLang = detectLanguage("${cand.title} ${cand.artists.joinToString(" ") { it.name }}")
-                                    candLang == null || candLang == targetLang
-                                }
-                            } else {
-                                cleanCandidates
-                            }
-
-                        // 3. If target language is specified:
-                        // First try candidates that EXPLICITLY specify the target language!
-                        if (targetLang != null) {
-                            val explicitLangCandidates =
-                                nonConflicting.filter { cand ->
-                                    val candLang = detectLanguage("${cand.title} ${cand.artists.joinToString(" ") { it.name }}")
-                                    candLang == targetLang
-                                }
-                            if (explicitLangCandidates.isNotEmpty()) {
-                                val strictLangRes = scoreStrict(trackQuery, explicitLangCandidates)
-                                if (strictLangRes?.accepted != null) {
-                                    return ResolutionResult(strictLangRes.accepted!!, strictLangRes.score, "strict_${tierName}_lang")
-                                }
-                                val relaxedLangRes = pickRelaxedCandidate(track, explicitLangCandidates)
-                                if (relaxedLangRes != null) {
-                                    return ResolutionResult(relaxedLangRes, 0.90, "relaxed_${tierName}_lang")
-                                }
-                            }
+                    suspend fun collectCandidates(
+                        searchFn: suspend () -> List<SongItem>,
+                        isOfficial: Boolean,
+                    ) {
+                        val items = searchFn()
+                        if (isOfficial) {
+                            officialSongIds.addAll(items.map { it.id })
                         }
-
-                        // 4. Try strict score on remaining non-conflicting candidates
-                        val strictRes = scoreStrict(trackQuery, nonConflicting)
-                        if (strictRes?.accepted != null) {
-                            val accepted = strictRes.accepted!!
-                            val candLang = detectLanguage("${accepted.title} ${accepted.artists.joinToString(" ") { it.name }}")
-                            if (targetLang == null || candLang == null || candLang == targetLang) {
-                                return ResolutionResult(accepted, strictRes.score, "strict_$tierName")
-                            }
-                        }
-
-                        // 5. Try relaxed candidate on non-conflicting candidates
-                        val relaxedRes = pickRelaxedCandidate(track, nonConflicting)
-                        if (relaxedRes != null) {
-                            return ResolutionResult(relaxedRes, 0.85, "relaxed_$tierName")
-                        }
-                        return null
+                        gatheredCandidates.addAll(items)
                     }
 
                     // Tier 1: standard query (songs)
                     Timber.tag("SpotifyMatching").d("QUERY standard: '$standardQuery'")
-                    val stdSongs = searchSongs(standardQuery)
-                    evaluateCandidates(stdSongs, "standard_song")?.let { return@withPermit it }
+                    collectCandidates({ searchSongs(standardQuery) }, isOfficial = true)
 
                     // Tier 2: base artist query (songs) if different
                     if (baseArtistQuery.isNotBlank() && baseArtistQuery != standardQuery) {
                         Timber.tag("SpotifyMatching").d("QUERY baseArtist: '$baseArtistQuery'")
-                        val baseSongs = searchSongs(baseArtistQuery)
-                        evaluateCandidates(baseSongs, "base_song")?.let { return@withPermit it }
+                        collectCandidates({ searchSongs(baseArtistQuery) }, isOfficial = true)
+                    }
+
+                    // Quick evaluation if we found solid official song candidates
+                    val distinctInitial = gatheredCandidates.distinctBy { it.id }
+                    val scoredInitial = distinctInitial.map { cand ->
+                        SpotifyTrackScorer.scoreCandidate(
+                            targetTitle = track.name,
+                            targetArtists = artistsList,
+                            targetAlbum = track.album?.name,
+                            targetDurationMs = track.durationMs.toLong(),
+                            contextQuery = contextQuery,
+                            candidate = cand,
+                            isOfficialSong = officialSongIds.contains(cand.id),
+                        )
+                    }
+
+                    val ambiguityInitial = SpotifyTrackScorer.evaluateAmbiguity(scoredInitial, artistsList)
+                    if (ambiguityInitial is AmbiguityResult.ClearWinner && ambiguityInitial.score >= 50.0) {
+                        return@withPermit ambiguityInitial
                     }
 
                     // Tier 3: standard and base queries (videos & all)
-                    val stdVideos = searchVideos(standardQuery)
-                    evaluateCandidates(stdVideos, "standard_video")?.let { return@withPermit it }
-
-                    val stdAll = searchAll(standardQuery)
-                    evaluateCandidates(stdAll, "standard_all")?.let { return@withPermit it }
+                    collectCandidates({ searchVideos(standardQuery) }, isOfficial = false)
+                    collectCandidates({ searchAll(standardQuery) }, isOfficial = false)
 
                     if (baseArtistQuery.isNotBlank() && baseArtistQuery != standardQuery) {
-                        val baseVideos = searchVideos(baseArtistQuery)
-                        evaluateCandidates(baseVideos, "base_video")?.let { return@withPermit it }
-
-                        val baseAll = searchAll(baseArtistQuery)
-                        evaluateCandidates(baseAll, "base_all")?.let { return@withPermit it }
+                        collectCandidates({ searchVideos(baseArtistQuery) }, isOfficial = false)
+                        collectCandidates({ searchAll(baseArtistQuery) }, isOfficial = false)
                     }
 
                     // Tier 4: clean query (if different)
                     if (cleanQuery.isNotBlank() && cleanQuery != standardQuery && cleanQuery != baseArtistQuery) {
                         Timber.tag("SpotifyMatching").d("QUERY clean: '$cleanQuery'")
-                        val cleanSongs = searchSongs(cleanQuery)
-                        evaluateCandidates(cleanSongs, "clean_song")?.let { return@withPermit it }
-
-                        val cleanAll = searchAll(cleanQuery)
-                        evaluateCandidates(cleanAll, "clean_all")?.let { return@withPermit it }
+                        collectCandidates({ searchSongs(cleanQuery) }, isOfficial = true)
+                        collectCandidates({ searchAll(cleanQuery) }, isOfficial = false)
                     }
 
                     // Tier 5: base album query (if applicable)
                     if (baseAlbumQuery.isNotBlank() && baseAlbumQuery != standardQuery && baseAlbumQuery != baseArtistQuery) {
                         Timber.tag("SpotifyMatching").d("QUERY baseAlbum: '$baseAlbumQuery'")
-                        val albumSongs = searchSongs(baseAlbumQuery)
-                        evaluateCandidates(albumSongs, "album_song")?.let { return@withPermit it }
-
-                        val albumAll = searchAll(baseAlbumQuery)
-                        evaluateCandidates(albumAll, "album_all")?.let { return@withPermit it }
+                        collectCandidates({ searchSongs(baseAlbumQuery) }, isOfficial = true)
+                        collectCandidates({ searchAll(baseAlbumQuery) }, isOfficial = false)
                     }
 
                     // Tier 6: base title alone query (if different)
-                    if (baseTitle.isNotBlank() && baseTitle != standardQuery && baseTitle != baseArtistQuery) {
-                        Timber.tag("SpotifyMatching").d("QUERY baseTitle: '$baseTitle'")
-                        val titleSongs = searchSongs(baseTitle)
-                        evaluateCandidates(titleSongs, "title_song")?.let { return@withPermit it }
-
-                        val titleVideos = searchVideos(baseTitle)
-                        evaluateCandidates(titleVideos, "title_video")?.let { return@withPermit it }
+                    if (baseTitleQuery.isNotBlank() && baseTitleQuery != standardQuery && baseTitleQuery != baseArtistQuery) {
+                        Timber.tag("SpotifyMatching").d("QUERY baseTitle: '$baseTitleQuery'")
+                        collectCandidates({ searchSongs(baseTitleQuery) }, isOfficial = true)
+                        collectCandidates({ searchVideos(baseTitleQuery) }, isOfficial = false)
                     }
 
                     // Tier 7: raw query (if different)
                     if (rawQuery.isNotBlank() && rawQuery != standardQuery && rawQuery != cleanQuery && rawQuery != baseArtistQuery) {
                         Timber.tag("SpotifyMatching").d("QUERY raw: '$rawQuery'")
-                        val rawAll = searchAll(rawQuery)
-                        evaluateCandidates(rawAll, "raw_all")?.let { return@withPermit it }
+                        collectCandidates({ searchAll(rawQuery) }, isOfficial = false)
                     }
 
-                    // Tier 8: best effort across all gathered candidates
-                    val allGathered = gatheredCandidates.distinctBy { it.id }
-                    val bestEffort = pickBestEffortCandidate(track, allGathered)
-                    if (bestEffort != null) {
-                        return@withPermit ResolutionResult(bestEffort, 0.60, "best_effort")
+                    val allDistinct = gatheredCandidates.distinctBy { it.id }
+                    val scoredAll = allDistinct.map { cand ->
+                        SpotifyTrackScorer.scoreCandidate(
+                            targetTitle = track.name,
+                            targetArtists = artistsList,
+                            targetAlbum = track.album?.name,
+                            targetDurationMs = track.durationMs.toLong(),
+                            contextQuery = contextQuery,
+                            candidate = cand,
+                            isOfficialSong = officialSongIds.contains(cand.id),
+                        )
                     }
 
-                    null
+                    SpotifyTrackScorer.evaluateAmbiguity(scoredAll, artistsList)
                 }
 
-            val best =
-                resolutionResult?.accepted ?: run {
+            when (decisionResult) {
+                is AmbiguityResult.ClearWinner -> {
+                    val accepted = decisionResult.accepted
+                    val bestMetadata = accepted.toMediaMetadata().copy(
+                        thumbnailUrl = SpotifyEntityMapper.getTrackThumbnail(track) ?: accepted.thumbnail,
+                        duration = if (track.durationMs > 0) track.durationMs / 1000 else accepted.duration ?: -1,
+                        explicit = track.explicit || accepted.explicit,
+                        album = track.album?.let { MediaMetadata.Album(id = it.id, title = it.name) }
+                            ?: accepted.toMediaMetadata().album,
+                        spotifyTrackId = track.id.takeIf(String::isNotBlank),
+                        isrc = track.externalIds?.isrc?.takeIf(String::isNotBlank) ?: accepted.toMediaMetadata().isrc,
+                    )
+
+                    mutex.withLock {
+                        cache[cacheKey] = bestMetadata
+                    }
+
+                    db?.insert(
+                        SpotifyMatchEntity(
+                            spotifyId = cacheKey,
+                            youtubeId = bestMetadata.id,
+                            title = accepted.title,
+                            artist = accepted.artists.joinToString(" ") { it.name }.ifBlank { track.artists.joinToString(" ") { it.name } },
+                            matchScore = decisionResult.score,
+                            isrc = bestMetadata.isrc,
+                            isManualOverride = false,
+                        ),
+                    )
+
+                    Timber.tag("SpotifyMatching").i(
+                        "RESOLVED '${track.name}' -> YT id=${accepted.id}, title='${accepted.title}', score=${decisionResult.score}",
+                    )
+                    PlaybackResolutionDecision.Resolved(bestMetadata)
+                }
+
+                is AmbiguityResult.Ambiguous -> {
+                    val best = decisionResult.best
+                    val bestMetadata = best.toMediaMetadata().copy(
+                        thumbnailUrl = SpotifyEntityMapper.getTrackThumbnail(track) ?: best.thumbnail,
+                        duration = if (track.durationMs > 0) track.durationMs / 1000 else best.duration ?: -1,
+                        explicit = track.explicit || best.explicit,
+                        album = track.album?.let { MediaMetadata.Album(id = it.id, title = it.name) }
+                            ?: best.toMediaMetadata().album,
+                        spotifyTrackId = track.id.takeIf(String::isNotBlank),
+                        isrc = track.externalIds?.isrc?.takeIf(String::isNotBlank) ?: best.toMediaMetadata().isrc,
+                    )
+
+                    Timber.tag("SpotifyMatching").w(
+                        "AMBIGUITY GUARD TRIGGERED for '${track.name}'. Top candidates: ${decisionResult.topCandidates.size}",
+                    )
+                    PlaybackResolutionDecision.Ambiguous(
+                        topCandidates = decisionResult.topCandidates,
+                        spotifyTrack = track,
+                        bestMetadata = bestMetadata,
+                    )
+                }
+
+                is AmbiguityResult.NoCandidates -> {
                     Timber.tag("SpotifyMatching").w("REJECTED '${track.name}': all resolution tiers failed")
-                    return@withContext null
-                }
-
-            Timber.tag("SpotifyMatching").i(
-                "ACCEPTED '${track.name}' -> YT id=${best.id}, title='${best.title}', method=${resolutionResult.method}, score=${resolutionResult.score}",
-            )
-
-            val bestMetadata = best.toMediaMetadata()
-            val metadata =
-                bestMetadata.copy(
-                    thumbnailUrl = SpotifyEntityMapper.getTrackThumbnail(track) ?: best.thumbnail,
-                    duration = if (track.durationMs > 0) track.durationMs / 1000 else best.duration ?: -1,
-                    explicit = track.explicit || best.explicit,
-                    album =
-                        track.album?.let { MediaMetadata.Album(id = it.id, title = it.name) }
-                            ?: bestMetadata.album,
-                    spotifyTrackId = track.id.takeIf(String::isNotBlank),
-                    isrc = track.externalIds?.isrc?.takeIf(String::isNotBlank) ?: bestMetadata.isrc,
-                )
-
-            Timber.tag("SpotifyMatching").d(
-                "PLAYER OUTPUT: id=${metadata.id}, title='${metadata.title}', artists='${metadata.artists.joinToString { it.name }}', " +
-                "dur=${metadata.duration}s, isrc=${metadata.isrc}, explicit=${metadata.explicit}",
-            )
-
-            mutex.withLock {
-                cache[track.id] = metadata
-                if (rawSpotifyId.isNotBlank()) {
-                    cache[rawSpotifyId] = metadata
+                    PlaybackResolutionDecision.NotFound
                 }
             }
-
-            val matchKey = if (rawSpotifyId.isNotBlank()) rawSpotifyId else track.id
-            val existingMatch = db?.getSpotifyMatch(matchKey)
-            if (existingMatch == null || !existingMatch.isManualOverride) {
-                db?.insert(
-                    SpotifyMatchEntity(
-                        spotifyId = matchKey,
-                        youtubeId = metadata.id,
-                        title = best.title,
-                        artist = best.artists.joinToString(" ") { it.name }.ifBlank { track.artists.joinToString(" ") { it.name } },
-                        matchScore = resolutionResult.score,
-                        isrc = metadata.isrc,
-                    ),
-                )
-            }
-
-            metadata
         }
+
+    suspend fun fetchTopCandidates(
+        trackId: String,
+        title: String,
+        artists: List<String>,
+        durationMs: Long = 0L,
+        album: String? = null,
+        contextQuery: String? = null,
+    ): List<SongItem> = withContext(Dispatchers.IO) {
+        val artistStr = artists.joinToString(" ")
+        val targetLang = SpotifyTrackScorer.detectLanguage("$title ${album.orEmpty()} ${contextQuery.orEmpty()}")
+        val langQuery = if (targetLang != null) " $targetLang" else ""
+        val primaryQuery = "$title$langQuery $artistStr".trim()
+        val baseTitle = SpotifyTrackScorer.extractBaseTitle(title)
+        val secondaryQuery = "$baseTitle$langQuery $artistStr".trim()
+
+        val songs = searchSongs(primaryQuery)
+        val moreSongs = if (secondaryQuery != primaryQuery) searchSongs(secondaryQuery) else emptyList()
+        val videos = searchVideos(primaryQuery)
+        val all = searchAll(primaryQuery)
+
+        val officialSongIds = (songs + moreSongs).map { it.id }.toSet()
+        val allCandidates = (songs + moreSongs + videos + all).distinctBy { it.id }
+
+        val scored = allCandidates.map { cand ->
+            SpotifyTrackScorer.scoreCandidate(
+                targetTitle = title,
+                targetArtists = artists,
+                targetAlbum = album,
+                targetDurationMs = durationMs,
+                contextQuery = contextQuery,
+                candidate = cand,
+                isOfficialSong = officialSongIds.contains(cand.id),
+            )
+        }
+
+        val valid = scored.filter { !it.isDisqualified && it.totalScore > -100.0 }.sortedByDescending { it.totalScore }
+        val top = valid.take(8).map { it.candidate }
+        if (top.isNotEmpty()) {
+            top
+        } else {
+            allCandidates.take(8)
+        }
+    }
+
+    suspend fun storeOverride(
+        database: MusicDatabase,
+        spotifyTrackId: String,
+        chosen: SongItem,
+        targetTrackTitle: String? = null,
+        targetArtist: String? = null,
+    ) {
+        val key = SpotifyTrackScorer.cacheKey(spotifyTrackId)
+        val entity = SpotifyMatchEntity(
+            spotifyId = key,
+            youtubeId = chosen.id,
+            title = chosen.title,
+            artist = chosen.artists.joinToString(", ") { it.name }.ifBlank { targetArtist.orEmpty() },
+            matchScore = 1.0,
+            isManualOverride = true,
+        )
+        withContext(Dispatchers.IO) {
+            database.spotifyDao().insert(entity)
+            val meta = chosen.toMediaMetadata().copy(spotifyTrackId = spotifyTrackId)
+            mutex.withLock {
+                cache[key] = meta
+            }
+        }
+    }
+
+    suspend fun resetOverride(
+        database: MusicDatabase,
+        spotifyTrackId: String,
+    ) {
+        val key = SpotifyTrackScorer.cacheKey(spotifyTrackId)
+        val rawId = spotifyTrackId.removePrefix("spotify:track:").removePrefix("spotify:").trim()
+        withContext(Dispatchers.IO) {
+            database.spotifyDao().deleteSpotifyMatch(key)
+            database.spotifyDao().deleteSpotifyMatch(rawId)
+            database.spotifyDao().deleteSpotifyMatch(spotifyTrackId)
+            mutex.withLock {
+                cache.remove(key)
+                cache.remove(rawId)
+                cache.remove(spotifyTrackId)
+            }
+        }
+    }
+
+    suspend fun hasOverride(
+        database: MusicDatabase,
+        spotifyTrackId: String,
+    ): Boolean {
+        val key = SpotifyTrackScorer.cacheKey(spotifyTrackId)
+        val rawId = spotifyTrackId.removePrefix("spotify:track:").removePrefix("spotify:").trim()
+        return withContext(Dispatchers.IO) {
+            val match = database.spotifyDao().getSpotifyMatch(key)
+                ?: database.spotifyDao().getSpotifyMatch(rawId)
+                ?: database.spotifyDao().getSpotifyMatch(spotifyTrackId)
+            match?.isManualOverride == true
+        }
+    }
 
     internal fun buildStandardQuery(track: SpotifyTrack, targetLang: String? = null): String {
         val rawStandardQuery = SpotifyQueryBuilder.buildSearchQuery(track)
@@ -375,42 +443,9 @@ object SpotifyPlaybackResolver {
         }
     }
 
-    private data class ResolutionResult(
-        val accepted: SongItem,
-        val score: Double,
-        val method: String,
-    )
+    internal fun detectLanguage(text: String): String? = SpotifyTrackScorer.detectLanguage(text)
 
-    private val KNOWN_LANGUAGES =
-        listOf(
-            "malayalam", "tamil", "telugu", "kannada", "hindi",
-            "bengali", "marathi", "punjabi", "gujarati", "bhojpuri",
-            "urdu", "japanese", "korean", "spanish", "french", "german",
-        )
-
-    internal fun detectLanguage(text: String): String? {
-        val sanitized =
-            text
-                .replace(Regex("""(?i)\benglish\s+sub(?:titles?)?\b"""), "")
-                .replace(Regex("""(?i)\beng\s+sub\b"""), "")
-        val lower = sanitized.lowercase()
-        return KNOWN_LANGUAGES.firstOrNull { lang ->
-            Regex("""\b${lang}\b""", RegexOption.IGNORE_CASE).containsMatchIn(lower)
-        }
-    }
-
-    internal fun extractBaseTitle(title: String): String {
-        val cleaned =
-            title
-                .replace(Regex("""(?i)\s*[\(\[]\s*(?:from\s+["“']?[^"”'\)\]]+["”']?|original\s+(?:motion\s+picture\s+)?soundtrack|soundtrack|ost)\s*[\)\]]"""), "")
-                .replace(Regex("""(?i)\s*[-–—]\s*(?:from\s+["“']?[^"”']+["”']?|original\s+(?:motion\s+picture\s+)?soundtrack|soundtrack|ost).*$"""), "")
-                .replace(Regex("""(?i)\s*[-–—]\s*from\s+.*$"""), "")
-                .replace(Regex("""(?i)\s*[\(\[]\s*(?:feat\.|ft\.|featuring)\s+[^)]*[\)\]]"""), "")
-                .trim()
-                .trim('-', '–', '—', '"', '\'', ' ', '\t')
-
-        return cleaned.ifBlank { title }
-    }
+    internal fun extractBaseTitle(title: String): String = SpotifyTrackScorer.extractBaseTitle(title)
 
     private suspend fun searchSongs(query: String): List<SongItem> {
         val res = YouTube.search(query = query, filter = YouTube.SearchFilter.FILTER_SONG).getOrNull()
@@ -425,228 +460,5 @@ object SpotifyPlaybackResolver {
     private suspend fun searchAll(query: String): List<SongItem> {
         val res = YouTube.search(query = query, filter = null).getOrNull()
         return res?.items?.filterIsInstance<SongItem>()?.distinctBy { it.id }.orEmpty()
-    }
-
-    private fun scoreStrict(
-        trackQuery: TrackQuery,
-        candidates: List<SongItem>,
-    ): SpotifySearchScorer.CandidateDecision<SongItem>? {
-        val valid = candidates.filter { (it.duration ?: 0) > 0 }
-        if (valid.isEmpty()) return null
-        return scorer.pickGeneric(
-            track = trackQuery,
-            candidates = valid,
-            titleOf = { it.title },
-            artistsOf = { it.artists.map { a -> a.name } },
-            durationMsOf = { (it.duration ?: 0) * 1000L },
-        )
-    }
-
-    private fun pickRelaxedCandidate(
-        track: SpotifyTrack,
-        candidates: List<SongItem>,
-    ): SongItem? {
-        if (candidates.isEmpty()) return null
-
-        val targetLang = detectLanguage("${track.name} ${track.album?.name.orEmpty()}")
-        val baseTitle = extractBaseTitle(track.name).ifBlank { track.name }
-        val normBaseTitle = matcher.canonicalTitle(baseTitle).ifBlank { matcher.canonicalTitle(track.name) }
-        val cleanTitle = SpotifyQueryBuilder.cleanTrackTitle(track.name).ifBlank { track.name }
-        val normCleanTitle = matcher.canonicalTitle(cleanTitle).ifBlank { normBaseTitle }
-
-        val primaryArtistName = track.artists.firstOrNull()?.name.orEmpty()
-        val normPrimaryArtist = matcher.canonicalArtist(primaryArtistName)
-        val allTargetArtists = track.artists.map { matcher.canonicalArtist(it.name) }.filter { it.isNotBlank() }
-        val targetDurSec = if (track.durationMs > 0) track.durationMs / 1000 else 0
-
-        val artistTokens = track.artists.flatMap { it.name.lowercase().split(Regex("""\W+""")) }.filter { it.length >= 3 }
-        val albumTokens = track.album?.name?.lowercase()?.split(Regex("""\W+"""))?.filter { it.length >= 3 }.orEmpty()
-
-        val baseTitleWords = normBaseTitle.split(Regex("""\W+""")).filter { it.length >= 3 }
-        val cleanTitleWords = normCleanTitle.split(Regex("""\W+""")).filter { it.length >= 3 }
-        val targetTitleWords = if (baseTitleWords.isNotEmpty()) baseTitleWords else cleanTitleWords
-
-        val scoredCandidates =
-            candidates.mapNotNull { cand ->
-                val candCleanTitle = SpotifyQueryBuilder.cleanTrackTitle(cand.title).ifBlank { cand.title }
-                val normCandTitle = matcher.canonicalTitle(candCleanTitle).ifBlank { matcher.canonicalTitle(cand.title) }
-
-                val hasUnwanted =
-                    UNWANTED_TOKENS.any { token ->
-                        cand.title.contains(token, ignoreCase = true) && !track.name.contains(token, ignoreCase = true)
-                    }
-                if (hasUnwanted) return@mapNotNull null
-
-                val candLang = detectLanguage("${cand.title} ${cand.artists.joinToString(" ") { it.name }}")
-
-                // Strict language conflict gate:
-                // If target specifies a language (e.g. Malayalam) and candidate specifies a DIFFERENT language (e.g. Kannada), REJECT!
-                if (targetLang != null && candLang != null && targetLang != candLang) {
-                    return@mapNotNull null
-                }
-
-                val candDurSec = cand.duration ?: 0
-                val durDelta = if (targetDurSec > 0 && candDurSec > 0) kotlin.math.abs(targetDurSec - candDurSec) else 0
-
-                // Discard candidates with massive duration disparity (> 60s) when both durations are known
-                if (targetDurSec > 0 && candDurSec > 0 && durDelta > 60) {
-                    return@mapNotNull null
-                }
-
-                val jwBaseTitle = matcher.jaroWinklerSimilarity(normBaseTitle, normCandTitle)
-                val jwCleanTitle = matcher.jaroWinklerSimilarity(normCleanTitle, normCandTitle)
-                val jwTitle = maxOf(jwBaseTitle, jwCleanTitle)
-
-                val baseContained =
-                    normBaseTitle.isNotBlank() && (
-                        normCandTitle.contains(normBaseTitle) || normBaseTitle.contains(normCandTitle)
-                    )
-                val cleanContained =
-                    normCleanTitle.isNotBlank() && (
-                        normCandTitle.contains(normCleanTitle) || normCleanTitle.contains(normCandTitle)
-                    )
-                val titleContains = baseContained || cleanContained
-
-                val candTitleWords = normCandTitle.split(Regex("""\W+""")).filter { it.length >= 3 }
-                val commonWordCount =
-                    targetTitleWords.count { targetWord ->
-                        candTitleWords.any { it == targetWord || it.contains(targetWord) || targetWord.contains(it) }
-                    }
-                val wordOverlapRatio = if (targetTitleWords.isNotEmpty()) commonWordCount.toDouble() / targetTitleWords.size else 0.0
-
-                val candArtistNames = cand.artists.map { matcher.canonicalArtist(it.name) }.filter { it.isNotBlank() }
-                val candAllText = (cand.artists.map { it.name } + cand.title).joinToString(" ").lowercase()
-
-                val primaryArtistMatched =
-                    normPrimaryArtist.isNotBlank() && (
-                        candArtistNames.any {
-                            it == normPrimaryArtist || it.contains(normPrimaryArtist) || normPrimaryArtist.contains(it) ||
-                                matcher.jaroWinklerSimilarity(normPrimaryArtist, it) >= 0.75
-                        } ||
-                            candAllText.contains(primaryArtistName.lowercase())
-                    )
-
-                val anyArtistMatched =
-                    primaryArtistMatched ||
-                        allTargetArtists.any { artist ->
-                            candArtistNames.any {
-                                it == artist || it.contains(artist) || artist.contains(it) ||
-                                    matcher.jaroWinklerSimilarity(artist, it) >= 0.75
-                            } ||
-                                candAllText.contains(artist)
-                        }
-
-                val tokenArtistMatched = anyArtistMatched || artistTokens.any { candAllText.contains(it) }
-                val albumMatched = albumTokens.isNotEmpty() && albumTokens.any { candAllText.contains(it) }
-                val contextMatched = tokenArtistMatched || albumMatched
-
-                val isQualified =
-                    when {
-                        jwTitle >= 0.75 -> true
-                        titleContains && (contextMatched || durDelta <= 30) -> true
-                        wordOverlapRatio >= 0.50 && (contextMatched || durDelta <= 20) -> true
-                        jwTitle >= 0.50 && contextMatched && (candDurSec == 0 || durDelta <= 45) -> true
-                        jwTitle >= 0.60 && (candDurSec > 0 && durDelta <= 15) -> true
-                        baseContained && candDurSec > 0 && durDelta <= 45 -> true
-                        else -> false
-                    }
-
-                if (!isQualified) return@mapNotNull null
-
-                var score = jwTitle * 40.0
-                if (titleContains) score += 25.0
-                if (primaryArtistMatched) {
-                    score += 25.0
-                } else if (tokenArtistMatched) {
-                    score += 20.0
-                } else if (albumMatched) {
-                    score += 10.0
-                }
-                score += wordOverlapRatio * 20.0
-
-                // Language match bonus or explicit dub penalty
-                if (targetLang != null && candLang == targetLang) {
-                    score += 35.0
-                } else if (targetLang == null && candLang != null) {
-                    score -= 25.0
-                }
-
-                if (targetDurSec > 0 && candDurSec > 0) {
-                    val durScore = (25.0 - (durDelta * 0.5)).coerceAtLeast(0.0)
-                    score += durScore
-                }
-
-                Pair(cand, score)
-            }
-
-        return scoredCandidates.maxByOrNull { it.second }?.first
-    }
-
-    private fun pickBestEffortCandidate(
-        track: SpotifyTrack,
-        candidates: List<SongItem>,
-    ): SongItem? {
-        if (candidates.isEmpty()) return null
-        val targetLang = detectLanguage("${track.name} ${track.album?.name.orEmpty()}")
-        val baseTitle = extractBaseTitle(track.name).ifBlank { track.name }
-        val normBaseTitle = matcher.canonicalTitle(baseTitle).ifBlank { matcher.canonicalTitle(track.name) }
-        val targetDurSec = if (track.durationMs > 0) track.durationMs / 1000 else 0
-        val targetWords = normBaseTitle.split(Regex("""\W+""")).filter { it.length >= 3 }
-        val artistTokens = track.artists.flatMap { it.name.lowercase().split(Regex("""\W+""")) }.filter { it.length >= 3 }
-
-        val nonUnwanted =
-            candidates.filter { cand ->
-                val hasUnwanted =
-                    UNWANTED_TOKENS.any { token ->
-                        cand.title.contains(token, ignoreCase = true) && !track.name.contains(token, ignoreCase = true)
-                    }
-                val candLang = detectLanguage("${cand.title} ${cand.artists.joinToString(" ") { it.name }}")
-                val hasLangConflict = targetLang != null && candLang != null && targetLang != candLang
-
-                !hasUnwanted && !hasLangConflict
-            }.ifEmpty { candidates }
-
-        // If target has language, first try candidates matching that exact language
-        if (targetLang != null) {
-            val matchingLangCandidate =
-                nonUnwanted.firstOrNull { cand ->
-                    val candLang = detectLanguage("${cand.title} ${cand.artists.joinToString(" ") { it.name }}")
-                    candLang == targetLang
-                }
-            if (matchingLangCandidate != null) return matchingLangCandidate
-        }
-
-        // Try candidate sharing words or high title similarity and duration delta <= 60s
-        val matchWithDuration =
-            nonUnwanted.firstOrNull { cand ->
-                val candDurSec = cand.duration ?: 0
-                if (targetDurSec > 0 && candDurSec > 0 && kotlin.math.abs(targetDurSec - candDurSec) > 60) {
-                    return@firstOrNull false
-                }
-                val normCandTitle = matcher.canonicalTitle(cand.title)
-                val sharesWord = targetWords.any { word -> normCandTitle.contains(word) }
-                val titleSim = matcher.jaroWinklerSimilarity(normBaseTitle, normCandTitle)
-                sharesWord || titleSim >= 0.40
-            }
-        if (matchWithDuration != null) return matchWithDuration
-
-        // Try candidate where artist token matches in candidate title/artist
-        val matchWithArtistToken =
-            nonUnwanted.firstOrNull { cand ->
-                val candAll = (cand.artists.map { it.name } + cand.title).joinToString(" ").lowercase()
-                artistTokens.any { candAll.contains(it) }
-            }
-        if (matchWithArtistToken != null) return matchWithArtistToken
-
-        // Fallback: take the first non-unwanted candidate that has reasonable duration (<= 90s delta)
-        val reasonableDuration =
-            nonUnwanted.firstOrNull { cand ->
-                val candDurSec = cand.duration ?: 0
-                candDurSec == 0 || targetDurSec == 0 || kotlin.math.abs(targetDurSec - candDurSec) <= 90
-            }
-        if (reasonableDuration != null) return reasonableDuration
-
-        // Ultimate fallback: first item
-        return nonUnwanted.firstOrNull()
     }
 }

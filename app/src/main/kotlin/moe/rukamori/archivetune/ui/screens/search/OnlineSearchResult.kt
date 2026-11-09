@@ -87,8 +87,11 @@ import moe.rukamori.archivetune.innertube.models.ArtistItem
 import moe.rukamori.archivetune.innertube.models.SongItem
 import moe.rukamori.archivetune.innertube.models.YTItem
 import moe.rukamori.archivetune.innertube.pages.SearchSummary
+import moe.rukamori.archivetune.spotify.PlaybackResolutionDecision
 import moe.rukamori.archivetune.spotify.SpotifyPlaybackResolver
 import moe.rukamori.archivetune.spotify.SpotifyTracksQueue
+import moe.rukamori.archivetune.spotify.mapping.SpotifyEntityMapper
+import moe.rukamori.archivetune.ui.menu.VersionPickerBottomSheet
 import moe.rukamori.archivetune.spotify.models.SpotifyTrack
 import moe.rukamori.archivetune.ui.component.EmptyPlaceholder
 import moe.rukamori.archivetune.ui.component.ItemThumbnail
@@ -212,21 +215,37 @@ fun OnlineSearchResult(
             coroutineScope.launch {
                 resolvingTrackId = track.id
                 try {
-                    val preloadItem = SpotifyPlaybackResolver.resolveToMetadata(track, contextQuery = viewModel.query)
-                    if (preloadItem != null) {
-                        playerConnection.playQueue(
-                            SpotifyTracksQueue(
-                                allTracks = trackList,
-                                startIndex = trackList.indexOf(track).coerceAtLeast(0),
-                                preloadItem = preloadItem,
-                                title = "Spotify: ${viewModel.query}",
-                                totalCount = trackList.size,
-                                hasCustomOrder = true,
-                                contextQuery = viewModel.query,
-                            ),
-                        )
-                    } else {
-                        Toast.makeText(context, "Could not find a playable version of this song", Toast.LENGTH_SHORT).show()
+                    when (val decision = SpotifyPlaybackResolver.resolveCandidateDecision(track, database, viewModel.query)) {
+                        is PlaybackResolutionDecision.Resolved -> {
+                            playerConnection.playQueue(
+                                SpotifyTracksQueue(
+                                    allTracks = trackList,
+                                    startIndex = trackList.indexOf(track).coerceAtLeast(0),
+                                    preloadItem = decision.metadata,
+                                    title = "Spotify: ${viewModel.query}",
+                                    totalCount = trackList.size,
+                                    hasCustomOrder = true,
+                                    contextQuery = viewModel.query,
+                                ),
+                            )
+                        }
+                        is PlaybackResolutionDecision.Ambiguous -> {
+                            menuState.show {
+                                VersionPickerBottomSheet(
+                                    spotifyTrackId = track.id,
+                                    targetTitle = track.name,
+                                    targetArtists = track.artists.map { it.name },
+                                    targetDurationMs = track.durationMs.toLong(),
+                                    targetAlbum = track.album?.name,
+                                    targetThumbnail = SpotifyEntityMapper.getTrackThumbnail(track).orEmpty(),
+                                    initialCandidates = decision.topCandidates,
+                                    onDismiss = menuState::dismiss,
+                                )
+                            }
+                        }
+                        is PlaybackResolutionDecision.NotFound -> {
+                            Toast.makeText(context, "Could not find a playable version of this song", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 } finally {
                     if (resolvingTrackId == track.id) {
@@ -257,6 +276,7 @@ fun OnlineSearchResult(
                         YouTubeSongMenu(
                             song = songItem,
                             navController = navController,
+                            spotifyTrackId = track.id,
                             onDismiss = menuState::dismiss,
                         )
                     }

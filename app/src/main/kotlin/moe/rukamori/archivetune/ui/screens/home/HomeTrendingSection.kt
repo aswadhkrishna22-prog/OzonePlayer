@@ -375,7 +375,7 @@ private fun TrendingShelfContent(
                                                         mediaContext.playerConnection.playQueue(
                                                             YouTubeQueue(
                                                                 endpoint = song.endpoint ?: WatchEndpoint(videoId = song.id),
-                                                                preloadItem = song.toMediaMetadata(),
+                                                                preloadItem = song.toMediaMetadata().copy(spotifyTrackId = track.id),
                                                             ),
                                                         )
                                                     }

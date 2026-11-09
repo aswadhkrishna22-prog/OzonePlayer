@@ -1355,4 +1355,15 @@
     <!-- Smart Vibe & Energy Queue Engine -->
     <string name="smart_vibe_queue_title">Smart Vibe Queue</string>
     <string name="smart_vibe_queue_desc">Keep queue songs in the same energy vibe (Power, Love, Emotional) when starting radio</string>
+
+    <!-- Version Picker / Match Override -->
+    <string name="wrong_song_pick_another">Wrong song? Pick another version</string>
+    <string name="wrong_song_pick_another_desc">Choose the exact version from YouTube Music</string>
+    <string name="pick_another_version">Pick another version</string>
+    <string name="reset_to_automatic">Reset to automatic</string>
+    <string name="reset_to_automatic_desc">Remove custom version override</string>
+    <string name="ambiguous_version_title">Select Version</string>
+    <string name="ambiguous_version_desc">Multiple versions match. Tap the one you want to play:</string>
+    <string name="version_override_saved">Saved version for this song</string>
+    <string name="version_override_cleared">Reset to automatic matching</string>
 </resources>

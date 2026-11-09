@@ -15,7 +15,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.ui.component.MenuSurfaceSection
+import moe.rukamori.archivetune.ui.component.NewMenuItem
 import androidx.compose.ui.unit.dp
 import androidx.media3.exoplayer.offline.Download
 import androidx.navigation.NavController
@@ -41,6 +47,8 @@ internal fun YouTubeSongMenuContent(
     bottomSheetPageState: BottomSheetPageState,
     navController: NavController,
     context: Context,
+    effectiveSpotifyId: String? = null,
+    onOpenVersionPicker: () -> Unit = {},
     onDismiss: () -> Unit,
     onAddToPlaylist: () -> Unit,
     onToggleSpeedDial: () -> Unit,
@@ -115,6 +123,30 @@ internal fun YouTubeSongMenuContent(
                     onDismiss = onDismiss,
                     onShowSelectArtistDialog = onShowSelectArtistDialog,
                 )
+            }
+        }
+
+        if (!effectiveSpotifyId.isNullOrBlank()) {
+            item {
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            item {
+                MenuSurfaceSection {
+                    NewMenuItem(
+                        headlineContent = { Text(text = stringResource(R.string.wrong_song_pick_another)) },
+                        supportingContent = { Text(text = stringResource(R.string.wrong_song_pick_another_desc)) },
+                        leadingContent = {
+                            Icon(
+                                painter = painterResource(R.drawable.tune),
+                                contentDescription = null,
+                            )
+                        },
+                        onClick = onOpenVersionPicker,
+                        index = 0,
+                        count = 1,
+                    )
+                }
             }
         }
 
