@@ -212,7 +212,7 @@ fun OnlineSearchResult(
             coroutineScope.launch {
                 resolvingTrackId = track.id
                 try {
-                    val preloadItem = SpotifyPlaybackResolver.resolveToMetadata(track)
+                    val preloadItem = SpotifyPlaybackResolver.resolveToMetadata(track, contextQuery = viewModel.query)
                     if (preloadItem != null) {
                         playerConnection.playQueue(
                             SpotifyTracksQueue(
@@ -222,6 +222,7 @@ fun OnlineSearchResult(
                                 title = "Spotify: ${viewModel.query}",
                                 totalCount = trackList.size,
                                 hasCustomOrder = true,
+                                contextQuery = viewModel.query,
                             ),
                         )
                     } else {
@@ -240,7 +241,7 @@ fun OnlineSearchResult(
         coroutineScope.launch {
             resolvingTrackId = track.id
             try {
-                val metadata = SpotifyPlaybackResolver.resolveToMetadata(track)
+                val metadata = SpotifyPlaybackResolver.resolveToMetadata(track, contextQuery = viewModel.query)
                 if (metadata != null) {
                     val songItem =
                         SongItem(

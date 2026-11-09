@@ -6,6 +6,8 @@
 
 package moe.rukamori.archivetune.spotify
 
+import moe.rukamori.archivetune.spotify.models.SpotifySimpleArtist
+import moe.rukamori.archivetune.spotify.models.SpotifyTrack
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -63,5 +65,19 @@ class SpotifyPlaybackResolverTest {
         assertEquals("malayalam", SpotifyPlaybackResolver.detectLanguage("Samajavaragamana Malayalam Song (English Subtitles)"))
         assertEquals("malayalam", SpotifyPlaybackResolver.detectLanguage("Samajavaragamana Malayalam [Eng Sub]"))
         assertEquals(null, SpotifyPlaybackResolver.detectLanguage("Shape of You"))
+    }
+
+    @Test
+    fun buildStandardQuery_appendsTargetLangWhenNotPresent() {
+        val track = SpotifyTrack(name = "Samajavaragamana", artists = listOf(SpotifySimpleArtist(name = "Thaman S")))
+        val query = SpotifyPlaybackResolver.buildStandardQuery(track, "malayalam")
+        assertEquals("Samajavaragamana Thaman S malayalam", query)
+    }
+
+    @Test
+    fun buildStandardQuery_doesNotDuplicateLanguageWhenAlreadyPresent() {
+        val track = SpotifyTrack(name = "Samajavaragamana Malayalam", artists = listOf(SpotifySimpleArtist(name = "Thaman S")))
+        val query = SpotifyPlaybackResolver.buildStandardQuery(track, "malayalam")
+        assertEquals("Samajavaragamana Malayalam Thaman S", query)
     }
 }
