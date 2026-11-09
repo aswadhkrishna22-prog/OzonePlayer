@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +40,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -79,7 +81,10 @@ import moe.rukamori.archivetune.innertube.SearchFilter.Companion.FILTER_COMMUNIT
 import moe.rukamori.archivetune.innertube.SearchFilter.Companion.FILTER_FEATURED_PLAYLIST
 import moe.rukamori.archivetune.innertube.SearchFilter.Companion.FILTER_SONG
 import moe.rukamori.archivetune.innertube.SearchFilter.Companion.FILTER_VIDEO
+import moe.rukamori.archivetune.innertube.models.Album
+import moe.rukamori.archivetune.innertube.models.Artist
 import moe.rukamori.archivetune.innertube.models.ArtistItem
+import moe.rukamori.archivetune.innertube.models.SongItem
 import moe.rukamori.archivetune.innertube.models.YTItem
 import moe.rukamori.archivetune.innertube.pages.SearchSummary
 import moe.rukamori.archivetune.spotify.SpotifyPlaybackResolver
@@ -93,6 +98,7 @@ import moe.rukamori.archivetune.ui.component.SpotifyTrackListItem
 import moe.rukamori.archivetune.ui.component.shimmer.ListItemPlaceHolder
 import moe.rukamori.archivetune.ui.component.shimmer.ShimmerHost
 import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.menu.YouTubeSongMenu
 import moe.rukamori.archivetune.ui.screens.playlist.isResolvedAs
 import moe.rukamori.archivetune.ui.screens.spotifyhome.SpotifyAlbumSectionRow
 import moe.rukamori.archivetune.ui.screens.spotifyhome.SpotifyArtistSectionRow
@@ -225,6 +231,40 @@ fun OnlineSearchResult(
                     if (resolvingTrackId == track.id) {
                         resolvingTrackId = null
                     }
+                }
+            }
+        }
+    }
+
+    val onSpotifyTrackMenuClick: (SpotifyTrack) -> Unit = { track ->
+        coroutineScope.launch {
+            resolvingTrackId = track.id
+            try {
+                val metadata = SpotifyPlaybackResolver.resolveToMetadata(track)
+                if (metadata != null) {
+                    val songItem =
+                        SongItem(
+                            id = metadata.id,
+                            title = metadata.title,
+                            artists = metadata.artists.map { Artist(name = it.name, id = it.id) },
+                            album = metadata.album?.let { Album(name = it.title, id = it.id) },
+                            duration = metadata.duration.takeIf { it > 0 },
+                            thumbnail = metadata.thumbnailUrl.orEmpty(),
+                            explicit = metadata.explicit,
+                        )
+                    menuState.show {
+                        YouTubeSongMenu(
+                            song = songItem,
+                            navController = navController,
+                            onDismiss = menuState::dismiss,
+                        )
+                    }
+                } else {
+                    Toast.makeText(context, "Could not resolve track", Toast.LENGTH_SHORT).show()
+                }
+            } finally {
+                if (resolvingTrackId == track.id) {
+                    resolvingTrackId = null
                 }
             }
         }
@@ -453,12 +493,27 @@ fun OnlineSearchResult(
                                         trailingContent = {
                                             if (isTrackResolving) {
                                                 CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
+                                            } else {
+                                                IconButton(
+                                                    onClick = { onSpotifyTrackMenuClick(track) },
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.more_vert),
+                                                        contentDescription = null,
+                                                    )
+                                                }
                                             }
                                         },
                                         modifier =
                                             Modifier
                                                 .fillMaxWidth()
-                                                .clickable { onSpotifyTrackClick(track, tracks) },
+                                                .combinedClickable(
+                                                    onClick = { onSpotifyTrackClick(track, tracks) },
+                                                    onLongClick = {
+                                                        haptics.longPress()
+                                                        onSpotifyTrackMenuClick(track)
+                                                    },
+                                                ),
                                     )
                                 }
                             }
@@ -568,12 +623,27 @@ fun OnlineSearchResult(
                                         trailingContent = {
                                             if (isTrackResolving) {
                                                 CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
+                                            } else {
+                                                IconButton(
+                                                    onClick = { onSpotifyTrackMenuClick(track) },
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.more_vert),
+                                                        contentDescription = null,
+                                                    )
+                                                }
                                             }
                                         },
                                         modifier =
                                             Modifier
                                                 .fillMaxWidth()
-                                                .clickable { onSpotifyTrackClick(track, tracks) },
+                                                .combinedClickable(
+                                                    onClick = { onSpotifyTrackClick(track, tracks) },
+                                                    onLongClick = {
+                                                        haptics.longPress()
+                                                        onSpotifyTrackMenuClick(track)
+                                                    },
+                                                ),
                                     )
                                 }
                             } else {
