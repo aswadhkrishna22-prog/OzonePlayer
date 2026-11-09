@@ -71,7 +71,7 @@ fun PlayerMenu(
     val menuState = LocalMenuState.current
     val dbMatch by produceState<moe.rukamori.archivetune.db.entities.SpotifyMatchEntity?>(initialValue = null, mediaMetadata.id) {
         value = withContext(Dispatchers.IO) {
-            database.spotifyDao().getSpotifyMatchByYouTubeId(mediaMetadata.id)
+            database.getSpotifyMatchByYouTubeId(mediaMetadata.id)
         }
     }
     val effectiveSpotifyId = remember(mediaMetadata.spotifyTrackId, dbMatch) {

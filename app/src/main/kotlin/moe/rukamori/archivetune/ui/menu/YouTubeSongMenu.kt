@@ -62,7 +62,7 @@ fun YouTubeSongMenu(
     val menuState = LocalMenuState.current
     val dbMatch by produceState<moe.rukamori.archivetune.db.entities.SpotifyMatchEntity?>(initialValue = null, song.id) {
         value = withContext(Dispatchers.IO) {
-            database.spotifyDao().getSpotifyMatchByYouTubeId(song.id)
+            database.getSpotifyMatchByYouTubeId(song.id)
         }
     }
     val effectiveSpotifyId = remember(spotifyTrackId, playerConnection.currentMediaMetadata.value, dbMatch) {

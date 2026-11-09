@@ -394,7 +394,7 @@ object SpotifyPlaybackResolver {
             isManualOverride = true,
         )
         withContext(Dispatchers.IO) {
-            database.spotifyDao().insert(entity)
+            database.insert(entity)
             val meta = chosen.toMediaMetadata().copy(spotifyTrackId = spotifyTrackId)
             mutex.withLock {
                 cache[key] = meta
@@ -409,9 +409,9 @@ object SpotifyPlaybackResolver {
         val key = SpotifyTrackScorer.cacheKey(spotifyTrackId)
         val rawId = spotifyTrackId.removePrefix("spotify:track:").removePrefix("spotify:").trim()
         withContext(Dispatchers.IO) {
-            database.spotifyDao().deleteSpotifyMatch(key)
-            database.spotifyDao().deleteSpotifyMatch(rawId)
-            database.spotifyDao().deleteSpotifyMatch(spotifyTrackId)
+            database.deleteSpotifyMatch(key)
+            database.deleteSpotifyMatch(rawId)
+            database.deleteSpotifyMatch(spotifyTrackId)
             mutex.withLock {
                 cache.remove(key)
                 cache.remove(rawId)
@@ -427,9 +427,9 @@ object SpotifyPlaybackResolver {
         val key = SpotifyTrackScorer.cacheKey(spotifyTrackId)
         val rawId = spotifyTrackId.removePrefix("spotify:track:").removePrefix("spotify:").trim()
         return withContext(Dispatchers.IO) {
-            val match = database.spotifyDao().getSpotifyMatch(key)
-                ?: database.spotifyDao().getSpotifyMatch(rawId)
-                ?: database.spotifyDao().getSpotifyMatch(spotifyTrackId)
+            val match = database.getSpotifyMatch(key)
+                ?: database.getSpotifyMatch(rawId)
+                ?: database.getSpotifyMatch(spotifyTrackId)
             match?.isManualOverride == true
         }
     }

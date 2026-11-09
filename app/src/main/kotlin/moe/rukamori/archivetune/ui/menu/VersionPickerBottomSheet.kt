@@ -51,6 +51,8 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
 import moe.rukamori.archivetune.LocalDatabase
 import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
@@ -60,7 +62,6 @@ import moe.rukamori.archivetune.models.toMediaMetadata
 import moe.rukamori.archivetune.playback.queues.YouTubeQueue
 import moe.rukamori.archivetune.spotify.SpotifyPlaybackResolver
 import moe.rukamori.archivetune.spotify.matching.SpotifyTrackScorer
-import moe.rukamori.archivetune.ui.component.ItemThumbnail
 import moe.rukamori.archivetune.ui.component.MenuSurfaceSection
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
 import moe.rukamori.archivetune.utils.makeTimeString
@@ -90,9 +91,9 @@ fun VersionPickerBottomSheet(
         val key = SpotifyTrackScorer.cacheKey(spotifyTrackId)
         val rawId = spotifyTrackId.removePrefix("spotify:track:").removePrefix("spotify:").trim()
         val match = withContext(Dispatchers.IO) {
-            database.spotifyDao().getSpotifyMatch(key)
-                ?: database.spotifyDao().getSpotifyMatch(rawId)
-                ?: database.spotifyDao().getSpotifyMatch(spotifyTrackId)
+            database.getSpotifyMatch(key)
+                ?: database.getSpotifyMatch(rawId)
+                ?: database.getSpotifyMatch(spotifyTrackId)
         }
         hasOverride = match?.isManualOverride == true
         currentMatchedYtId = match?.youtubeId
@@ -125,10 +126,13 @@ fun VersionPickerBottomSheet(
                 .padding(horizontal = 4.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ItemThumbnail(
-                thumbnailUrl = targetThumbnail,
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.size(48.dp),
+            AsyncImage(
+                model = targetThumbnail,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(8.dp)),
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -266,10 +270,13 @@ fun VersionPickerBottomSheet(
                             )
                         },
                         leadingContent = {
-                            ItemThumbnail(
-                                thumbnailUrl = cand.thumbnail,
-                                shape = RoundedCornerShape(6.dp),
-                                modifier = Modifier.size(40.dp),
+                            AsyncImage(
+                                model = cand.thumbnail,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(6.dp)),
                             )
                         },
                         trailingContent = {
