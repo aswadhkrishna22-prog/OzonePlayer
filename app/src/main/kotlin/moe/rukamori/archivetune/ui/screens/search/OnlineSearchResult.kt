@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -68,14 +69,23 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.core.net.toUri
+import androidx.media3.common.MediaItem
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.LocalDatabase
 import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.AnimateSearchResultsKey
 import moe.rukamori.archivetune.constants.ListThumbnailSize
+import moe.rukamori.archivetune.constants.PlaybackSource
 import moe.rukamori.archivetune.constants.ThumbnailCornerRadius
+import moe.rukamori.archivetune.db.entities.FormatEntity
 import moe.rukamori.archivetune.extensions.togglePlayPause
+import moe.rukamori.archivetune.flaccore.streaming.JioSaavnCandidate
+import moe.rukamori.archivetune.flaccore.streaming.JioSaavnDecryptor
+import moe.rukamori.archivetune.models.MediaMetadata
+import moe.rukamori.archivetune.playback.formatIdForSource
+import moe.rukamori.archivetune.playback.queues.ListQueue
 import moe.rukamori.archivetune.innertube.YouTube
 import moe.rukamori.archivetune.innertube.SearchFilter.Companion.FILTER_ALBUM
 import moe.rukamori.archivetune.innertube.SearchFilter.Companion.FILTER_ARTIST
@@ -110,6 +120,7 @@ import moe.rukamori.archivetune.ui.screens.spotifyhome.SpotifyArtistSectionRow
 import moe.rukamori.archivetune.ui.screens.spotifyhome.SpotifyPlaylistSectionRow
 import moe.rukamori.archivetune.ui.utils.resize
 import moe.rukamori.archivetune.utils.joinByBullet
+import moe.rukamori.archivetune.utils.makeTimeString
 import moe.rukamori.archivetune.utils.rememberPreference
 import moe.rukamori.archivetune.viewmodels.OnlineSearchSource
 import moe.rukamori.archivetune.viewmodels.OnlineSearchViewModel
@@ -144,6 +155,9 @@ fun OnlineSearchResult(
     val spotifyResult = viewModel.spotifyResult
     val isSpotifyLoading = viewModel.isSpotifyLoading
     val spotifyError = viewModel.spotifyError
+    val jioSaavnResult = viewModel.jioSaavnResult
+    val isJioSaavnLoading = viewModel.isJioSaavnLoading
+    val jioSaavnError = viewModel.jioSaavnError
 
     var resolvingTrackId by remember { mutableStateOf<String?>(null) }
     val (isSearchSlideEnabled) = rememberPreference(AnimateSearchResultsKey, defaultValue = true)
@@ -255,6 +269,95 @@ fun OnlineSearchResult(
                     }
                 } finally {
                     if (resolvingTrackId == track.id) {
+                        resolvingTrackId = null
+                    }
+                }
+            }
+        }
+    }
+
+    val onJioSaavnTrackClick: (JioSaavnCandidate, List<JioSaavnCandidate>) -> Unit = { candidate, candidateList ->
+        val isActive = mediaMetadata?.id == "jiosaavn_${candidate.id}"
+        if (isActive) {
+            playerConnection.player.togglePlayPause()
+        } else {
+            coroutineScope.launch(Dispatchers.IO) {
+                resolvingTrackId = candidate.id
+                try {
+                    val mediaItems = candidateList.mapNotNull { item ->
+                        val rawUrl = JioSaavnDecryptor.decryptMediaUrl(item.encryptedMediaUrl) ?: return@mapNotNull null
+                        val direct320Url = JioSaavnDecryptor.to320KbpsUrl(rawUrl)
+                        val itemMediaId = "jiosaavn_${item.id}"
+                        val itemMetadata = MediaMetadata(
+                            id = itemMediaId,
+                            title = item.title,
+                            artists = item.artists.map { MediaMetadata.Artist(id = null, name = it) },
+                            duration = item.durationSec.toInt(),
+                            thumbnailUrl = item.imageUrl?.replace("150x150", "500x500"),
+                            album = item.album?.let { MediaMetadata.Album(id = "jiosaavn_album_${item.id}", title = it) },
+                        )
+
+                        database.insert(itemMetadata)
+                        val format320 = FormatEntity(
+                            id = formatIdForSource(itemMediaId, PlaybackSource.FLAC),
+                            itag = 0,
+                            mimeType = "audio/mp4",
+                            codecs = "mp4a.40.2",
+                            bitrate = 320000,
+                            sampleRate = 44100,
+                            contentLength = (320000L / 8L) * item.durationSec,
+                            loudnessDb = null,
+                            playbackUrl = direct320Url,
+                            bitsPerSample = 16,
+                        )
+                        database.upsert(format320)
+                        database.upsert(format320.copy(id = itemMediaId))
+
+                        MediaItem.Builder()
+                            .setMediaId(itemMediaId)
+                            .setUri(direct320Url.toUri())
+                            .setCustomCacheKey(itemMediaId)
+                            .setTag(itemMetadata)
+                            .setMediaMetadata(
+                                androidx.media3.common.MediaMetadata.Builder()
+                                    .setTitle(item.title)
+                                    .setSubtitle(item.artists.joinToString(", "))
+                                    .setArtist(item.artists.joinToString(", "))
+                                    .setArtworkUri(itemMetadata.thumbnailUrl?.toUri())
+                                    .setAlbumTitle(item.album)
+                                    .setIsPlayable(true)
+                                    .setMediaType(androidx.media3.common.MediaMetadata.MEDIA_TYPE_MUSIC)
+                                    .build(),
+                            )
+                            .build()
+                    }
+
+                    if (mediaItems.isEmpty()) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "Could not resolve JioSaavn audio stream", Toast.LENGTH_SHORT).show()
+                        }
+                        return@launch
+                    }
+
+                    val targetMediaId = "jiosaavn_${candidate.id}"
+                    val startIndex = mediaItems.indexOfFirst { it.mediaId == targetMediaId }.coerceAtLeast(0)
+
+                    withContext(Dispatchers.Main) {
+                        playerConnection.playQueue(
+                            ListQueue(
+                                title = "JioSaavn: ${viewModel.query}",
+                                items = mediaItems,
+                                startIndex = startIndex,
+                            ),
+                        )
+                    }
+                } catch (e: Exception) {
+                    timber.log.Timber.e(e, "Failed to play JioSaavn track")
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Error playing JioSaavn track", Toast.LENGTH_SHORT).show()
+                    }
+                } finally {
+                    if (resolvingTrackId == candidate.id) {
                         resolvingTrackId = null
                     }
                 }
@@ -441,7 +544,7 @@ fun OnlineSearchResult(
                         }
                     }
                 }
-            } else {
+            } else if (searchSource == OnlineSearchSource.SPOTIFY) {
                 // SPOTIFY SEARCH RESULTS
                 if (isSpotifyLoading && spotifyResult == null) {
                     item(key = "spotify_initial_loading", contentType = "loading") {
@@ -870,7 +973,139 @@ fun OnlineSearchResult(
                         }
                     }
                 }
+            } else if (searchSource == OnlineSearchSource.JIOSAAVN) {
+                // JIOSAAVN SEARCH RESULTS
+                if (isJioSaavnLoading && jioSaavnResult == null) {
+                    item(key = "jiosaavn_initial_loading", contentType = "loading") {
+                        ShimmerHost {
+                            repeat(8) {
+                                ListItemPlaceHolder()
+                            }
+                        }
+                    }
+                } else if (jioSaavnError != null && jioSaavnResult == null) {
+                    item(key = "jiosaavn_general_error", contentType = "error") {
+                        Column(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp, vertical = 32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_about),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(48.dp),
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                text = stringResource(R.string.error_unknown),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Spacer(Modifier.height(16.dp))
+                            Button(
+                                onClick = viewModel::retryJioSaavn,
+                                shape = RoundedCornerShape(20.dp),
+                            ) {
+                                Text(stringResource(R.string.retry_button))
+                            }
+                        }
+                    }
+                } else if (jioSaavnResult != null) {
+                    val tracks = jioSaavnResult.orEmpty()
+                    if (tracks.isNotEmpty()) {
+                        val jioSaavnSongsKey = "${viewModel.searchRequestId}_jiosaavn_songs"
+                        val shouldAnimateJioSaavnSongs = isSlideAnimationActive && !viewModel.isAnimationPlayed(jioSaavnSongsKey)
+
+                        itemsIndexed(
+                            items = tracks,
+                            key = { idx, candidate -> "jiosaavn_track_${candidate.id}_$idx" },
+                            contentType = { _, _ -> "jiosaavn_track" },
+                        ) { idx, candidate ->
+                            SearchSlideRow(
+                                index = idx,
+                                animationKey = jioSaavnSongsKey,
+                                shouldAnimate = shouldAnimateJioSaavnSongs,
+                                onAnimationTriggered = {
+                                    viewModel.markAnimationPlayed(jioSaavnSongsKey)
+                                },
+                            ) {
+                                val isTrackActive = mediaMetadata?.id == "jiosaavn_${candidate.id}"
+                                val isTrackResolving = resolvingTrackId == candidate.id
+                                JioSaavnTrackListItem(
+                                    candidate = candidate,
+                                    isActive = isTrackActive || isTrackResolving,
+                                    isPlaying = isPlaying && !isTrackResolving,
+                                    trailingContent = {
+                                        if (isTrackResolving) {
+                                            CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
+                                        }
+                                    },
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                onJioSaavnTrackClick(candidate, tracks)
+                                            },
+                                )
+                            }
+                        }
+                    } else {
+                        item(key = "jiosaavn_empty_songs", contentType = "empty") {
+                            OnlineSearchEmptyBlock()
+                        }
+                    }
+                }
             }
         }
     }
+}
+
+@Composable
+fun JioSaavnTrackListItem(
+    candidate: JioSaavnCandidate,
+    isActive: Boolean,
+    isPlaying: Boolean,
+    modifier: Modifier = Modifier,
+    trailingContent: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {},
+) {
+    val duration = candidate.durationSec.takeIf { it > 0 }?.let { makeTimeString(it * 1000L) }
+    val artists = candidate.artists.joinToString(", ")
+    val subtitle = joinByBullet(artists, duration)
+
+    ListItem(
+        title = candidate.title,
+        subtitle = subtitle,
+        badges = {
+            Box(
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f))
+                        .padding(horizontal = 4.dp, vertical = 1.dp),
+            ) {
+                Text(
+                    text = "320 kbps",
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
+        },
+        thumbnailContent = {
+            ItemThumbnail(
+                thumbnailUrl = candidate.imageUrl?.replace("150x150", "500x500")?.resize(200, 200),
+                isActive = isActive,
+                isPlaying = isPlaying,
+                shape = RoundedCornerShape(ThumbnailCornerRadius),
+                placeholderIconRes = R.drawable.music_note,
+                modifier = Modifier.size(ListThumbnailSize),
+            )
+        },
+        trailingContent = trailingContent,
+        modifier = modifier,
+        isActive = isActive,
+    )
 }

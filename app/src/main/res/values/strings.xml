@@ -1175,6 +1175,7 @@
     <string name="home_screen_provider_desc">YouTube Music / Spotify</string>
     <string name="home_provider_youtube_music">YouTube Music</string>
     <string name="home_provider_spotify">Spotify</string>
+    <string name="home_provider_jiosaavn">JioSaavn</string>
 
     <string name="spotify_because_you_like">Because you like %1$s</string>
     <string name="spotify_top_tracks">Top Tracks</string>

@@ -10,6 +10,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -71,6 +73,7 @@ fun SearchFilterHeader(
                 modifier =
                     Modifier
                         .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
                         .padding(horizontal = 12.dp, vertical = 2.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -101,6 +104,26 @@ fun SearchFilterHeader(
                     leadingIcon = {
                         Icon(
                             painter = painterResource(R.drawable.spotify_icon),
+                            contentDescription = null,
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(FilterChipDefaults.IconSize),
+                        )
+                    },
+                    shape = RoundedCornerShape(20.dp),
+                    border = null,
+                    colors =
+                        FilterChipDefaults.filterChipColors(
+                            containerColor = Color.Transparent,
+                        ),
+                )
+
+                FilterChip(
+                    selected = searchSource == OnlineSearchSource.JIOSAAVN,
+                    onClick = { onSourceChange(OnlineSearchSource.JIOSAAVN) },
+                    label = { Text(stringResource(R.string.home_provider_jiosaavn)) },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(R.drawable.jiosaavn_icon),
                             contentDescription = null,
                             tint = Color.Unspecified,
                             modifier = Modifier.size(FilterChipDefaults.IconSize),
@@ -169,6 +192,22 @@ fun SearchFilterHeader(
                                     SpotifySearchFilter.ALBUMS to R.drawable.album,
                                     SpotifySearchFilter.ARTISTS to R.drawable.person,
                                     SpotifySearchFilter.PLAYLISTS to R.drawable.playlist_play,
+                                ),
+                        )
+                    }
+
+                    OnlineSearchSource.JIOSAAVN -> {
+                        ChipsRow(
+                            containerColor = Color.Transparent,
+                            chips =
+                                listOf(
+                                    null to stringResource(R.string.filter_songs),
+                                ),
+                            currentValue = null,
+                            onValueUpdate = {},
+                            icons =
+                                mapOf(
+                                    null to R.drawable.music_note,
                                 ),
                         )
                     }

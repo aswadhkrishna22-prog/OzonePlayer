@@ -105,7 +105,25 @@ class JioSaavnStreamResolver(
         add("${query.title} ${query.artist}".trim())
     }.distinct()
 
-    private fun search(searchTerm: String): List<JioSaavnCandidate> {
+    private fun search(searchTerm: String): List<JioSaavnCandidate> = searchWithLimit(searchTerm, 10)
+
+    suspend fun searchSongs(query: String, limit: Int = 30): List<JioSaavnCandidate> = withContext(Dispatchers.IO) {
+        if (query.isBlank()) return@withContext emptyList()
+        val results = searchWithLimit(query, limit)
+        if (results.isNotEmpty()) {
+            return@withContext results
+        }
+        val clean = cleanString(query)
+        if (clean.isNotBlank() && clean != query) {
+            val fallback = searchWithLimit(clean, limit)
+            if (fallback.isNotEmpty()) {
+                return@withContext fallback
+            }
+        }
+        emptyList()
+    }
+
+    private fun searchWithLimit(searchTerm: String, limit: Int): List<JioSaavnCandidate> {
         return try {
             val url = BASE_URL.toHttpUrl().newBuilder()
                 .addQueryParameter("__call", "search.getResults")
@@ -113,7 +131,7 @@ class JioSaavnStreamResolver(
                 .addQueryParameter("_marker", "0")
                 .addQueryParameter("api_version", "4")
                 .addQueryParameter("ctx", "web6dot0")
-                .addQueryParameter("n", "10")
+                .addQueryParameter("n", limit.toString())
                 .addQueryParameter("p", "1")
                 .addQueryParameter("q", searchTerm)
                 .build()

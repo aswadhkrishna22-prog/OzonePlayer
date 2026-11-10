@@ -190,4 +190,12 @@ class JioSaavnStreamResolverTest {
         assertTrue(terms.isNotEmpty())
         assertTrue(terms.any { it.contains("Illuminati") && it.contains("Sushin Shyam") })
     }
+
+    @Test
+    fun searchSongs_emptyQueryReturnsEmptyList() = runTest {
+        val emptyResults = resolver.searchSongs("")
+        assertTrue(emptyResults.isEmpty())
+        val blankResults = resolver.searchSongs("   ")
+        assertTrue(blankResults.isEmpty())
+    }
 }

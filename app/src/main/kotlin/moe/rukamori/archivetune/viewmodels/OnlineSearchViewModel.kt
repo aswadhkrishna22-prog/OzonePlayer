@@ -48,11 +48,14 @@ import moe.rukamori.archivetune.ui.screens.search.decodeOnlineSearchQuery
 import moe.rukamori.archivetune.utils.dataStore
 import moe.rukamori.archivetune.utils.get
 import moe.rukamori.archivetune.utils.reportException
+import moe.rukamori.archivetune.flaccore.streaming.JioSaavnCandidate
+import moe.rukamori.archivetune.flaccore.streaming.JioSaavnStreamResolver
 import javax.inject.Inject
 
 enum class OnlineSearchSource {
     YOUTUBE,
     SPOTIFY,
+    JIOSAAVN,
 }
 
 enum class SpotifySearchFilter {
@@ -75,6 +78,7 @@ class OnlineSearchViewModel
         private val savedStateHandle: SavedStateHandle,
         private val loadAiContentFilterPolicy: LoadAiContentFilterPolicyUseCase,
         private val filterAiContent: FilterAiContentUseCase,
+        val jioSaavnResolver: JioSaavnStreamResolver,
     ) : ViewModel() {
         val query =
             decodeOnlineSearchQuery(
@@ -88,6 +92,9 @@ class OnlineSearchViewModel
         var spotifyResult by mutableStateOf<SpotifySearchResult?>(null)
         var isSpotifyLoading by mutableStateOf(false)
         var spotifyError by mutableStateOf<Int?>(null)
+        var jioSaavnResult by mutableStateOf<List<JioSaavnCandidate>?>(null)
+        var isJioSaavnLoading by mutableStateOf(false)
+        var jioSaavnError by mutableStateOf<Int?>(null)
         val viewStateMap = mutableStateMapOf<String, ItemsPage?>()
 
         private var searchRequestCounter: Int
@@ -131,6 +138,7 @@ class OnlineSearchViewModel
             private val summaryCache = LruCache<String, SearchSummaryPage>(50)
             private val filterCache = LruCache<String, ItemsPage>(100)
             private val spotifyCache = LruCache<String, SpotifySearchResult>(50)
+            private val jioSaavnCache = LruCache<String, List<JioSaavnCandidate>>(50)
         }
 
         init {
@@ -146,6 +154,8 @@ class OnlineSearchViewModel
                 searchSource.collect { source ->
                     if (source == OnlineSearchSource.SPOTIFY) {
                         loadSpotifySearchIfNeeded()
+                    } else if (source == OnlineSearchSource.JIOSAAVN) {
+                        loadJioSaavnSearchIfNeeded()
                     }
                 }
             }
@@ -317,6 +327,10 @@ class OnlineSearchViewModel
                     viewModelScope.launch {
                         loadSpotifySearchIfNeeded()
                     }
+                } else if (source == OnlineSearchSource.JIOSAAVN) {
+                    viewModelScope.launch {
+                        loadJioSaavnSearchIfNeeded()
+                    }
                 }
             }
         }
@@ -375,6 +389,37 @@ class OnlineSearchViewModel
                 spotifyError = R.string.error_unknown
             } finally {
                 isSpotifyLoading = false
+            }
+        }
+
+        fun retryJioSaavn() {
+            viewModelScope.launch {
+                loadJioSaavnSearchIfNeeded(force = true)
+            }
+        }
+
+        suspend fun loadJioSaavnSearchIfNeeded(force: Boolean = false) {
+            if (query.isBlank()) return
+            if (!force && (jioSaavnResult != null || isJioSaavnLoading)) return
+
+            if (!force) {
+                jioSaavnCache.get(query)?.let { cached ->
+                    jioSaavnResult = cached
+                    return
+                }
+            }
+
+            isJioSaavnLoading = true
+            jioSaavnError = null
+            try {
+                val results = jioSaavnResolver.searchSongs(query, limit = 30)
+                jioSaavnResult = results
+                jioSaavnCache.put(query, results)
+            } catch (e: Exception) {
+                reportException(e)
+                jioSaavnError = R.string.error_unknown
+            } finally {
+                isJioSaavnLoading = false
             }
         }
     }

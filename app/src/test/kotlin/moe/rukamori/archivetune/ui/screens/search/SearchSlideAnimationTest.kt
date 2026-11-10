@@ -28,8 +28,11 @@ class SearchSlideAnimationTest {
     fun testSearchSlideTrigger_triggersOnSourceChange() {
         assertTrue(SearchSlideTrigger.shouldTriggerOnSourceChange(OnlineSearchSource.YOUTUBE, OnlineSearchSource.SPOTIFY))
         assertTrue(SearchSlideTrigger.shouldTriggerOnSourceChange(OnlineSearchSource.SPOTIFY, OnlineSearchSource.YOUTUBE))
+        assertTrue(SearchSlideTrigger.shouldTriggerOnSourceChange(OnlineSearchSource.YOUTUBE, OnlineSearchSource.JIOSAAVN))
+        assertTrue(SearchSlideTrigger.shouldTriggerOnSourceChange(OnlineSearchSource.JIOSAAVN, OnlineSearchSource.SPOTIFY))
         assertFalse(SearchSlideTrigger.shouldTriggerOnSourceChange(OnlineSearchSource.YOUTUBE, OnlineSearchSource.YOUTUBE))
         assertFalse(SearchSlideTrigger.shouldTriggerOnSourceChange(OnlineSearchSource.SPOTIFY, OnlineSearchSource.SPOTIFY))
+        assertFalse(SearchSlideTrigger.shouldTriggerOnSourceChange(OnlineSearchSource.JIOSAAVN, OnlineSearchSource.JIOSAAVN))
     }
 
     @Test

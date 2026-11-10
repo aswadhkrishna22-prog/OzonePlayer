@@ -37,7 +37,14 @@ internal fun MusicService.resolvePlaybackDataSpec(
     dataSpec: DataSpec,
     allowCacheShortCircuit: Boolean,
 ): DataSpec {
-    if (dataSpec.uri.shouldBypassYouTubeResolver()) return dataSpec
+    if (dataSpec.uri.shouldBypassYouTubeResolver()) {
+        val mediaId = dataSpec.key?.let { extractMediaIdFromCacheKey(it) }
+            ?: runCatching { player.currentMediaItem?.mediaId }.getOrNull()
+        if (mediaId != null) {
+            setActualPlaybackSource(mediaId, PlaybackSource.FLAC)
+        }
+        return dataSpec
+    }
     val mediaId = extractMediaIdFromCacheKey(dataSpec.key ?: return dataSpec)
     val startTime = android.os.SystemClock.elapsedRealtime()
 
