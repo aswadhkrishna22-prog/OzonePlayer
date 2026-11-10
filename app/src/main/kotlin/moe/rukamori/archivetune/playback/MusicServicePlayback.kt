@@ -20,14 +20,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import moe.rukamori.archivetune.MainActivity
 import moe.rukamori.archivetune.constants.AutoSkipNextOnErrorKey
+import moe.rukamori.archivetune.constants.FlacQuality
 import moe.rukamori.archivetune.constants.PlaybackSource
 import moe.rukamori.archivetune.constants.PlayerStreamClient
 import moe.rukamori.archivetune.constants.Prefer320KbpsKey
 import moe.rukamori.archivetune.extensions.directorySizeBytes
 import moe.rukamori.archivetune.extensions.findNextMediaItemById
-import moe.rukamori.archivetune.flaccore.streaming.FlacStreamUrl
 import moe.rukamori.archivetune.innertube.YouTube
 import moe.rukamori.archivetune.playback.crossfade.isTrackFullyCached
+import moe.rukamori.archivetune.playback.resolvers.StreamUrl
 import moe.rukamori.archivetune.storage.StorageFolderKind
 import moe.rukamori.archivetune.storage.StorageLocationRepository
 import moe.rukamori.archivetune.utils.AuthScopedCacheValue
@@ -62,7 +63,7 @@ internal fun MusicService.resolvePlaybackDataSpec(
             return buildResolvedFlacDataSpec(
                 dataSpec = dataSpec,
                 mediaId = mediaId,
-                streamUrl = FlacStreamUrl(
+                streamUrl = StreamUrl(
                     url = directUrl,
                     expiresAtMs = System.currentTimeMillis() + 86_400_000L,
                     codec = "aac",
@@ -76,7 +77,7 @@ internal fun MusicService.resolvePlaybackDataSpec(
         val song = runBlocking(Dispatchers.IO) { database.song(mediaId).firstOrNull() }
         if (song != null) {
             val resolved = runBlocking(Dispatchers.IO) {
-                losslessStreamResolver.resolve(song, moe.rukamori.archivetune.constants.FlacQuality.HIGH)
+                losslessStreamResolver.resolve(song, FlacQuality.CD)
             }
             if (resolved != null && resolved.url.isNotBlank()) {
                 return buildResolvedFlacDataSpec(
