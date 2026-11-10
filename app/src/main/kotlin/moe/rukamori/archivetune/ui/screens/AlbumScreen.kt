@@ -25,6 +25,15 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
+import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.ui.screens.playlist.PlaylistDownloadSheet
+import moe.rukamori.archivetune.ui.screens.playlist.toDownloadableSong
+import moe.rukamori.archivetune.ui.utils.HeaderDownloadItem
+import moe.rukamori.archivetune.ui.utils.sendAddMissingDownloads
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -78,6 +87,7 @@ fun AlbumScreen(
     val screenUiState = rememberAlbumUiState(albumWithSongs, uiState, otherVersions)
     val selectionState = rememberAlbumSelectionState(screenUiState.albumWithSongs, hideExplicit)
     val downloadUiState = rememberAlbumDownloadUiState()
+    var showDownloadSheet by rememberSaveable { mutableStateOf(false) }
     val gradientColors = rememberAlbumGradientColors(screenUiState.albumWithSongs?.album?.thumbnailUrl, context)
     val gradientAlpha by rememberAlbumGradientAlpha(lazyListState)
     val collapseFraction by rememberCollapseFraction(lazyListState)
@@ -97,6 +107,7 @@ fun AlbumScreen(
             menuState = menuState,
             navController = navController,
             context = context,
+            onDownloadLongClick = { showDownloadSheet = true },
         )
 
     val showTopBarTitle by remember { derivedStateOf { lazyListState.firstVisibleItemIndex > 0 } }
@@ -221,5 +232,25 @@ fun AlbumScreen(
                     .padding(LocalPlayerAwareWindowInsets.current.asPaddingValues())
                     .padding(bottom = 16.dp),
         )
+
+        val currentAlbum = screenUiState.albumWithSongs
+        if (showDownloadSheet && currentAlbum != null) {
+            PlaylistDownloadSheet(
+                title = currentAlbum.album.title,
+                thumbnailUrl = currentAlbum.album.thumbnailUrl,
+                songs = currentAlbum.songs.map { it.toDownloadableSong() },
+                downloads = downloadUiState.downloads,
+                hasMoreSongs = false,
+                onDismiss = { showDownloadSheet = false },
+                onStartDownload = { selectedList ->
+                    downloadUiState.dismissed = false
+                    sendAddMissingDownloads(
+                        context = context,
+                        songs = selectedList.map { HeaderDownloadItem(id = it.id, title = it.title) },
+                        downloads = downloadUiState.downloads,
+                    )
+                },
+            )
+        }
     }
 }

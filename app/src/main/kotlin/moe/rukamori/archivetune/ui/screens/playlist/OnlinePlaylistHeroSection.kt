@@ -8,6 +8,7 @@
 
 package moe.rukamori.archivetune.ui.screens.playlist
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -49,15 +51,19 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.AppBarHeight
+import moe.rukamori.archivetune.constants.PlaylistDownloadTipShownKey
 import moe.rukamori.archivetune.innertube.models.PlaylistItem
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.LocalYumaColors
 import moe.rukamori.archivetune.ui.theme.yumaClickable
+import moe.rukamori.archivetune.ui.theme.yumaCombinedClickable
 import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.utils.rememberPreference
 import moe.rukamori.archivetune.ui.utils.HeaderDownloadProgressIndicator
 import moe.rukamori.archivetune.ui.utils.HeaderDownloadState
 
@@ -331,46 +337,79 @@ fun OnlinePlaylistHeroSection(
                 }
             }
 
+            val (tipShown, onTipShownChange) = rememberPreference(PlaylistDownloadTipShownKey, defaultValue = false)
+
             Box(
-                modifier =
-                    Modifier
-                        .size(48.dp)
-                        .yumaClickable(
-                            pressedScale = SettingsAnimations.PressScale,
-                            onClick = actions.onDownload,
-                        )
-                        .yumaGlassCard(
-                            shape = CircleShape,
-                            backgroundColor = LocalYumaColors.current.glassBackground,
-                        )
-                        .clip(CircleShape)
-                        .semantics(mergeDescendants = true) {
-                            contentDescription = downloadLabel
-                            role = Role.Button
-                        },
+                modifier = Modifier.size(48.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                val state = downloadState
-                when (state) {
-                    HeaderDownloadState.Completed -> {
-                        Icon(
-                            painter = painterResource(R.drawable.offline),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(SettingsDimensions.RowIconInnerSize),
-                        )
-                    }
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .yumaCombinedClickable(
+                                pressedScale = SettingsAnimations.PressScale,
+                                onClick = actions.onDownload,
+                                onLongClick = {
+                                    if (!tipShown) onTipShownChange(true)
+                                    actions.onDownloadLongClick()
+                                },
+                            )
+                            .yumaGlassCard(
+                                shape = CircleShape,
+                                backgroundColor = LocalYumaColors.current.glassBackground,
+                            )
+                            .clip(CircleShape)
+                            .semantics(mergeDescendants = true) {
+                                contentDescription = downloadLabel
+                                role = Role.Button
+                            },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    val state = downloadState
+                    when (state) {
+                        HeaderDownloadState.Completed -> {
+                            Icon(
+                                painter = painterResource(R.drawable.offline),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(SettingsDimensions.RowIconInnerSize),
+                            )
+                        }
 
-                    is HeaderDownloadState.Partial -> {
-                        HeaderDownloadProgressIndicator(progress = state.progress)
-                    }
+                        is HeaderDownloadState.Partial -> {
+                            HeaderDownloadProgressIndicator(progress = state.progress)
+                        }
 
-                    HeaderDownloadState.None -> {
-                        Icon(
-                            painter = painterResource(R.drawable.download),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(SettingsDimensions.RowIconInnerSize),
+                        HeaderDownloadState.None -> {
+                            Icon(
+                                painter = painterResource(R.drawable.download),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(SettingsDimensions.RowIconInnerSize),
+                            )
+                        }
+                    }
+                }
+
+                if (!tipShown) {
+                    Surface(
+                        modifier =
+                            Modifier
+                                .offset(y = (-44).dp)
+                                .zIndex(20f)
+                                .yumaClickable(onClick = { onTipShownChange(true) }),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)),
+                        shadowElevation = 6.dp,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.playlist_download_tip),
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            maxLines = 1,
                         )
                     }
                 }

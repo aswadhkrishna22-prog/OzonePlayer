@@ -38,4 +38,5 @@ data class AlbumActions(
     val onLike: () -> Unit = {},
     val onMenu: () -> Unit = {},
     val onDownload: () -> Unit = {},
+    val onDownloadLongClick: () -> Unit = {},
 )

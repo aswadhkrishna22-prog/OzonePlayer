@@ -33,7 +33,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
+import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.ui.utils.HeaderDownloadItem
+import moe.rukamori.archivetune.ui.utils.sendAddMissingDownloads
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -92,6 +97,7 @@ fun LocalPlaylistScreen(
     val dialogState = rememberLocalPlaylistDialogState()
     val searchState = rememberLocalPlaylistSearchState(songs)
     val downloadUiState = rememberLocalPlaylistDownloadUiState()
+    var showDownloadSheet by rememberSaveable { mutableStateOf(false) }
 
     val editable: Boolean = playlist?.playlist?.isEditable == true
     val playlistLength = remember(songs) { songs.fastSumBy { it.song.song.duration } }
@@ -142,6 +148,7 @@ fun LocalPlaylistScreen(
             onSortDescendingChange = { viewModel.updateSortPreference(sortType, it) },
             onRefresh = viewModel::refresh,
             onLockToggle = { locked = !locked },
+            onDownloadLongClick = { showDownloadSheet = true },
         )
 
     LocalPlaylistEffects(
@@ -288,6 +295,30 @@ fun LocalPlaylistScreen(
                     .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.union(WindowInsets.ime))
                     .align(Alignment.BottomCenter),
         )
+
+        if (showDownloadSheet && playlist != null) {
+            PlaylistDownloadSheet(
+                title = playlist?.playlist?.name.orEmpty(),
+                thumbnailUrl = playlist?.thumbnails?.firstOrNull() ?: playlist?.playlist?.thumbnailUrl,
+                songs = songs.map { it.toDownloadableSong() },
+                downloads = downloadUiState.downloads,
+                hasMoreSongs = false,
+                onDismiss = { showDownloadSheet = false },
+                onStartDownload = { selectedList ->
+                    downloadUiState.dismissed = false
+                    sendAddMissingDownloads(
+                        context = context,
+                        songs = selectedList.map { HeaderDownloadItem(id = it.id, title = it.title) },
+                        downloads = downloadUiState.downloads,
+                    )
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.playlist_download_started, selectedList.size),
+                        )
+                    }
+                },
+            )
+        }
     }
 
     LocalPlaylistDialogsHost(

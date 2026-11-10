@@ -128,11 +128,7 @@ class DownloadUtil
         val downloads = MutableStateFlow<Map<String, Download>>(emptyMap())
 
         private suspend fun resolveDownloadAudioQuality(lowDataModeActive: Boolean): AudioQuality =
-            if (lowDataModeActive) {
-                AudioQuality.LOW
-            } else {
-                context.dataStore.getAsync(AudioQualityKey, AudioQuality.AUTO.name).toEnum(AudioQuality.AUTO)
-            }
+            Companion.resolveDownloadAudioQuality(context, lowDataModeActive)
 
         private fun ensureSongDownloadedTimestamp(mediaId: String) {
             downloadScope.launch {
@@ -373,10 +369,20 @@ class DownloadUtil
         }
 
         companion object {
-            private const val DEFAULT_MAX_PARALLEL_DOWNLOADS = 6
+            private const val DEFAULT_MAX_PARALLEL_DOWNLOADS = 3
             private const val MAX_IDLE_DOWNLOAD_CONNECTIONS = 12
             private const val MAX_DOWNLOAD_HTTP_REQUESTS = 24
             private const val DOWNLOAD_CONNECTION_KEEP_ALIVE_MINUTES = 5L
             private const val DOWNLOAD_WRITE_BUFFER_SIZE = 256 * 1024
+
+            suspend fun resolveDownloadAudioQuality(
+                context: Context,
+                lowDataModeActive: Boolean = context.isLowDataModeActive(),
+            ): AudioQuality =
+                if (lowDataModeActive) {
+                    AudioQuality.LOW
+                } else {
+                    context.dataStore.getAsync(AudioQualityKey, AudioQuality.AUTO.name).toEnum(AudioQuality.AUTO)
+                }
         }
     }

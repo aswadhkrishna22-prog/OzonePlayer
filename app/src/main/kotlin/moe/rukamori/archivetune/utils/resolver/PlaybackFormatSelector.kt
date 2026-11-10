@@ -32,6 +32,26 @@ object PlaybackFormatSelector {
         ).firstOrNull()
     }
 
+    fun resolveEffectiveAudioQuality(
+        audioQuality: AudioQuality,
+        networkMetered: Boolean,
+    ): AudioQuality =
+        when (audioQuality) {
+            AudioQuality.AUTO -> if (networkMetered) AudioQuality.HIGH else AudioQuality.HIGHEST
+            else -> audioQuality
+        }
+
+    fun resolveTargetBitrateBps(
+        audioQuality: AudioQuality,
+        networkMetered: Boolean,
+    ): Int =
+        when (resolveEffectiveAudioQuality(audioQuality, networkMetered)) {
+            AudioQuality.LOW -> 70_000
+            AudioQuality.HIGH -> 160_000
+            AudioQuality.HIGHEST -> 256_000
+            AudioQuality.AUTO -> 256_000
+        }
+
     fun selectAudioFormatCandidates(
         playerResponse: PlayerResponse,
         audioQuality: AudioQuality,
@@ -50,11 +70,7 @@ object PlaybackFormatSelector {
 
         if (audioFormats.isEmpty()) return emptyList()
 
-        val effectiveQuality =
-            when (audioQuality) {
-                AudioQuality.AUTO -> if (networkMetered) AudioQuality.HIGH else AudioQuality.HIGHEST
-                else -> audioQuality
-            }
+        val effectiveQuality = resolveEffectiveAudioQuality(audioQuality, networkMetered)
 
         val targetBitrateBps =
             when (effectiveQuality) {

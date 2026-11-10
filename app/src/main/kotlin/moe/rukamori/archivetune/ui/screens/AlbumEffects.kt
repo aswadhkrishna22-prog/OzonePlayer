@@ -59,6 +59,7 @@ fun rememberAlbumActions(
     menuState: MenuState,
     navController: NavController,
     context: Context,
+    onDownloadLongClick: () -> Unit = {},
 ): AlbumActions {
     val downloadState = downloadUiState.downloadState
     val downloads = downloadUiState.downloads
@@ -155,6 +156,7 @@ fun rememberAlbumActions(
                         }
                     }
                 },
+                onDownloadLongClick = onDownloadLongClick,
             )
         } else {
             AlbumActions()
