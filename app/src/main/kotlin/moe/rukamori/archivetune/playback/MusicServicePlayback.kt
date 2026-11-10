@@ -10,6 +10,7 @@ import android.content.Intent
 import android.net.NetworkCapabilities
 import android.net.Uri
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.cache.Cache
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,7 @@ import moe.rukamori.archivetune.constants.PlayerStreamClient
 import moe.rukamori.archivetune.constants.Prefer320KbpsKey
 import moe.rukamori.archivetune.extensions.directorySizeBytes
 import moe.rukamori.archivetune.extensions.findNextMediaItemById
+import moe.rukamori.archivetune.flaccore.streaming.FlacStreamUrl
 import moe.rukamori.archivetune.innertube.YouTube
 import moe.rukamori.archivetune.playback.crossfade.isTrackFullyCached
 import moe.rukamori.archivetune.storage.StorageFolderKind
@@ -45,7 +47,51 @@ internal fun MusicService.resolvePlaybackDataSpec(
         }
         return dataSpec
     }
-    val mediaId = extractMediaIdFromCacheKey(dataSpec.key ?: return dataSpec)
+
+    val rawKey = dataSpec.key ?: dataSpec.uri.toString()
+    val mediaId = extractMediaIdFromCacheKey(rawKey)
+
+    if (mediaId.startsWith("jiosaavn_") || dataSpec.uri.scheme?.startsWith("jiosaavn") == true) {
+        setActualPlaybackSource(mediaId, PlaybackSource.FLAC)
+        val directUrl = runBlocking(Dispatchers.IO) {
+            database.getFormatForSource(mediaId, PlaybackSource.FLAC)?.playbackUrl
+                ?: database.getFormatById(mediaId)?.playbackUrl
+                ?: database.getFormatById(formatIdForSource(mediaId, PlaybackSource.FLAC))?.playbackUrl
+        }
+        if (!directUrl.isNullOrBlank()) {
+            return buildResolvedFlacDataSpec(
+                dataSpec = dataSpec,
+                mediaId = mediaId,
+                streamUrl = FlacStreamUrl(
+                    url = directUrl,
+                    expiresAtMs = System.currentTimeMillis() + 86_400_000L,
+                    codec = "aac",
+                    bitsPerSample = 16,
+                    sampleRateHz = 44100,
+                    bitrateKbps = 320,
+                    origin = "jiosaavn",
+                ),
+            )
+        }
+        val song = runBlocking(Dispatchers.IO) { database.song(mediaId).firstOrNull() }
+        if (song != null) {
+            val resolved = runBlocking(Dispatchers.IO) {
+                losslessStreamResolver.resolve(song, moe.rukamori.archivetune.constants.FlacQuality.HIGH)
+            }
+            if (resolved != null && resolved.url.isNotBlank()) {
+                return buildResolvedFlacDataSpec(
+                    dataSpec = dataSpec,
+                    mediaId = mediaId,
+                    streamUrl = resolved,
+                )
+            }
+        }
+        throw PlaybackException(
+            "JioSaavn audio stream unavailable",
+            null,
+            PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
+        )
+    }
     val startTime = android.os.SystemClock.elapsedRealtime()
 
     Timber.tag("PlaybackTiming").i("[$mediaId] START resolvePlaybackDataSpec (allowCache=$allowCacheShortCircuit)")

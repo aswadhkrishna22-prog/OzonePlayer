@@ -85,6 +85,7 @@ import moe.rukamori.archivetune.flaccore.streaming.JioSaavnCandidate
 import moe.rukamori.archivetune.flaccore.streaming.JioSaavnDecryptor
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.playback.formatIdForSource
+import moe.rukamori.archivetune.playback.queues.JioSaavnQueue
 import moe.rukamori.archivetune.playback.queues.ListQueue
 import moe.rukamori.archivetune.innertube.YouTube
 import moe.rukamori.archivetune.innertube.SearchFilter.Companion.FILTER_ALBUM
@@ -344,7 +345,7 @@ fun OnlineSearchResult(
 
                     withContext(Dispatchers.Main) {
                         playerConnection.playQueue(
-                            ListQueue(
+                            JioSaavnQueue(
                                 title = "JioSaavn: ${viewModel.query}",
                                 items = mediaItems,
                                 startIndex = startIndex,
@@ -362,6 +363,27 @@ fun OnlineSearchResult(
                     }
                 }
             }
+        }
+    }
+
+    val onJioSaavnTrackMenuClick: (JioSaavnCandidate) -> Unit = { candidate ->
+        val itemMediaId = "jiosaavn_${candidate.id}"
+        val songItem =
+            SongItem(
+                id = itemMediaId,
+                title = candidate.title,
+                artists = candidate.artists.map { Artist(name = it, id = null) },
+                album = candidate.album?.let { Album(name = it, id = "jiosaavn_album_${candidate.id}") },
+                duration = candidate.durationSec.toInt().takeIf { it > 0 },
+                thumbnail = candidate.imageUrl?.replace("150x150", "500x500").orEmpty(),
+                explicit = false,
+            )
+        menuState.show {
+            YouTubeSongMenu(
+                song = songItem,
+                navController = navController,
+                onDismiss = menuState::dismiss,
+            )
         }
     }
 
@@ -1042,14 +1064,27 @@ fun OnlineSearchResult(
                                     trailingContent = {
                                         if (isTrackResolving) {
                                             CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
+                                        } else {
+                                            IconButton(
+                                                onClick = { onJioSaavnTrackMenuClick(candidate) },
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.more_vert),
+                                                    contentDescription = null,
+                                                )
+                                            }
                                         }
                                     },
                                     modifier =
                                         Modifier
                                             .fillMaxWidth()
-                                            .clickable {
-                                                onJioSaavnTrackClick(candidate, tracks)
-                                            },
+                                            .combinedClickable(
+                                                onClick = { onJioSaavnTrackClick(candidate, tracks) },
+                                                onLongClick = {
+                                                    haptics.longPress()
+                                                    onJioSaavnTrackMenuClick(candidate)
+                                                },
+                                            ),
                                 )
                             }
                         }
@@ -1079,21 +1114,6 @@ fun JioSaavnTrackListItem(
     ListItem(
         title = candidate.title,
         subtitle = subtitle,
-        badges = {
-            Box(
-                modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f))
-                        .padding(horizontal = 4.dp, vertical = 1.dp),
-            ) {
-                Text(
-                    text = "320 kbps",
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-        },
         thumbnailContent = {
             ItemThumbnail(
                 thumbnailUrl = candidate.imageUrl?.replace("150x150", "500x500")?.resize(200, 200),
