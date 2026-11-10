@@ -43,6 +43,7 @@ import moe.rukamori.archivetune.spotify.Spotify
 import moe.rukamori.archivetune.spotify.models.SpotifySearchResult
 import moe.rukamori.archivetune.spotify.sync.SpotifyTokenManager
 import moe.rukamori.archivetune.ui.screens.search.OnlineSearchResultArgument
+import moe.rukamori.archivetune.ui.screens.search.SearchSlideTrigger
 import moe.rukamori.archivetune.ui.screens.search.decodeOnlineSearchQuery
 import moe.rukamori.archivetune.utils.dataStore
 import moe.rukamori.archivetune.utils.get
@@ -89,6 +90,28 @@ class OnlineSearchViewModel
         var spotifyError by mutableStateOf<Int?>(null)
         val viewStateMap = mutableStateMapOf<String, ItemsPage?>()
 
+        private var searchRequestCounter: Int
+            get() = savedStateHandle.get<Int>(KEY_SEARCH_REQUEST_COUNTER) ?: 1
+            set(value) {
+                savedStateHandle[KEY_SEARCH_REQUEST_COUNTER] = value
+            }
+
+        val searchRequestId: String
+            get() = "req_${query}_${searchSource.value.name}_$searchRequestCounter"
+
+        private val playedAnimationKeys: MutableSet<String> =
+            (savedStateHandle.get<ArrayList<String>>(KEY_PLAYED_ANIMATION_KEYS)
+                ?: savedStateHandle.get<List<String>>(KEY_PLAYED_ANIMATION_KEYS)
+                ?: emptyList()).toMutableSet()
+
+        fun isAnimationPlayed(key: String): Boolean = playedAnimationKeys.contains(key)
+
+        fun markAnimationPlayed(key: String) {
+            if (playedAnimationKeys.add(key)) {
+                savedStateHandle[KEY_PLAYED_ANIMATION_KEYS] = ArrayList(playedAnimationKeys)
+            }
+        }
+
         private val allModeFilters =
             listOf(
                 FILTER_SONG,
@@ -103,6 +126,8 @@ class OnlineSearchViewModel
         private var searchJob: kotlinx.coroutines.Job? = null
 
         companion object {
+            private const val KEY_SEARCH_REQUEST_COUNTER = "search_request_counter"
+            private const val KEY_PLAYED_ANIMATION_KEYS = "played_search_slide_keys"
             private val summaryCache = LruCache<String, SearchSummaryPage>(50)
             private val filterCache = LruCache<String, ItemsPage>(100)
             private val spotifyCache = LruCache<String, SpotifySearchResult>(50)
@@ -278,7 +303,11 @@ class OnlineSearchViewModel
 
         fun setSearchSource(source: OnlineSearchSource) {
             if (searchSource.value != source) {
+                val oldSource = searchSource.value
                 searchSource.value = source
+                if (SearchSlideTrigger.shouldTriggerOnSourceChange(oldSource, source)) {
+                    searchRequestCounter++
+                }
                 viewModelScope.launch {
                     context.dataStore.edit { prefs ->
                         prefs[UseSpotifySearchKey] = (source == OnlineSearchSource.SPOTIFY)
@@ -293,6 +322,9 @@ class OnlineSearchViewModel
         }
 
         fun setSpotifyFilter(filter: SpotifySearchFilter?) {
+            if (SearchSlideTrigger.shouldTriggerOnCategoryFilterChange()) {
+                searchRequestCounter++
+            }
             spotifyFilter.value = filter
         }
 

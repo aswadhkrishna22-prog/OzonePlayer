@@ -37,6 +37,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.constants.AnimateSearchResultsKey
 import moe.rukamori.archivetune.constants.AppFontPreference
 import moe.rukamori.archivetune.constants.ArchiveTuneCanvasKey
 import moe.rukamori.archivetune.constants.BlurNavBarKey
@@ -108,6 +109,11 @@ fun AppearanceSettings(navController: NavController) {
         rememberPreference(
             DisableAnimationsKey,
             defaultValue = defaultDisableAnimations,
+        )
+    val (animateSearchResults, onAnimateSearchResultsChange) =
+        rememberPreference(
+            AnimateSearchResultsKey,
+            defaultValue = true,
         )
     val (splashOverlayEnabled, onSplashOverlayEnabledChange) =
         rememberPreference(
@@ -243,6 +249,7 @@ fun AppearanceSettings(navController: NavController) {
             blurNavBar = blurNavBar,
             blurRadius = blurRadius,
             disableAnimations = disableAnimations,
+            animateSearchResults = animateSearchResults,
             splashOverlayEnabled = splashOverlayEnabled,
             splashShapePreference = splashShapePreference,
             homeBackgroundStyle = homeBackgroundStyle,
@@ -278,6 +285,7 @@ fun AppearanceSettings(navController: NavController) {
                 onBlurNavBarChange = onBlurNavBarChange,
                 onBlurRadiusChange = onBlurRadiusChange,
                 onDisableAnimationsChange = onDisableAnimationsChange,
+                onAnimateSearchResultsChange = onAnimateSearchResultsChange,
                 onSplashOverlayEnabledChange = onSplashOverlayEnabledChange,
                 onSplashShapePreferenceChange = onSplashShapePreferenceChange,
                 onNavigateCanvas = { navController.navigate(AppearanceContract.CANVAS_ROUTE) },

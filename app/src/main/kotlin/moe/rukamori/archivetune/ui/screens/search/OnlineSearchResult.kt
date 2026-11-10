@@ -72,6 +72,7 @@ import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.LocalDatabase
 import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.constants.AnimateSearchResultsKey
 import moe.rukamori.archivetune.constants.ListThumbnailSize
 import moe.rukamori.archivetune.constants.ThumbnailCornerRadius
 import moe.rukamori.archivetune.extensions.togglePlayPause
@@ -109,6 +110,7 @@ import moe.rukamori.archivetune.ui.screens.spotifyhome.SpotifyArtistSectionRow
 import moe.rukamori.archivetune.ui.screens.spotifyhome.SpotifyPlaylistSectionRow
 import moe.rukamori.archivetune.ui.utils.resize
 import moe.rukamori.archivetune.utils.joinByBullet
+import moe.rukamori.archivetune.utils.rememberPreference
 import moe.rukamori.archivetune.viewmodels.OnlineSearchSource
 import moe.rukamori.archivetune.viewmodels.OnlineSearchViewModel
 import moe.rukamori.archivetune.viewmodels.SpotifySearchFilter
@@ -144,6 +146,8 @@ fun OnlineSearchResult(
     val spotifyError = viewModel.spotifyError
 
     var resolvingTrackId by remember { mutableStateOf<String?>(null) }
+    val (isSearchSlideEnabled) = rememberPreference(AnimateSearchResultsKey, defaultValue = true)
+    val isSlideAnimationActive = rememberSearchSlideAnimationEnabled(isSearchSlideEnabled)
 
     val itemsPage by remember(searchFilter) {
         derivedStateOf {
@@ -353,12 +357,28 @@ fun OnlineSearchResult(
                             OnlineSearchSectionHeader(summary = summary)
                         }
 
+                        val sectionSongKey = "${viewModel.searchRequestId}_yt_all_${summary.title}"
+                        val shouldAnimateSummarySongs = isSlideAnimationActive && !viewModel.isAnimationPlayed(sectionSongKey)
+
                         itemsIndexed(
                             items = viewModel.sortedItems(summary.items, searchSort),
                             key = { itemIndex, item -> "${summary.title}/${item.id}/$itemIndex" },
                             contentType = { _, _ -> "search_result" },
-                        ) { _, item ->
-                            ytItemContent(item)
+                        ) { itemIndex, item ->
+                            if (item is SongItem) {
+                                SearchSlideRow(
+                                    index = itemIndex,
+                                    animationKey = sectionSongKey,
+                                    shouldAnimate = shouldAnimateSummarySongs,
+                                    onAnimationTriggered = {
+                                        viewModel.markAnimationPlayed(sectionSongKey)
+                                    },
+                                ) {
+                                    ytItemContent(item)
+                                }
+                            } else {
+                                ytItemContent(item)
+                            }
                         }
 
                         item(
@@ -375,12 +395,29 @@ fun OnlineSearchResult(
                         }
                     }
                 } else {
-                    items(
+                    val filteredSongKey = "${viewModel.searchRequestId}_yt_filtered_${searchFilter?.value ?: "all"}"
+                    val shouldAnimateFilteredSongs = isSlideAnimationActive && !viewModel.isAnimationPlayed(filteredSongKey)
+
+                    itemsIndexed(
                         items = viewModel.sortedItems(itemsPage?.items.orEmpty().distinctBy { it.id }, searchSort),
-                        key = { "filtered_${it.id}" },
-                        contentType = { "search_result" },
-                        itemContent = ytItemContent,
-                    )
+                        key = { _, item -> "filtered_${item.id}" },
+                        contentType = { _, _ -> "search_result" },
+                    ) { itemIndex, item ->
+                        if (item is SongItem) {
+                            SearchSlideRow(
+                                index = itemIndex,
+                                animationKey = filteredSongKey,
+                                shouldAnimate = shouldAnimateFilteredSongs,
+                                onAnimationTriggered = {
+                                    viewModel.markAnimationPlayed(filteredSongKey)
+                                },
+                            ) {
+                                ytItemContent(item)
+                            }
+                        } else {
+                            ytItemContent(item)
+                        }
+                    }
 
                     if (itemsPage?.continuation != null) {
                         item(key = "loading", contentType = "loading") {
@@ -502,42 +539,54 @@ fun OnlineSearchResult(
                                     OnlineSearchSectionHeader(title = stringResource(R.string.filter_songs))
                                 }
                                 val topTracks = tracks.take(5)
+                                val spotifySongsKey = "${viewModel.searchRequestId}_spotify_songs"
+                                val shouldAnimateSpotifySongs = isSlideAnimationActive && !viewModel.isAnimationPlayed(spotifySongsKey)
+
                                 itemsIndexed(
                                     items = topTracks,
                                     key = { idx, track -> "spotify_top_track_${track.id}_$idx" },
                                     contentType = { _, _ -> "spotify_track" },
-                                ) { _, track ->
-                                    val isTrackActive = remember(track, mediaMetadata) { track.isResolvedAs(mediaMetadata) }
-                                    val isTrackResolving = resolvingTrackId == track.id
-                                    SpotifyTrackListItem(
-                                        track = track,
-                                        isActive = isTrackActive || isTrackResolving,
-                                        isPlaying = isPlaying && !isTrackResolving,
-                                        trailingContent = {
-                                            if (isTrackResolving) {
-                                                CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
-                                            } else {
-                                                IconButton(
-                                                    onClick = { onSpotifyTrackMenuClick(track) },
-                                                ) {
-                                                    Icon(
-                                                        painter = painterResource(R.drawable.more_vert),
-                                                        contentDescription = null,
-                                                    )
-                                                }
-                                            }
+                                ) { idx, track ->
+                                    SearchSlideRow(
+                                        index = idx,
+                                        animationKey = spotifySongsKey,
+                                        shouldAnimate = shouldAnimateSpotifySongs,
+                                        onAnimationTriggered = {
+                                            viewModel.markAnimationPlayed(spotifySongsKey)
                                         },
-                                        modifier =
-                                            Modifier
-                                                .fillMaxWidth()
-                                                .combinedClickable(
-                                                    onClick = { onSpotifyTrackClick(track, tracks) },
-                                                    onLongClick = {
-                                                        haptics.longPress()
-                                                        onSpotifyTrackMenuClick(track)
-                                                    },
-                                                ),
-                                    )
+                                    ) {
+                                        val isTrackActive = remember(track, mediaMetadata) { track.isResolvedAs(mediaMetadata) }
+                                        val isTrackResolving = resolvingTrackId == track.id
+                                        SpotifyTrackListItem(
+                                            track = track,
+                                            isActive = isTrackActive || isTrackResolving,
+                                            isPlaying = isPlaying && !isTrackResolving,
+                                            trailingContent = {
+                                                if (isTrackResolving) {
+                                                    CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
+                                                } else {
+                                                    IconButton(
+                                                        onClick = { onSpotifyTrackMenuClick(track) },
+                                                    ) {
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.more_vert),
+                                                            contentDescription = null,
+                                                        )
+                                                    }
+                                                }
+                                            },
+                                            modifier =
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .combinedClickable(
+                                                        onClick = { onSpotifyTrackClick(track, tracks) },
+                                                        onLongClick = {
+                                                            haptics.longPress()
+                                                            onSpotifyTrackMenuClick(track)
+                                                        },
+                                                    ),
+                                        )
+                                    }
                                 }
                             }
 
@@ -632,42 +681,54 @@ fun OnlineSearchResult(
 
                         SpotifySearchFilter.SONGS -> {
                             if (tracks.isNotEmpty()) {
+                                val spotifyFilterSongsKey = "${viewModel.searchRequestId}_spotify_songs"
+                                val shouldAnimateSpotifyFilter = isSlideAnimationActive && !viewModel.isAnimationPlayed(spotifyFilterSongsKey)
+
                                 itemsIndexed(
                                     items = tracks,
                                     key = { idx, track -> "spotify_full_track_${track.id}_$idx" },
                                     contentType = { _, _ -> "spotify_track" },
-                                ) { _, track ->
-                                    val isTrackActive = remember(track, mediaMetadata) { track.isResolvedAs(mediaMetadata) }
-                                    val isTrackResolving = resolvingTrackId == track.id
-                                    SpotifyTrackListItem(
-                                        track = track,
-                                        isActive = isTrackActive || isTrackResolving,
-                                        isPlaying = isPlaying && !isTrackResolving,
-                                        trailingContent = {
-                                            if (isTrackResolving) {
-                                                CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
-                                            } else {
-                                                IconButton(
-                                                    onClick = { onSpotifyTrackMenuClick(track) },
-                                                ) {
-                                                    Icon(
-                                                        painter = painterResource(R.drawable.more_vert),
-                                                        contentDescription = null,
-                                                    )
-                                                }
-                                            }
+                                ) { idx, track ->
+                                    SearchSlideRow(
+                                        index = idx,
+                                        animationKey = spotifyFilterSongsKey,
+                                        shouldAnimate = shouldAnimateSpotifyFilter,
+                                        onAnimationTriggered = {
+                                            viewModel.markAnimationPlayed(spotifyFilterSongsKey)
                                         },
-                                        modifier =
-                                            Modifier
-                                                .fillMaxWidth()
-                                                .combinedClickable(
-                                                    onClick = { onSpotifyTrackClick(track, tracks) },
-                                                    onLongClick = {
-                                                        haptics.longPress()
-                                                        onSpotifyTrackMenuClick(track)
-                                                    },
-                                                ),
-                                    )
+                                    ) {
+                                        val isTrackActive = remember(track, mediaMetadata) { track.isResolvedAs(mediaMetadata) }
+                                        val isTrackResolving = resolvingTrackId == track.id
+                                        SpotifyTrackListItem(
+                                            track = track,
+                                            isActive = isTrackActive || isTrackResolving,
+                                            isPlaying = isPlaying && !isTrackResolving,
+                                            trailingContent = {
+                                                if (isTrackResolving) {
+                                                    CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
+                                                } else {
+                                                    IconButton(
+                                                        onClick = { onSpotifyTrackMenuClick(track) },
+                                                    ) {
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.more_vert),
+                                                            contentDescription = null,
+                                                        )
+                                                    }
+                                                }
+                                            },
+                                            modifier =
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .combinedClickable(
+                                                        onClick = { onSpotifyTrackClick(track, tracks) },
+                                                        onLongClick = {
+                                                            haptics.longPress()
+                                                            onSpotifyTrackMenuClick(track)
+                                                        },
+                                                    ),
+                                        )
+                                    }
                                 }
                             } else {
                                 item(key = "spotify_empty_songs", contentType = "empty") {

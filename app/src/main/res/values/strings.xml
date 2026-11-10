@@ -487,6 +487,8 @@
     <string name="blur_radius_desc">Adjust the background blur intensity of floating panels</string>
     <string name="disable_animations">Disable animations</string>
     <string name="disable_animations_desc">Disable most app animations. Recommended for low-end devices</string>
+    <string name="animate_search_results">Animate search results</string>
+    <string name="animate_search_results_desc">Slide in song results when new search results appear</string>
     <string name="splash_overlay_enabled">Splash screen animation</string>
     <string name="splash_overlay_enabled_desc">Show animated splash screen on app launch</string>
     <string name="splash_shape_preference">Splash constellation shape</string>
