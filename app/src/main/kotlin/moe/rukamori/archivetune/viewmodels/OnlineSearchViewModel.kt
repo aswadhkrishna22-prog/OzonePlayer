@@ -72,7 +72,7 @@ class OnlineSearchViewModel
     @Inject
     constructor(
         @ApplicationContext val context: Context,
-        savedStateHandle: SavedStateHandle,
+        private val savedStateHandle: SavedStateHandle,
         private val loadAiContentFilterPolicy: LoadAiContentFilterPolicyUseCase,
         private val filterAiContent: FilterAiContentUseCase,
     ) : ViewModel() {
