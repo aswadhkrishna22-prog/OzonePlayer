@@ -1368,4 +1368,8 @@
     <string name="ambiguous_version_desc">Multiple versions match. Tap the one you want to play:</string>
     <string name="version_override_saved">Saved version for this song</string>
     <string name="version_override_cleared">Reset to automatic matching</string>
+
+    <!-- JioSaavn 320 kbps High Quality Audio -->
+    <string name="prefer_320kbps">Prefer 320 kbps audio (JioSaavn)</string>
+    <string name="prefer_320kbps_desc">Automatically stream original 320 kbps studio audio from JioSaavn when available</string>
 </resources>

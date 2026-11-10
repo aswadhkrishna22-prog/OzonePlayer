@@ -21,6 +21,7 @@ import moe.rukamori.archivetune.MainActivity
 import moe.rukamori.archivetune.constants.AutoSkipNextOnErrorKey
 import moe.rukamori.archivetune.constants.PlaybackSource
 import moe.rukamori.archivetune.constants.PlayerStreamClient
+import moe.rukamori.archivetune.constants.Prefer320KbpsKey
 import moe.rukamori.archivetune.extensions.directorySizeBytes
 import moe.rukamori.archivetune.extensions.findNextMediaItemById
 import moe.rukamori.archivetune.innertube.YouTube
@@ -104,13 +105,14 @@ internal fun MusicService.resolvePlaybackDataSpec(
     val isMeteredConnection = connectivityManager.isActiveNetworkMetered
     val lowDataEnabled = isLowDataEnabled
     val shouldBypassFlac = shouldBypassFlac(lowData = lowDataEnabled, metered = isMeteredConnection)
-    val effectiveSource = if (currentSource == PlaybackSource.YT_MUSIC) {
-        PlaybackSource.YT_MUSIC
-    } else {
+    val prefer320Kbps = dataStore.get(Prefer320KbpsKey, true)
+    val effectiveSource = if (currentSource == PlaybackSource.FLAC || (!shouldBypassFlac && prefer320Kbps)) {
         val isFlacFullyCached = isKeyFullyCached(flacStreamCacheKey(mediaId), mediaId) ||
                 (validateLegacyCacheKeyAcrossCaches(downloadCache, playerCache, flacCacheKey(mediaId), PlaybackSource.FLAC) &&
                         isKeyFullyCached(flacCacheKey(mediaId), mediaId))
-        effectiveSource(source = currentSource, shouldBypassFlac = shouldBypassFlac && !isFlacFullyCached)
+        effectiveSource(source = PlaybackSource.FLAC, shouldBypassFlac = shouldBypassFlac && !isFlacFullyCached)
+    } else {
+        PlaybackSource.YT_MUSIC
     }
 
     if (!audioNormalizationFactorCache.containsKey(mediaId)) {

@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 import moe.rukamori.archivetune.constants.FlacQuality
 import moe.rukamori.archivetune.constants.FlacStreamingQualityKey
 import moe.rukamori.archivetune.constants.PlaybackSource
+import moe.rukamori.archivetune.constants.Prefer320KbpsKey
 import moe.rukamori.archivetune.extensions.findNextMediaItemById
 import moe.rukamori.archivetune.extensions.metadata
 import moe.rukamori.archivetune.extensions.toEnum
@@ -31,7 +32,7 @@ internal fun MusicService.resolveFlacPlaybackDataSpec(
     lowDataEnabled: Boolean,
     isMeteredConnection: Boolean,
 ): DataSpec? {
-    val losslessResult = if (!shouldBypassFlac && currentSource == PlaybackSource.FLAC) {
+    val losslessResult = if (!shouldBypassFlac && (currentSource == PlaybackSource.FLAC || dataStore.get(Prefer320KbpsKey, true))) {
         val isOffline = connectivityManager.activeNetwork == null
 
         if (isOffline) {
