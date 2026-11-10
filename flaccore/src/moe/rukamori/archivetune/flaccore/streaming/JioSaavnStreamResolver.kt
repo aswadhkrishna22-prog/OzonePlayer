@@ -87,7 +87,7 @@ class JioSaavnStreamResolver(
         return emptyList()
     }
 
-    internal fun buildSearchTerms(query: TrackQuery): List<String> = buildList {
+    fun buildSearchTerms(query: TrackQuery): List<String> = buildList {
         val cleanTitle = cleanString(query.title)
         val cleanArtist = cleanString(query.artist)
         val primaryArtist = cleanArtist.split(",", ";", "&", "feat").firstOrNull()?.trim().orEmpty()
@@ -136,7 +136,7 @@ class JioSaavnStreamResolver(
         }
     }
 
-    internal fun parseSearchResponse(jsonString: String): List<JioSaavnCandidate> {
+    fun parseSearchResponse(jsonString: String): List<JioSaavnCandidate> {
         if (jsonString.isBlank()) return emptyList()
         return try {
             val root = json.parseToJsonElement(jsonString) as? JsonObject ?: return emptyList()
@@ -182,7 +182,7 @@ class JioSaavnStreamResolver(
         }
     }
 
-    internal fun pickBestCandidate(candidates: List<JioSaavnCandidate>, query: TrackQuery): JioSaavnCandidate? {
+    fun pickBestCandidate(candidates: List<JioSaavnCandidate>, query: TrackQuery): JioSaavnCandidate? {
         val scored = candidates.map { candidate ->
             candidate to scoreCandidate(candidate, query)
         }.sortedByDescending { it.second }
