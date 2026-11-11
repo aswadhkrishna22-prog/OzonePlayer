@@ -7,6 +7,7 @@
 package moe.rukamori.archivetune.spotify
 
 import androidx.media3.common.MediaItem
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
