@@ -54,6 +54,7 @@ data class OnlinePlaylistActions(
     val onMenu: () -> Unit = {},
     val onSongMenu: (SongItem) -> Unit = {},
     val onDownload: () -> Unit = {},
+    val onDownloadLongClick: () -> Unit = {},
     val onRetry: () -> Unit = {},
     val onLoadMore: () -> Unit = {},
     val onArtistClick: (String) -> Unit = {},

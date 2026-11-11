@@ -38,7 +38,16 @@ class StreamErrorRouter(
     private var lastLoginRecoveryPrompt: Pair<String, Long>? = null
 
     fun onPlayerError(error: PlaybackException): RecoveryDecision {
-        val currentMediaId = playerActions.currentMediaItem?.mediaId ?: return RecoveryDecision.None
+        val currentMediaItem = playerActions.currentMediaItem
+        val currentMediaId = currentMediaItem?.mediaId ?: return RecoveryDecision.None
+
+        if (moe.rukamori.archivetune.playback.JioSaavnPlaybackFallback.isJioSaavnTrack(currentMediaItem) &&
+            moe.rukamori.archivetune.playback.JioSaavnPlaybackFallback.isPrePlaybackSourceError(error, playerActions.currentPosition)
+        ) {
+            if (moe.rukamori.archivetune.playback.JioSaavnPlaybackFallback.canFallback(currentMediaItem)) {
+                return RecoveryDecision.Retry
+            }
+        }
         val isLocalMedia = currentMediaId.isLocalMediaId()
         val isFullyCachedMedia = cacheOps.isTrackFullyCached(currentMediaId)
         val hasAnyCachedData =

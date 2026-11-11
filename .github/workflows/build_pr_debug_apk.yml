@@ -2,9 +2,9 @@ name: Build PR Debug APK
 
 on:
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
   push:
-    branches: [ "feat/dual-play-ui", "feat/slim-updates", "release/1.2-prep", "feat/kemo" ]
+    branches: [ "dev" ]
   workflow_dispatch:
 
 permissions:
@@ -32,13 +32,13 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Unit Tests
-        run: ./gradlew testGmsMobileUniversalDebugUnitTest --tests "moe.rukamori.archivetune.kemo.KemoStateTest" --tests "moe.rukamori.archivetune.beastmode.BeastModeTest" --tests "moe.rukamori.archivetune.playback.queue.SongVibeMatcherTest" --stacktrace
+        run: ./gradlew :flaccore:test testGmsMobileUniversalDebugUnitTest --tests "moe.rukamori.archivetune.kemo.KemoStateTest" --tests "moe.rukamori.archivetune.beastmode.BeastModeTest" --tests "moe.rukamori.archivetune.playback.queue.SongVibeMatcherTest" --tests "moe.rukamori.archivetune.spotify.SpotifyPlaybackResolverTest" --tests "moe.rukamori.archivetune.ui.screens.search.SearchSlideAnimationTest" --tests "moe.rukamori.archivetune.playback.resolvers.JioSaavnPlaybackResolutionTest" --tests "moe.rukamori.archivetune.ui.screens.playlist.PlaylistDownloadSheetTest" --tests "moe.rukamori.archivetune.ui.player.player_0.MiniPlayerRollingArtworkTest" --stacktrace
 
       - name: Build Normal Debug APK
         run: ./gradlew assembleGmsMobileUniversalDebug -Pdualplay=true --stacktrace
 
       - name: Build R8 Release Test APK
-        run: ./gradlew assembleGmsMobileUniversalRelease -Prtest=true -PnightlyVersionName="1.2.${{ github.run_number }}" --stacktrace
+        run: ./gradlew assembleGmsMobileUniversalRelease -Prtest=true -PnightlyVersionName="1.3.${{ github.run_number }}" --stacktrace
 
       - name: Analyze APK Sizes & Summary
         run: |

@@ -256,7 +256,7 @@ Ozone Player is free software licensed under the **GNU General Public License v3
 You may freely copy, modify, and redistribute the source code provided you preserve copyright notices and distribute derivative works under the same GPL-3.0 license.
 
 ### Disclaimer
-Ozone Player is an independent third-party client. It is **not affiliated with, endorsed by, or sponsored by Google LLC, YouTube Music, Spotify AB, or Apple Inc.**. The application is provided for personal use only as a tool for managing your own library.
+Ozone Player is an independent third-party client. It is **not affiliated with, endorsed by, or sponsored by Google LLC, YouTube Music, Spotify AB, Apple Inc., or JioSaavn**. The application is provided for personal use only as a tool for managing your own library.
 
 ---
 

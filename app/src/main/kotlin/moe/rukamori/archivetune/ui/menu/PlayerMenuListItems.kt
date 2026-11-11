@@ -99,6 +99,8 @@ internal fun PlayerMenuOptionsSection(
     isQueueTrigger: Boolean?,
     onRemoveFromQueue: (() -> Unit)?,
     playerConnection: PlayerConnection,
+    effectiveSpotifyId: String? = null,
+    onOpenVersionPicker: () -> Unit = {},
     onShowDetailsDialog: () -> Unit,
     onShowEqualizerDialog: () -> Unit,
     onShowPitchTempoDialog: () -> Unit,
@@ -150,6 +152,30 @@ internal fun PlayerMenuOptionsSection(
                     },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
             )
+
+            if (!effectiveSpotifyId.isNullOrBlank()) {
+                HorizontalDivider(
+                    modifier = Modifier.padding(start = 56.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                )
+
+                ListItem(
+                    headlineContent = { Text(text = stringResource(R.string.wrong_song_pick_another)) },
+                    supportingContent = { Text(text = stringResource(R.string.wrong_song_pick_another_desc)) },
+                    leadingContent = {
+                        Icon(
+                            painter = painterResource(R.drawable.tune),
+                            contentDescription = null,
+                        )
+                    },
+                    modifier =
+                        Modifier.clickable {
+                            onDismiss()
+                            onOpenVersionPicker()
+                        },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
 
             if (isQueueTrigger != true) {
                 HorizontalDivider(

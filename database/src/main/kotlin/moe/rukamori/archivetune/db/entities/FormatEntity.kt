@@ -44,7 +44,26 @@ fun FormatEntity.codecLabel(): String {
     }
 }
 
-fun FormatEntity.formattedBitrate(): String = if (bitrate > 0) "${bitrate / 1000} kbps" else "Unknown"
+fun FormatEntity.sourceBitrateKbps(): Int? =
+    takeIf { bitrate > 0 }?.let {
+        if (bitrate > 2000) (bitrate / 1000.0).roundToInt() else bitrate
+    }
+
+fun FormatEntity.measuredBitrateKbps(durationSec: Long?): Int? {
+    if (contentLength > 0L && durationSec != null && durationSec > 0L) {
+        val bps = (contentLength * 8.0) / durationSec
+        return (bps / 1000.0).roundToInt().takeIf { it > 0 }
+    }
+    return null
+}
+
+fun FormatEntity.measuredBitrateKbps(durationSec: Int?): Int? =
+    measuredBitrateKbps(durationSec?.toLong())
+
+fun FormatEntity.formattedBitrate(measuredKbps: Int? = null): String {
+    val kbps = measuredKbps ?: sourceBitrateKbps()
+    return if (kbps != null && kbps > 0) "~$kbps kbps" else "Unknown"
+}
 
 fun FormatEntity.formattedSampleRate(): String? =
     sampleRate?.takeIf { it > 0 }?.let {

@@ -56,4 +56,31 @@ class FlacStreamRegistryTest {
 
         registry.resolve(query, quality)
     }
+
+    @Test
+    fun `jiosaavn resolves first when provided`() = runTest {
+        val jioExpected = FlacStreamUrl("url_jiosaavn", 0, codec = "aac", bitrateKbps = 320, origin = "jiosaavn")
+        val qbdlxExpected = FlacStreamUrl("url_qbdlx", 0, codec = "flac", bitrateKbps = 1411, origin = "qbdlx")
+
+        val registry = FlacStreamRegistry(
+            jiosaavn = { _, _ -> jioExpected },
+            qbdlx = { _, _ -> qbdlxExpected },
+        )
+
+        val result = registry.resolve(query, quality)
+        assertEquals(jioExpected, result)
+    }
+
+    @Test
+    fun `falls back to qbdlx when jiosaavn returns null`() = runTest {
+        val qbdlxExpected = FlacStreamUrl("url_qbdlx", 0, codec = "flac", bitrateKbps = 1411, origin = "qbdlx")
+
+        val registry = FlacStreamRegistry(
+            jiosaavn = { _, _ -> null },
+            qbdlx = { _, _ -> qbdlxExpected },
+        )
+
+        val result = registry.resolve(query, quality)
+        assertEquals(qbdlxExpected, result)
+    }
 }

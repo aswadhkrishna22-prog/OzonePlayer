@@ -29,6 +29,13 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
+import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.ui.utils.HeaderDownloadItem
+import moe.rukamori.archivetune.ui.utils.sendAddMissingDownloads
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -84,6 +91,7 @@ fun OnlinePlaylistScreen(
 
     val searchState = rememberOnlinePlaylistSearchState(songs)
     val downloadUiState = rememberOnlinePlaylistDownloadUiState()
+    var showDownloadSheet by rememberSaveable { mutableStateOf(false) }
     val (gradientColors, gradientAlpha) =
         rememberOnlinePlaylistGradientState(
             thumbnailUrl = playlist?.thumbnail,
@@ -132,6 +140,7 @@ fun OnlinePlaylistScreen(
             haptics = haptics,
             onRetry = viewModel::retry,
             onLoadMore = viewModel::loadMoreSongs,
+            onDownloadLongClick = { showDownloadSheet = true },
         )
 
     val headerItems by remember {
@@ -233,5 +242,30 @@ fun OnlinePlaylistScreen(
                     .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.union(WindowInsets.ime))
                     .align(Alignment.BottomCenter),
         )
+
+        if (showDownloadSheet && playlist != null) {
+            PlaylistDownloadSheet(
+                title = playlist?.title.orEmpty(),
+                thumbnailUrl = playlist?.thumbnail,
+                songs = songs.map { it.toDownloadableSong() },
+                downloads = downloadUiState.downloads,
+                hasMoreSongs = viewModel.continuation != null,
+                onLoadMore = viewModel::loadMoreSongs,
+                onDismiss = { showDownloadSheet = false },
+                onStartDownload = { selectedList ->
+                    downloadUiState.dismissed = false
+                    sendAddMissingDownloads(
+                        context = context,
+                        songs = selectedList.map { HeaderDownloadItem(id = it.id, title = it.title) },
+                        downloads = downloadUiState.downloads,
+                    )
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.playlist_download_started, selectedList.size),
+                        )
+                    }
+                },
+            )
+        }
     }
 }

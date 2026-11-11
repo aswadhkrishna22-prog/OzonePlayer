@@ -302,11 +302,21 @@ object AppModule {
 
     @Singleton
     @Provides
+    fun provideJioSaavnStreamResolver(
+        client: okhttp3.OkHttpClient,
+    ): moe.rukamori.archivetune.flaccore.streaming.JioSaavnStreamResolver {
+        return moe.rukamori.archivetune.flaccore.streaming.JioSaavnStreamResolver(client)
+    }
+
+    @Singleton
+    @Provides
     fun provideFlacStreamRegistry(
         qbdlxResolver: moe.rukamori.archivetune.flaccore.streaming.QbdlxStreamResolver,
+        jiosaavnResolver: moe.rukamori.archivetune.flaccore.streaming.JioSaavnStreamResolver,
     ): moe.rukamori.archivetune.flaccore.streaming.FlacStreamRegistry {
         return moe.rukamori.archivetune.flaccore.streaming.FlacStreamRegistry(
             qbdlx = { q, ql -> qbdlxResolver.resolve(q, ql) },
+            jiosaavn = { q, ql -> jiosaavnResolver.resolve(q, ql) },
         )
     }
 

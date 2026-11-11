@@ -25,6 +25,7 @@ open class SpotifyTracksQueue(
     override val preloadItem: MediaMetadata? = null,
     protected val totalCount: Int? = null,
     protected val hasCustomOrder: Boolean = false,
+    protected val contextQuery: String? = null,
 ) : SpotifyQueue {
     override val isContextQueue: Boolean = true
 
@@ -64,6 +65,7 @@ open class SpotifyTracksQueue(
         title: String? = null,
         totalCount: Int? = null,
         hasCustomOrder: Boolean = false,
+        contextQuery: String? = null,
     ) : this(
         title = title,
         initialTracks = allTracks,
@@ -71,6 +73,7 @@ open class SpotifyTracksQueue(
         preloadItem = preloadItem,
         totalCount = totalCount,
         hasCustomOrder = hasCustomOrder,
+        contextQuery = contextQuery,
     )
 
     data class PageResult(
@@ -86,7 +89,7 @@ open class SpotifyTracksQueue(
         PageResult(tracks = emptyList(), total = 0, rawCount = 0)
 
     protected open suspend fun resolveToMediaItem(track: SpotifyTrack): MediaItem? =
-        SpotifyPlaybackResolver.resolveToMediaItem(track)
+        SpotifyPlaybackResolver.resolveToMediaItem(track, contextQuery = contextQuery)
 
     override suspend fun getInitialStatus(): Queue.Status =
         withContext(Dispatchers.IO) {

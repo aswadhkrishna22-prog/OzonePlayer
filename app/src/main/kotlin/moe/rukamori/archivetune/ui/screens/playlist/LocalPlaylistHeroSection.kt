@@ -60,6 +60,7 @@ import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.LocalYumaColors
 import moe.rukamori.archivetune.ui.theme.yumaClickable
+import moe.rukamori.archivetune.ui.theme.yumaCombinedClickable
 import moe.rukamori.archivetune.ui.theme.yumaGlassCard
 import moe.rukamori.archivetune.ui.utils.HeaderDownloadProgressIndicator
 import moe.rukamori.archivetune.ui.utils.HeaderDownloadState
@@ -556,9 +557,10 @@ fun LocalPlaylistHeroSection(
                 modifier =
                     Modifier
                         .size(48.dp)
-                        .yumaClickable(
+                        .yumaCombinedClickable(
                             pressedScale = SettingsAnimations.PressScale,
                             onClick = actions.onDownload,
+                            onLongClick = actions.onDownloadLongClick,
                         )
                         .yumaGlassCard(
                             shape = CircleShape,
