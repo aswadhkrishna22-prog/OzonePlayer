@@ -12,6 +12,8 @@ import moe.rukamori.archivetune.flaccore.streaming.FlacStreamRegistry
 import moe.rukamori.archivetune.flaccore.streaming.FlacStreamUrl
 import moe.rukamori.archivetune.flaccore.streaming.JioSaavnCandidate
 import moe.rukamori.archivetune.flaccore.streaming.JioSaavnDecryptor
+import moe.rukamori.archivetune.flaccore.streaming.JioSaavnQualityCache
+import moe.rukamori.archivetune.flaccore.streaming.JioSaavnQualityTier
 import moe.rukamori.archivetune.flaccore.streaming.JioSaavnStreamResolver
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
@@ -51,6 +53,49 @@ class JioSaavnPlaybackResolutionTest {
 
         val rawM4a = "https://aac.saavncdn.com/999/song_96.m4a"
         assertEquals("https://aac.saavncdn.com/999/song_320.m4a", JioSaavnDecryptor.to320KbpsUrl(rawM4a))
+    }
+
+    @Test
+    fun fallbackSequence_progresses320To160ToOriginal() {
+        val raw = "https://aac.saavncdn.com/535/01c78b530edbbeff6f744cb2cc3e1c41_96.mp4"
+        val sequence = JioSaavnDecryptor.buildFallbackSequence(raw)
+
+        assertEquals(3, sequence.size)
+        assertEquals(JioSaavnQualityTier.KBPS_320, sequence[0].first)
+        assertEquals("https://aac.saavncdn.com/535/01c78b530edbbeff6f744cb2cc3e1c41_320.mp4", sequence[0].second)
+
+        assertEquals(JioSaavnQualityTier.KBPS_160, sequence[1].first)
+        assertEquals("https://aac.saavncdn.com/535/01c78b530edbbeff6f744cb2cc3e1c41_160.mp4", sequence[1].second)
+
+        assertEquals(JioSaavnQualityTier.ORIGINAL, sequence[2].first)
+        assertEquals("https://aac.saavncdn.com/535/01c78b530edbbeff6f744cb2cc3e1c41_96.mp4", sequence[2].second)
+
+        // Step progression
+        val step1 = JioSaavnDecryptor.getNextFallback(sequence[0].second, raw)
+        assertNotNull(step1)
+        assertEquals(JioSaavnQualityTier.KBPS_160, step1?.first)
+
+        val step2 = JioSaavnDecryptor.getNextFallback(step1!!.second, raw)
+        assertNotNull(step2)
+        assertEquals(JioSaavnQualityTier.ORIGINAL, step2?.first)
+
+        val step3 = JioSaavnDecryptor.getNextFallback(step2!!.second, raw)
+        assertNull(step3)
+    }
+
+    @Test
+    fun qualityCache_storesAndProvidesWorkingTier() {
+        val key = "jiosaavn_test123"
+        val raw = "https://aac.saavncdn.com/535/test_96.mp4"
+
+        JioSaavnQualityCache.clear()
+        assertEquals(JioSaavnQualityTier.KBPS_320, JioSaavnQualityCache.getWorkingTier(key))
+
+        JioSaavnQualityCache.storeRawUrl(key, raw)
+        JioSaavnQualityCache.recordWorkingTier(key, JioSaavnQualityTier.KBPS_160)
+
+        assertEquals(JioSaavnQualityTier.KBPS_160, JioSaavnQualityCache.getWorkingTier(key))
+        assertEquals(raw, JioSaavnQualityCache.getRawUrl(key))
     }
 
     @Test

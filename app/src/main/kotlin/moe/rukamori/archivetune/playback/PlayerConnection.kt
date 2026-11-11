@@ -309,6 +309,18 @@ class PlayerConnection(
 
     override fun onPlayerErrorChanged(playbackError: PlaybackException?) {
         if (playbackError != null) {
+            val currentItem = player.currentMediaItem
+            val currentPos = runCatching { player.currentPosition }.getOrDefault(0L)
+            if (JioSaavnPlaybackFallback.isJioSaavnTrack(currentItem) &&
+                JioSaavnPlaybackFallback.isPrePlaybackSourceError(playbackError, currentPos)
+            ) {
+                val handled = JioSaavnPlaybackFallback.tryFallback(player, database, scope)
+                if (handled) {
+                    timber.log.Timber.tag("PlayerConnection").i("JioSaavn early source error automatically retrying next lower quality; suppressing error UI")
+                    return
+                }
+            }
+
             reportException(playbackError)
             if (moe.rukamori.archivetune.BuildConfig.DEBUG) {
                 var isLogin = false

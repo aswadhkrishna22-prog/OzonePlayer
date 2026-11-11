@@ -61,16 +61,20 @@ class JioSaavnStreamResolver(
             return@withContext null
         }
 
-        val streamUrl320 = JioSaavnDecryptor.to320KbpsUrl(rawUrl)
-        logger.i("JioSaavn resolved 320kbps stream: $streamUrl320 for '${query.title}'")
+        val songKey = "jiosaavn_${best.id}"
+        JioSaavnQualityCache.storeRawUrl(songKey, rawUrl)
+        val workingTier = JioSaavnQualityCache.getWorkingTier(songKey)
+        val streamUrl = JioSaavnDecryptor.getUrlForTier(rawUrl, workingTier)
+        val nominalBitrate = if (workingTier.nominalBitrateKbps > 0) workingTier.nominalBitrateKbps else 160
+        logger.i("JioSaavn resolved ${workingTier.nominalBitrateKbps}kbps stream: $streamUrl for '${query.title}'")
 
         FlacStreamUrl(
-            url = streamUrl320,
+            url = streamUrl,
             expiresAtMs = System.currentTimeMillis() + 86_400_000L, // 24 hours
             codec = "aac",
             bitsPerSample = 16,
             sampleRateHz = 44100,
-            bitrateKbps = 320,
+            bitrateKbps = nominalBitrate,
             coverArtUrl = best.imageUrl?.replace("150x150", "500x500"),
             origin = ORIGIN,
         )

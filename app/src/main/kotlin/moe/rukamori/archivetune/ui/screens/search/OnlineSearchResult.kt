@@ -83,6 +83,8 @@ import moe.rukamori.archivetune.db.entities.FormatEntity
 import moe.rukamori.archivetune.extensions.togglePlayPause
 import moe.rukamori.archivetune.flaccore.streaming.JioSaavnCandidate
 import moe.rukamori.archivetune.flaccore.streaming.JioSaavnDecryptor
+import moe.rukamori.archivetune.flaccore.streaming.JioSaavnQualityCache
+import moe.rukamori.archivetune.flaccore.streaming.JioSaavnQualityTier
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.playback.formatIdForSource
 import moe.rukamori.archivetune.playback.queues.JioSaavnQueue
@@ -287,8 +289,12 @@ fun OnlineSearchResult(
                 try {
                     val mediaItems = candidateList.mapNotNull { item ->
                         val rawUrl = JioSaavnDecryptor.decryptMediaUrl(item.encryptedMediaUrl) ?: return@mapNotNull null
-                        val direct320Url = JioSaavnDecryptor.to320KbpsUrl(rawUrl)
                         val itemMediaId = "jiosaavn_${item.id}"
+                        JioSaavnQualityCache.storeRawUrl(itemMediaId, rawUrl)
+                        val workingTier = JioSaavnQualityCache.getWorkingTier(itemMediaId)
+                        val streamUrl = JioSaavnDecryptor.getUrlForTier(rawUrl, workingTier)
+                        val nominalBitrate = if (workingTier.nominalBitrateKbps > 0) workingTier.nominalBitrateKbps * 1000 else 160000
+
                         val itemMetadata = MediaMetadata(
                             id = itemMediaId,
                             title = item.title,
@@ -299,24 +305,24 @@ fun OnlineSearchResult(
                         )
 
                         database.insert(itemMetadata)
-                        val format320 = FormatEntity(
+                        val formatEntity = FormatEntity(
                             id = formatIdForSource(itemMediaId, PlaybackSource.FLAC),
                             itag = 0,
                             mimeType = "audio/mp4",
                             codecs = "mp4a.40.2",
-                            bitrate = 320000,
+                            bitrate = nominalBitrate,
                             sampleRate = 44100,
-                            contentLength = (320000L / 8L) * item.durationSec,
+                            contentLength = (nominalBitrate.toLong() / 8L) * item.durationSec,
                             loudnessDb = null,
-                            playbackUrl = direct320Url,
+                            playbackUrl = streamUrl,
                             bitsPerSample = 16,
                         )
-                        database.upsert(format320)
-                        database.upsert(format320.copy(id = itemMediaId))
+                        database.upsert(formatEntity)
+                        database.upsert(formatEntity.copy(id = itemMediaId))
 
                         MediaItem.Builder()
                             .setMediaId(itemMediaId)
-                            .setUri(direct320Url.toUri())
+                            .setUri(streamUrl.toUri())
                             .setCustomCacheKey(itemMediaId)
                             .setTag(itemMetadata)
                             .setMediaMetadata(

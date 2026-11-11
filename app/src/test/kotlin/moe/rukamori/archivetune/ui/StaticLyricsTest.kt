@@ -63,7 +63,6 @@ class StaticLyricsTest {
         every { connection.isPlaying } returns MutableStateFlow(false)
         every { connection.currentFormat } returns MutableStateFlow(null)
         every { connection.audioFormat } returns MutableStateFlow(null)
-        every { connection.measuredBitrateKbps } returns MutableStateFlow(null)
         every { connection.shuffleModeEnabled } returns MutableStateFlow(false)
         every { connection.repeatMode } returns MutableStateFlow(0)
         every { connection.queueWindows } returns MutableStateFlow(emptyList())
