@@ -1373,4 +1373,21 @@
     <!-- JioSaavn 320 kbps High Quality Audio -->
     <string name="prefer_320kbps">Prefer 320 kbps audio (JioSaavn)</string>
     <string name="prefer_320kbps_desc">Automatically stream original 320 kbps studio audio from JioSaavn when available</string>
+
+    <!-- Playlist Download Sheet -->
+    <string name="playlist_download_tip">Long press to choose songs</string>
+    <string name="playlist_download_select_all">Select all</string>
+    <string name="playlist_download_select_results">Select results (%1$d)</string>
+    <string name="playlist_download_custom">Custom</string>
+    <string name="playlist_download_button">Download (%1$d, ~%2$s)</string>
+    <string name="playlist_download_downloaded">Downloaded</string>
+    <string name="playlist_download_search_hint">Search songs or artists</string>
+    <string name="playlist_download_songs_count">%1$d songs</string>
+    <string name="playlist_download_songs_selected">%1$d of %2$d selected</string>
+    <string name="playlist_download_unknown_durations">%1$d songs without duration</string>
+    <string name="playlist_download_one_unknown_duration">1 song without duration</string>
+    <string name="playlist_download_loading_more">Loading songs… (%1$d loaded)</string>
+    <string name="playlist_download_storage_warning_title">Storage Warning</string>
+    <string name="playlist_download_storage_warning_message">Estimated download size (~%1$s) exceeds available space (~%2$s) in download storage. Download anyway?</string>
+    <string name="playlist_download_started">Downloading %1$d songs</string>
 </resources>

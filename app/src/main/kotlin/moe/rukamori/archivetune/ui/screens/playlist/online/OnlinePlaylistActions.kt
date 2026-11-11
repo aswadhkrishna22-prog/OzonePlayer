@@ -130,6 +130,7 @@ fun rememberOnlinePlaylistActions(
     haptics: YumaHaptics,
     onRetry: () -> Unit,
     onLoadMore: () -> Unit,
+    onDownloadLongClick: () -> Unit = {},
 ): OnlinePlaylistActions =
     remember(
         playlist,
@@ -263,6 +264,7 @@ fun rememberOnlinePlaylistActions(
                     }
                 }
             },
+            onDownloadLongClick = onDownloadLongClick,
             onRetry = onRetry,
             onLoadMore = onLoadMore,
             onArtistClick = { artistId ->

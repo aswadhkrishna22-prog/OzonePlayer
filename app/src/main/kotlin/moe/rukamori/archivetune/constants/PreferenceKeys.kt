@@ -309,6 +309,7 @@ val ExternalDownloaderPackageKey = stringPreferencesKey("externalDownloaderPacka
 val PlaylistTagsFilterKey = stringPreferencesKey("playlistTagsFilter")
 val ShowHomeCategoryChipsKey = booleanPreferencesKey("showHomeCategoryChips")
 val ShowTagsInLibraryKey = booleanPreferencesKey("showTagsInLibrary")
+val PlaylistDownloadTipShownKey = booleanPreferencesKey("playlistDownloadTipShown")
 
 val EqualizerEnabledKey = booleanPreferencesKey("equalizerEnabled")
 val EqualizerBandLevelsMbKey = stringPreferencesKey("equalizerBandLevelsMb")

@@ -625,6 +625,7 @@ fun rememberLocalPlaylistActions(
     onLockToggle: () -> Unit,
     onSongLongClick: (PlaylistSong) -> Unit = {},
     onMenu: (PlaylistSong) -> Unit = {},
+    onDownloadLongClick: () -> Unit = {},
 ): LocalPlaylistActions =
     remember(
         playlist,
@@ -719,6 +720,7 @@ fun rememberLocalPlaylistActions(
                     }
                 }
             },
+            onDownloadLongClick = onDownloadLongClick,
             onEdit = onEditPlaylist,
             onDelete = onDeletePlaylist,
             onToggleLike = {
@@ -771,6 +773,7 @@ fun rememberLocalPlaylistActions(
     onLockToggle: () -> Unit,
     onSongLongClick: (PlaylistSong) -> Unit = {},
     onMenu: (PlaylistSong) -> Unit = {},
+    onDownloadLongClick: () -> Unit = {},
 ): LocalPlaylistActions =
     rememberLocalPlaylistActions(
         playlist = playlist,
@@ -796,6 +799,7 @@ fun rememberLocalPlaylistActions(
         onLockToggle = onLockToggle,
         onSongLongClick = onSongLongClick,
         onMenu = onMenu,
+        onDownloadLongClick = onDownloadLongClick,
     )
 
 @Composable
