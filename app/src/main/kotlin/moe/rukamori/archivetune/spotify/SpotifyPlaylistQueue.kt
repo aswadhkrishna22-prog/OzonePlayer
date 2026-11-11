@@ -95,13 +95,14 @@ open class SpotifyPlaylistQueue(
                     val match = matcher.matchInitial(targetIndex = targetIndex, preloadedItem = preloadItem)
 
                     if (match.items.isEmpty()) {
-                        if (preloadItem != null) {
+                        val fallback = preloadItem
+                        if (fallback != null) {
                             Timber.tag("SpotifyPipeline").w(
                                 "Window matching empty in SpotifyPlaylistQueue, falling back to preloaded track"
                             )
                             return@withContext Queue.Status(
                                 title = title,
-                                items = listOf(preloadItem.toMediaItem()),
+                                items = listOf(fallback.toMediaItem()),
                                 mediaItemIndex = 0,
                             )
                         }
