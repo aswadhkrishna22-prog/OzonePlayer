@@ -112,6 +112,7 @@ class PlayerConnection(
 
     val aodModeEnabled = MutableStateFlow(false)
     val audioFormat = MutableStateFlow<String?>(null)
+    val measuredBitrateKbps = MutableStateFlow<Int?>(null)
 
     val error = MutableStateFlow<PlaybackException?>(null)
     val waitingForNetworkConnection = service.waitingForNetworkConnection
@@ -254,6 +255,9 @@ class PlayerConnection(
     override fun onPlaybackStateChanged(state: Int) {
         playbackState.value = state
         error.value = player.playerError
+        if (state == Player.STATE_READY && measuredBitrateKbps.value == null) {
+            refreshMeasuredBitrate()
+        }
     }
 
     override fun onPlayWhenReadyChanged(
@@ -271,6 +275,8 @@ class PlayerConnection(
         mediaItem: MediaItem?,
         reason: Int,
     ) {
+        measuredBitrateKbps.value = null
+        audioFormat.value = null
         currentMediaItemIndex.value = player.currentMediaItemIndex
         currentWindowIndex.value = player.getCurrentQueueIndex()
         updateCanSkipPreviousAndNext()
@@ -329,7 +335,6 @@ class PlayerConnection(
     }
 
     override fun onTracksChanged(tracks: Tracks) {
-        var codecInfo: String? = null
         var foundBitrate = -1
         var foundSampleRate = -1
         var foundMimeType = "UNKNOWN"
@@ -350,42 +355,93 @@ class PlayerConnection(
         }
 
         if (foundMimeType != "UNKNOWN") {
-            val isLossless = foundMimeType.contains("FLAC", true) || foundMimeType.contains("ALAC", true)
+            updateFormatInfo(foundMimeType, foundBitrate, foundSampleRate)
+        }
+    }
 
-            if (!isLossless && foundBitrate > 0) {
-                val bitrateKbps = if (foundBitrate > 2000) foundBitrate / 1000 else foundBitrate
-                audioFormat.value = "$foundMimeType | $bitrateKbps kbps"
+    private fun refreshMeasuredBitrate() {
+        val tracks = player.currentTracks
+        var foundBitrate = -1
+        var foundSampleRate = -1
+        var foundMimeType = "UNKNOWN"
+
+        for (group in tracks.groups) {
+            if (group.type == C.TRACK_TYPE_AUDIO && group.isSelected) {
+                val format = group.getTrackFormat(0)
+                foundMimeType = format.sampleMimeType?.substringAfter("audio/")?.uppercase() ?: "UNKNOWN"
+
+                var bitrate = format.bitrate
+                if (bitrate <= 0) bitrate = format.peakBitrate
+                if (bitrate <= 0) bitrate = format.averageBitrate
+
+                foundBitrate = bitrate
+                foundSampleRate = format.sampleRate
+                break
+            }
+        }
+
+        if (foundMimeType != "UNKNOWN") {
+            updateFormatInfo(foundMimeType, foundBitrate, foundSampleRate)
+        }
+    }
+
+    private fun updateFormatInfo(
+        foundMimeType: String,
+        foundBitrate: Int,
+        foundSampleRate: Int,
+    ) {
+        val isLossless = foundMimeType.contains("FLAC", true) || foundMimeType.contains("ALAC", true)
+
+        scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val mediaId = mediaMetadata.value?.id ?: return@launch
+            val source = service.actualPlaybackSources.value[mediaId] ?: service.currentPlaybackSource
+            val formatEntity = database.getFormatForSource(mediaId, source)
+
+            if (mediaMetadata.value?.id != mediaId) return@launch
+
+            if (isLossless) {
+                measuredBitrateKbps.value = null
+                if (formatEntity != null) {
+                    audioFormat.value = "${formatEntity.codecLabel()} | ${formatEntity.formattedQuality()}"
+                } else if (foundSampleRate > 0) {
+                    val khz = (foundSampleRate / 100.0).roundToInt() / 10.0
+                    audioFormat.value = "$foundMimeType | $khz kHz"
+                } else {
+                    audioFormat.value = foundMimeType
+                }
             } else {
-                scope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                    val mediaId = mediaMetadata.value?.id ?: return@launch
-                    val source = service.actualPlaybackSources.value[mediaId] ?: service.currentPlaybackSource
-                    val formatEntity = database.getFormatForSource(mediaId, source)
-
-                    if (mediaMetadata.value?.id != mediaId) return@launch
-
-                    if (isLossless && formatEntity != null) {
-                        audioFormat.value = "${formatEntity.codecLabel()} | ${formatEntity.formattedQuality()}"
-                    } else if (isLossless && formatEntity == null) {
-                        if (foundSampleRate > 0) {
-                            val khz = (foundSampleRate / 100.0).roundToInt() / 10.0
-                            audioFormat.value = "$foundMimeType | $khz kHz"
-                        } else {
-                            audioFormat.value = foundMimeType
-                        }
-                    } else {
-                        val finalBitrate = when {
-                            foundBitrate > 0 -> foundBitrate
-                            formatEntity != null && formatEntity.bitrate > 0 -> formatEntity.bitrate
-                            else -> -1
-                        }
-
-                        audioFormat.value = if (finalBitrate > 0) {
-                            val bitrateKbps = if (finalBitrate > 2000) finalBitrate / 1000 else finalBitrate
-                            "$foundMimeType | $bitrateKbps kbps"
-                        } else {
-                            foundMimeType
-                        }
+                val measuredKbps = when {
+                    foundBitrate > 0 -> {
+                        if (foundBitrate > 2000) (foundBitrate / 1000.0).roundToInt() else foundBitrate
                     }
+                    else -> {
+                        val durationSec = mediaMetadata.value?.duration?.takeIf { it > 0 }
+                            ?: player.duration.takeIf { it > 0 }?.let { it / 1000L }
+
+                        val targetKey = runCatching { service.resolveTargetDataKey(mediaId, source) }.getOrNull()
+                        val contentLength = targetKey?.let { key ->
+                            service.contentLengthCache[key]?.takeIf { it > 0L }
+                                ?: runCatching {
+                                    service.playerCache.getContentMetadata(key).get(androidx.media3.datasource.cache.ContentMetadata.KEY_CONTENT_LENGTH, -1L)
+                                }.getOrNull()?.takeIf { it > 0L }
+                                ?: runCatching {
+                                    service.downloadCache.getContentMetadata(key).get(androidx.media3.datasource.cache.ContentMetadata.KEY_CONTENT_LENGTH, -1L)
+                                }.getOrNull()?.takeIf { it > 0L }
+                        } ?: formatEntity?.contentLength?.takeIf { it > 0L }
+
+                        if (contentLength != null && contentLength > 0L && durationSec != null && durationSec > 0L) {
+                            val bps = (contentLength * 8.0) / durationSec
+                            (bps / 1000.0).roundToInt().takeIf { it > 0 }
+                        } else null
+                    }
+                }
+
+                measuredBitrateKbps.value = measuredKbps
+
+                if (measuredKbps != null && measuredKbps > 0) {
+                    audioFormat.value = "$foundMimeType | ~$measuredKbps kbps"
+                } else {
+                    audioFormat.value = foundMimeType
                 }
             }
         }

@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ "main" ]
   push:
-    branches: [ "feat/dual-play-ui", "feat/slim-updates", "release/1.2-prep", "feat/kemo" ]
+    branches: [ "feat/dual-play-ui", "feat/slim-updates", "release/1.2-prep", "feat/kemo", "fix/bitrate-label" ]
   workflow_dispatch:
 
 permissions:
