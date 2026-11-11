@@ -29,6 +29,8 @@ import kotlinx.coroutines.flow.firstOrNull
 import moe.rukamori.archivetune.utils.YTPlayerUtils
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.stateIn
 import moe.rukamori.archivetune.db.MusicDatabase
 import moe.rukamori.archivetune.db.entities.codecLabel
@@ -416,7 +418,9 @@ class PlayerConnection(
                     }
                     else -> {
                         val durationSec = mediaMetadata.value?.duration?.takeIf { it > 0 }?.toLong()
-                            ?: player.duration.takeIf { it > 0 }?.let { it / 1000L }
+                            ?: withContext(Dispatchers.Main) {
+                                runCatching { player.duration }.getOrNull()
+                            }?.takeIf { it > 0 }?.let { it / 1000L }
 
                         val targetKey = runCatching { service.resolveTargetDataKey(mediaId, source) }.getOrNull()
                         val contentLength = targetKey?.let { key ->
