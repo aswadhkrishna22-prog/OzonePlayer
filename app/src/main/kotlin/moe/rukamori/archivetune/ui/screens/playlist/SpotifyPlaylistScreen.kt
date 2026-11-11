@@ -74,6 +74,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
+import moe.rukamori.archivetune.LocalDatabase
 import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.DisableBlurKey
@@ -104,6 +105,7 @@ fun SpotifyPlaylistScreen(
     viewModel: SpotifyPlaylistViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
+    val database = LocalDatabase.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val playerConnection = LocalPlayerConnection.current
     val coroutineScope = rememberCoroutineScope()
@@ -230,7 +232,7 @@ fun SpotifyPlaylistScreen(
         preloadJob = coroutineScope.launch {
             resolvingTrackId = preloadTrack.id
             try {
-                val preloadItem = SpotifyPlaybackResolver.resolveToMetadata(preloadTrack)
+                val preloadItem = SpotifyPlaybackResolver.resolveToMetadata(preloadTrack, database)
                 if (!isActive || resolvingTrackId != preloadTrack.id) return@launch
                 playerConnection.playQueueIfCurrent(
                     SpotifyPlaylistQueue(

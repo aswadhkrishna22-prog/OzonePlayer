@@ -298,6 +298,28 @@ class SpotifyLazyTrackMatcherTest {
         )
     }
 
+    @Test
+    fun matchInitial_whenIndividualTrackThrows_otherTracksStillResolve() = runTest {
+        val requested = mutableListOf<String>()
+        val matcher = SpotifyLazyTrackMatcher(
+            resolveTrack = { track ->
+                requested += track.id
+                if (track.id == "sp-648") {
+                    throw java.io.IOException("Simulated network timeout")
+                }
+                mediaItem(track)
+            },
+        )
+        matcher.reset((0 until 1300).map(::track))
+
+        val match = matcher.matchInitial(targetIndex = 650, preloadedItem = null)
+
+        assertEquals(16, requested.size)
+        assertEquals(15, match.items.size)
+        assertFalse(match.items.any { it.mediaId == "yt-sp-648" })
+        assertEquals(1, match.failedCount)
+    }
+
     private fun matcher(
         requested: MutableList<String>,
         failedIndices: Set<Int> = emptySet(),

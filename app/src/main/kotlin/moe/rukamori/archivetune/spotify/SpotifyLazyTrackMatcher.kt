@@ -7,12 +7,14 @@
 package moe.rukamori.archivetune.spotify
 
 import androidx.media3.common.MediaItem
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import moe.rukamori.archivetune.extensions.toMediaItem
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.spotify.models.SpotifyTrack
+import timber.log.Timber
 
 internal object SpotifyQueuePolicy {
     const val SOURCE_PAGE_SIZE = 50
@@ -171,13 +173,19 @@ internal class SpotifyLazyTrackMatcher(
                         indices
                             .map { index ->
                                 async {
-                                    val item =
-                                        if (index == preloadedGlobalIndex && preloadedItem != null) {
-                                            preloadedItem.toMediaItem()
-                                        } else {
-                                            resolveTrack(loaded[index])
-                                        }
-                                    item?.let { index to it }
+                                    try {
+                                        val item =
+                                            if (index == preloadedGlobalIndex && preloadedItem != null) {
+                                                preloadedItem.toMediaItem()
+                                            } else {
+                                                resolveTrack(loaded[index])
+                                            }
+                                        item?.let { index to it }
+                                    } catch (e: Exception) {
+                                        if (e is CancellationException) throw e
+                                        Timber.tag("SpotifyPipeline").w(e, "Failed resolving track at index $index: ${loaded.getOrNull(index)?.name}")
+                                        null
+                                    }
                                 }
                             }.awaitAll()
                             .filterNotNull()

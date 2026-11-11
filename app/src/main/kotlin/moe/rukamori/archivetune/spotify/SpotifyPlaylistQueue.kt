@@ -94,6 +94,16 @@ open class SpotifyPlaylistQueue(
                     val match = matcher.matchInitial(targetIndex = targetIndex, preloadedItem = preloadItem)
 
                     if (match.items.isEmpty()) {
+                        if (preloadItem != null) {
+                            Timber.tag("SpotifyPipeline").w(
+                                "Window matching empty in SpotifyPlaylistQueue, falling back to preloaded track"
+                            )
+                            return@withContext Queue.Status(
+                                title = title,
+                                items = listOf(preloadItem.toMediaItem()),
+                                mediaItemIndex = 0,
+                            )
+                        }
                         isLoadFailed = true
                         Timber.tag("SpotifyPipeline").w(
                             "Could not resolve any track for initial status (failed=${match.failedCount})"
