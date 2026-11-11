@@ -74,6 +74,8 @@ import moe.rukamori.archivetune.LocalDatabase
 import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.PlaybackSource
+import moe.rukamori.archivetune.db.entities.sourceBitrateKbps
+import moe.rukamori.archivetune.db.entities.measuredBitrateKbps
 import moe.rukamori.archivetune.innertube.YouTube
 import moe.rukamori.archivetune.innertube.models.MediaInfo
 import moe.rukamori.archivetune.playback.formatForSource
@@ -115,6 +117,7 @@ fun ShowMediaInfo(videoId: String) {
     val playerConnection = LocalPlayerConnection.current
     val mediaMetadataFlow = remember(playerConnection) { playerConnection?.mediaMetadata ?: flowOf(null) }
     val currentFormatFlow = remember(playerConnection) { playerConnection?.currentFormat ?: flowOf(null) }
+    val measuredBitrateFlow = remember(playerConnection) { playerConnection?.measuredBitrateKbps ?: flowOf(null) }
     val selectedSourceFlow = remember(playerConnection) {
         playerConnection?.currentPlaybackSource ?: flowOf(PlaybackSource.YT_MUSIC)
     }
@@ -123,6 +126,7 @@ fun ShowMediaInfo(videoId: String) {
     val isCurrentTrack = videoId == currentMediaMetadata?.id
     val song by database.song(videoId).collectAsState(initial = null)
     val currentPlayingFormat by currentFormatFlow.collectAsState(initial = null)
+    val liveMeasuredBitrate by measuredBitrateFlow.collectAsState(initial = null)
     val fallbackDbFormat by remember(videoId, selectedSource) {
         database.formatForSource(videoId, selectedSource)
     }.collectAsState(initial = null)
@@ -185,6 +189,12 @@ fun ShowMediaInfo(videoId: String) {
             add(MediaInfoDetail(label = mediaIdLabel, value = videoId))
         }
 
+    val durationSec: Long? = song?.song?.duration?.takeIf { it > 0 }?.toLong()
+        ?: (if (isCurrentTrack) currentMediaMetadata?.duration?.takeIf { it > 0 }?.toLong() ?: playerConnection?.player?.duration?.takeIf { it > 0 }?.let { it / 1000L } else null)
+    val calculatedMeasuredBitrate = currentFormat?.measuredBitrateKbps(durationSec)
+    val effectiveMeasuredBitrate = if (isCurrentTrack) (liveMeasuredBitrate ?: calculatedMeasuredBitrate) else calculatedMeasuredBitrate
+    val sourceBitrate = currentFormat?.sourceBitrateKbps()
+
     val technicalDetails =
         buildList {
             currentFormat?.itag?.toString()?.let { add(MediaInfoDetail(label = "Itag", value = it)) }
@@ -196,10 +206,16 @@ fun ShowMediaInfo(videoId: String) {
                 ?.codecs
                 ?.takeIf { it.isNotBlank() }
                 ?.let { add(MediaInfoDetail(label = codecsLabel, value = it)) }
-            currentFormat
-                ?.bitrate
-                ?.takeIf { it > 0 }
-                ?.let { add(MediaInfoDetail(label = bitrateLabel, value = "${it / 1000} Kbps")) }
+            if (sourceBitrate != null || effectiveMeasuredBitrate != null) {
+                val bitrateText = when {
+                    sourceBitrate != null && effectiveMeasuredBitrate != null && sourceBitrate != effectiveMeasuredBitrate -> {
+                        "Source says: $sourceBitrate kbps  •  Measured: about $effectiveMeasuredBitrate kbps"
+                    }
+                    effectiveMeasuredBitrate != null -> "about $effectiveMeasuredBitrate kbps"
+                    else -> "Source says: $sourceBitrate kbps"
+                }
+                add(MediaInfoDetail(label = bitrateLabel, value = bitrateText, multiline = true))
+            }
             currentFormat
                 ?.sampleRate
                 ?.takeIf { it > 0 }
@@ -226,10 +242,9 @@ fun ShowMediaInfo(videoId: String) {
                 ?.substringBefore(';')
                 ?.takeIf { it.isNotBlank() }
                 ?.let { add(MediaInfoQuickFact(iconRes = R.drawable.graphic_eq, text = it)) }
-            currentFormat
-                ?.bitrate
-                ?.takeIf { it > 0 }
-                ?.let { add(MediaInfoQuickFact(iconRes = R.drawable.waves, text = "${it / 1000} Kbps")) }
+            effectiveMeasuredBitrate?.let {
+                add(MediaInfoQuickFact(iconRes = R.drawable.waves, text = "~$it kbps"))
+            }
             currentFormat
                 ?.contentLength
                 ?.takeIf { it > 0 }

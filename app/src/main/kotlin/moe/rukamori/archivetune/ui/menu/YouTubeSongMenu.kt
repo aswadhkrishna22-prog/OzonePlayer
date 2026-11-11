@@ -16,6 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import moe.rukamori.archivetune.ui.component.LocalMenuState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -51,11 +53,23 @@ import moe.rukamori.archivetune.utils.toggleSpeedDialPin
 fun YouTubeSongMenu(
     song: SongItem,
     navController: NavController,
+    spotifyTrackId: String? = null,
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
     val database = LocalDatabase.current
     val playerConnection = LocalPlayerConnection.current ?: return
+    val menuState = LocalMenuState.current
+    val dbMatch by produceState<moe.rukamori.archivetune.db.entities.SpotifyMatchEntity?>(initialValue = null, song.id) {
+        value = withContext(Dispatchers.IO) {
+            database.getSpotifyMatchByYouTubeId(song.id)
+        }
+    }
+    val effectiveSpotifyId = remember(spotifyTrackId, playerConnection.mediaMetadata.value, dbMatch) {
+        spotifyTrackId
+            ?: (if (playerConnection.mediaMetadata.value?.id == song.id) playerConnection.mediaMetadata.value?.spotifyTrackId else null)
+            ?: dbMatch?.spotifyId
+    }
     val librarySong by database.song(song.id).collectAsState(initial = null)
     val download by LocalDownloadUtil.current.getDownload(song.id).collectAsState(initial = null)
     val coroutineScope = rememberCoroutineScope()
@@ -129,6 +143,22 @@ fun YouTubeSongMenu(
         bottomSheetPageState = bottomSheetPageState,
         navController = navController,
         context = context,
+        effectiveSpotifyId = effectiveSpotifyId,
+        onOpenVersionPicker = {
+            effectiveSpotifyId?.let { trackId ->
+                menuState.show {
+                    VersionPickerBottomSheet(
+                        spotifyTrackId = trackId,
+                        targetTitle = song.title,
+                        targetArtists = song.artists.map { it.name },
+                        targetDurationMs = (song.duration ?: 0) * 1000L,
+                        targetAlbum = song.album?.name,
+                        targetThumbnail = song.thumbnail,
+                        onDismiss = menuState::dismiss,
+                    )
+                }
+            }
+        },
         onDismiss = onDismiss,
         onAddToPlaylist = { showChoosePlaylistDialog = true },
         onToggleSpeedDial = {

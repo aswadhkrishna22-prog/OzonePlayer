@@ -181,19 +181,25 @@ class PlaybackStateHolder(
                     combine(
                         connection.currentFormat,
                         connection.audioFormat,
-                    ) { dbFormat, liveFormat ->
-                        if (dbFormat != null) {
-                            val isLossless = dbFormat.codecLabel() == "FLAC" || dbFormat.codecLabel() == "ALAC"
-                            val quality = if (isLossless) {
-                                dbFormat.formattedQuality()
-                            } else {
-                                dbFormat.formattedBitrate()
+                        connection.measuredBitrateKbps,
+                    ) { dbFormat, liveFormat, measuredBitrate ->
+                        when {
+                            !liveFormat.isNullOrBlank() && liveFormat != "UNKNOWN" -> liveFormat
+                            dbFormat != null -> {
+                                val isLossless = dbFormat.codecLabel() == "FLAC" || dbFormat.codecLabel() == "ALAC"
+                                val codec = dbFormat.codecLabel()
+                                if (isLossless) {
+                                    val quality = dbFormat.formattedQuality()
+                                    if (quality.isNotBlank() && quality != "Unknown") "$codec | $quality" else codec
+                                } else {
+                                    if (measuredBitrate != null && measuredBitrate > 0) {
+                                        "$codec | ~$measuredBitrate kbps"
+                                    } else {
+                                        codec
+                                    }
+                                }
                             }
-                            "${dbFormat.codecLabel()} | $quality"
-                        } else if (!liveFormat.isNullOrBlank() && liveFormat != "UNKNOWN") {
-                            liveFormat
-                        } else {
-                            ""
+                            else -> ""
                         }
                     }
                 }

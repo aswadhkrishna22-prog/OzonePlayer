@@ -70,7 +70,11 @@ internal fun MusicService.buildResolvedFlacDataSpec(
     explicitKey: String? = null,
 ): DataSpec {
     val headers = mutableMapOf<String, String>()
-    if (streamUrl.origin in listOf("squid", "kennyy", "arcod", "qobuz", "qbdlx")) {
+    if (streamUrl.origin == "jiosaavn") {
+        headers["User-Agent"] =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        headers["Referer"] = "https://www.jiosaavn.com/"
+    } else if (streamUrl.origin in listOf("squid", "kennyy", "arcod", "qobuz", "qbdlx")) {
         headers["User-Agent"] =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
         headers["Referer"] = "https://music.youtube.com/"
@@ -93,19 +97,25 @@ internal fun MusicService.buildResolvedFlacDataSpec(
             contentLengthCache[targetKey] = preservedLength
         }
 
+        val mimeType = if (streamUrl.origin == "jiosaavn" || streamUrl.codec?.equals("aac", ignoreCase = true) == true) {
+            "audio/mp4"
+        } else {
+            "audio/flac"
+        }
+
         val flacFormat =
             FormatEntity(
                 id = flacFormatId,
                 itag = 0,
-                mimeType = "audio/flac",
+                mimeType = mimeType,
                 codecs = streamUrl.codec ?: "flac",
-                bitrate = streamUrl.bitrateKbps ?: 0,
-                sampleRate = streamUrl.sampleRateHz,
+                bitrate = streamUrl.bitrateKbps ?: 320,
+                sampleRate = streamUrl.sampleRateHz ?: 44100,
                 contentLength = preservedLength,
                 loudnessDb = existing?.loudnessDb,
                 perceptualLoudnessDb = existing?.perceptualLoudnessDb,
                 playbackUrl = streamUrl.url,
-                bitsPerSample = streamUrl.bitsPerSample ?: existing?.bitsPerSample,
+                bitsPerSample = streamUrl.bitsPerSample ?: existing?.bitsPerSample ?: 16,
             )
         upsert(flacFormat)
     }

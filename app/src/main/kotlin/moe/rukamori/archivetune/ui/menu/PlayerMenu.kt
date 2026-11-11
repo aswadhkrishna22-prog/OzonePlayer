@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -31,10 +32,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import moe.rukamori.archivetune.LocalDatabase
 import moe.rukamori.archivetune.LocalDownloadUtil
 import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.ui.component.LocalMenuState
 import moe.rukamori.archivetune.constants.ArtistSeparatorsKey
 import moe.rukamori.archivetune.constants.ExternalDownloaderEnabledKey
 import moe.rukamori.archivetune.constants.ExternalDownloaderPackageKey
@@ -64,6 +68,15 @@ fun PlayerMenu(
     val context = LocalContext.current
     val database = LocalDatabase.current
     val playerConnection = LocalPlayerConnection.current ?: return
+    val menuState = LocalMenuState.current
+    val dbMatch by produceState<moe.rukamori.archivetune.db.entities.SpotifyMatchEntity?>(initialValue = null, mediaMetadata.id) {
+        value = withContext(Dispatchers.IO) {
+            database.getSpotifyMatchByYouTubeId(mediaMetadata.id)
+        }
+    }
+    val effectiveSpotifyId = remember(mediaMetadata.spotifyTrackId, dbMatch) {
+        mediaMetadata.spotifyTrackId ?: dbMatch?.spotifyId
+    }
     val deviceMusicVolumeController = rememberDeviceMusicVolumeController()
     val onPlayerVolumeChange =
         remember(deviceMusicVolumeController) {
@@ -186,6 +199,22 @@ fun PlayerMenu(
                     playerBottomSheetState = playerBottomSheetState,
                     database = database,
                     context = context,
+                    effectiveSpotifyId = effectiveSpotifyId,
+                    onOpenVersionPicker = {
+                        effectiveSpotifyId?.let { trackId ->
+                            menuState.show {
+                                VersionPickerBottomSheet(
+                                    spotifyTrackId = trackId,
+                                    targetTitle = mediaMetadata.title,
+                                    targetArtists = mediaMetadata.artists.map { it.name },
+                                    targetDurationMs = (mediaMetadata.duration.coerceAtLeast(0)) * 1000L,
+                                    targetAlbum = mediaMetadata.album?.title,
+                                    targetThumbnail = mediaMetadata.thumbnailUrl.orEmpty(),
+                                    onDismiss = menuState::dismiss,
+                                )
+                            }
+                        }
+                    },
                     onRemoveFromQueue = onRemoveFromQueue,
                     onSpeedDialSongIdsChange = onSpeedDialSongIdsChange,
                     onShowChoosePlaylistDialog = { showChoosePlaylistDialog = true },

@@ -71,6 +71,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import moe.rukamori.archivetune.db.entities.sourceBitrateKbps
 import moe.rukamori.archivetune.ui.component.GlassDefaults
 import moe.rukamori.archivetune.ui.component.GlassScaffold
 import androidx.compose.runtime.Composable
@@ -1185,11 +1186,11 @@ private fun NerdStatsSection(playerConnection: moe.rukamori.archivetune.playback
                             modifier = Modifier.weight(1f),
                         )
 
-                        val bitrateKbps = currentFormat?.bitrate?.let { it / 1000 } ?: 0
+                        val bitrateKbps = currentFormat?.sourceBitrateKbps() ?: 0
                         NerdStatChip(
                             icon = R.drawable.speed,
                             label = stringResource(R.string.bitrate_label),
-                            value = if (bitrateKbps > 0) "$bitrateKbps kbps" else stringResource(R.string.unknown_bitrate),
+                            value = if (bitrateKbps > 0) "~$bitrateKbps kbps" else stringResource(R.string.unknown_bitrate),
                             modifier = Modifier.weight(1f),
                         )
                     }

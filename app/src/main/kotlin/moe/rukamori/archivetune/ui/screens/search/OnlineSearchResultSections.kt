@@ -34,6 +34,17 @@ internal fun OnlineSearchSectionHeader(
     summary: SearchSummary,
     modifier: Modifier = Modifier,
 ) {
+    OnlineSearchSectionHeader(
+        title = summary.title,
+        modifier = modifier,
+    )
+}
+
+@Composable
+internal fun OnlineSearchSectionHeader(
+    title: String,
+    modifier: Modifier = Modifier,
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier.padding(horizontal = 20.dp, vertical = 12.dp),
@@ -48,7 +59,7 @@ internal fun OnlineSearchSectionHeader(
         )
         Spacer(Modifier.width(10.dp))
         Text(
-            text = summary.title,
+            text = title,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,

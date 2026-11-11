@@ -100,6 +100,15 @@ internal fun PlayerLosslessSection(
                 onEnableLosslessChange = actions.onEnableLosslessChange,
             )
         }
+        item {
+            SwitchPreference(
+                title = { Text(stringResource(R.string.prefer_320kbps)) },
+                description = stringResource(R.string.prefer_320kbps_desc),
+                icon = { Icon(painterResource(R.drawable.graphic_eq), null) },
+                checked = state.prefer320Kbps,
+                onCheckedChange = actions.onPrefer320KbpsChange,
+            )
+        }
         if (state.playbackSource == PlaybackSource.FLAC) {
             item {
                 EnumListPreference(

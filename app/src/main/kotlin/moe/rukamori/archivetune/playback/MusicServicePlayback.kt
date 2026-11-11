@@ -10,6 +10,7 @@ import android.content.Intent
 import android.net.NetworkCapabilities
 import android.net.Uri
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.cache.Cache
 import kotlinx.coroutines.Dispatchers
@@ -19,12 +20,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import moe.rukamori.archivetune.MainActivity
 import moe.rukamori.archivetune.constants.AutoSkipNextOnErrorKey
+import moe.rukamori.archivetune.constants.FlacQuality
 import moe.rukamori.archivetune.constants.PlaybackSource
 import moe.rukamori.archivetune.constants.PlayerStreamClient
+import moe.rukamori.archivetune.constants.Prefer320KbpsKey
 import moe.rukamori.archivetune.extensions.directorySizeBytes
 import moe.rukamori.archivetune.extensions.findNextMediaItemById
 import moe.rukamori.archivetune.innertube.YouTube
 import moe.rukamori.archivetune.playback.crossfade.isTrackFullyCached
+import moe.rukamori.archivetune.playback.resolvers.StreamUrl
 import moe.rukamori.archivetune.storage.StorageFolderKind
 import moe.rukamori.archivetune.storage.StorageLocationRepository
 import moe.rukamori.archivetune.utils.AuthScopedCacheValue
@@ -36,8 +40,59 @@ internal fun MusicService.resolvePlaybackDataSpec(
     dataSpec: DataSpec,
     allowCacheShortCircuit: Boolean,
 ): DataSpec {
-    if (dataSpec.uri.shouldBypassYouTubeResolver()) return dataSpec
-    val mediaId = extractMediaIdFromCacheKey(dataSpec.key ?: return dataSpec)
+    if (dataSpec.uri.shouldBypassYouTubeResolver()) {
+        val mediaId = dataSpec.key?.let { extractMediaIdFromCacheKey(it) }
+            ?: runCatching { player.currentMediaItem?.mediaId }.getOrNull()
+        if (mediaId != null) {
+            setActualPlaybackSource(mediaId, PlaybackSource.FLAC)
+        }
+        return dataSpec
+    }
+
+    val rawKey = dataSpec.key ?: dataSpec.uri.toString()
+    val mediaId = extractMediaIdFromCacheKey(rawKey)
+
+    if (mediaId.startsWith("jiosaavn_") || dataSpec.uri.scheme?.startsWith("jiosaavn") == true) {
+        setActualPlaybackSource(mediaId, PlaybackSource.FLAC)
+        val directUrl = runBlocking(Dispatchers.IO) {
+            database.getFormatForSource(mediaId, PlaybackSource.FLAC)?.playbackUrl
+                ?: database.getFormatById(mediaId)?.playbackUrl
+                ?: database.getFormatById(formatIdForSource(mediaId, PlaybackSource.FLAC))?.playbackUrl
+        }
+        if (!directUrl.isNullOrBlank()) {
+            return buildResolvedFlacDataSpec(
+                dataSpec = dataSpec,
+                mediaId = mediaId,
+                streamUrl = StreamUrl(
+                    url = directUrl,
+                    expiresAtMs = System.currentTimeMillis() + 86_400_000L,
+                    codec = "aac",
+                    bitsPerSample = 16,
+                    sampleRateHz = 44100,
+                    bitrateKbps = 320,
+                    origin = "jiosaavn",
+                ),
+            )
+        }
+        val song = runBlocking(Dispatchers.IO) { database.song(mediaId).firstOrNull() }
+        if (song != null) {
+            val resolved = runBlocking(Dispatchers.IO) {
+                losslessStreamResolver.resolve(song, FlacQuality.CD)
+            }
+            if (resolved != null && resolved.url.isNotBlank()) {
+                return buildResolvedFlacDataSpec(
+                    dataSpec = dataSpec,
+                    mediaId = mediaId,
+                    streamUrl = resolved,
+                )
+            }
+        }
+        throw PlaybackException(
+            "JioSaavn audio stream unavailable",
+            null,
+            PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
+        )
+    }
     val startTime = android.os.SystemClock.elapsedRealtime()
 
     Timber.tag("PlaybackTiming").i("[$mediaId] START resolvePlaybackDataSpec (allowCache=$allowCacheShortCircuit)")
@@ -104,13 +159,14 @@ internal fun MusicService.resolvePlaybackDataSpec(
     val isMeteredConnection = connectivityManager.isActiveNetworkMetered
     val lowDataEnabled = isLowDataEnabled
     val shouldBypassFlac = shouldBypassFlac(lowData = lowDataEnabled, metered = isMeteredConnection)
-    val effectiveSource = if (currentSource == PlaybackSource.YT_MUSIC) {
-        PlaybackSource.YT_MUSIC
-    } else {
+    val prefer320Kbps = dataStore.get(Prefer320KbpsKey, true)
+    val effectiveSource = if (currentSource == PlaybackSource.FLAC || (!shouldBypassFlac && prefer320Kbps)) {
         val isFlacFullyCached = isKeyFullyCached(flacStreamCacheKey(mediaId), mediaId) ||
                 (validateLegacyCacheKeyAcrossCaches(downloadCache, playerCache, flacCacheKey(mediaId), PlaybackSource.FLAC) &&
                         isKeyFullyCached(flacCacheKey(mediaId), mediaId))
-        effectiveSource(source = currentSource, shouldBypassFlac = shouldBypassFlac && !isFlacFullyCached)
+        effectiveSource(source = PlaybackSource.FLAC, shouldBypassFlac = shouldBypassFlac && !isFlacFullyCached)
+    } else {
+        PlaybackSource.YT_MUSIC
     }
 
     if (!audioNormalizationFactorCache.containsKey(mediaId)) {
