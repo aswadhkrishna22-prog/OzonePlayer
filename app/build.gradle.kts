@@ -68,8 +68,8 @@ android {
     applicationId = "com.ozone.player"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1_020_000
-        versionName = "1.2.0-RC.1"
+        versionCode = 1_030_000
+        versionName = "1.3.0"
 
         manifestPlaceholders["appName"] = "@string/app_name"
 
