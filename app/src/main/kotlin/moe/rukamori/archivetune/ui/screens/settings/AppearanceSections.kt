@@ -78,6 +78,8 @@ fun AppearanceThemeSection(
         onBlurRadiusChange = actions.onBlurRadiusChange,
         disableAnimations = state.disableAnimations,
         onDisableAnimationsChange = actions.onDisableAnimationsChange,
+        animateSearchResults = state.animateSearchResults,
+        onAnimateSearchResultsChange = actions.onAnimateSearchResultsChange,
         splashOverlayEnabled = state.splashOverlayEnabled,
         onSplashOverlayEnabledChange = actions.onSplashOverlayEnabledChange,
         splashShapePreference = state.splashShapePreference,
@@ -124,6 +126,8 @@ fun AppearanceThemeSection(
     onBlurRadiusChange: (Float) -> Unit,
     disableAnimations: Boolean,
     onDisableAnimationsChange: (Boolean) -> Unit,
+    animateSearchResults: Boolean,
+    onAnimateSearchResultsChange: (Boolean) -> Unit,
     splashOverlayEnabled: Boolean,
     onSplashOverlayEnabledChange: (Boolean) -> Unit,
     splashShapePreference: SplashShapePreference,
@@ -229,6 +233,16 @@ fun AppearanceThemeSection(
                 icon = { Icon(painterResource(R.drawable.animation), null, modifier = Modifier.size(24.dp)) },
                 checked = disableAnimations,
                 onCheckedChange = onDisableAnimationsChange,
+            )
+        }
+
+        item {
+            SwitchPreference(
+                title = { Text(stringResource(R.string.animate_search_results)) },
+                description = stringResource(R.string.animate_search_results_desc),
+                icon = { Icon(painterResource(R.drawable.animation), null, modifier = Modifier.size(24.dp)) },
+                checked = animateSearchResults,
+                onCheckedChange = onAnimateSearchResultsChange,
             )
         }
 

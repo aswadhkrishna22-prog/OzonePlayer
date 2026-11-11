@@ -60,6 +60,7 @@ import moe.rukamori.archivetune.constants.CrossfadeEnabledKey
 import moe.rukamori.archivetune.constants.CrossfadeGaplessKey
 import moe.rukamori.archivetune.constants.DownloadLocationUriKey
 import moe.rukamori.archivetune.constants.EnableLosslessKey
+import moe.rukamori.archivetune.constants.Prefer320KbpsKey
 import moe.rukamori.archivetune.constants.FlacDownloadQualityKey
 import moe.rukamori.archivetune.constants.FlacQuality
 import moe.rukamori.archivetune.constants.FlacStreamingQualityKey
@@ -179,6 +180,7 @@ fun PlayerSettings(navController: NavController) {
     }
 
     val (_, onEnableLosslessChange) = rememberPreference(EnableLosslessKey, false)
+    val (prefer320Kbps, onPrefer320KbpsChange) = rememberPreference(Prefer320KbpsKey, true)
     val (memoryCacheToggle, onMemoryCacheToggleChange) = rememberPreference(MemoryCacheToggleKey, false)
     val (downloadLocationUri, onDownloadLocationUriChange) = rememberPreference(DownloadLocationUriKey, "")
 
@@ -248,6 +250,7 @@ fun PlayerSettings(navController: NavController) {
         qobuzAppId = qobuzAppId,
         qobuzAppSecret = qobuzAppSecret,
         qobuzUserAuthToken = qobuzUserAuthToken,
+        prefer320Kbps = prefer320Kbps,
     )
 
     val actions = remember(
@@ -287,6 +290,7 @@ fun PlayerSettings(navController: NavController) {
             onQobuzAppIdChange = onQobuzAppIdChange,
             onQobuzAppSecretChange = onQobuzAppSecretChange,
             onQobuzUserAuthTokenChange = onQobuzUserAuthTokenChange,
+            onPrefer320KbpsChange = onPrefer320KbpsChange,
             onEqualizerClick = onEqualizerClick,
             onSpatialAudioClick = { navController.navigate("settings/spatial_audio") },
             onDualPlayClick = { navController.navigate("settings/dual_play_debug") },

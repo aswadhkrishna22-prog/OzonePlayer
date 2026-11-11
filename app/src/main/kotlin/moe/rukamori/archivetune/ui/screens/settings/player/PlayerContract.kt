@@ -93,6 +93,7 @@ data class PlayerSettingsUiState(
     val qobuzAppId: String = "",
     val qobuzAppSecret: String = "",
     val qobuzUserAuthToken: String = "",
+    val prefer320Kbps: Boolean = true,
 )
 
 @Immutable
@@ -125,6 +126,7 @@ data class PlayerSettingsUiActions(
     val onQobuzAppIdChange: (String) -> Unit = {},
     val onQobuzAppSecretChange: (String) -> Unit = {},
     val onQobuzUserAuthTokenChange: (String) -> Unit = {},
+    val onPrefer320KbpsChange: (Boolean) -> Unit = {},
     val onEqualizerClick: () -> Unit = {},
     val onSpatialAudioClick: () -> Unit = {},
     val onDualPlayClick: () -> Unit = {},
