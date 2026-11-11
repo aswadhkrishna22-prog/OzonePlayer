@@ -32,7 +32,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Unit Tests
-        run: ./gradlew :flaccore:test testGmsMobileUniversalDebugUnitTest --tests "moe.rukamori.archivetune.kemo.KemoStateTest" --tests "moe.rukamori.archivetune.beastmode.BeastModeTest" --tests "moe.rukamori.archivetune.playback.queue.SongVibeMatcherTest" --tests "moe.rukamori.archivetune.spotify.SpotifyPlaybackResolverTest" --tests "moe.rukamori.archivetune.ui.screens.search.SearchSlideAnimationTest" --tests "moe.rukamori.archivetune.playback.resolvers.JioSaavnPlaybackResolutionTest" --tests "moe.rukamori.archivetune.ui.screens.playlist.PlaylistDownloadSheetTest" --stacktrace
+        run: ./gradlew :flaccore:test testGmsMobileUniversalDebugUnitTest --tests "moe.rukamori.archivetune.kemo.KemoStateTest" --tests "moe.rukamori.archivetune.beastmode.BeastModeTest" --tests "moe.rukamori.archivetune.playback.queue.SongVibeMatcherTest" --tests "moe.rukamori.archivetune.spotify.SpotifyPlaybackResolverTest" --tests "moe.rukamori.archivetune.ui.screens.search.SearchSlideAnimationTest" --tests "moe.rukamori.archivetune.playback.resolvers.JioSaavnPlaybackResolutionTest" --tests "moe.rukamori.archivetune.ui.screens.playlist.PlaylistDownloadSheetTest" --tests "moe.rukamori.archivetune.ui.player.player_0.MiniPlayerRollingArtworkTest" --stacktrace
 
       - name: Build Normal Debug APK
         run: ./gradlew assembleGmsMobileUniversalDebug -Pdualplay=true --stacktrace

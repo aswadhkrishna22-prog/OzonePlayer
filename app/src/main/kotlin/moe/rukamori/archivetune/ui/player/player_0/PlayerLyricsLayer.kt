@@ -87,6 +87,9 @@ internal fun PlayerLyricsLayer(
                         onMoreLyricsClick()
                     },
                     isVisible = true,
+                    sheetTarget = sheetTarget,
+                    mediaMetadataOverride = mediaMetadataOverride,
+                    playerOverride = playerOverride,
                     modifier = Modifier.align(Alignment.TopCenter),
                 )
             }

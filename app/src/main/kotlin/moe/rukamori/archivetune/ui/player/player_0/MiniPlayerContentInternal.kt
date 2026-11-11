@@ -1,50 +1,44 @@
 package moe.rukamori.archivetune.ui.player.player_0
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.allowHardware
-import moe.rukamori.archivetune.R
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import moe.rukamori.archivetune.LocalAnimationsDisabled
+import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.constants.MiniPlayerHeight
 import moe.rukamori.archivetune.ui.component.MarqueeText
 import moe.rukamori.archivetune.ui.player.player_0.buttons.MiniPlayerButtons
@@ -68,7 +62,6 @@ internal fun MiniPlayerContentInternal(
 
     LaunchedEffect(isVisible, playbackProgress) {
         if (!isVisible) return@LaunchedEffect
-
         playbackProgress.collect { progressMs = it }
     }
 
@@ -85,6 +78,54 @@ internal fun MiniPlayerContentInternal(
                 )
             }
         }
+    }
+
+    val playerConnection = LocalPlayerConnection.current
+    val mediaMetadata by (playerConnection?.mediaMetadata ?: MutableStateFlow(null)).collectAsState()
+    val currentMediaItemIndex by (playerConnection?.currentMediaItemIndex ?: MutableStateFlow(-1)).collectAsState()
+    val queueRestoreCompleted by (playerConnection?.queueRestoreCompleted ?: MutableStateFlow(true)).collectAsState()
+
+    val currentMediaId = mediaMetadata?.id ?: state.trackUrl.takeIf { it.isNotBlank() } ?: ""
+
+    val localAnimationsDisabled = LocalAnimationsDisabled.current
+    val systemAnimationsDisabled = remember(context) {
+        runCatching {
+            !android.animation.ValueAnimator.areAnimatorsEnabled() ||
+            android.provider.Settings.Global.getFloat(
+                context.contentResolver,
+                android.provider.Settings.Global.ANIMATOR_DURATION_SCALE,
+                1f
+            ) == 0f
+        }.getOrDefault(false)
+    }
+    val animationsDisabled = localAnimationsDisabled || systemAnimationsDisabled
+
+    var lastMediaId by remember { mutableStateOf<String?>(null) }
+    var wasVisible by remember { mutableStateOf(false) }
+    var isFirstComposition by remember { mutableStateOf(true) }
+    var previousQueueIndex by remember { mutableIntStateOf(-1) }
+
+    val isForward = remember(currentMediaId) {
+        RollingArtworkMath.isForwardDirection(previousQueueIndex, currentMediaItemIndex)
+    }
+
+    val allowAnimation = remember(currentMediaId, isVisible, queueRestoreCompleted, animationsDisabled) {
+        RollingArtworkMath.shouldAnimateRoll(
+            isFirstComposition = isFirstComposition,
+            isVisible = isVisible,
+            wasVisible = wasVisible,
+            queueRestoreCompleted = queueRestoreCompleted,
+            animationsDisabled = animationsDisabled,
+            previousMediaId = lastMediaId,
+            currentMediaId = currentMediaId,
+        )
+    }
+
+    SideEffect {
+        isFirstComposition = false
+        wasVisible = isVisible
+        lastMediaId = currentMediaId
+        previousQueueIndex = currentMediaItemIndex
     }
 
     Row(
@@ -116,46 +157,16 @@ internal fun MiniPlayerContentInternal(
                 trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
             )
 
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .aspectRatio(1f)
-                    .graphicsLayer { rotationZ = rotation.value }
-                    .clip(CircleShape)
-            ) {
-                val targetUrl = state.coverUrl.takeIf { it.isNotBlank() }
-                Crossfade(
-                    targetState = targetUrl,
-                    animationSpec = tween(350),
-                    label = "MiniCoverCrossfade"
-                ) { url ->
-                    if (url == null) {
-                        Image(
-                            painter = painterResource(id = state.placeholderResId),
-                            contentDescription = stringResource(R.string.mini_album_art),
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        val request = remember(url) {
-                            ImageRequest.Builder(context)
-                                .data(url)
-                                .size(96)
-                                .allowHardware(true)
-                                .memoryCacheKey("mini:$url")
-                                .diskCacheKey("mini:$url")
-                                .build()
-                        }
-                        AsyncImage(
-                            model = request,
-                            contentDescription = stringResource(R.string.mini_album_art),
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop,
-                            error = painterResource(id = state.placeholderResId)
-                        )
-                    }
-                }
-            }
+            RollingArtwork(
+                mediaId = currentMediaId,
+                model = state.coverUrl,
+                placeholderResId = state.placeholderResId,
+                size = 40.dp,
+                slotPaddingExtra = 10.dp,
+                isForward = isForward,
+                isRollingAllowed = allowAnimation,
+                spinRotationProvider = { rotation.value }
+            )
         }
 
         Column(
