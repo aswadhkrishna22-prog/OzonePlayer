@@ -57,6 +57,9 @@ fun FormatEntity.measuredBitrateKbps(durationSec: Long?): Int? {
     return null
 }
 
+fun FormatEntity.measuredBitrateKbps(durationSec: Int?): Int? =
+    measuredBitrateKbps(durationSec?.toLong())
+
 fun FormatEntity.formattedBitrate(measuredKbps: Int? = null): String {
     val kbps = measuredKbps ?: sourceBitrateKbps()
     return if (kbps != null && kbps > 0) "~$kbps kbps" else "Unknown"

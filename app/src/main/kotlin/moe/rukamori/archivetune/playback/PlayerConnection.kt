@@ -415,7 +415,7 @@ class PlayerConnection(
                         if (foundBitrate > 2000) (foundBitrate / 1000.0).roundToInt() else foundBitrate
                     }
                     else -> {
-                        val durationSec = mediaMetadata.value?.duration?.takeIf { it > 0 }
+                        val durationSec = mediaMetadata.value?.duration?.takeIf { it > 0 }?.toLong()
                             ?: player.duration.takeIf { it > 0 }?.let { it / 1000L }
 
                         val targetKey = runCatching { service.resolveTargetDataKey(mediaId, source) }.getOrNull()

@@ -189,8 +189,8 @@ fun ShowMediaInfo(videoId: String) {
             add(MediaInfoDetail(label = mediaIdLabel, value = videoId))
         }
 
-    val durationSec = song?.song?.duration?.takeIf { it > 0 }
-        ?: (if (isCurrentTrack) currentMediaMetadata?.duration?.takeIf { it > 0 } ?: playerConnection?.player?.duration?.takeIf { it > 0 }?.let { it / 1000L } else null)
+    val durationSec: Long? = song?.song?.duration?.takeIf { it > 0 }?.toLong()
+        ?: (if (isCurrentTrack) currentMediaMetadata?.duration?.takeIf { it > 0 }?.toLong() ?: playerConnection?.player?.duration?.takeIf { it > 0 }?.let { it / 1000L } else null)
     val calculatedMeasuredBitrate = currentFormat?.measuredBitrateKbps(durationSec)
     val effectiveMeasuredBitrate = if (isCurrentTrack) (liveMeasuredBitrate ?: calculatedMeasuredBitrate) else calculatedMeasuredBitrate
     val sourceBitrate = currentFormat?.sourceBitrateKbps()
