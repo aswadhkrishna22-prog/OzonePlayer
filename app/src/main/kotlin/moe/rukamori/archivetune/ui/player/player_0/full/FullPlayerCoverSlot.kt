@@ -128,52 +128,52 @@ internal fun FullPlayerCoverSlot(
                         alpha = kinematics.alpha
                     }
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .playerArtworkFade(queueFractionProvider)
+                DoubleTapSeekOverlay(
+                    durationMs = state.durationMs,
+                    positionFlow = playbackProgress,
+                    onSeek = onSeek,
+                    enabled = isDoubleTapToSeekEnabled && !motionState.isOverlayVisible && queueFractionProvider() < 0.05f,
+                    seekStepSeconds = seekStepSeconds,
+                    modifier = Modifier.fillMaxSize(),
                 ) {
-                    PlayerCoverGlow(
-                        coverUrl = state.coverUrl,
-                        enabled = isCoverGlowEnabled,
-                        modifier = Modifier.fillMaxSize(),
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .playerArtworkFade(queueFractionProvider)
+                    ) {
+                        PlayerCoverGlow(
+                            coverUrl = state.coverUrl,
+                            enabled = isCoverGlowEnabled,
+                            modifier = Modifier.fillMaxSize(),
+                        )
 
-                    PlayerCoverCard(
-                        coverUrl = state.coverUrl,
-                        placeholderResId = state.placeholderResId,
-                        gestureEnabled = motionState.coverGestureEnabled,
-                        mediaId = state.trackUrl,
-                        songTitle = state.title,
-                        artistName = state.artist,
-                        isPlaying = motionState.canPlayCanvas,
-                        canvasState = canvasState,
-                        onCoverLoaded = {
-                            coroutineScope.launch {
-                                trackSwitchScale.snapTo(0.88f)
-                                trackSwitchScale.animateTo(
-                                    targetValue = 1f,
-                                    animationSpec = spring(
-                                        dampingRatio = 0.58f,
-                                        stiffness = 340f,
+                        PlayerCoverCard(
+                            coverUrl = state.coverUrl,
+                            placeholderResId = state.placeholderResId,
+                            gestureEnabled = motionState.coverGestureEnabled,
+                            mediaId = state.trackUrl,
+                            songTitle = state.title,
+                            artistName = state.artist,
+                            isPlaying = motionState.canPlayCanvas,
+                            canvasState = canvasState,
+                            onCoverLoaded = {
+                                coroutineScope.launch {
+                                    trackSwitchScale.snapTo(0.88f)
+                                    trackSwitchScale.animateTo(
+                                        targetValue = 1f,
+                                        animationSpec = spring(
+                                            dampingRatio = 0.58f,
+                                            stiffness = 340f,
+                                        )
                                     )
-                                )
-                            }
-                        },
-                        onNext = { onAction(PlayerAction.Next) },
-                        onPrevious = { onAction(PlayerAction.Previous) }
-                    )
+                                }
+                            },
+                            onNext = { onAction(PlayerAction.Next) },
+                            onPrevious = { onAction(PlayerAction.Previous) }
+                        )
+                    }
                 }
             }
-
-            DoubleTapSeekOverlay(
-                durationMs = state.durationMs,
-                positionFlow = playbackProgress,
-                onSeek = onSeek,
-                enabled = isDoubleTapToSeekEnabled && !motionState.isOverlayVisible && queueFractionProvider() < 0.05f,
-                seekStepSeconds = seekStepSeconds,
-                modifier = Modifier.fillMaxSize(),
-            )
         }
     }
 }
