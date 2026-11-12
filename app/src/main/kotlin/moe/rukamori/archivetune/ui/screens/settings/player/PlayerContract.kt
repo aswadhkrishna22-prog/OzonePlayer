@@ -20,6 +20,8 @@ import moe.rukamori.archivetune.constants.AutomixTransitionDurationKey
 import moe.rukamori.archivetune.constants.CrossfadeDurationKey
 import moe.rukamori.archivetune.constants.CrossfadeEnabledKey
 import moe.rukamori.archivetune.constants.CrossfadeGaplessKey
+import moe.rukamori.archivetune.constants.DoubleTapSeekStepKey
+import moe.rukamori.archivetune.constants.DoubleTapToSeekKey
 import moe.rukamori.archivetune.constants.DownloadLocationUriKey
 import moe.rukamori.archivetune.constants.EnableLosslessKey
 import moe.rukamori.archivetune.constants.FlacDownloadQualityKey
@@ -52,6 +54,8 @@ internal object PlayerContract {
     val BeastModeAutoPrompt = BeastModeAutoPromptKey
     val StopMusicOnTaskClear = StopMusicOnTaskClearKey
     val Wakelock = WakelockKey
+    val DoubleTapToSeek = DoubleTapToSeekKey
+    val DoubleTapSeekStep = DoubleTapSeekStepKey
     val CrossfadeEnabled = CrossfadeEnabledKey
     val CrossfadeDuration = CrossfadeDurationKey
     val CrossfadeGapless = CrossfadeGaplessKey
@@ -94,6 +98,8 @@ data class PlayerSettingsUiState(
     val qobuzAppSecret: String = "",
     val qobuzUserAuthToken: String = "",
     val prefer320Kbps: Boolean = true,
+    val doubleTapToSeek: Boolean = true,
+    val doubleTapSeekStep: Int = 10,
 )
 
 @Immutable
@@ -127,6 +133,8 @@ data class PlayerSettingsUiActions(
     val onQobuzAppSecretChange: (String) -> Unit = {},
     val onQobuzUserAuthTokenChange: (String) -> Unit = {},
     val onPrefer320KbpsChange: (Boolean) -> Unit = {},
+    val onDoubleTapToSeekChange: (Boolean) -> Unit = {},
+    val onDoubleTapSeekStepChange: (Int) -> Unit = {},
     val onEqualizerClick: () -> Unit = {},
     val onSpatialAudioClick: () -> Unit = {},
     val onDualPlayClick: () -> Unit = {},

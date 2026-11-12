@@ -97,7 +97,10 @@ import moe.rukamori.archivetune.ui.player.player_0.sett.CompactMenuRow
 import moe.rukamori.archivetune.ui.player.player_0.sett.DownloadMenuContent
 import moe.rukamori.archivetune.ui.utils.ShowMediaInfo
 import moe.rukamori.archivetune.utils.rememberPreference
+import moe.rukamori.archivetune.constants.DoubleTapSeekStepKey
+import moe.rukamori.archivetune.constants.DoubleTapToSeekKey
 import moe.rukamori.archivetune.constants.SpeedDialSongIdsKey
+import moe.rukamori.archivetune.ui.player.player_0.DoubleTapSeekOverlay
 import moe.rukamori.archivetune.utils.SpeedDialPin
 import moe.rukamori.archivetune.utils.SpeedDialPinType
 import moe.rukamori.archivetune.utils.parseSpeedDialPins
@@ -598,7 +601,10 @@ private fun ImmersiveNowPlayingPane(
                 },
             verticalArrangement = Arrangement.Bottom,
         ) {
-            // Upper artwork area: on top pane, detects swipe down to collapse
+            // Upper artwork area: on top pane, detects swipe down to collapse + double tap to seek
+            val (isDoubleTapToSeekEnabled) = rememberPreference(DoubleTapToSeekKey, defaultValue = true)
+            val (seekStepSeconds) = rememberPreference(DoubleTapSeekStepKey, defaultValue = 10)
+
             if (isTopPane && isForegroundInteractive) {
                 Box(
                     modifier = Modifier
@@ -611,9 +617,31 @@ private fun ImmersiveNowPlayingPane(
                                 }
                             }
                         }
-                )
+                ) {
+                    DoubleTapSeekOverlay(
+                        durationMs = durationMs,
+                        positionFlow = positionFlow,
+                        onSeek = { onSeek(it.toLong()) },
+                        enabled = isDoubleTapToSeekEnabled && isForegroundInteractive,
+                        seekStepSeconds = seekStepSeconds,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
             } else {
-                Spacer(modifier = Modifier.weight(1f))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) {
+                    DoubleTapSeekOverlay(
+                        durationMs = durationMs,
+                        positionFlow = positionFlow,
+                        onSeek = { onSeek(it.toLong()) },
+                        enabled = isDoubleTapToSeekEnabled && isForegroundInteractive,
+                        seekStepSeconds = seekStepSeconds,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
             }
 
             // Controls Block Container (Anchored at the bottom)
