@@ -734,6 +734,15 @@ fun PlaylistDownloadSheet(
                                 .padding(top = 6.dp, bottom = 6.dp),
                         )
 
+                        val checkboxCheckedColor = remember(coverColor, MaterialTheme.colorScheme.primary) {
+                            if (coverColor != null && coverColor.luminance() >= 0.15f) {
+                                coverColor
+                            } else {
+                                MaterialTheme.colorScheme.primary
+                            }
+                        }
+                        val checkboxCheckmarkColor = if (checkboxCheckedColor.luminance() > 0.5f) Color.Black else Color.White
+
                         // 4. LazyColumn of songs (shrinks with weight(1f) when keyboard opens)
                         LazyColumn(
                             modifier = Modifier
@@ -826,7 +835,9 @@ fun PlaylistDownloadSheet(
                                             checked = isSelected,
                                             onCheckedChange = { toggleRow(song.id) },
                                             colors = CheckboxDefaults.colors(
-                                                checkedColor = coverColor ?: MaterialTheme.colorScheme.primary,
+                                                checkedColor = checkboxCheckedColor,
+                                                uncheckedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                                checkmarkColor = checkboxCheckmarkColor,
                                             ),
                                         )
                                     }
