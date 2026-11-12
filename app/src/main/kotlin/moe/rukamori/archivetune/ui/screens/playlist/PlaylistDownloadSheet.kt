@@ -734,11 +734,12 @@ fun PlaylistDownloadSheet(
                                 .padding(top = 6.dp, bottom = 6.dp),
                         )
 
-                        val checkboxCheckedColor = remember(coverColor, MaterialTheme.colorScheme.primary) {
+                        val primaryColor = MaterialTheme.colorScheme.primary
+                        val checkboxCheckedColor = remember(coverColor, primaryColor) {
                             if (coverColor != null && coverColor.luminance() >= 0.15f) {
                                 coverColor
                             } else {
-                                MaterialTheme.colorScheme.primary
+                                primaryColor
                             }
                         }
                         val checkboxCheckmarkColor = if (checkboxCheckedColor.luminance() > 0.5f) Color.Black else Color.White
