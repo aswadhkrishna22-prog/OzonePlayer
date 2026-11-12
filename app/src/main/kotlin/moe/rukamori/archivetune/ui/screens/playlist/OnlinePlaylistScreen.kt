@@ -252,6 +252,7 @@ fun OnlinePlaylistScreen(
                 hasMoreSongs = viewModel.continuation != null,
                 onLoadMore = viewModel::loadMoreSongs,
                 onDismiss = { showDownloadSheet = false },
+                accentColor = gradientColors.firstOrNull(),
                 onStartDownload = { selectedList ->
                     downloadUiState.dismissed = false
                     sendAddMissingDownloads(

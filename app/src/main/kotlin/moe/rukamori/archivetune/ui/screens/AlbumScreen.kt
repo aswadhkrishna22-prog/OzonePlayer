@@ -242,6 +242,7 @@ fun AlbumScreen(
                 downloads = downloadUiState.downloads,
                 hasMoreSongs = false,
                 onDismiss = { showDownloadSheet = false },
+                accentColor = gradientColors.firstOrNull(),
                 onStartDownload = { selectedList ->
                     downloadUiState.dismissed = false
                     sendAddMissingDownloads(

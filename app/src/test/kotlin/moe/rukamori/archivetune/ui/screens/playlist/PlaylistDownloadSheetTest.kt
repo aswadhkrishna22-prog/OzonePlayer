@@ -50,6 +50,27 @@ class PlaylistDownloadSheetTest {
         assertEquals("5 min", PlaylistDownloadCalculator.formatDurationHoursMinutes(300))
         assertEquals("1 hr 15 min", PlaylistDownloadCalculator.formatDurationHoursMinutes(4500))
         assertEquals("2 hr", PlaylistDownloadCalculator.formatDurationHoursMinutes(7200))
+        assertEquals("2 hr 41 min", PlaylistDownloadCalculator.formatDurationHoursMinutes(9660))
+    }
+
+    @Test
+    fun formatQualityChip_formatting() {
+        assertEquals(
+            "AAC, up to 256 kbps",
+            PlaylistDownloadCalculator.formatQualityChip(AudioQuality.HIGHEST, networkMeteredOrLowData = false, bitrateBps = 256_000),
+        )
+        assertEquals(
+            "Opus, up to 160 kbps",
+            PlaylistDownloadCalculator.formatQualityChip(AudioQuality.HIGH, networkMeteredOrLowData = false, bitrateBps = 160_000),
+        )
+        assertEquals(
+            "Opus, up to 70 kbps",
+            PlaylistDownloadCalculator.formatQualityChip(AudioQuality.LOW, networkMeteredOrLowData = false, bitrateBps = 70_000),
+        )
+        assertEquals(
+            "Opus, up to 160 kbps",
+            PlaylistDownloadCalculator.formatQualityChip(AudioQuality.AUTO, networkMeteredOrLowData = true, bitrateBps = 160_000),
+        )
     }
 
     @Test
