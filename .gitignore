@@ -126,3 +126,4 @@ deploy*.py
 /opencode.json
 opencode.json
 /.omo/
+graphify-out/

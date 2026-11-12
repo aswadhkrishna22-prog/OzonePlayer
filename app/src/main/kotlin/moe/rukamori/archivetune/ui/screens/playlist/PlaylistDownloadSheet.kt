@@ -7,21 +7,34 @@
 package moe.rukamori.archivetune.ui.screens.playlist
 
 import android.content.Context
+import android.graphics.drawable.ColorDrawable
+import android.os.Build
+import android.os.PowerManager
+import android.view.View
+import android.view.ViewParent
+import android.view.WindowManager
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -34,42 +47,58 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import androidx.media3.exoplayer.offline.Download
+import androidx.palette.graphics.Palette
 import coil3.compose.AsyncImage
+import coil3.imageLoader
+import coil3.request.ImageRequest
+import coil3.request.allowHardware
+import coil3.toBitmap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import moe.rukamori.archivetune.LocalAnimationsDisabled
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.AudioQuality
 import moe.rukamori.archivetune.db.entities.PlaylistSong
@@ -78,9 +107,6 @@ import moe.rukamori.archivetune.innertube.models.SongItem
 import moe.rukamori.archivetune.playback.DownloadUtil
 import moe.rukamori.archivetune.storage.StorageFolderKind
 import moe.rukamori.archivetune.storage.StorageLocationRepository
-import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
 import moe.rukamori.archivetune.ui.utils.formatFileSize
 import moe.rukamori.archivetune.utils.isLowDataModeActive
 import moe.rukamori.archivetune.utils.makeTimeString
@@ -137,6 +163,35 @@ object PlaylistDownloadCalculator {
             else -> "${totalSeconds}s"
         }
     }
+
+    fun resolveExpectedCodec(
+        quality: AudioQuality,
+        networkMeteredOrLowData: Boolean,
+    ): String? {
+        val effectiveQuality = PlaybackFormatSelector.resolveEffectiveAudioQuality(quality, networkMeteredOrLowData)
+        return when (effectiveQuality) {
+            AudioQuality.HIGHEST -> "AAC"
+            AudioQuality.HIGH -> "Opus"
+            AudioQuality.LOW -> "Opus"
+            AudioQuality.AUTO -> if (networkMeteredOrLowData) "Opus" else "AAC"
+        }
+    }
+
+    fun formatQualityChip(
+        audioQuality: AudioQuality,
+        networkMeteredOrLowData: Boolean,
+        bitrateBps: Int,
+    ): String {
+        val codec = resolveExpectedCodec(audioQuality, networkMeteredOrLowData)
+        val kbps = bitrateBps / 1000
+        val effectiveQuality = PlaybackFormatSelector.resolveEffectiveAudioQuality(audioQuality, networkMeteredOrLowData)
+        return if (!codec.isNullOrBlank()) {
+            "$codec, up to $kbps kbps"
+        } else {
+            val qualityName = effectiveQuality.name.lowercase().replaceFirstChar { it.uppercase() }
+            "$qualityName, up to $kbps kbps"
+        }
+    }
 }
 
 enum class PlaylistDownloadSelectionMode {
@@ -144,7 +199,18 @@ enum class PlaylistDownloadSelectionMode {
     CUSTOM,
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+private fun findDialogWindow(view: View): android.view.Window? {
+    var parent: ViewParent? = view.parent
+    while (parent != null) {
+        if (parent is DialogWindowProvider) {
+            return parent.window
+        }
+        parent = parent.parent
+    }
+    return null
+}
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PlaylistDownloadSheet(
     title: String,
@@ -155,11 +221,94 @@ fun PlaylistDownloadSheet(
     onLoadMore: () -> Unit = {},
     onDismiss: () -> Unit,
     onStartDownload: (List<DownloadableSong>) -> Unit,
+    accentColor: Color? = null,
 ) {
     val context = LocalContext.current
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val view = LocalView.current
+    val coroutineScope = rememberCoroutineScope()
+    val animationsDisabled = LocalAnimationsDisabled.current
 
-    // Compute effective audio quality & bitrate using the downloader's own logic
+    val powerManager = remember(context) { context.getSystemService(Context.POWER_SERVICE) as? PowerManager }
+    val windowManager = remember(context) { context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager }
+
+    val isBlurSupported = remember(animationsDisabled) {
+        if (animationsDisabled) return@remember false
+        if (powerManager?.isPowerSaveMode == true) return@remember false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            runCatching {
+                windowManager?.isCrossWindowBlurEnabled == true
+            }.getOrDefault(false)
+        } else {
+            false
+        }
+    }
+
+    // Attach native cross-window blur on Android 12+ while dialog window is alive
+    DisposableEffect(view, isBlurSupported) {
+        val window = findDialogWindow(view)
+        if (window != null) {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            window.setBackgroundDrawable(ColorDrawable(android.graphics.Color.TRANSPARENT))
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (isBlurSupported) {
+                    window.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                    val blurPx = (24 * view.resources.displayMetrics.density).toInt().coerceAtLeast(1)
+                    runCatching {
+                        window.attributes = window.attributes.apply {
+                            blurBehindRadius = blurPx
+                        }
+                    }
+                } else {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                }
+            }
+        }
+        onDispose {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && window != null) {
+                runCatching {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                }
+            }
+        }
+    }
+
+    // Smooth entrance and exit animation (fade + scale 0.96 to 1 + 24dp rise in 280ms)
+    val animatable = remember { Animatable(0f) }
+    var isDismissing by remember { mutableStateOf(false) }
+
+    fun animateDismiss() {
+        if (isDismissing) return
+        isDismissing = true
+        if (animationsDisabled) {
+            onDismiss()
+        } else {
+            coroutineScope.launch {
+                animatable.animateTo(
+                    targetValue = 0f,
+                    animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+                )
+                onDismiss()
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (animationsDisabled) {
+            animatable.snapTo(1f)
+        } else {
+            animatable.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+            )
+        }
+    }
+
+    BackHandler(enabled = true) {
+        animateDismiss()
+    }
+
+    // Compute effective audio quality & bitrate using downloader's logic
     val isLowData = remember { context.isLowDataModeActive() }
     var effectiveAudioQuality by remember { mutableStateOf(AudioQuality.AUTO) }
 
@@ -171,10 +320,47 @@ fun PlaylistDownloadSheet(
         PlaybackFormatSelector.resolveTargetBitrateBps(effectiveAudioQuality, isLowData)
     }
 
-    val qualityLabel = remember(effectiveAudioQuality, isLowData) {
-        val quality = PlaybackFormatSelector.resolveEffectiveAudioQuality(effectiveAudioQuality, isLowData)
-        val kbps = effectiveBitrateBps / 1000
-        "${quality.name.lowercase().replaceFirstChar { it.uppercase() }} (${kbps} kbps)"
+    val qualityChipText = remember(effectiveAudioQuality, isLowData, effectiveBitrateBps) {
+        PlaylistDownloadCalculator.formatQualityChip(effectiveAudioQuality, isLowData, effectiveBitrateBps)
+    }
+
+    // Extract playlist cover vibrant tint if not passed explicitly
+    var extractedCoverColor by remember { mutableStateOf<Color?>(null) }
+    val coverColor = accentColor ?: extractedCoverColor
+
+    LaunchedEffect(thumbnailUrl, accentColor) {
+        if (accentColor == null && thumbnailUrl != null) {
+            val request = ImageRequest.Builder(context)
+                .data(thumbnailUrl)
+                .size(100, 100)
+                .allowHardware(false)
+                .build()
+            val result = runCatching { context.imageLoader.execute(request) }.getOrNull()
+            val bitmap = result?.image?.toBitmap()
+            if (bitmap != null) {
+                val palette = withContext(Dispatchers.Default) {
+                    Palette.from(bitmap).maximumColorCount(16).generate()
+                }
+                val vibrantRgb = palette.vibrantSwatch?.rgb
+                    ?: palette.dominantSwatch?.rgb
+                    ?: palette.swatches.firstOrNull()?.rgb
+                if (vibrantRgb != null) {
+                    extractedCoverColor = Color(vibrantRgb)
+                }
+            }
+        }
+    }
+
+    // Card surface color: 66% alpha when blurred, 94% fallback when unsupported, tinted with cover color
+    val cardBaseColor = MaterialTheme.colorScheme.surface
+    val effectiveAlpha = if (isBlurSupported) 0.66f else 0.94f
+    val baseSurfaceColor = cardBaseColor.copy(alpha = effectiveAlpha)
+    val surfaceColor = remember(baseSurfaceColor, coverColor) {
+        if (coverColor != null) {
+            coverColor.copy(alpha = 0.08f).compositeOver(baseSurfaceColor)
+        } else {
+            baseSurfaceColor
+        }
     }
 
     // Trigger background loading of subsequent pages while sheet is open
@@ -189,7 +375,7 @@ fun PlaylistDownloadSheet(
     var customSelectedIds by rememberSaveable { mutableStateOf(setOf<String>()) }
     var showStorageWarningDialog by remember { mutableStateOf(false) }
 
-    // Helper partition of un-downloaded songs
+    // Partition downloadable songs
     val eligibleSongs = remember(songs, downloads) {
         songs.filter { song ->
             downloads[song.id]?.state != Download.STATE_COMPLETED
@@ -239,6 +425,10 @@ fun PlaylistDownloadSheet(
         PlaylistDownloadCalculator.calculateDownloadEstimate(selectedSongs, effectiveBitrateBps)
     }
 
+    val wholePlaylistEstimate = remember(songs, effectiveBitrateBps) {
+        PlaylistDownloadCalculator.calculateDownloadEstimate(songs, effectiveBitrateBps)
+    }
+
     val usableStorageBytes = remember {
         runCatching {
             StorageLocationRepository.cacheDirectory(context, StorageFolderKind.DOWNLOADS).usableSpace
@@ -248,7 +438,7 @@ fun PlaylistDownloadSheet(
     fun handleDownloadConfirmed() {
         if (selectedSongs.isNotEmpty()) {
             onStartDownload(selectedSongs)
-            onDismiss()
+            animateDismiss()
         }
     }
 
@@ -262,408 +452,464 @@ fun PlaylistDownloadSheet(
 
     fun toggleRow(songId: String) {
         val currentlySelected = songId in effectiveSelectedIds
-        when (selectionMode) {
-            PlaylistDownloadSelectionMode.ALL -> {
-                // Switch to CUSTOM with this item toggled
-                val base = if (searchQuery.isNotBlank()) {
-                    filteredEligibleSongs.map { it.id }.toMutableSet()
-                } else {
-                    eligibleSongs.map { it.id }.toMutableSet()
-                }
-                if (currentlySelected) {
-                    base.remove(songId)
-                } else {
-                    base.add(songId)
-                }
-                customSelectedIds = base
-                selectionMode = PlaylistDownloadSelectionMode.CUSTOM
-            }
-            PlaylistDownloadSelectionMode.CUSTOM -> {
-                customSelectedIds = if (currentlySelected) {
-                    customSelectedIds - songId
-                } else {
-                    customSelectedIds + songId
-                }
+        val currentSet = effectiveSelectedIds.toMutableSet()
+        if (currentlySelected) {
+            currentSet.remove(songId)
+        } else {
+            currentSet.add(songId)
+        }
+        customSelectedIds = currentSet
+        val allEligibleIds = eligibleSongs.map { it.id }.toSet()
+        if (allEligibleIds.isNotEmpty() && currentSet.containsAll(allEligibleIds)) {
+            selectionMode = PlaylistDownloadSelectionMode.ALL
+        } else {
+            selectionMode = PlaylistDownloadSelectionMode.CUSTOM
+        }
+    }
+
+    val isSearchActive = searchQuery.isNotBlank()
+    val areAllTargetSelected by remember(isSearchActive, filteredEligibleSongs, eligibleSongs, effectiveSelectedIds) {
+        derivedStateOf {
+            if (isSearchActive) {
+                filteredEligibleSongs.isNotEmpty() && filteredEligibleSongs.all { it.id in effectiveSelectedIds }
+            } else {
+                eligibleSongs.isNotEmpty() && eligibleSongs.all { it.id in effectiveSelectedIds }
             }
         }
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        modifier = Modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.surface,
-        dragHandle = null,
-    ) {
-        Scaffold(
-            modifier = Modifier
-                .fillMaxSize()
-                .imePadding(),
-            containerColor = Color.Transparent,
-            bottomBar = {
-                Surface(
-                    color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 4.dp,
-                    shadowElevation = 8.dp,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .navigationBarsPadding()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        // Left: Two-state toggle button: "Select all" / "Custom"
-                        val isSelectAllMode = selectionMode == PlaylistDownloadSelectionMode.ALL
-                        val toggleText = if (isSelectAllMode) {
-                            if (searchQuery.isNotBlank()) {
-                                stringResource(R.string.playlist_download_select_results, filteredEligibleSongs.size)
-                            } else {
-                                stringResource(R.string.playlist_download_select_all)
-                            }
-                        } else {
-                            stringResource(R.string.playlist_download_custom)
-                        }
+    fun handleToggleClick() {
+        if (areAllTargetSelected) {
+            if (isSearchActive) {
+                customSelectedIds = effectiveSelectedIds - filteredEligibleSongs.map { it.id }.toSet()
+            } else {
+                customSelectedIds = emptySet()
+            }
+            selectionMode = PlaylistDownloadSelectionMode.CUSTOM
+        } else {
+            if (isSearchActive) {
+                customSelectedIds = effectiveSelectedIds + filteredEligibleSongs.map { it.id }.toSet()
+                selectionMode = PlaylistDownloadSelectionMode.CUSTOM
+            } else {
+                customSelectedIds = eligibleSongs.map { it.id }.toSet()
+                selectionMode = PlaylistDownloadSelectionMode.ALL
+            }
+        }
+    }
 
-                        OutlinedButton(
-                            onClick = {
-                                if (isSelectAllMode) {
-                                    // Switch to custom with cleared selection
-                                    customSelectedIds = emptySet()
-                                    selectionMode = PlaylistDownloadSelectionMode.CUSTOM
-                                } else {
-                                    // Switch to select all
-                                    selectionMode = PlaylistDownloadSelectionMode.ALL
-                                }
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(
-                                1.dp,
-                                if (isSelectAllMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-                            ),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (isSelectAllMode) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color.Transparent,
-                            ),
-                        ) {
-                            Text(
-                                text = toggleText,
-                                style = MaterialTheme.typography.labelLarge,
-                                color = if (isSelectAllMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
+    val toggleButtonText = if (areAllTargetSelected) {
+        stringResource(R.string.playlist_download_custom)
+    } else {
+        if (isSearchActive) {
+            stringResource(R.string.playlist_download_select_results, filteredEligibleSongs.size)
+        } else {
+            stringResource(R.string.playlist_download_select_all)
+        }
+    }
 
-                        // Right: Download button: "Download (N, ~X MB)"
-                        val formattedSize = remember(estimate.totalBytes) { formatFileSize(estimate.totalBytes) }
-                        Button(
-                            onClick = { handleDownloadClick() },
-                            enabled = selectedSongs.isNotEmpty(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
-                            ),
-                        ) {
-                            Text(
-                                text = stringResource(R.string.playlist_download_button, selectedSongs.size, formattedSize),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                        }
-                    }
+    val downloadedCount = remember(songs, downloads) {
+        songs.count { downloads[it.id]?.state == Download.STATE_COMPLETED }
+    }
+    val unknownDurationCount = remember(songs) {
+        songs.count { it.durationSeconds <= 0 }
+    }
+
+    val selectedStatusText = remember(selectedSongs.size, songs.size, downloadedCount, unknownDurationCount) {
+        buildString {
+            append("${selectedSongs.size} of ${songs.size} selected")
+            if (downloadedCount > 0) {
+                append(" ($downloadedCount already downloaded)")
+            }
+            if (unknownDurationCount > 0) {
+                val unknownText = if (unknownDurationCount == 1) {
+                    "1 song without duration"
+                } else {
+                    "$unknownDurationCount songs without duration"
                 }
-            },
-        ) { contentPadding ->
-            Column(
+                append(" • $unknownText")
+            }
+        }
+    }
+
+    Dialog(
+        onDismissRequest = { animateDismiss() },
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        ),
+    ) {
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            val maxSheetHeight = maxHeight * 0.82f
+
+            // Black scrim (38% alpha) with smooth fade
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(contentPadding)
-                    .padding(horizontal = 16.dp),
+                    .graphicsLayer {
+                        alpha = animatable.value
+                    }
+                    .background(Color.Black.copy(alpha = 0.38f))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { animateDismiss() },
+                    ),
+            )
+
+            // Floating card container with 10dp margins and navigationBarsPadding
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .imePadding()
+                    .navigationBarsPadding()
+                    .padding(bottom = 10.dp),
+                contentAlignment = Alignment.BottomCenter,
             ) {
-                // Top drag indicator and close row
-                Row(
+                Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
+                        .padding(horizontal = 10.dp)
+                        .heightIn(max = maxSheetHeight)
+                        .graphicsLayer {
+                            alpha = animatable.value
+                            scaleX = 0.96f + 0.04f * animatable.value
+                            scaleY = 0.96f + 0.04f * animatable.value
+                            translationY = (1f - animatable.value) * 24.dp.toPx()
+                        }
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {},
+                        ),
+                    shape = RoundedCornerShape(28.dp),
+                    color = surfaceColor,
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.20f)),
+                    shadowElevation = 16.dp,
                 ) {
-                    Box(
+                    Column(
                         modifier = Modifier
-                            .width(36.dp)
-                            .height(4.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)),
-                    )
-                    IconButton(onClick = onDismiss) {
-                        Icon(
-                            painter = painterResource(R.drawable.close),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-                }
-
-                // HEADER: Image + Title and Facts
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (thumbnailUrl != null) {
-                        AsyncImage(
-                            model = thumbnailUrl,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(RoundedCornerShape(12.dp)),
-                        )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.queue_music),
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(28.dp),
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 16.dp),
+                    ) {
+                        // 1. HEADER: small cover (56dp, 14dp radius), playlist title (up to 2 lines, 17sp medium), round X button
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                            ) {
-                                Text(
-                                    text = qualityLabel,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                )
-                            }
-
-                            Text(
-                                text = "•",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-
-                            Text(
-                                text = stringResource(R.string.playlist_download_songs_selected, selectedSongs.size, songs.size),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(2.dp))
-
-                        val formattedDuration = remember(estimate.totalDurationSeconds) {
-                            PlaylistDownloadCalculator.formatDurationHoursMinutes(estimate.totalDurationSeconds)
-                        }
-                        val formattedEstimateSize = remember(estimate.totalBytes) {
-                            formatFileSize(estimate.totalBytes)
-                        }
-
-                        Text(
-                            text = "$formattedDuration • Estimated size ~$formattedEstimateSize",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-
-                        if (estimate.unknownDurationCount > 0) {
-                            val unknownNote = if (estimate.unknownDurationCount == 1) {
-                                stringResource(R.string.playlist_download_one_unknown_duration)
-                            } else {
-                                stringResource(R.string.playlist_download_unknown_durations, estimate.unknownDurationCount)
-                            }
-                            Text(
-                                text = unknownNote,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Search field (local filter)
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = {
-                        Text(
-                            text = stringResource(R.string.playlist_download_search_hint),
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            painter = painterResource(R.drawable.search),
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(
-                                    painter = painterResource(R.drawable.close),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                        }
-                    },
-                    singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // LazyList of songs
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                ) {
-                    items(
-                        items = filteredSongs,
-                        key = { it.id },
-                    ) { song ->
-                        val isDownloaded = downloads[song.id]?.state == Download.STATE_COMPLETED
-                        val isSelected = song.id in effectiveSelectedIds
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable(enabled = !isDownloaded) {
-                                    toggleRow(song.id)
-                                }
-                                .padding(vertical = 6.dp, horizontal = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            if (song.thumbnailUrl != null) {
+                            if (thumbnailUrl != null) {
                                 AsyncImage(
-                                    model = song.thumbnailUrl,
+                                    model = thumbnailUrl,
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
-                                        .size(48.dp)
-                                        .clip(RoundedCornerShape(8.dp)),
+                                        .size(56.dp)
+                                        .clip(RoundedCornerShape(14.dp)),
                                 )
                             } else {
                                 Box(
                                     modifier = Modifier
-                                        .size(48.dp)
-                                        .clip(RoundedCornerShape(8.dp))
+                                        .size(56.dp)
+                                        .clip(RoundedCornerShape(14.dp))
                                         .background(MaterialTheme.colorScheme.surfaceVariant),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Icon(
-                                        painter = painterResource(R.drawable.music_note),
+                                        painter = painterResource(R.drawable.queue_music),
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(22.dp),
+                                        modifier = Modifier.size(28.dp),
                                     )
                                 }
                             }
 
                             Spacer(modifier = Modifier.width(12.dp))
 
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = song.title,
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    color = if (isDownloaded) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface,
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                val durationText = if (song.durationSeconds > 0) makeTimeString(song.durationSeconds * 1000L) else ""
-                                val subtitle = if (durationText.isNotEmpty()) "${song.artistNames} • $durationText" else song.artistNames
-                                Text(
-                                    text = subtitle,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (isDownloaded) 0.6f else 0.85f),
-                                )
-                            }
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    lineHeight = 22.sp,
+                                ),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f),
+                            )
 
                             Spacer(modifier = Modifier.width(8.dp))
 
-                            if (isDownloaded) {
-                                Surface(
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.playlist_download_downloaded),
-                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    )
-                                }
-                            } else {
-                                Checkbox(
-                                    checked = isSelected,
-                                    onCheckedChange = { toggleRow(song.id) },
+                            IconButton(
+                                onClick = { animateDismiss() },
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.close),
+                                    contentDescription = stringResource(android.R.string.cancel),
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(16.dp),
                                 )
                             }
                         }
-                    }
 
-                    if (hasMoreSongs) {
-                        item(key = "loading_more_songs_indicator") {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 16.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(18.dp),
-                                    strokeWidth = 2.dp,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                                Spacer(modifier = Modifier.width(10.dp))
+                        // 2. CHIPS: wrapping row of chips (quality, N songs, total duration, up to ~X MB)
+                        val totalDurationText = remember(wholePlaylistEstimate.totalDurationSeconds) {
+                            PlaylistDownloadCalculator.formatDurationHoursMinutes(wholePlaylistEstimate.totalDurationSeconds)
+                        }
+                        val wholePlaylistSizeText = remember(wholePlaylistEstimate.totalBytes) {
+                            formatFileSize(wholePlaylistEstimate.totalBytes)
+                        }
+
+                        FlowRow(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            PlaylistChip(text = qualityChipText)
+                            PlaylistChip(text = stringResource(R.string.playlist_download_songs_count, songs.size))
+                            PlaylistChip(text = totalDurationText)
+                            PlaylistChip(text = stringResource(R.string.playlist_download_whole_estimate, wholePlaylistSizeText))
+                        }
+
+                        // Status line: "N of M selected" and "(k already downloaded)"
+                        Text(
+                            text = selectedStatusText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(top = 8.dp, bottom = 2.dp),
+                        )
+
+                        // 3. Search field (local filter)
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            placeholder = {
                                 Text(
-                                    text = stringResource(R.string.playlist_download_loading_more, songs.size),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    text = stringResource(R.string.playlist_download_search_hint),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.search),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            },
+                            trailingIcon = {
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(
+                                        onClick = { searchQuery = "" },
+                                        modifier = Modifier.size(24.dp),
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.close),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
+                            },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = coverColor ?: MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f),
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f),
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 6.dp, bottom = 6.dp),
+                        )
+
+                        // 4. LazyColumn of songs (shrinks with weight(1f) when keyboard opens)
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f, fill = false),
+                        ) {
+                            items(
+                                items = filteredSongs,
+                                key = { it.id },
+                            ) { song ->
+                                val isDownloaded = downloads[song.id]?.state == Download.STATE_COMPLETED
+                                val isSelected = song.id in effectiveSelectedIds
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable(enabled = !isDownloaded) {
+                                            toggleRow(song.id)
+                                        }
+                                        .padding(vertical = 5.dp, horizontal = 2.dp)
+                                        .graphicsLayer {
+                                            if (isDownloaded) alpha = 0.45f
+                                        },
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    if (song.thumbnailUrl != null) {
+                                        AsyncImage(
+                                            model = song.thumbnailUrl,
+                                            contentDescription = null,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .size(46.dp)
+                                                .clip(RoundedCornerShape(8.dp)),
+                                        )
+                                    } else {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(46.dp)
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.music_note),
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.size(20.dp),
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.width(12.dp))
+
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = song.title,
+                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        val durationText = if (song.durationSeconds > 0) makeTimeString(song.durationSeconds * 1000L) else ""
+                                        val subtitle = if (durationText.isNotEmpty()) "${song.artistNames} • $durationText" else song.artistNames
+                                        Text(
+                                            text = subtitle,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    if (isDownloaded) {
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.playlist_download_downloaded),
+                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.Medium),
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                            )
+                                        }
+                                    } else {
+                                        Checkbox(
+                                            checked = isSelected,
+                                            onCheckedChange = { toggleRow(song.id) },
+                                            colors = CheckboxDefaults.colors(
+                                                checkedColor = coverColor ?: MaterialTheme.colorScheme.primary,
+                                            ),
+                                        )
+                                    }
+                                }
+                            }
+
+                            if (hasMoreSongs) {
+                                item(key = "loading_more_songs_indicator") {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 12.dp),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            strokeWidth = 2.dp,
+                                            color = coverColor ?: MaterialTheme.colorScheme.primary,
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = stringResource(R.string.playlist_download_loading_more, songs.size),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // 5. BOTTOM BAR: left outlined pill toggle, right filled accent pill
+                        val formattedEstimateSize = remember(estimate.totalBytes) { formatFileSize(estimate.totalBytes) }
+                        val accentFillColor = coverColor ?: MaterialTheme.colorScheme.primary
+                        val isAccentBright = accentFillColor.luminance() > 0.5f
+                        val accentContentColor = if (isAccentBright) Color.Black else Color.White
+                        val downloadButtonText = stringResource(R.string.playlist_download_button, selectedSongs.size, formattedEstimateSize)
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            OutlinedButton(
+                                onClick = { handleToggleClick() },
+                                shape = CircleShape,
+                                border = BorderStroke(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
+                                ),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = Color.Transparent,
+                                    contentColor = MaterialTheme.colorScheme.onSurface,
+                                ),
+                                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp),
+                            ) {
+                                Text(
+                                    text = toggleButtonText,
+                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium),
+                                    maxLines = 1,
+                                )
+                            }
+
+                            Button(
+                                onClick = { handleDownloadClick() },
+                                enabled = selectedSongs.isNotEmpty(),
+                                shape = CircleShape,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = accentFillColor,
+                                    contentColor = accentContentColor,
+                                    disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                                    disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                                ),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text(
+                                    text = downloadButtonText,
+                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                             }
                         }
@@ -709,6 +955,26 @@ fun PlaylistDownloadSheet(
                     Text(text = stringResource(android.R.string.cancel))
                 }
             },
+        )
+    }
+}
+
+@Composable
+private fun PlaylistChip(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
         )
     }
 }
