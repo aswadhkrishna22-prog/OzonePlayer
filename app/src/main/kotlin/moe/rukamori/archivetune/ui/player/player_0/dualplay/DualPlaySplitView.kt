@@ -101,6 +101,7 @@ import moe.rukamori.archivetune.constants.DoubleTapSeekStepKey
 import moe.rukamori.archivetune.constants.DoubleTapToSeekKey
 import moe.rukamori.archivetune.constants.SpeedDialSongIdsKey
 import moe.rukamori.archivetune.ui.player.player_0.DoubleTapSeekOverlay
+import moe.rukamori.archivetune.ui.player.player_0.WaterRippleState
 import moe.rukamori.archivetune.utils.SpeedDialPin
 import moe.rukamori.archivetune.utils.SpeedDialPinType
 import moe.rukamori.archivetune.utils.parseSpeedDialPins
@@ -570,6 +571,7 @@ private fun ImmersiveNowPlayingPane(
 
     var localGradientColor by remember(paneState.gradientColor) { mutableIntStateOf(paneState.gradientColor) }
     var localVibrantColor by remember(paneState.vibrantColor) { mutableIntStateOf(paneState.vibrantColor) }
+    val paneRippleState = remember { WaterRippleState() }
 
     Box(
         modifier = modifier
@@ -589,6 +591,7 @@ private fun ImmersiveNowPlayingPane(
                 localGradientColor = gradient
             },
             clearArtworkFadeEndY = clearArtworkFadeEndY,
+            rippleState = paneRippleState,
             modifier = Modifier.fillMaxSize(),
         )
 
@@ -624,6 +627,7 @@ private fun ImmersiveNowPlayingPane(
                         onSeek = { onSeek(it.toLong()) },
                         enabled = isDoubleTapToSeekEnabled && isForegroundInteractive,
                         seekStepSeconds = seekStepSeconds,
+                        rippleState = paneRippleState,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -639,6 +643,7 @@ private fun ImmersiveNowPlayingPane(
                         onSeek = { onSeek(it.toLong()) },
                         enabled = isDoubleTapToSeekEnabled && isForegroundInteractive,
                         seekStepSeconds = seekStepSeconds,
+                        rippleState = paneRippleState,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }

@@ -16,7 +16,7 @@ import android.os.PowerManager
 import android.provider.Settings
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -37,10 +38,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -58,136 +59,64 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.LocalAnimationsDisabled
 import moe.rukamori.archivetune.ui.haptics.LocalYumaHaptics
+import kotlin.math.max
 
 // ── AGSL WATER RIPPLE SHADER (PHYSICAL REFRACTION & SPECULAR CRESTS) ────────────
 private const val WATER_RIPPLE_SHADER_SRC = """
-    uniform shader composable;
-    uniform float2 uResolution;
-    // Up to 3 active ripples: (origin.x, origin.y, progress 0..1, active 0 or 1)
-    uniform float4 uRipple0;
-    uniform float4 uRipple1;
-    uniform float4 uRipple2;
+    uniform shader content;
+    uniform float2 size;
+    uniform float2 centers[3];
+    uniform float times[3];
+    uniform float strength;
+    uniform float speed;
+    uniform float waveLen;
+    uniform float decay;
+    uniform float stretchX;
 
-    half4 main(float2 coord) {
-        if (uRipple0.w < 0.5 && uRipple1.w < 0.5 && uRipple2.w < 0.5) {
-            return composable.eval(coord);
+    float height(float r, float t) {
+        float x = r - speed * t;
+        float env = exp(-x * x / (4.5 * waveLen * waveLen));
+        return sin(6.2831853 * x / waveLen) * env * exp(-decay * t) / sqrt(1.0 + r / waveLen);
+    }
+
+    half4 main(float2 p) {
+        float2 off = float2(0.0, 0.0);
+        float shade = 0.0;
+        for (int i = 0; i < 3; i++) {
+            if (times[i] < 0.0) continue;
+            float2 d = p - centers[i];
+            d.x /= stretchX;
+            float r = length(d);
+            float2 dir = d / max(r, 0.001);
+            float dh = (height(r + 1.0, times[i]) - height(r - 1.0, times[i])) * 0.5;
+            off += dir * dh * strength;
+            shade += dh;
         }
-
-        float2 totalOffset = float2(0.0, 0.0);
-        float totalSpecular = 0.0;
-        float maxDim = max(uResolution.x, uResolution.y);
-
-        // Ripple 0
-        if (uRipple0.w > 0.5) {
-            float p = uRipple0.z;
-            float2 diff = coord - uRipple0.xy;
-            float dist = length(diff);
-            float waveRadius = p * maxDim * 1.05;
-            float dr = dist - waveRadius;
-
-            float envelope = exp(-0.5 * (dr * dr) / (130.0 * 130.0));
-            float damping = (1.0 - p) * (1.0 - p * 0.65);
-
-            float phase = dr * (6.2831853 / 70.0);
-            float wave = sin(phase) * envelope * damping;
-            float slope = cos(phase) * envelope * damping;
-
-            if (dist > 0.5) {
-                float2 dir = diff / dist;
-                totalOffset += dir * (wave * 20.0);
-
-                float3 N = normalize(float3(-dir * slope * 1.6, 1.0));
-                float3 L = normalize(float3(-0.35, -0.85, 0.75));
-                float3 H = normalize(L + float3(0.0, 0.0, 1.0));
-                float spec = pow(max(0.0, dot(N, H)), 24.0);
-                totalSpecular += spec * damping * 0.38;
-            }
-        }
-
-        // Ripple 1
-        if (uRipple1.w > 0.5) {
-            float p = uRipple1.z;
-            float2 diff = coord - uRipple1.xy;
-            float dist = length(diff);
-            float waveRadius = p * maxDim * 1.05;
-            float dr = dist - waveRadius;
-
-            float envelope = exp(-0.5 * (dr * dr) / (130.0 * 130.0));
-            float damping = (1.0 - p) * (1.0 - p * 0.65);
-
-            float phase = dr * (6.2831853 / 70.0);
-            float wave = sin(phase) * envelope * damping;
-            float slope = cos(phase) * envelope * damping;
-
-            if (dist > 0.5) {
-                float2 dir = diff / dist;
-                totalOffset += dir * (wave * 20.0);
-
-                float3 N = normalize(float3(-dir * slope * 1.6, 1.0));
-                float3 L = normalize(float3(-0.35, -0.85, 0.75));
-                float3 H = normalize(L + float3(0.0, 0.0, 1.0));
-                float spec = pow(max(0.0, dot(N, H)), 24.0);
-                totalSpecular += spec * damping * 0.38;
-            }
-        }
-
-        // Ripple 2
-        if (uRipple2.w > 0.5) {
-            float p = uRipple2.z;
-            float2 diff = coord - uRipple2.xy;
-            float dist = length(diff);
-            float waveRadius = p * maxDim * 1.05;
-            float dr = dist - waveRadius;
-
-            float envelope = exp(-0.5 * (dr * dr) / (130.0 * 130.0));
-            float damping = (1.0 - p) * (1.0 - p * 0.65);
-
-            float phase = dr * (6.2831853 / 70.0);
-            float wave = sin(phase) * envelope * damping;
-            float slope = cos(phase) * envelope * damping;
-
-            if (dist > 0.5) {
-                float2 dir = diff / dist;
-                totalOffset += dir * (wave * 20.0);
-
-                float3 N = normalize(float3(-dir * slope * 1.6, 1.0));
-                float3 L = normalize(float3(-0.35, -0.85, 0.75));
-                float3 H = normalize(L + float3(0.0, 0.0, 1.0));
-                float spec = pow(max(0.0, dot(N, H)), 24.0);
-                totalSpecular += spec * damping * 0.38;
-            }
-        }
-
-        // Chromatic dispersion for realistic optical liquid feel
-        float2 uvR = clamp(coord + totalOffset * 1.025, float2(0.0, 0.0), uResolution);
-        float2 uvG = clamp(coord + totalOffset * 1.000, float2(0.0, 0.0), uResolution);
-        float2 uvB = clamp(coord + totalOffset * 0.975, float2(0.0, 0.0), uResolution);
-
-        half4 colR = composable.eval(uvR);
-        half4 colG = composable.eval(uvG);
-        half4 colB = composable.eval(uvB);
-
-        half3 finalColor = half3(colR.r, colG.g, colB.b) + half3(totalSpecular);
-        return half4(clamp(finalColor, half3(0.0, 0.0, 0.0), half3(1.0, 1.0, 1.0)), colG.a);
+        float2 q = clamp(p + off, float2(0.0, 0.0), size);
+        half4 c = content.eval(q);
+        c.rgb += half3(half(shade * 1.5)) * c.a;
+        return c;
     }
 """
 
-// ── DOUBLE TAP TO SEEK CONSTANTS ───────────────────────────────────────────────
-private const val ACCUMULATION_WINDOW_MS = 700L
-private const val RIPPLE_DURATION_MS = 1050 // Tuned for natural, organic liquid propagation
-private const val MAX_ACTIVE_RIPPLES = 3
-private const val MAX_RINGS_NORMAL = 3
-private const val MAX_RINGS_BATTERY_SAVER = 1
-private const val RADIUS_SCREEN_WIDTH_FRACTION = 0.55f
-private const val TRAVEL_SCREEN_WIDTH_FRACTION = 0.25f
-private const val STRETCH_FACTOR = 1.35f
-private const val STROKE_WIDTH_START_DP = 5f
-private const val STROKE_WIDTH_END_DP = 1f
-private const val ALPHA_START = 0.45f
-private const val LABEL_FADE_IN_MS = 140
-private const val LABEL_FADE_OUT_MS = 240
+// ── DOUBLE TAP TO SEEK & WATER RIPPLE TIMING CONSTANTS ─────────────────────────
+const val RIPPLE_DURATION_MS = 1600L
+const val RIPPLE_DURATION_BATTERY_MS = 1000L
+const val ACCUMULATION_WINDOW_MS = 700L
+const val MAX_ACTIVE_RIPPLES = 3
+const val MAX_ACTIVE_RIPPLES_BATTERY = 1
+const val MAX_RINGS_NORMAL = 3
+const val MAX_RINGS_BATTERY_SAVER = 1
+const val RADIUS_SCREEN_WIDTH_FRACTION = 0.55f
+const val TRAVEL_SCREEN_WIDTH_FRACTION = 0.25f
+const val STRETCH_FACTOR = 1.35f
+const val STROKE_WIDTH_START_DP = 5f
+const val STROKE_WIDTH_END_DP = 1f
+const val ALPHA_START = 0.45f
+const val LABEL_FADE_IN_MS = 140
+const val LABEL_FADE_OUT_MS = 240
 
-private class RippleInstance(
+class ActiveRipple(
     val id: Long,
     val origin: Offset,
     val isForward: Boolean,
@@ -195,13 +124,110 @@ private class RippleInstance(
     var job: Job? = null,
 )
 
+@Stable
+class WaterRippleState {
+    val activeRipples = mutableStateListOf<ActiveRipple>()
+    var rippleIdCounter by mutableLongStateOf(0L)
+    var isPowerSaveMode by mutableStateOf(false)
+    var animationsDisabled by mutableStateOf(false)
+    var animatorScale by mutableFloatStateOf(1f)
+
+    private var cachedShader: RuntimeShader? = null
+    private var cachedRenderEffect: RenderEffect? = null
+    private var composeRenderEffect: androidx.compose.ui.graphics.RenderEffect? = null
+
+    fun getOrCreateShader(): RuntimeShader? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return null
+        if (cachedShader == null) {
+            try {
+                cachedShader = RuntimeShader(WATER_RIPPLE_SHADER_SRC)
+            } catch (_: Throwable) {
+                cachedShader = null
+            }
+        }
+        return cachedShader
+    }
+
+    fun getOrCreateRenderEffect(shader: RuntimeShader): androidx.compose.ui.graphics.RenderEffect? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return null
+        if (cachedRenderEffect == null || composeRenderEffect == null) {
+            try {
+                cachedRenderEffect = RenderEffect.createRuntimeShaderEffect(shader, "content")
+                composeRenderEffect = cachedRenderEffect?.asComposeRenderEffect()
+            } catch (_: Throwable) {
+                composeRenderEffect = null
+            }
+        }
+        return composeRenderEffect
+    }
+}
+
+val GlobalFullPlayerRippleState = WaterRippleState()
+
 /**
- * DoubleTapSeekOverlay applies real fluid water wave displacement and specular highlights
- * to its content (on Android 13+ via AGSL RuntimeShader) with smooth Canvas fallback,
- * while managing YouTube-style accumulation for backward/forward seeking.
- *
- * Touch events are handled via [detectTapGestures] on double-tap (and single-tap
- * during an active accumulation window), ensuring drags and other gestures keep working.
+ * Applies the AGSL water ripple distortion as a RenderEffect to the calling modifier.
+ * Active only while ripples are progressing; reverts to null when idle for zero overhead.
+ */
+fun Modifier.waterRippleEffect(rippleState: WaterRippleState?): Modifier {
+    if (rippleState == null) return this
+    return this.graphicsLayer {
+        val shouldAnimate = !rippleState.animationsDisabled && rippleState.animatorScale > 0f
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && shouldAnimate && rippleState.activeRipples.isNotEmpty()) {
+            val shader = rippleState.getOrCreateShader()
+            val w = size.width
+            val h = size.height
+            if (shader == null || w <= 0f || h <= 0f) {
+                renderEffect = null
+                return@graphicsLayer
+            }
+
+            shader.setFloatUniform("size", w, h)
+            shader.setFloatUniform("stretchX", STRETCH_FACTOR)
+            shader.setFloatUniform("waveLen", 80f)
+            shader.setFloatUniform("decay", 2.5f)
+            shader.setFloatUniform("strength", if (rippleState.isPowerSaveMode) 120f else 200f)
+
+            val maxRadius = max(w, h) * 0.95f
+            val durationSec = (if (rippleState.isPowerSaveMode) RIPPLE_DURATION_BATTERY_MS else RIPPLE_DURATION_MS) / 1000f
+            val speed = maxRadius / durationSec
+            shader.setFloatUniform("speed", speed)
+
+            val maxTravel = w * TRAVEL_SCREEN_WIDTH_FRACTION
+            val centers = FloatArray(6)
+            val times = FloatArray(3)
+
+            for (i in 0 until 3) {
+                val ripple = rippleState.activeRipples.getOrNull(i)
+                if (ripple != null) {
+                    val p = ripple.progress.value
+                    val t = p * durationSec
+                    times[i] = t
+
+                    val directionX = if (ripple.isForward) 1f else -1f
+                    val cx = ripple.origin.x + (p * maxTravel * directionX)
+                    val cy = ripple.origin.y
+                    centers[i * 2] = cx
+                    centers[i * 2 + 1] = cy
+                } else {
+                    times[i] = -1.0f
+                    centers[i * 2] = 0f
+                    centers[i * 2 + 1] = 0f
+                }
+            }
+
+            shader.setFloatUniform("centers", centers)
+            shader.setFloatUniform("times", times)
+
+            renderEffect = rippleState.getOrCreateRenderEffect(shader)
+        } else {
+            renderEffect = null
+        }
+    }
+}
+
+/**
+ * DoubleTapSeekOverlay handles double-tap seek detection, label accumulation,
+ * and initiates physical water ripples driven by [rippleState].
  */
 @Composable
 fun DoubleTapSeekOverlay(
@@ -211,6 +237,7 @@ fun DoubleTapSeekOverlay(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     seekStepSeconds: Int = 10,
+    rippleState: WaterRippleState = GlobalFullPlayerRippleState,
     content: (@Composable () -> Unit)? = null,
 ) {
     if (!enabled) {
@@ -260,32 +287,10 @@ fun DoubleTapSeekOverlay(
         )
     }
 
-    // ── AGSL RuntimeShader & RenderEffect Setup ────────────────────────────────
-    val runtimeShader = remember {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            try {
-                RuntimeShader(WATER_RIPPLE_SHADER_SRC)
-            } catch (_: Throwable) {
-                null
-            }
-        } else {
-            null
-        }
-    }
-
-    val shaderRenderEffect = remember(runtimeShader) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && runtimeShader != null) {
-            try {
-                RenderEffect
-                    .createRuntimeShaderEffect(runtimeShader, "composable")
-                    .asComposeRenderEffect()
-            } catch (_: Throwable) {
-                null
-            }
-        } else {
-            null
-        }
-    }
+    // Sync environment state to the active ripple controller
+    rippleState.isPowerSaveMode = isPowerSaveMode
+    rippleState.animationsDisabled = animationsDisabled
+    rippleState.animatorScale = animatorScale
 
     // ── Accumulation State ─────────────────────────────────────────────────────
     var isAccumulating by remember { mutableStateOf(false) }
@@ -295,16 +300,12 @@ fun DoubleTapSeekOverlay(
     var targetSeekPositionMs by remember { mutableLongStateOf(-1L) }
 
     val labelAlpha = remember { Animatable(0f) }
-    val labelScale = remember { Animatable(1f) }
     var labelFadeJob by remember { mutableStateOf<Job?>(null) }
     var accumulationTimerJob by remember { mutableStateOf<Job?>(null) }
 
-    // ── Ripple Pool (Up to 3 active ripples at once) ───────────────────────────
-    val activeRipples = remember { mutableStateListOf<RippleInstance>() }
-    var rippleIdCounter by remember { mutableLongStateOf(0L) }
-
     val startStrokePx = with(density) { STROKE_WIDTH_START_DP.dp.toPx() }
     val endStrokePx = with(density) { STROKE_WIDTH_END_DP.dp.toPx() }
+    val outlineBorderWidthPx = with(density) { 3.dp.toPx() }
 
     fun triggerSeekAndRipple(offset: Offset, isRightSide: Boolean) {
         val now = System.currentTimeMillis()
@@ -332,39 +333,34 @@ fun DoubleTapSeekOverlay(
 
         val shouldAnimate = !animationsDisabled && animatorScale > 0f
         if (shouldAnimate) {
-            val ripple = RippleInstance(
-                id = ++rippleIdCounter,
+            val maxRipples = if (isPowerSaveMode) MAX_ACTIVE_RIPPLES_BATTERY else MAX_ACTIVE_RIPPLES
+            val ripple = ActiveRipple(
+                id = ++rippleState.rippleIdCounter,
                 origin = offset,
                 isForward = activeIsForward
             )
 
-            if (activeRipples.size >= MAX_ACTIVE_RIPPLES) {
-                val oldest = activeRipples.removeAt(0)
+            if (rippleState.activeRipples.size >= maxRipples) {
+                val oldest = rippleState.activeRipples.removeAt(0)
                 oldest.job?.cancel()
             }
-            activeRipples.add(ripple)
+            rippleState.activeRipples.add(ripple)
 
+            val duration = if (isPowerSaveMode) RIPPLE_DURATION_BATTERY_MS else RIPPLE_DURATION_MS
             ripple.job = coroutineScope.launch {
                 ripple.progress.animateTo(
                     targetValue = 1f,
                     animationSpec = tween(
-                        durationMillis = RIPPLE_DURATION_MS,
-                        easing = FastOutSlowInEasing
+                        durationMillis = duration.toInt(),
+                        easing = LinearEasing
                     )
                 )
-                activeRipples.remove(ripple)
+                rippleState.activeRipples.remove(ripple)
             }
         }
 
         labelFadeJob?.cancel()
         labelFadeJob = coroutineScope.launch {
-            labelScale.snapTo(0.82f)
-            launch {
-                labelScale.animateTo(
-                    targetValue = 1f,
-                    animationSpec = tween(180, easing = FastOutSlowInEasing)
-                )
-            }
             labelAlpha.animateTo(1f, tween(LABEL_FADE_IN_MS))
         }
 
@@ -379,47 +375,11 @@ fun DoubleTapSeekOverlay(
     }
 
     Box(modifier = modifier) {
-        // ── 1. Content Layer: Receives AGSL Water Ripple Distortion ──────────
         if (content != null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && runtimeShader != null && activeRipples.isNotEmpty()) {
-                            runtimeShader.setFloatUniform("uResolution", size.width, size.height)
-
-                            val r0 = activeRipples.getOrNull(0)
-                            if (r0 != null) {
-                                runtimeShader.setFloatUniform("uRipple0", r0.origin.x, r0.origin.y, r0.progress.value, 1f)
-                            } else {
-                                runtimeShader.setFloatUniform("uRipple0", 0f, 0f, 0f, 0f)
-                            }
-
-                            val r1 = activeRipples.getOrNull(1)
-                            if (r1 != null) {
-                                runtimeShader.setFloatUniform("uRipple1", r1.origin.x, r1.origin.y, r1.progress.value, 1f)
-                            } else {
-                                runtimeShader.setFloatUniform("uRipple1", 0f, 0f, 0f, 0f)
-                            }
-
-                            val r2 = activeRipples.getOrNull(2)
-                            if (r2 != null) {
-                                runtimeShader.setFloatUniform("uRipple2", r2.origin.x, r2.origin.y, r2.progress.value, 1f)
-                            } else {
-                                runtimeShader.setFloatUniform("uRipple2", 0f, 0f, 0f, 0f)
-                            }
-
-                            renderEffect = shaderRenderEffect
-                        } else {
-                            renderEffect = null
-                        }
-                    }
-            ) {
-                content()
-            }
+            content()
         }
 
-        // ── 2. Overlay Layer: Gestures & Crisp Floating Text & Fallback Rings ─
+        // Overlay layer: Gestures & Crisp outline text & Fallback rings for API < 33
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -448,7 +408,6 @@ fun DoubleTapSeekOverlay(
                 if (canvasWidth <= 0f || canvasHeight <= 0f) return@Canvas
 
                 val isShaderActive = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                        runtimeShader != null &&
                         !animationsDisabled &&
                         animatorScale > 0f
 
@@ -458,7 +417,7 @@ fun DoubleTapSeekOverlay(
                     val maxRadius = screenWidth * RADIUS_SCREEN_WIDTH_FRACTION
                     val maxTravel = screenWidth * TRAVEL_SCREEN_WIDTH_FRACTION
 
-                    for (ripple in activeRipples) {
+                    for (ripple in rippleState.activeRipples) {
                         val directionX = if (ripple.isForward) 1f else -1f
                         val masterP = ripple.progress.value
                         if (masterP <= 0f || masterP >= 1f) continue
@@ -491,28 +450,33 @@ fun DoubleTapSeekOverlay(
                     }
                 }
 
-                // Plain +10 / -10 text (no '>>>', no pill background / border)
+                // Plain +10 / -10 text with black outline (border) and white fill
                 val currentLabelAlpha = labelAlpha.value
-                val currentLabelScale = labelScale.value
                 if (currentLabelAlpha > 0.01f && accumulatedSeconds > 0) {
                     val text = if (activeIsForward) "+$accumulatedSeconds" else "-$accumulatedSeconds"
 
-                    val textLayoutResult = textMeasurer.measure(
-                        text = AnnotatedString(text),
-                        style = TextStyle(
-                            color = Color.White.copy(alpha = currentLabelAlpha),
-                            fontSize = 34.sp,
-                            fontWeight = FontWeight.Bold,
-                            shadow = Shadow(
-                                color = Color.Black.copy(alpha = 0.70f * currentLabelAlpha),
-                                offset = Offset(0f, 3f),
-                                blurRadius = 10f
-                            )
-                        )
+                    val outlineStyle = TextStyle(
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        drawStyle = Stroke(width = outlineBorderWidthPx, join = StrokeJoin.Round)
+                    )
+                    val fillStyle = TextStyle(
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        drawStyle = Fill
                     )
 
-                    val textWidth = textLayoutResult.size.width.toFloat()
-                    val textHeight = textLayoutResult.size.height.toFloat()
+                    val strokeResult = textMeasurer.measure(
+                        text = AnnotatedString(text),
+                        style = outlineStyle
+                    )
+                    val fillResult = textMeasurer.measure(
+                        text = AnnotatedString(text),
+                        style = fillStyle
+                    )
+
+                    val textWidth = fillResult.size.width.toFloat()
+                    val textHeight = fillResult.size.height.toFloat()
 
                     val targetCenterX = if (activeIsForward) canvasWidth * 0.75f else canvasWidth * 0.25f
                     val targetCenterY = canvasHeight * 0.5f
@@ -520,12 +484,19 @@ fun DoubleTapSeekOverlay(
                     val textLeft = targetCenterX - (textWidth / 2f)
                     val textTop = targetCenterY - (textHeight / 2f)
 
-                    scale(scale = currentLabelScale, pivot = Offset(targetCenterX, targetCenterY)) {
-                        drawText(
-                            textLayoutResult = textLayoutResult,
-                            topLeft = Offset(textLeft, textTop)
-                        )
-                    }
+                    // Layer 1: Black outline border
+                    drawText(
+                        textLayoutResult = strokeResult,
+                        topLeft = Offset(textLeft, textTop),
+                        color = Color.Black.copy(alpha = currentLabelAlpha)
+                    )
+
+                    // Layer 2: White fill
+                    drawText(
+                        textLayoutResult = fillResult,
+                        topLeft = Offset(textLeft, textTop),
+                        color = Color.White.copy(alpha = currentLabelAlpha)
+                    )
                 }
             }
         }

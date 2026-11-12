@@ -26,6 +26,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.ui.player.player_0.DoubleTapSeekOverlay
+import moe.rukamori.archivetune.ui.player.player_0.GlobalFullPlayerRippleState
+import moe.rukamori.archivetune.ui.player.player_0.waterRippleEffect
 import moe.rukamori.archivetune.ui.player.player_0.FullPlayerMotionState
 import moe.rukamori.archivetune.ui.player.player_0.PlayerCanvasState
 import moe.rukamori.archivetune.ui.player.player_0.PlayerCoverCard
@@ -134,12 +136,14 @@ internal fun FullPlayerCoverSlot(
                     onSeek = onSeek,
                     enabled = isDoubleTapToSeekEnabled && !motionState.isOverlayVisible && queueFractionProvider() < 0.05f,
                     seekStepSeconds = seekStepSeconds,
+                    rippleState = GlobalFullPlayerRippleState,
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .playerArtworkFade(queueFractionProvider)
+                            .waterRippleEffect(GlobalFullPlayerRippleState)
                     ) {
                         PlayerCoverGlow(
                             coverUrl = state.coverUrl,
