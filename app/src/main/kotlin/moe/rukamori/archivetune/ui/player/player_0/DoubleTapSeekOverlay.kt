@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -42,6 +43,9 @@ import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
@@ -123,6 +127,7 @@ const val SPECULAR = 0.08f
 class ActiveRipple(
     val id: Long,
     val origin: Offset,
+    val rootOrigin: Offset = origin,
     val isForward: Boolean,
     val progress: Animatable<Float, AnimationVector1D> = Animatable(0f),
     var job: Job? = null,
@@ -156,7 +161,7 @@ val GlobalFullPlayerRippleState = WaterRippleState()
 /**
  * Applies the AGSL water ripple distortion as a RenderEffect to the calling modifier.
  * Active only while ripples are progressing; reverts to null when idle for zero overhead.
- * Uniform updates recreate RenderEffect each frame in graphicsLayer draw phase without recomposition.
+ * Automatically aligns global touch coordinates to the local layer coordinate space.
  */
 fun Modifier.waterRippleEffect(
     rippleState: WaterRippleState?,
@@ -165,43 +170,61 @@ fun Modifier.waterRippleEffect(
     specular: Float = SPECULAR,
 ): Modifier {
     if (rippleState == null) return this
-    return this.graphicsLayer {
-        val isShaderSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-        val shouldAnimate = !rippleState.animationsDisabled && rippleState.animatorScale > 0f
-        val hasActiveRipples = rippleState.activeRipples.isNotEmpty()
+    return this.composed {
+        var layerCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
-        if (isShaderSupported && shouldAnimate && !rippleState.isPowerSaveMode && hasActiveRipples) {
-            val shader = rippleState.getOrCreateShader()
-            val w = size.width
-            val h = size.height
-            if (shader != null && w > 0f && h > 0f) {
-                shader.setFloatUniform("size", w, h)
-                shader.setFloatUniform("amp", amp)
-                shader.setFloatUniform("waveLen", waveLen)
-                shader.setFloatUniform("specular", specular)
-
-                for (i in 0 until 3) {
-                    val ripple = rippleState.activeRipples.getOrNull(i)
-                    val uniformName = "r$i"
-                    if (ripple != null) {
-                        val p = ripple.progress.value
-                        val dir = if (ripple.isForward) 1.0f else -1.0f
-                        shader.setFloatUniform(uniformName, ripple.origin.x, ripple.origin.y, p, dir)
-                    } else {
-                        shader.setFloatUniform(uniformName, 0f, 0f, -1f, 1f)
-                    }
+        Modifier
+            .onGloballyPositioned { coords ->
+                if (coords.isAttached) {
+                    layerCoords = coords
                 }
-
-                // Recreate RenderEffect when uniforms change so Android RenderNode applies the update
-                renderEffect = RenderEffect
-                    .createRuntimeShaderEffect(shader, "content")
-                    .asComposeRenderEffect()
-            } else {
-                renderEffect = null
             }
-        } else {
-            renderEffect = null
-        }
+            .graphicsLayer {
+                val isShaderSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                val shouldAnimate = !rippleState.animationsDisabled && rippleState.animatorScale > 0f
+                val hasActiveRipples = rippleState.activeRipples.isNotEmpty()
+
+                if (isShaderSupported && shouldAnimate && !rippleState.isPowerSaveMode && hasActiveRipples) {
+                    val shader = rippleState.getOrCreateShader()
+                    val w = size.width
+                    val h = size.height
+                    if (shader != null && w > 0f && h > 0f) {
+                        shader.setFloatUniform("size", w, h)
+                        shader.setFloatUniform("amp", amp)
+                        shader.setFloatUniform("waveLen", waveLen)
+                        shader.setFloatUniform("specular", specular)
+
+                        val layerOriginInRoot = if (layerCoords?.isAttached == true) {
+                            layerCoords!!.positionInRoot()
+                        } else {
+                            Offset.Zero
+                        }
+
+                        for (i in 0 until 3) {
+                            val ripple = rippleState.activeRipples.getOrNull(i)
+                            val uniformName = "r$i"
+                            if (ripple != null) {
+                                val p = ripple.progress.value
+                                val dir = if (ripple.isForward) 1.0f else -1.0f
+                                val localX = ripple.rootOrigin.x - layerOriginInRoot.x
+                                val localY = ripple.rootOrigin.y - layerOriginInRoot.y
+                                shader.setFloatUniform(uniformName, localX, localY, p, dir)
+                            } else {
+                                shader.setFloatUniform(uniformName, 0f, 0f, -1f, 1f)
+                            }
+                        }
+
+                        // Recreate RenderEffect when uniforms change so Android RenderNode applies the update
+                        renderEffect = RenderEffect
+                            .createRuntimeShaderEffect(shader, "content")
+                            .asComposeRenderEffect()
+                    } else {
+                        renderEffect = null
+                    }
+                } else {
+                    renderEffect = null
+                }
+            }
     }
 }
 
@@ -288,7 +311,9 @@ fun DoubleTapSeekOverlay(
     val startStrokePx = with(density) { STROKE_WIDTH_START_DP.dp.toPx() }
     val endStrokePx = with(density) { STROKE_WIDTH_END_DP.dp.toPx() }
 
-    fun triggerSeekAndRipple(offset: Offset, isRightSide: Boolean) {
+    var overlayCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+
+    fun triggerSeekAndRipple(offset: Offset, rootOffset: Offset, isRightSide: Boolean) {
         val now = System.currentTimeMillis()
         val isWindowActive = isAccumulating && (now - lastTapTimestampMs <= ACCUMULATION_WINDOW_MS)
         lastTapTimestampMs = now
@@ -318,6 +343,7 @@ fun DoubleTapSeekOverlay(
             val ripple = ActiveRipple(
                 id = ++rippleState.rippleIdCounter,
                 origin = offset,
+                rootOrigin = rootOffset,
                 isForward = activeIsForward
             )
 
@@ -364,13 +390,19 @@ fun DoubleTapSeekOverlay(
         Box(
             modifier = Modifier
                 .matchParentSize()
+                .onGloballyPositioned { overlayCoordinates = it }
                 .pointerInput(enabled, durationMs, seekStepSeconds) {
                     if (durationMs <= 0L) return@pointerInput
 
                     detectTapGestures(
                         onDoubleTap = { offset ->
                             val isRightSide = offset.x >= (size.width / 2f)
-                            triggerSeekAndRipple(offset, isRightSide)
+                            val rootOffset = if (overlayCoordinates?.isAttached == true) {
+                                overlayCoordinates!!.positionInRoot() + offset
+                            } else {
+                                offset
+                            }
+                            triggerSeekAndRipple(offset, rootOffset, isRightSide)
                         },
                         onTap = { offset ->
                             val now = System.currentTimeMillis()
@@ -378,7 +410,12 @@ fun DoubleTapSeekOverlay(
                             if (!isWindowActive) return@detectTapGestures
 
                             val isRightSide = offset.x >= (size.width / 2f)
-                            triggerSeekAndRipple(offset, isRightSide)
+                            val rootOffset = if (overlayCoordinates?.isAttached == true) {
+                                overlayCoordinates!!.positionInRoot() + offset
+                            } else {
+                                offset
+                            }
+                            triggerSeekAndRipple(offset, rootOffset, isRightSide)
                         }
                     )
                 }

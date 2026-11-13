@@ -96,12 +96,17 @@ internal fun FullPlayerCoverSlot(
             }
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .onSizeChanged { size ->
-                    cardWidthPx = if (size.width > 0) size.width.toFloat() else 0f
+            modifier = (
+                if (state.isImmersiveEnabled) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
                 }
+            ).onSizeChanged { size ->
+                cardWidthPx = if (size.width > 0) size.width.toFloat() else 0f
+            }
         ) {
             DoubleTapSeekOverlay(
                 durationMs = state.durationMs,
