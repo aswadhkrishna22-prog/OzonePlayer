@@ -31,6 +31,7 @@ internal fun UpdateScreenDialogsHost(
     latestCommitSha: String?,
     downloadVersion: String?,
     downloadProgress: Float?,
+    updateStep: UpdateStep = UpdateStep.DOWNLOADING,
     upToDateDialog: MutableState<Boolean>,
     errorDialog: MutableState<Boolean>,
     errorMessage: String?,
@@ -56,7 +57,11 @@ internal fun UpdateScreenDialogsHost(
     if (showCheckingDialog) UpdateCheckingDialog()
     if (downloadDialog.value) {
         UpdateDownloadDialog(
-            updateChannel = updateChannel, latestCommitSha = latestCommitSha, version = downloadVersion, progress = downloadProgress,
+            updateChannel = updateChannel,
+            latestCommitSha = latestCommitSha,
+            version = downloadVersion,
+            progress = downloadProgress,
+            step = updateStep,
             onCancel = { downloadDialog.value = false; onCancelDownload() },
         )
     }
@@ -69,9 +74,26 @@ internal fun UpdateScreenDialogsHost(
 }
 
 internal fun CoroutineScope.launchUpdateDownload(
-    context: Context, url: String, onProgress: (Float?) -> Unit, onSuccess: () -> Unit, onFailure: (String) -> Unit,
+    context: Context,
+    url: String,
+    onProgress: (UpdateStep, Float?) -> Unit,
+    onSuccess: () -> Unit,
+    onFailure: (String) -> Unit,
 ): Job = launch {
-    AppUpdateInstaller.downloadAndInstall(context, url) { onProgress(it.fraction) }
+    AppUpdateInstaller.downloadAndInstallWithStages(
+        context = context,
+        url = url,
+        onInstallProgress = { stage ->
+            when (stage) {
+                is AppUpdateInstaller.InstallProgress.Downloading -> {
+                    onProgress(UpdateStep.DOWNLOADING, stage.progress.fraction)
+                }
+                is AppUpdateInstaller.InstallProgress.Installing -> {
+                    onProgress(UpdateStep.INSTALLING, stage.progress)
+                }
+            }
+        },
+    )
         .onSuccess { onSuccess() }
         .onFailure { onFailure(it.message ?: context.getString(R.string.error_unknown)) }
 }

@@ -125,7 +125,7 @@ internal fun UpdateSummaryCard(
                         }
                     }
                 } else {
-                    InteractiveChip(label = stringResource(R.string.download_apk), iconResId = R.drawable.download, onClick = onDownloadApk, enabled = isDownloadReady, modifier = Modifier.fillMaxWidth())
+                    InteractiveChip(label = stringResource(R.string.update_button), iconResId = R.drawable.update, onClick = onDownloadApk, enabled = isDownloadReady && isUpdateAvailable, modifier = Modifier.fillMaxWidth())
                     InteractiveChip(label = stringResource(R.string.check_again), iconResId = R.drawable.sync, onClick = onCheckForUpdate, modifier = Modifier.fillMaxWidth())
                     InteractiveChip(label = stringResource(R.string.view_changelog), iconResId = R.drawable.update, onClick = onOpenChangelog, modifier = Modifier.fillMaxWidth())
                     InteractiveChip(label = stringResource(R.string.all_releases_github), iconResId = R.drawable.ic_github, onClick = onOpenAllReleases, modifier = Modifier.fillMaxWidth())

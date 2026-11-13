@@ -65,6 +65,7 @@ fun UpdateScreen(
     var updateSheetNotes by remember { mutableStateOf<String?>(null) }
     var updateSheetError by remember { mutableStateOf<String?>(null) }
     var updateDownloadProgress by remember { mutableStateOf<Float?>(null) }
+    var updateStep by remember { mutableStateOf(UpdateStep.DOWNLOADING) }
     var updateDownloadJob by remember { mutableStateOf<Job?>(null) }
     val useInAppUpdateInstaller = BuildConfig.DISTRIBUTION == "gms"
     val snackbarHostState = remember { SnackbarHostState() }
@@ -91,10 +92,19 @@ fun UpdateScreen(
         if (url.isBlank()) { updateSheetError = "Update download URL unavailable"; showErrorDialog.value = true }
         else if (!useInAppUpdateInstaller) openUpdateUrl(url)
         else if (updateDownloadJob?.isActive != true) {
+            updateStep = UpdateStep.DOWNLOADING
             updateDownloadProgress = null; updateSheetError = null; showErrorDialog.value = false; showDownloadDialog.value = true
             updateDownloadJob = coroutineScope.launchUpdateDownload(
-                context = context, url = url, onProgress = { updateDownloadProgress = it },
-                onSuccess = { showDownloadDialog.value = false; coroutineScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.download_complete)) } },
+                context = context,
+                url = url,
+                onProgress = { step, progress ->
+                    updateStep = step
+                    updateDownloadProgress = progress
+                },
+                onSuccess = {
+                    updateStep = UpdateStep.INSTALLING
+                    updateDownloadProgress = 1f
+                },
                 onFailure = { showDownloadDialog.value = false; updateSheetError = it; showErrorDialog.value = true },
             )
         }
@@ -189,6 +199,7 @@ fun UpdateScreen(
         onCancelDownload = { updateDownloadJob?.cancel(); updateDownloadJob = null; updateDownloadProgress = null },
         updateChannel = updateChannel, latestCommitSha = latestCommit?.sha,
         downloadVersion = updateSheetVersion, downloadProgress = updateDownloadProgress,
+        updateStep = updateStep,
         upToDateDialog = showUpToDateDialog, errorDialog = showErrorDialog, errorMessage = updateSheetError,
     )
 }
