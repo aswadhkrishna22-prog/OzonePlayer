@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -37,6 +38,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -55,7 +57,10 @@ import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.AppBarHeight
+import moe.rukamori.archivetune.core.common.math.lerp3
 import moe.rukamori.archivetune.db.entities.Playlist
+import moe.rukamori.archivetune.ui.component.HeaderType
+import moe.rukamori.archivetune.ui.component.YumaMorphingHeader
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.LocalYumaColors
@@ -233,6 +238,87 @@ fun LocalPlaylistMeshGradient(
 }
 
 @Composable
+fun PlaylistCoverCollage(
+    thumbnails: List<String>,
+    modifier: Modifier = Modifier,
+) {
+    if (thumbnails.size == 1) {
+        AsyncImage(
+            model = thumbnails[0],
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            alignment = Alignment.Center,
+            modifier = modifier.fillMaxSize(),
+        )
+    } else if (thumbnails.size > 1) {
+        Column(modifier = modifier.fillMaxSize()) {
+            Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                AsyncImage(
+                    model = thumbnails.getOrNull(0),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    alignment = Alignment.Center,
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                )
+                AsyncImage(
+                    model = thumbnails.getOrNull(1),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    alignment = Alignment.Center,
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                )
+            }
+            Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                AsyncImage(
+                    model = thumbnails.getOrNull(2),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    alignment = Alignment.Center,
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                )
+                AsyncImage(
+                    model = thumbnails.getOrNull(3),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    alignment = Alignment.Center,
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                )
+            }
+        }
+    } else {
+        Box(
+            modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.queue_music),
+                contentDescription = null,
+                modifier = Modifier.size(80.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+fun PlaylistMorphingHeader(
+    thumbnails: List<String>,
+    collapseFraction: Float,
+    modifier: Modifier = Modifier,
+) {
+    YumaMorphingHeader(
+        collapseFraction = collapseFraction,
+        type = HeaderType.PLAYLIST,
+        modifier = modifier,
+    ) {
+        PlaylistCoverCollage(
+            thumbnails = thumbnails,
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+}
+
+@Composable
 fun LocalPlaylistHeroSection(
     playlist: Playlist,
     playlistLength: Int,
@@ -240,6 +326,8 @@ fun LocalPlaylistHeroSection(
     systemBarsTopPadding: Dp,
     downloadState: HeaderDownloadState,
     actions: LocalPlaylistActions,
+    heroSpacerHeight: Dp,
+    collapseFractionProvider: () -> Float,
     modifier: Modifier = Modifier,
 ) {
     val editable = playlist.playlist.isEditable
@@ -254,108 +342,48 @@ fun LocalPlaylistHeroSection(
         Box(
             modifier =
                 Modifier
-                    .padding(top = 8.dp, bottom = 20.dp),
+                    .fillMaxWidth()
+                    .height(heroSpacerHeight),
         ) {
-            if (playlist.thumbnails.size == 1) {
-                Surface(
-                    modifier =
-                        Modifier
-                            .size(240.dp)
-                            .shadow(
-                                elevation = 24.dp,
-                                shape = RoundedCornerShape(16.dp),
-                                spotColor =
-                                    gradientColors.getOrNull(0)?.copy(alpha = 0.5f)
-                                        ?: MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                            ),
-                    shape = RoundedCornerShape(16.dp),
-                ) {
-                    AsyncImage(
-                        model = playlist.thumbnails[0],
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-            } else if (playlist.thumbnails.size > 1) {
-                Surface(
-                    modifier =
-                        Modifier
-                            .size(240.dp)
-                            .shadow(
-                                elevation = 24.dp,
-                                shape = RoundedCornerShape(16.dp),
-                                spotColor =
-                                    gradientColors.getOrNull(0)?.copy(alpha = 0.5f)
-                                        ?: MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                            ),
-                    shape = RoundedCornerShape(16.dp),
-                ) {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        listOf(
-                            Alignment.TopStart,
-                            Alignment.TopEnd,
-                            Alignment.BottomStart,
-                            Alignment.BottomEnd,
-                        ).fastForEachIndexed { index, alignment ->
-                            AsyncImage(
-                                model = playlist.thumbnails.getOrNull(index),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier =
-                                    Modifier
-                                        .align(alignment)
-                                        .size(120.dp),
-                            )
-                        }
-                    }
-                }
-            } else {
-                Surface(
-                    modifier =
-                        Modifier
-                            .size(240.dp)
-                            .shadow(
-                                elevation = 16.dp,
-                                shape = RoundedCornerShape(16.dp),
-                            ),
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.queue_music),
-                            contentDescription = null,
-                            modifier = Modifier.size(80.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-
             if (editable) {
-                Surface(
-                    onClick = actions.onPickCover,
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shadowElevation = 6.dp,
+                Box(
                     modifier =
                         Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(8.dp)
-                            .size(40.dp),
+                            .padding(
+                                end = SettingsDimensions.ScreenHorizontalPadding,
+                                bottom = 8.dp,
+                            )
+                            .graphicsLayer {
+                                val fraction = collapseFractionProvider()
+                                val currentScale = lerp3(start = 1f, mid = 0.44f, end = 0f, fraction = fraction)
+                                scaleX = currentScale
+                                scaleY = currentScale
+                                alpha = (1f - fraction * 2.5f).coerceIn(0f, 1f)
+                            }
+                            .size(48.dp)
+                            .yumaClickable(
+                                enabled = collapseFractionProvider() < 0.3f,
+                                pressedScale = SettingsAnimations.PressScale,
+                                onClick = actions.onPickCover,
+                            )
+                            .yumaGlassCard(
+                                shape = CircleShape,
+                                backgroundColor = LocalYumaColors.current.glassBackground,
+                            )
+                            .clip(CircleShape)
+                            .semantics(mergeDescendants = true) {
+                                contentDescription = stringResource(R.string.change_playlist_cover)
+                                role = Role.Button
+                            },
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            painter = painterResource(R.drawable.edit),
-                            contentDescription = stringResource(R.string.change_playlist_cover),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
+                    Icon(
+                        painter = painterResource(R.drawable.edit),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(SettingsDimensions.RowIconInnerSize),
+                    )
                 }
             }
         }
@@ -611,6 +639,8 @@ fun LazyListScope.localPlaylistHeroItem(
     systemBarsTopPadding: Dp,
     downloadState: HeaderDownloadState,
     actions: LocalPlaylistActions,
+    heroSpacerHeight: Dp,
+    collapseFractionProvider: () -> Float,
 ) {
     item(key = LOCAL_PLAYLIST_KEY_HEADER, contentType = CONTENT_TYPE_LOCAL_PLAYLIST_HEADER) {
         LocalPlaylistHeroSection(
@@ -620,6 +650,8 @@ fun LazyListScope.localPlaylistHeroItem(
             systemBarsTopPadding = systemBarsTopPadding,
             downloadState = downloadState,
             actions = actions,
+            heroSpacerHeight = heroSpacerHeight,
+            collapseFractionProvider = collapseFractionProvider,
         )
     }
 }

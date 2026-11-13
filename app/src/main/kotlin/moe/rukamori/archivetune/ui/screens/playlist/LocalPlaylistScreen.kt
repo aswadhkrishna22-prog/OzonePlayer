@@ -44,6 +44,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastSumBy
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -59,7 +61,9 @@ import moe.rukamori.archivetune.constants.PlaylistEditLockKey
 import moe.rukamori.archivetune.constants.SwipeToSongKey
 import moe.rukamori.archivetune.ui.component.DraggableScrollbar
 import moe.rukamori.archivetune.ui.component.ExpressivePullToRefreshBox
+import moe.rukamori.archivetune.ui.component.HeaderType
 import moe.rukamori.archivetune.ui.component.LocalMenuState
+import moe.rukamori.archivetune.ui.component.rememberCollapseFraction
 import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
 import moe.rukamori.archivetune.utils.rememberPreference
 import moe.rukamori.archivetune.viewmodels.LocalPlaylistViewModel
@@ -170,6 +174,10 @@ fun LocalPlaylistScreen(
             lazyListState = lazyListState,
         )
     val systemBarsTopPadding = WindowInsets.systemBars.asPaddingValues().calculateTopPadding()
+    val screenWidthDp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }
+    val expandedHeight = screenWidthDp * HeaderType.PLAYLIST.heightRatio
+    val heroSpacerHeight = expandedHeight * 0.6f
+    val collapseFraction by rememberCollapseFraction(lazyListState)
 
     ExpressivePullToRefreshBox(
         isRefreshing = isRefreshing,
@@ -179,6 +187,7 @@ fun LocalPlaylistScreen(
                 .fillMaxSize()
                 .background(Color.Transparent),
     ) {
+        val hasContent = uiState.playlist?.let { it.songCount > 0 || it.playlist.remoteSongCount != 0 } == true
         if (!searchState.isSearching) {
             LocalPlaylistMeshGradient(
                 disableBlur = disableBlur,
@@ -187,6 +196,13 @@ fun LocalPlaylistScreen(
                 surfaceColor = MaterialTheme.colorScheme.surface,
                 modifier = Modifier.align(Alignment.TopCenter),
             )
+
+            if (hasContent) {
+                PlaylistMorphingHeader(
+                    thumbnails = playlist?.thumbnails.orEmpty(),
+                    collapseFraction = collapseFraction,
+                )
+            }
         }
 
         LazyColumn(
@@ -204,6 +220,8 @@ fun LocalPlaylistScreen(
                         systemBarsTopPadding = systemBarsTopPadding,
                         downloadState = downloadUiState.downloadState,
                         actions = actions,
+                        heroSpacerHeight = heroSpacerHeight,
+                        collapseFractionProvider = { collapseFraction },
                     )
 
                     localPlaylistSortHeaderItem(
