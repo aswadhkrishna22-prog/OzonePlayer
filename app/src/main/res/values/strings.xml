@@ -1326,6 +1326,8 @@
     <string name="canvas_settings_update_failed">Could not update Canvas settings</string>
     <string name="remind_me_later">Remind me later</string>
     <string name="downloading_update">Downloading update…</string>
+    <string name="installing_update">Installing update…</string>
+    <string name="installing_update_desc">Please wait while the update is being installed</string>
     <string name="update_now">Update Now</string>
     <string name="update_reinstall_title">One-time reinstall required</string>
     <string name="update_reinstall_desc">This update needs a one-time reinstall because the app release signing key was upgraded for future seamless updates. Back up your library first in Settings &gt; Backup and restore, then uninstall this version and install the new APK.</string>

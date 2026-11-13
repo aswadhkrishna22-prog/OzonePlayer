@@ -71,7 +71,7 @@ internal fun UpdateScreenContent(
             ) {
                 item {
                     Spacer(modifier = Modifier.height(4.dp))
-                    val isDownloadReady = !isCheckingForUpdate && downloadUrl.isNotBlank() && (isUpdateAvailable || latestVersion != null)
+                    val isDownloadReady = !isCheckingForUpdate && downloadUrl.isNotBlank() && isUpdateAvailable
                     UpdateSummaryCard(
                         currentVersion = BuildConfig.VERSION_NAME, latestVersion = latestVersion, updateChannel = updateChannel,
                         isUpdateAvailable = isUpdateAvailable, isCheckingForUpdate = isCheckingForUpdate, imageUrl = latestImageUrl,

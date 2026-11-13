@@ -43,6 +43,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.flow.flowOf
 import moe.rukamori.archivetune.ui.player.player_0.dualplay.DualPlayInterceptDialog
+import moe.rukamori.archivetune.ui.screens.settings.UpdateStep
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -125,6 +126,7 @@ fun BoxScope.GlobalDialogsHost(
     var latestImageUrl by remember { mutableStateOf<String?>(null) }
     val releaseNotesState = remember { mutableStateOf<String?>(null) }
     var isDownloadingUpdate by remember { mutableStateOf(false) }
+    var updateInstallStep by remember { mutableStateOf(UpdateStep.DOWNLOADING) }
     var updateDownloadProgress by remember { mutableStateOf<Float?>(null) }
     var updateDownloadError by remember { mutableStateOf<String?>(null) }
     var updateDownloadJob by remember { mutableStateOf<Job?>(null) }
@@ -212,19 +214,25 @@ fun BoxScope.GlobalDialogsHost(
             ) {
                 Text(
                     text =
-                        updateDownloadProgress?.let { "${(it * 100).toInt()}%" }
-                            ?: stringResource(R.string.downloading_update),
+                        if (updateInstallStep == UpdateStep.INSTALLING) {
+                            stringResource(R.string.installing_update)
+                        } else {
+                            updateDownloadProgress?.let { "${(it * 100).toInt()}%" }
+                                ?: stringResource(R.string.downloading_update)
+                        },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.secondary,
                 )
-                TextButton(
-                    onClick = {
-                        updateDownloadJob?.cancel()
-                        isDownloadingUpdate = false
-                        updateDownloadProgress = null
-                    },
-                ) {
-                    Text(text = stringResource(R.string.cancel))
+                if (updateInstallStep != UpdateStep.INSTALLING) {
+                    TextButton(
+                        onClick = {
+                            updateDownloadJob?.cancel()
+                            isDownloadingUpdate = false
+                            updateDownloadProgress = null
+                        },
+                    ) {
+                        Text(text = stringResource(R.string.cancel))
+                    }
                 }
             }
             if (updateDownloadError != null) {
@@ -284,18 +292,29 @@ fun BoxScope.GlobalDialogsHost(
                                 }
                             if (downloadUrl.isNotBlank()) {
                                 isDownloadingUpdate = true
+                                updateInstallStep = UpdateStep.DOWNLOADING
                                 updateDownloadProgress = null
                                 updateDownloadError = null
                                 updateDownloadJob =
                                     coroutineScope.launch {
-                                        AppUpdateInstaller.downloadAndInstall(
+                                        AppUpdateInstaller.downloadAndInstallWithStages(
                                             context = context,
                                             url = downloadUrl,
-                                            onProgress = { updateDownloadProgress = it.fraction },
+                                            onInstallProgress = { stage ->
+                                                when (stage) {
+                                                    is AppUpdateInstaller.InstallProgress.Downloading -> {
+                                                        updateInstallStep = UpdateStep.DOWNLOADING
+                                                        updateDownloadProgress = stage.progress.fraction
+                                                    }
+                                                    is AppUpdateInstaller.InstallProgress.Installing -> {
+                                                        updateInstallStep = UpdateStep.INSTALLING
+                                                        updateDownloadProgress = stage.progress
+                                                    }
+                                                }
+                                            },
                                         ).onSuccess {
-                                            isDownloadingUpdate = false
-                                            isUpdateSheetShowing = false
-                                            bottomSheetPageState.dismiss()
+                                            updateInstallStep = UpdateStep.INSTALLING
+                                            updateDownloadProgress = 1f
                                         }.onFailure { e ->
                                             isDownloadingUpdate = false
                                             updateDownloadError = e.message ?: context.getString(R.string.error_unknown)

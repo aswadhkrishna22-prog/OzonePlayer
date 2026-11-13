@@ -24,6 +24,11 @@ internal object UpdateContract {
     val DefaultChannel = defaultUpdateChannel
 }
 
+enum class UpdateStep {
+    DOWNLOADING,
+    INSTALLING,
+}
+
 @Immutable
 data class UpdateUiState(
     val currentVersion: String = "",
