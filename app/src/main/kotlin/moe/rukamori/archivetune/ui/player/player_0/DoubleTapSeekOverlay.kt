@@ -58,7 +58,7 @@ import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.LocalAnimationsDisabled
 import moe.rukamori.archivetune.ui.haptics.LocalYumaHaptics
 
-// ── AGSL WATER RIPPLE SHADER (PHYSICAL REFRACTION DISTORTION) ──────────────────
+// ── AGSL WATER RIPPLE SHADER (PHYSICAL REFRACTION DISTORTION & CREST HIGHLIGHT) ──
 private const val WATER_RIPPLE_SHADER_SRC = """
     uniform shader content;
     uniform float2 size;
@@ -67,10 +67,11 @@ private const val WATER_RIPPLE_SHADER_SRC = """
     uniform float4 r2;
     uniform float amp;
     uniform float waveLen;
+    uniform float specular;
 
-    float2 disp(float2 p, float4 r) {
+    float3 disp(float2 p, float4 r) {
         float t = r.z;
-        if (t <= 0.0 || t >= 1.0) { return float2(0.0, 0.0); }
+        if (t <= 0.0 || t >= 1.0) { return float3(0.0, 0.0, 0.0); }
         float2 c = float2(r.x + r.w * size.x * 0.25 * t, r.y);
         float2 d = p - c;
         float dist = length(d);
@@ -80,12 +81,21 @@ private const val WATER_RIPPLE_SHADER_SRC = """
         float env = exp(-arg * arg) * (1.0 - t) * (1.0 - t);
         float w = sin(6.2831853 * x / waveLen) * env * amp;
         float2 dir = dist > 0.001 ? (d / dist) : float2(0.0, 0.0);
-        return dir * w;
+        return float3(dir.x * w, dir.y * w, w);
     }
 
     half4 main(float2 p) {
-        float2 q = p + disp(p, r0) + disp(p, r1) + disp(p, r2);
-        return content.eval(q);
+        float3 d0 = disp(p, r0);
+        float3 d1 = disp(p, r1);
+        float3 d2 = disp(p, r2);
+        float2 q = p + d0.xy + d1.xy + d2.xy;
+        half4 color = content.eval(q);
+        float w = d0.z;
+        if (abs(d1.z) > abs(w)) { w = d1.z; }
+        if (abs(d2.z) > abs(w)) { w = d2.z; }
+        float denom = amp > 0.0001 ? amp : 1.0;
+        color.rgb += half3(specular * clamp(w / denom, -1.0, 1.0));
+        return color;
     }
 """
 
@@ -103,11 +113,12 @@ const val TRAVEL_SCREEN_WIDTH_FRACTION = 0.25f
 const val STRETCH_FACTOR = 1.35f
 const val STROKE_WIDTH_START_DP = 5f
 const val STROKE_WIDTH_END_DP = 1f
-const val ALPHA_START = 0.22f // 40% of previous 0.55f for thin subtle crest
+const val ALPHA_START = 0.22f // 40% of previous 0.55f for thin subtle crest fallback
 const val LABEL_FADE_IN_MS = 140
 const val LABEL_FADE_OUT_MS = 240
 const val WAVE_AMP_PX = 14f
 const val WAVE_LEN_PX = 90f
+const val SPECULAR = 0.08f
 
 class ActiveRipple(
     val id: Long,
@@ -151,6 +162,7 @@ fun Modifier.waterRippleEffect(
     rippleState: WaterRippleState?,
     amp: Float = WAVE_AMP_PX,
     waveLen: Float = WAVE_LEN_PX,
+    specular: Float = SPECULAR,
 ): Modifier {
     if (rippleState == null) return this
     return this.graphicsLayer {
@@ -166,6 +178,7 @@ fun Modifier.waterRippleEffect(
                 shader.setFloatUniform("size", w, h)
                 shader.setFloatUniform("amp", amp)
                 shader.setFloatUniform("waveLen", waveLen)
+                shader.setFloatUniform("specular", specular)
 
                 for (i in 0 until 3) {
                     val ripple = rippleState.activeRipples.getOrNull(i)
@@ -195,7 +208,8 @@ fun Modifier.waterRippleEffect(
 /**
  * DoubleTapSeekOverlay handles double-tap seek detection, label accumulation,
  * and initiates physical water ripples driven by [rippleState].
- * Draws thin white rings (40% alpha) to highlight wave fronts and bold white "+10" / "-10" text.
+ * Displays plain bold white "+10" / "-10" text. Thin white rings are drawn ONLY
+ * as fallback when the AGSL runtime shader cannot run (below Android 13, or battery saver on).
  */
 @Composable
 fun DoubleTapSeekOverlay(
@@ -374,7 +388,10 @@ fun DoubleTapSeekOverlay(
                 val canvasHeight = size.height
                 if (canvasWidth <= 0f || canvasHeight <= 0f) return@Canvas
 
-                val shouldDrawRings = !animationsDisabled && animatorScale > 0f
+                // Ring overlay is drawn ONLY as fallback when the shader cannot run (below API 33 or battery saver)
+                val isShaderSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                val isShaderActive = isShaderSupported && !isPowerSaveMode && !animationsDisabled && animatorScale > 0f
+                val shouldDrawRings = !animationsDisabled && animatorScale > 0f && !isShaderActive
                 if (shouldDrawRings) {
                     val screenWidth = context.resources.displayMetrics.widthPixels.toFloat().coerceAtLeast(canvasWidth)
                     val maxRadius = screenWidth * RADIUS_SCREEN_WIDTH_FRACTION
