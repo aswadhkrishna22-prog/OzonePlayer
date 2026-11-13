@@ -331,6 +331,7 @@ fun LocalPlaylistHeroSection(
     modifier: Modifier = Modifier,
 ) {
     val editable = playlist.playlist.isEditable
+    val editCoverLabel = stringResource(R.string.change_playlist_cover)
 
     Column(
         modifier =
@@ -373,7 +374,7 @@ fun LocalPlaylistHeroSection(
                             )
                             .clip(CircleShape)
                             .semantics(mergeDescendants = true) {
-                                contentDescription = stringResource(R.string.change_playlist_cover)
+                                contentDescription = editCoverLabel
                                 role = Role.Button
                             },
                     contentAlignment = Alignment.Center,
