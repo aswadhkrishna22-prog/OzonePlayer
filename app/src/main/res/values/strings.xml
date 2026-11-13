@@ -638,6 +638,10 @@
     <string name="stop_music_on_task_clear">Stop music on task clear</string>
     <string name="wakelock">Keep CPU awake during playback</string>
     <string name="wakelock_desc">Prevents the system from interrupting music by holding a CPU wake lock</string>
+    <string name="double_tap_to_seek">Double tap to seek</string>
+    <string name="double_tap_to_seek_desc">Double tap sides of artwork to seek backward or forward</string>
+    <string name="seek_step">Seek step</string>
+    <string name="seek_step_seconds">%d seconds</string>
     <string name="auto_start_on_bluetooth">Auto-start on Bluetooth connect</string>
     <string name="auto_start_on_bluetooth_desc">Automatically resume playback when a Bluetooth audio device connects</string>
     <string name="artist_separators">Symbols to split artists</string>
