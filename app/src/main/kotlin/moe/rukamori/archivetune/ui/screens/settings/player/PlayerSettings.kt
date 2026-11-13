@@ -58,6 +58,8 @@ import moe.rukamori.archivetune.constants.AutomixTransitionDurationKey
 import moe.rukamori.archivetune.constants.CrossfadeDurationKey
 import moe.rukamori.archivetune.constants.CrossfadeEnabledKey
 import moe.rukamori.archivetune.constants.CrossfadeGaplessKey
+import moe.rukamori.archivetune.constants.DoubleTapSeekStepKey
+import moe.rukamori.archivetune.constants.DoubleTapToSeekKey
 import moe.rukamori.archivetune.constants.DownloadLocationUriKey
 import moe.rukamori.archivetune.constants.EnableLosslessKey
 import moe.rukamori.archivetune.constants.Prefer320KbpsKey
@@ -152,6 +154,14 @@ fun PlayerSettings(navController: NavController) {
     val (wakelockEnabled, onWakelockChange) = rememberPreference(
         WakelockKey,
         defaultValue = false,
+    )
+    val (doubleTapToSeek, onDoubleTapToSeekChange) = rememberPreference(
+        DoubleTapToSeekKey,
+        defaultValue = true,
+    )
+    val (doubleTapSeekStep, onDoubleTapSeekStepChange) = rememberPreference(
+        DoubleTapSeekStepKey,
+        defaultValue = 10,
     )
 
     val (crossfadeEnabled, onCrossfadeEnabledChange) = rememberPreference(
@@ -251,6 +261,8 @@ fun PlayerSettings(navController: NavController) {
         qobuzAppSecret = qobuzAppSecret,
         qobuzUserAuthToken = qobuzUserAuthToken,
         prefer320Kbps = prefer320Kbps,
+        doubleTapToSeek = doubleTapToSeek,
+        doubleTapSeekStep = doubleTapSeekStep,
     )
 
     val actions = remember(
@@ -278,6 +290,8 @@ fun PlayerSettings(navController: NavController) {
             onSmartVibeQueueChange = onSmartVibeQueueChange,
             onStopMusicOnTaskClearChange = onStopMusicOnTaskClearChange,
             onWakelockChange = onWakelockChange,
+            onDoubleTapToSeekChange = onDoubleTapToSeekChange,
+            onDoubleTapSeekStepChange = onDoubleTapSeekStepChange,
             onCrossfadeEnabledChange = onCrossfadeEnabledChange,
             onCrossfadeDurationSecondsChange = onCrossfadeDurationSecondsChange,
             onCrossfadeGaplessChange = onCrossfadeGaplessChange,

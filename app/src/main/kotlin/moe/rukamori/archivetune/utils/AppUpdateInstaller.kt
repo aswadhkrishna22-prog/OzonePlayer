@@ -51,6 +51,11 @@ object AppUpdateInstaller {
                     ?.coerceIn(0f, 1f)
     }
 
+    sealed interface InstallProgress {
+        data class Downloading(val progress: Progress) : InstallProgress
+        data class Installing(val progress: Float? = null) : InstallProgress
+    }
+
     private val client by lazy {
         OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
@@ -64,6 +69,20 @@ object AppUpdateInstaller {
         context: Context,
         url: String,
         onProgress: (Progress) -> Unit,
+    ): Result<Unit> = downloadAndInstallWithStages(
+        context = context,
+        url = url,
+        onInstallProgress = { stage ->
+            if (stage is InstallProgress.Downloading) {
+                onProgress(stage.progress)
+            }
+        },
+    )
+
+    suspend fun downloadAndInstallWithStages(
+        context: Context,
+        url: String,
+        onInstallProgress: (InstallProgress) -> Unit,
     ): Result<Unit> {
         if (BuildConfig.DISTRIBUTION != "gms") {
             return Result.failure(IllegalStateException("In-app updates are only available for GMS builds"))
@@ -72,10 +91,19 @@ object AppUpdateInstaller {
         return try {
             val apkFile =
                 withContext(Dispatchers.IO) {
-                    downloadApk(context.applicationContext, url, onProgress)
+                    downloadApk(context.applicationContext, url) { progress ->
+                        onInstallProgress(InstallProgress.Downloading(progress))
+                    }
                 }
             withContext(Dispatchers.Main) {
-                installApk(context, apkFile)
+                onInstallProgress(InstallProgress.Installing(0f))
+            }
+            withContext(Dispatchers.IO) {
+                installApk(context, apkFile) { progress ->
+                    withContext(Dispatchers.Main) {
+                        onInstallProgress(InstallProgress.Installing(progress))
+                    }
+                }
             }
             Result.success(Unit)
         } catch (e: CancellationException) {
@@ -229,9 +257,10 @@ object AppUpdateInstaller {
         }
     }
 
-    private fun tryInstallWithPackageInstaller(
+    private suspend fun tryInstallWithPackageInstaller(
         context: Context,
         apkFile: File,
+        onProgress: suspend (Float) -> Unit = {},
     ): Boolean {
         var session: PackageInstaller.Session? = null
         return try {
@@ -246,9 +275,30 @@ object AppUpdateInstaller {
             }
             val sessionId = packageInstaller.createSession(params)
             session = packageInstaller.openSession(sessionId)
-            session.openWrite("package", 0, apkFile.length()).use { output ->
+            val apkLength = apkFile.length()
+            session.openWrite("package", 0, apkLength).use { output ->
                 apkFile.inputStream().use { input ->
-                    input.copyTo(output)
+                    val buffer = ByteArray(STREAM_BUFFER_SIZE)
+                    var writtenBytes = 0L
+                    var lastUpdateMs = 0L
+                    while (true) {
+                        currentCoroutineContext().ensureActive()
+                        val read = input.read(buffer)
+                        if (read == -1) break
+                        output.write(buffer, 0, read)
+                        writtenBytes += read.toLong()
+                        val now = System.currentTimeMillis()
+                        if (now - lastUpdateMs >= PROGRESS_UPDATE_INTERVAL_MS) {
+                            if (apkLength > 0L) {
+                                val frac = (writtenBytes.toFloat() / apkLength.toFloat()).coerceIn(0f, 1f)
+                                onProgress(frac)
+                            }
+                            lastUpdateMs = now
+                        }
+                    }
+                    if (apkLength > 0L) {
+                        onProgress(1f)
+                    }
                 }
                 session.fsync(output)
             }
@@ -279,16 +329,17 @@ object AppUpdateInstaller {
         }
     }
 
-    private fun installApk(
+    private suspend fun installApk(
         context: Context,
         apkFile: File,
+        onProgress: suspend (Float) -> Unit = {},
     ) {
         if (!canRequestPackageInstalls(context)) {
             openInstallPermissionSettings(context)
             throw SecurityException("Please allow app installation from this source in Settings")
         }
 
-        val installedViaPackageInstaller = tryInstallWithPackageInstaller(context, apkFile)
+        val installedViaPackageInstaller = tryInstallWithPackageInstaller(context, apkFile, onProgress)
         if (!installedViaPackageInstaller) {
             val uri =
                 FileProvider.getUriForFile(

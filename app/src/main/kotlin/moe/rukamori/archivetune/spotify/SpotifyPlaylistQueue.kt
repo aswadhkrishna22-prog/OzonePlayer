@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import moe.rukamori.archivetune.extensions.toMediaItem
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.playback.queues.Queue
 import moe.rukamori.archivetune.playback.queues.SpotifyQueue
@@ -94,6 +95,17 @@ open class SpotifyPlaylistQueue(
                     val match = matcher.matchInitial(targetIndex = targetIndex, preloadedItem = preloadItem)
 
                     if (match.items.isEmpty()) {
+                        val fallback = preloadItem
+                        if (fallback != null) {
+                            Timber.tag("SpotifyPipeline").w(
+                                "Window matching empty in SpotifyPlaylistQueue, falling back to preloaded track"
+                            )
+                            return@withContext Queue.Status(
+                                title = title,
+                                items = listOf(fallback.toMediaItem()),
+                                mediaItemIndex = 0,
+                            )
+                        }
                         isLoadFailed = true
                         Timber.tag("SpotifyPipeline").w(
                             "Could not resolve any track for initial status (failed=${match.failedCount})"

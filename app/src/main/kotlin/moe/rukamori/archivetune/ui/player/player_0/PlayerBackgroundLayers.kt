@@ -42,6 +42,9 @@ import dev.chrisbanes.haze.blur.HazeBlurStyle
 import dev.chrisbanes.haze.blur.HazeColorEffect
 import dev.chrisbanes.haze.blur.hazeBlur
 import dev.chrisbanes.haze.hazeSource
+import moe.rukamori.archivetune.ui.player.player_0.GlobalFullPlayerRippleState
+import moe.rukamori.archivetune.ui.player.player_0.WaterRippleState
+import moe.rukamori.archivetune.ui.player.player_0.waterRippleEffect
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.state.PlayerUiState
 
@@ -57,6 +60,7 @@ fun PlayerBackgroundLayers(
     queueFractionProvider: () -> Float = { 0f },
     onColorsExtracted: (vibrant: Int, darkMuted: Int, gradient: Int) -> Unit = { _, _, _ -> },
     clearArtworkFadeEndY: Float? = null,
+    rippleState: WaterRippleState? = null,
 ) {
 
     val currentState by rememberUpdatedState(state)
@@ -216,6 +220,7 @@ fun PlayerBackgroundLayers(
         }
 
         val painter = painters.currentClearPainter
+        val effectiveRippleState = rippleState ?: if (state.isImmersiveEnabled) GlobalFullPlayerRippleState else null
         if (painter != null && !(isCanvasActive && isCanvasReady)) {
             Image(
                 painter = painter,
@@ -224,6 +229,7 @@ fun PlayerBackgroundLayers(
                     .fillMaxWidth()
                     .aspectRatio(0.75f)
                     .align(Alignment.TopCenter)
+                    .waterRippleEffect(effectiveRippleState)
                     .artworkBottomFade(immersiveTransitionAlpha * queueArtworkFade, clearArtworkFadeEndY),
                 contentScale = ContentScale.Crop,
                 alignment = Alignment.TopCenter
@@ -242,6 +248,7 @@ fun PlayerBackgroundLayers(
                     .fillMaxWidth()
                     .aspectRatio(0.75f)
                     .align(Alignment.TopCenter)
+                    .waterRippleEffect(effectiveRippleState)
                     .artworkBottomFade(immersiveTransitionAlpha * queueArtworkFade, clearArtworkFadeEndY)
             )
         }

@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.lowdata.AutoLowDataMode
 import moe.rukamori.archivetune.ui.component.EnumListPreference
+import moe.rukamori.archivetune.ui.component.ListPreference
 import moe.rukamori.archivetune.ui.component.PreferenceGroup
 import moe.rukamori.archivetune.ui.component.SwitchPreference
 import moe.rukamori.archivetune.ui.screens.settings.playerAwareBottomPadding
@@ -86,6 +87,27 @@ internal fun PlayerBehaviorSection(
                 checked = state.wakelockEnabled,
                 onCheckedChange = actions.onWakelockChange,
             )
+        }
+        item {
+            SwitchPreference(
+                title = { Text(stringResource(R.string.double_tap_to_seek)) },
+                description = stringResource(R.string.double_tap_to_seek_desc),
+                icon = { Icon(painterResource(R.drawable.fast_forward), null) },
+                checked = state.doubleTapToSeek,
+                onCheckedChange = actions.onDoubleTapToSeekChange,
+            )
+        }
+        if (state.doubleTapToSeek) {
+            item {
+                ListPreference(
+                    title = { Text(stringResource(R.string.seek_step)) },
+                    icon = { Icon(painterResource(R.drawable.speed), null) },
+                    selectedValue = state.doubleTapSeekStep,
+                    values = listOf(5, 10, 15, 30),
+                    valueText = { stringResource(R.string.seek_step_seconds, it) },
+                    onValueSelected = actions.onDoubleTapSeekStepChange,
+                )
+            }
         }
         item {
             SwitchPreference(

@@ -68,6 +68,7 @@ internal fun UpdateDownloadDialog(
     latestCommitSha: String?,
     version: String?,
     progress: Float?,
+    step: UpdateStep = UpdateStep.DOWNLOADING,
     onCancel: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -81,17 +82,21 @@ internal fun UpdateDownloadDialog(
     val determinateIndicatorModifier = remember { Modifier.fillMaxSize() }
     val indeterminateIndicatorModifier = remember { Modifier.size(72.dp) }
 
-    val downloadTitle =
-        buildString {
-            when (updateChannel) {
-                UpdateChannel.DAILY_NIGHTLY -> append("${context.getString(R.string.ui_app_name)} Nightly")
-                else -> append(context.getString(R.string.ui_app_name))
-            }
-            append(' ')
-            if (updateChannel == UpdateChannel.NIGHTLY) {
-                append(latestCommitSha?.take(7) ?: version ?: "?")
-            } else {
-                append(version ?: "?")
+    val dialogTitle =
+        if (step == UpdateStep.INSTALLING) {
+            stringResource(R.string.installing_update)
+        } else {
+            buildString {
+                when (updateChannel) {
+                    UpdateChannel.DAILY_NIGHTLY -> append("${context.getString(R.string.ui_app_name)} Nightly")
+                    else -> append(context.getString(R.string.ui_app_name))
+                }
+                append(' ')
+                if (updateChannel == UpdateChannel.NIGHTLY) {
+                    append(latestCommitSha?.take(7) ?: version ?: "?")
+                } else {
+                    append(version ?: "?")
+                }
             }
         }
 
@@ -99,7 +104,7 @@ internal fun UpdateDownloadDialog(
         onDismissRequest = {},
         title = {
             Text(
-                text = downloadTitle,
+                text = dialogTitle,
                 style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.Center,
                 modifier = centeredDialogContentModifier,
@@ -111,6 +116,14 @@ internal fun UpdateDownloadDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                if (step == UpdateStep.INSTALLING) {
+                    Text(
+                        text = stringResource(R.string.installing_update_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 if (progress != null) {
                     Box(
                         modifier = determinateProgressModifier,
@@ -139,8 +152,10 @@ internal fun UpdateDownloadDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onCancel) {
-                Text(text = stringResource(android.R.string.cancel))
+            if (step != UpdateStep.INSTALLING) {
+                TextButton(onClick = onCancel) {
+                    Text(text = stringResource(android.R.string.cancel))
+                }
             }
         },
     )

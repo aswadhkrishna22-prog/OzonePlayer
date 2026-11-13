@@ -7,6 +7,7 @@
 package moe.rukamori.archivetune.spotify
 
 import androidx.media3.common.MediaItem
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -51,23 +52,41 @@ object SpotifyPlaybackResolver {
     @Volatile
     private var databaseRef: MusicDatabase? = null
 
+    fun init(database: MusicDatabase) {
+        if (databaseRef == null) {
+            databaseRef = database
+        }
+    }
+
     suspend fun resolveToMediaItem(
         track: SpotifyTrack,
         database: MusicDatabase? = null,
         contextQuery: String? = null,
-    ): MediaItem? = resolveToMetadata(track, database, contextQuery)?.toMediaItem()
+    ): MediaItem? =
+        try {
+            resolveToMetadata(track, database, contextQuery)?.toMediaItem()
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Timber.tag("SpotifyMatching").w(e, "Failed converting resolved track '${track.name}' to MediaItem")
+            null
+        }
 
     suspend fun resolveToMetadata(
         track: SpotifyTrack,
         database: MusicDatabase? = null,
         contextQuery: String? = null,
-    ): MediaMetadata? {
-        return when (val decision = resolveCandidateDecision(track, database, contextQuery)) {
-            is PlaybackResolutionDecision.Resolved -> decision.metadata
-            is PlaybackResolutionDecision.Ambiguous -> decision.bestMetadata
-            is PlaybackResolutionDecision.NotFound -> null
+    ): MediaMetadata? =
+        try {
+            when (val decision = resolveCandidateDecision(track, database, contextQuery)) {
+                is PlaybackResolutionDecision.Resolved -> decision.metadata
+                is PlaybackResolutionDecision.Ambiguous -> decision.bestMetadata
+                is PlaybackResolutionDecision.NotFound -> null
+            }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Timber.tag("SpotifyMatching").w(e, "Failed resolving metadata for track '${track.name}'")
+            null
         }
-    }
 
     suspend fun resolveCandidateDecision(
         track: SpotifyTrack,
@@ -286,17 +305,21 @@ object SpotifyPlaybackResolver {
                         cache[cacheKey] = bestMetadata
                     }
 
-                    db?.insert(
-                        SpotifyMatchEntity(
-                            spotifyId = cacheKey,
-                            youtubeId = bestMetadata.id,
-                            title = accepted.title,
-                            artist = accepted.artists.joinToString(" ") { it.name }.ifBlank { track.artists.joinToString(" ") { it.name } },
-                            matchScore = decisionResult.score,
-                            isrc = bestMetadata.isrc,
-                            isManualOverride = false,
-                        ),
-                    )
+                    runCatching {
+                        db?.insert(
+                            SpotifyMatchEntity(
+                                spotifyId = cacheKey,
+                                youtubeId = bestMetadata.id,
+                                title = accepted.title,
+                                artist = accepted.artists.joinToString(" ") { it.name }.ifBlank { track.artists.joinToString(" ") { it.name } },
+                                matchScore = decisionResult.score,
+                                isrc = bestMetadata.isrc,
+                                isManualOverride = false,
+                            ),
+                        )
+                    }.onFailure { err ->
+                        Timber.tag("SpotifyMatching").w(err, "Failed caching match in database for '${track.name}'")
+                    }
 
                     Timber.tag("SpotifyMatching").i(
                         "RESOLVED '${track.name}' -> YT id=${accepted.id}, title='${accepted.title}', score=${decisionResult.score}",

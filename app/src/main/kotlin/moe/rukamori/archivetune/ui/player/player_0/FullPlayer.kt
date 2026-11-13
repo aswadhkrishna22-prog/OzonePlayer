@@ -28,6 +28,8 @@ import androidx.compose.ui.platform.LocalDensity
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import moe.rukamori.archivetune.LocalPlayerConnection
+import moe.rukamori.archivetune.constants.DoubleTapSeekStepKey
+import moe.rukamori.archivetune.constants.DoubleTapToSeekKey
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.player.player_0.dualplay.DualPlaySplitView
 import moe.rukamori.archivetune.ui.player.player_0.full.FullPlayerCoverSlot
@@ -35,6 +37,7 @@ import moe.rukamori.archivetune.ui.player.player_0.full.FullPlayerToolbarSlot
 import moe.rukamori.archivetune.ui.player.player_0.sett.PlayerMenuScreen
 import moe.rukamori.archivetune.ui.state.PlayerUiState
 import moe.rukamori.archivetune.ui.state.UpdateState
+import moe.rukamori.archivetune.utils.rememberPreference
 
 @Composable
 fun FullPlayer(
@@ -64,6 +67,9 @@ fun FullPlayer(
         lyricsFractionProvider = lyricsFractionProvider,
         queueFractionProvider = queueFractionProvider,
     )
+
+    val (isDoubleTapToSeekEnabled) = rememberPreference(DoubleTapToSeekKey, defaultValue = true)
+    val (seekStepSeconds) = rememberPreference(DoubleTapSeekStepKey, defaultValue = 10)
 
     val localDensity = LocalDensity.current
     val capsuleHeaderHeightPx = with(localDensity) { CapsuleDefaults.totalHeaderHeight().roundToPx().toFloat() }
@@ -145,6 +151,10 @@ fun FullPlayer(
                             slideOffset = slideOffset,
                             queueFractionProvider = queueFractionProvider,
                             onAction = onAction,
+                            onSeek = onSeek,
+                            playbackProgress = playbackProgress,
+                            isDoubleTapToSeekEnabled = isDoubleTapToSeekEnabled,
+                            seekStepSeconds = seekStepSeconds,
                         )
                     },
                     controls = {

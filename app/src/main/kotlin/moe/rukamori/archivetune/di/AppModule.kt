@@ -151,7 +151,10 @@ object AppModule {
     @Provides
     fun provideDatabase(
         @ApplicationContext context: Context,
-    ): MusicDatabase = InternalDatabase.newInstance(context)
+    ): MusicDatabase =
+        InternalDatabase.newInstance(context).also { db ->
+            moe.rukamori.archivetune.spotify.SpotifyPlaybackResolver.init(db)
+        }
 
     @Singleton
     @Provides

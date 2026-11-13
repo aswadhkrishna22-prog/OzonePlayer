@@ -25,6 +25,9 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
+import moe.rukamori.archivetune.ui.player.player_0.DoubleTapSeekOverlay
+import moe.rukamori.archivetune.ui.player.player_0.GlobalFullPlayerRippleState
+import moe.rukamori.archivetune.ui.player.player_0.waterRippleEffect
 import moe.rukamori.archivetune.ui.player.player_0.FullPlayerMotionState
 import moe.rukamori.archivetune.ui.player.player_0.PlayerCanvasState
 import moe.rukamori.archivetune.ui.player.player_0.PlayerCoverCard
@@ -35,6 +38,7 @@ import moe.rukamori.archivetune.ui.state.PlayerUiState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 @Composable
@@ -50,6 +54,10 @@ internal fun FullPlayerCoverSlot(
     slideOffset: () -> Float,
     queueFractionProvider: () -> Float,
     onAction: (PlayerAction) -> Unit,
+    onSeek: (Float) -> Unit,
+    playbackProgress: StateFlow<Long>,
+    isDoubleTapToSeekEnabled: Boolean = true,
+    seekStepSeconds: Int = 10,
     modifier: Modifier = Modifier,
 ) {
     val playPauseScaleState = rememberCoverPlayPauseScale(state.isPlaying)
@@ -88,71 +96,94 @@ internal fun FullPlayerCoverSlot(
             }
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .onSizeChanged { size ->
-                    cardWidthPx = if (size.width > 0) size.width.toFloat() else 0f
+            modifier = (
+                if (state.isImmersiveEnabled) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
                 }
-                .graphicsLayer {
-                    val isCoverVisible = !state.isImmersiveEnabled && !motionState.isOverlayVisible
-                    val effectiveScale = playPauseScaleState.value * trackSwitchScale.value
-
-                    val kinematics = calculateCoverKinematics(
-                        q = queueFractionProvider().coerceIn(0f, 1f),
-                        playPauseScale = effectiveScale,
-                        isCoverVisible = isCoverVisible,
-                        safeWidthPx = safeWidthPx,
-                        cardWidthPx = cardWidthPx,
-                        cardTopInRoot = cardTopInRoot,
-                        toolbarTopInRoot = toolbarTopInRoot,
-                        rootHeightPx = rootHeightPx,
-                        capsuleHeaderHeightPx = capsuleHeaderHeightPx,
-                        extraLiftPx = 40.dp.toPx(),
-                        gapPx = 16.dp.toPx(),
-                    )
-                    transformOrigin = TransformOrigin(0.5f, 0f)
-                    scaleX = kinematics.scale
-                    scaleY = kinematics.scale
-                    translationY = kinematics.translationY
-                    alpha = kinematics.alpha
-                }
+            ).onSizeChanged { size ->
+                cardWidthPx = if (size.width > 0) size.width.toFloat() else 0f
+            }
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .playerArtworkFade(queueFractionProvider)
+            DoubleTapSeekOverlay(
+                durationMs = state.durationMs,
+                positionFlow = playbackProgress,
+                onSeek = onSeek,
+                enabled = isDoubleTapToSeekEnabled && !motionState.isOverlayVisible && queueFractionProvider() < 0.05f,
+                seekStepSeconds = seekStepSeconds,
+                rippleState = GlobalFullPlayerRippleState,
+                modifier = Modifier.fillMaxSize(),
             ) {
-                PlayerCoverGlow(
-                    coverUrl = state.coverUrl,
-                    enabled = isCoverGlowEnabled,
-                    modifier = Modifier.fillMaxSize(),
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            val isCoverVisible = !state.isImmersiveEnabled && !motionState.isOverlayVisible
+                            val effectiveScale = playPauseScaleState.value * trackSwitchScale.value
 
-                PlayerCoverCard(
-                    coverUrl = state.coverUrl,
-                    placeholderResId = state.placeholderResId,
-                    gestureEnabled = motionState.coverGestureEnabled,
-                    mediaId = state.trackUrl,
-                    songTitle = state.title,
-                    artistName = state.artist,
-                    isPlaying = motionState.canPlayCanvas,
-                    canvasState = canvasState,
-                    onCoverLoaded = {
-                        coroutineScope.launch {
-                            trackSwitchScale.snapTo(0.88f)
-                            trackSwitchScale.animateTo(
-                                targetValue = 1f,
-                                animationSpec = spring(
-                                    dampingRatio = 0.58f,
-                                    stiffness = 340f,
-                                )
+                            val kinematics = calculateCoverKinematics(
+                                q = queueFractionProvider().coerceIn(0f, 1f),
+                                playPauseScale = effectiveScale,
+                                isCoverVisible = isCoverVisible,
+                                safeWidthPx = safeWidthPx,
+                                cardWidthPx = cardWidthPx,
+                                cardTopInRoot = cardTopInRoot,
+                                toolbarTopInRoot = toolbarTopInRoot,
+                                rootHeightPx = rootHeightPx,
+                                capsuleHeaderHeightPx = capsuleHeaderHeightPx,
+                                extraLiftPx = 40.dp.toPx(),
+                                gapPx = 16.dp.toPx(),
                             )
+                            transformOrigin = TransformOrigin(0.5f, 0f)
+                            scaleX = kinematics.scale
+                            scaleY = kinematics.scale
+                            translationY = kinematics.translationY
+                            alpha = kinematics.alpha
                         }
-                    },
-                    onNext = { onAction(PlayerAction.Next) },
-                    onPrevious = { onAction(PlayerAction.Previous) }
-                )
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .playerArtworkFade(queueFractionProvider)
+                    ) {
+                        PlayerCoverGlow(
+                            coverUrl = state.coverUrl,
+                            enabled = isCoverGlowEnabled,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+
+                        PlayerCoverCard(
+                            coverUrl = state.coverUrl,
+                            placeholderResId = state.placeholderResId,
+                            gestureEnabled = motionState.coverGestureEnabled,
+                            mediaId = state.trackUrl,
+                            songTitle = state.title,
+                            artistName = state.artist,
+                            isPlaying = motionState.canPlayCanvas,
+                            canvasState = canvasState,
+                            onCoverLoaded = {
+                                coroutineScope.launch {
+                                    trackSwitchScale.snapTo(0.88f)
+                                    trackSwitchScale.animateTo(
+                                        targetValue = 1f,
+                                        animationSpec = spring(
+                                            dampingRatio = 0.58f,
+                                            stiffness = 340f,
+                                        )
+                                    )
+                                }
+                            },
+                            onNext = { onAction(PlayerAction.Next) },
+                            onPrevious = { onAction(PlayerAction.Previous) },
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .waterRippleEffect(GlobalFullPlayerRippleState)
+                        )
+                    }
+                }
             }
         }
     }
