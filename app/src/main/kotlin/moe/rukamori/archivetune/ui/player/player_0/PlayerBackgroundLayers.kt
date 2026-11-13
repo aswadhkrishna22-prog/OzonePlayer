@@ -229,8 +229,8 @@ fun PlayerBackgroundLayers(
                     .fillMaxWidth()
                     .aspectRatio(0.75f)
                     .align(Alignment.TopCenter)
-                    .artworkBottomFade(immersiveTransitionAlpha * queueArtworkFade, clearArtworkFadeEndY)
-                    .waterRippleEffect(effectiveRippleState),
+                    .waterRippleEffect(effectiveRippleState)
+                    .artworkBottomFade(immersiveTransitionAlpha * queueArtworkFade, clearArtworkFadeEndY),
                 contentScale = ContentScale.Crop,
                 alignment = Alignment.TopCenter
             )
@@ -248,8 +248,8 @@ fun PlayerBackgroundLayers(
                     .fillMaxWidth()
                     .aspectRatio(0.75f)
                     .align(Alignment.TopCenter)
-                    .artworkBottomFade(immersiveTransitionAlpha * queueArtworkFade, clearArtworkFadeEndY)
                     .waterRippleEffect(effectiveRippleState)
+                    .artworkBottomFade(immersiveTransitionAlpha * queueArtworkFade, clearArtworkFadeEndY)
             )
         }
     }

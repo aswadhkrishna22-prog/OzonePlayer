@@ -103,47 +103,46 @@ internal fun FullPlayerCoverSlot(
                     cardWidthPx = if (size.width > 0) size.width.toFloat() else 0f
                 }
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        val isCoverVisible = !state.isImmersiveEnabled && !motionState.isOverlayVisible
-                        val effectiveScale = playPauseScaleState.value * trackSwitchScale.value
-
-                        val kinematics = calculateCoverKinematics(
-                            q = queueFractionProvider().coerceIn(0f, 1f),
-                            playPauseScale = effectiveScale,
-                            isCoverVisible = isCoverVisible,
-                            safeWidthPx = safeWidthPx,
-                            cardWidthPx = cardWidthPx,
-                            cardTopInRoot = cardTopInRoot,
-                            toolbarTopInRoot = toolbarTopInRoot,
-                            rootHeightPx = rootHeightPx,
-                            capsuleHeaderHeightPx = capsuleHeaderHeightPx,
-                            extraLiftPx = 40.dp.toPx(),
-                            gapPx = 16.dp.toPx(),
-                        )
-                        transformOrigin = TransformOrigin(0.5f, 0f)
-                        scaleX = kinematics.scale
-                        scaleY = kinematics.scale
-                        translationY = kinematics.translationY
-                        alpha = kinematics.alpha
-                    }
+            DoubleTapSeekOverlay(
+                durationMs = state.durationMs,
+                positionFlow = playbackProgress,
+                onSeek = onSeek,
+                enabled = isDoubleTapToSeekEnabled && !motionState.isOverlayVisible && queueFractionProvider() < 0.05f,
+                seekStepSeconds = seekStepSeconds,
+                rippleState = GlobalFullPlayerRippleState,
+                modifier = Modifier.fillMaxSize(),
             ) {
-                DoubleTapSeekOverlay(
-                    durationMs = state.durationMs,
-                    positionFlow = playbackProgress,
-                    onSeek = onSeek,
-                    enabled = isDoubleTapToSeekEnabled && !motionState.isOverlayVisible && queueFractionProvider() < 0.05f,
-                    seekStepSeconds = seekStepSeconds,
-                    rippleState = GlobalFullPlayerRippleState,
-                    modifier = Modifier.fillMaxSize(),
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            val isCoverVisible = !state.isImmersiveEnabled && !motionState.isOverlayVisible
+                            val effectiveScale = playPauseScaleState.value * trackSwitchScale.value
+
+                            val kinematics = calculateCoverKinematics(
+                                q = queueFractionProvider().coerceIn(0f, 1f),
+                                playPauseScale = effectiveScale,
+                                isCoverVisible = isCoverVisible,
+                                safeWidthPx = safeWidthPx,
+                                cardWidthPx = cardWidthPx,
+                                cardTopInRoot = cardTopInRoot,
+                                toolbarTopInRoot = toolbarTopInRoot,
+                                rootHeightPx = rootHeightPx,
+                                capsuleHeaderHeightPx = capsuleHeaderHeightPx,
+                                extraLiftPx = 40.dp.toPx(),
+                                gapPx = 16.dp.toPx(),
+                            )
+                            transformOrigin = TransformOrigin(0.5f, 0f)
+                            scaleX = kinematics.scale
+                            scaleY = kinematics.scale
+                            translationY = kinematics.translationY
+                            alpha = kinematics.alpha
+                        }
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .playerArtworkFade(queueFractionProvider)
-                            .waterRippleEffect(GlobalFullPlayerRippleState)
                     ) {
                         PlayerCoverGlow(
                             coverUrl = state.coverUrl,
@@ -173,7 +172,10 @@ internal fun FullPlayerCoverSlot(
                                 }
                             },
                             onNext = { onAction(PlayerAction.Next) },
-                            onPrevious = { onAction(PlayerAction.Previous) }
+                            onPrevious = { onAction(PlayerAction.Previous) },
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .waterRippleEffect(GlobalFullPlayerRippleState)
                         )
                     }
                 }
