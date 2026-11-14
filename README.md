@@ -9,6 +9,9 @@
   </p>
 
    <p align="center">
+    <a href="https://aswadhkrishna22-prog.github.io/OzonePlayer/">
+      <img src="https://img.shields.io/badge/🌐%20Website-ozoneplayer.github.io-00f2fe?style=for-the-badge&labelColor=1e1e2e" alt="Official Website" />
+    </a>
     <a href="README.md">
       <img src="https://img.shields.io/badge/🇺🇸%20English-6366f1?style=for-the-badge&labelColor=1e1e2e" alt="English" />
     </a>
@@ -23,6 +26,7 @@
   </p>
 
   <p>
+    <a href="https://aswadhkrishna22-prog.github.io/OzonePlayer/">🌐 <strong>Official Website</strong></a> •
     <a href="#-showcase">Showcase</a> •
     <a href="#-key-features">Features</a> •
     <a href="#-architecture--tech-stack">Architecture</a> •
