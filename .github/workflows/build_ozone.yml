@@ -12,12 +12,14 @@ on:
         default: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     name: Build Ozone Player APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -195,8 +197,24 @@ jobs:
             release_assets/*.apk
             release_assets/checksums.sha256
 
+  publish-release:
+    name: Publish Release
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && (!inputs.dry_run)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code for release notes
+        uses: actions/checkout@v4
+
+      - name: Download Built Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: OzonePlayer-APK
+          path: release_assets
+
       - name: Publish GitHub Release for In-App Auto-Update
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && (!inputs.dry_run)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
