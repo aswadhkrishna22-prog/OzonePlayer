@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -56,7 +56,7 @@ import moe.rukamori.archivetune.ui.component.LocalMenuState
 import moe.rukamori.archivetune.ui.component.SongListItem
 import moe.rukamori.archivetune.ui.component.SortHeader
 import moe.rukamori.archivetune.ui.component.asScrollContract
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.ui.menu.SongMenu
 import moe.rukamori.archivetune.utils.rememberEnumPreference
 import moe.rukamori.archivetune.utils.rememberPreference
@@ -71,7 +71,7 @@ fun ArtistSongsScreen(
 ) {
     val context = LocalContext.current
     val menuState = LocalMenuState.current
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
     val playerConnection = LocalPlayerConnection.current ?: return
     val isPlaying by playerConnection.isPlaying.collectAsState()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()

@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -73,9 +73,9 @@ class NewsRepository
 
         private companion object {
              const val METADATA_URL =
-                "https://raw.githubusercontent.com/MuwMx/yuma_news/main/metadata.json"
+                "https://raw.githubusercontent.com/aswadhkrishna22-prog/ozone_news/main/metadata.json"
 
             const val CONTENT_BASE_URL =
-                "https://raw.githubusercontent.com/MuwMx/yuma_news/main/content/"
+                "https://raw.githubusercontent.com/aswadhkrishna22-prog/ozone_news/main/content/"
         }
     }

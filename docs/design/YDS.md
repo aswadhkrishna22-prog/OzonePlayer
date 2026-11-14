@@ -1,4 +1,4 @@
-# Yuma Design System (YDS)
+# Ozone Design System (YDS)
 
 **Version:** 2.1  
 **Status:** Stable Foundation  
@@ -7,9 +7,9 @@
 
 ## 1. Philosophy
 
-Yuma is a design system centered around music as the primary content. It establishes a strict set of constraints and rules to produce a lightweight, deep, and aesthetically cohesive interface.
+Ozone is a design system centered around music as the primary content. It establishes a strict set of constraints and rules to produce a lightweight, deep, and aesthetically cohesive interface.
 
-The interface avoids generic, monolithic Material 3 templates with flat, continuous lists. Yuma's visual identity is built on segmented glass geometry, accented matte icon badges, breathable whitespace, and tactile micro-interactions.
+The interface avoids generic, monolithic Material 3 templates with flat, continuous lists. Ozone's visual identity is built on segmented glass geometry, accented matte icon badges, breathable whitespace, and tactile micro-interactions.
 
 ---
 
@@ -70,7 +70,7 @@ All dimensions, paddings, and radii must be referenced directly from design toke
 
 ### 5.1 Preference Group Anatomy
 
-Each row within a group is an **independent glass card** (`Modifier.yumaGlassCard`), rather than an item inside a single shared container.
+Each row within a group is an **independent glass card** (`Modifier.ozoneGlassCard`), rather than an item inside a single shared container.
 
 
 ┌─────────────────────────────────────────────────────────┐  ◄── Top Corners: 22dp (SegmentOuter) | Top Alpha: 0.20f
@@ -90,24 +90,24 @@ Gap: 1.5dp (SegmentGap, No Divider)
 └─────────────────────────────────────────────────────────┘  ◄── Bottom Corners: 22dp (SegmentOuter) | Bottom Alpha: 0.04f
 
 
-* **Corner Radii by Position (`PreferenceGroupPosition` / `YumaSegmentPosition`):**
+* **Corner Radii by Position (`PreferenceGroupPosition` / `OzoneSegmentPosition`):**
   * **`Single`:** 22dp on all four corners.
   * **`First`:** Top corners 22dp, bottom corners 5dp.
   * **`Middle`:** All corners 5dp.
   * **`Last`:** Top corners 5dp, bottom corners 22dp.
-* **Group Lighting (`YumaSegmentPosition` Gradient Alphas):**
+* **Group Lighting (`OzoneSegmentPosition` Gradient Alphas):**
   * To prevent blinding double-bright divider lines at inter-item joints, borders dynamically adapt their top/bottom gradient alphas based on position within the group:
     * **`Single`:** `0.20f to 0.04f` (full top-to-bottom light falloff).
     * **`First`:** `0.20f to 0.08f` (bright ceiling highlight, soft joint transition).
     * **`Middle`:** `0.08f to 0.08f` (uniform soft outline without harsh joint flashes).
     * **`Last`:** `0.08f to 0.04f` (soft joint top, subtle bottom fade).
 * **Modifier Chaining Order:**
-  * For tactile whole-card compression, `.yumaClickable(...)` must precede `.yumaGlassCard(...)` in the modifier chain:
+  * For tactile whole-card compression, `.ozoneClickable(...)` must precede `.ozoneGlassCard(...)` in the modifier chain:
     ```kotlin
     Modifier
         .fillMaxWidth()
-        .yumaClickable(pressedScale = 0.96f, onClick = onClick)
-        .yumaGlassCard(
+        .ozoneClickable(pressedScale = 0.96f, onClick = onClick)
+        .ozoneGlassCard(
             shape = shape,
             backgroundColor = backgroundColor,
             borderColor = borderColor,
@@ -127,7 +127,7 @@ Gap: 1.5dp (SegmentGap, No Divider)
 ### 5.2 Provider Chip (Segmented Toggle)
 
 Interactive music provider toggle (YouTube Music / Spotify):
-* Implemented as a `yumaGlassCard` segmented card.
+* Implemented as a `ozoneGlassCard` segmented card.
 * Features a track with a sliding 36dp container (`primary`) that smoothly animates on provider change.
 * Active label renders in `onPrimary`, inactive in `onSurfaceVariant`.
 
@@ -149,7 +149,7 @@ Interactive music provider toggle (YouTube Music / Spotify):
 ### 5.4 Dropdowns & Selection Dialogs
 
 Dropdowns, context dialogs, and single-choice selectors follow **YDS 2.1 segmented glass patterns**:
-* Each selection option is an independent segmented glass card with position-aware lighting (`YumaSegmentPosition`).
+* Each selection option is an independent segmented glass card with position-aware lighting (`OzoneSegmentPosition`).
 * Outer modal surface utilizes solid `surfaceContainerHigh` with 28dp corner radius and 0.5dp border (`SettingsDimensions.GlassBorderThickness`).
 * Total elimination of `HorizontalDivider` between options; separation is maintained by `SegmentGap = 1.5dp`.
 * Selected items feature a subtle `primary.copy(alpha = 0.16f)` container tint and a right-aligned checkmark icon.
@@ -159,7 +159,7 @@ Dropdowns, context dialogs, and single-choice selectors follow **YDS 2.1 segment
 ### 5.5 Multi-Selection Bottom Sheets
 
 - Multi-selection sheets follow the same YDS segmented selection pattern as single-choice dialogs.
-- Each option is a full-width, independently clickable segmented row using `Modifier.yumaClickable()` and `Modifier.yumaGlassCard()`.
+- Each option is a full-width, independently clickable segmented row using `Modifier.ozoneClickable()` and `Modifier.ozoneGlassCard()`.
 - Selection is indicated through a subtle accent-tinted surface and a trailing checkmark icon.
 - Do not use default square Material 3 `Checkbox` controls for segmented selection lists.
 - Use position-aware corner radii, lighting and `SegmentGap` between options.
@@ -216,18 +216,18 @@ Dropdowns, context dialogs, and single-choice selectors follow **YDS 2.1 segment
 
 
 
-Design Tokens (SettingsDimensions, SettingsAnimations, YdsInsets, LocalYumaColors)
+Design Tokens (SettingsDimensions, SettingsAnimations, YdsInsets, LocalOzoneColors)
 ↓
 Primitive Modifiers
-(Modifier.yumaGlassCard, Modifier.yumaClickable, yumaSegmentPosition / yumaSegmentAlphas)
+(Modifier.ozoneGlassCard, Modifier.ozoneClickable, ozoneSegmentPosition / ozoneSegmentAlphas)
 ↓
 Composite Components
 (PreferenceGroup, PreferenceEntry, SwitchPreference, EditTextPreference, SliderPreference, NumberPickerPreference,
-YumaMorphingHeader, FloatingNavigationToolbar / FluidTabsContainer, GlassScaffold, ExpressivePullToRefreshBox,
+OzoneMorphingHeader, FloatingNavigationToolbar / FluidTabsContainer, GlassScaffold, ExpressivePullToRefreshBox,
 LibraryFilterChipBar, shimmer placeholders)
 ↓
 Shared Foundations
-(YumaHaptics, YdsInsets safe-area helpers, ThemePreviews / TestThemeWrapper)
+(OzoneHaptics, YdsInsets safe-area helpers, ThemePreviews / TestThemeWrapper)
 ↓
 Screens
 (SettingsScreen, AccountSettings, AppearanceSettings, HomeScreen, player_0 sheets, etc.)
@@ -238,8 +238,8 @@ Screens
 ## 8. Do / Don't
 
 ### ✔ DO
-* Use `Modifier.yumaGlassCard()` with `glassBackground` fill, 0.5dp `glassBorder`, and position-aware lighting for all preference rows and selection options.
-* Precede `.yumaGlassCard(...)` with `.yumaClickable(...)` in modifier chains for tactile whole-card compression.
+* Use `Modifier.ozoneGlassCard()` with `glassBackground` fill, 0.5dp `glassBorder`, and position-aware lighting for all preference rows and selection options.
+* Precede `.ozoneGlassCard(...)` with `.ozoneClickable(...)` in modifier chains for tactile whole-card compression.
 * Use the `SegmentGap` token (1.5dp) to separate grouped rows instead of `HorizontalDivider`.
 * Apply segmented corner radii (22dp outer, 5dp inner) to unify items within a group.
 * Use custom squircle/petal badge shapes for icons.
@@ -250,7 +250,7 @@ Screens
 ### ✘ DON'T
 * Wrap an entire preference group into a single opaque container without individual segmented rows.
 * Apply heavy runtime blur shaders (`BackdropBlur`) to list items or preference rows (blur is strictly reserved for floating overlays).
-* Put `.yumaClickable(...)` after `.yumaGlassCard(...)` or inside inner layout containers, which causes disconnected content-only scaling.
+* Put `.ozoneClickable(...)` after `.ozoneGlassCard(...)` or inside inner layout containers, which causes disconnected content-only scaling.
 * Introduce arbitrary corner radii or paddings outside the defined YDS tokens.
 * Use generic circular solid chips from default Material 3.
 * Keep dependent settings visible as greyed-out rows when their parent feature is disabled.

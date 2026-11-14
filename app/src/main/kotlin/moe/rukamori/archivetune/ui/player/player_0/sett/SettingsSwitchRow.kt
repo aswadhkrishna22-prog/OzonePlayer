@@ -15,10 +15,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaCombinedClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
-import moe.rukamori.archivetune.ui.theme.yumaSegmentPosition
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneCombinedClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneSegmentPosition
 
 @Composable
 fun SettingsSwitchRow(
@@ -41,14 +41,14 @@ fun SettingsSwitchRow(
             else -> RoundedCornerShape(small)
         }
     }
-    val position = remember(index, count) { yumaSegmentPosition(index, count) }
-    val colors = LocalYumaColors.current
+    val position = remember(index, count) { ozoneSegmentPosition(index, count) }
+    val colors = LocalOzoneColors.current
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .yumaCombinedClickable(onClick = { onCheckedChange(!checked) })
-            .yumaGlassCard(
+            .ozoneCombinedClickable(onClick = { onCheckedChange(!checked) })
+            .ozoneGlassCard(
                 shape = shape,
                 backgroundColor = colors.glassBackground,
                 borderColor = colors.glassBorder,
@@ -63,7 +63,7 @@ fun SettingsSwitchRow(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = subtitle,
-                    color = Color.White.copy(alpha = SettingsDimensions.YumaRowSubtitleAlpha),
+                    color = Color.White.copy(alpha = SettingsDimensions.OzoneRowSubtitleAlpha),
                     fontSize = 11.sp,
                     lineHeight = 14.sp,
                     fontFamily = LocalArchiveTuneFontFamily.current

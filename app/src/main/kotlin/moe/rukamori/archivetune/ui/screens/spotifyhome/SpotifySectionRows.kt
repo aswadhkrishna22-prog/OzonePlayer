@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -49,7 +49,7 @@ import moe.rukamori.archivetune.spotify.models.SpotifyPlaylist
 import moe.rukamori.archivetune.spotify.models.SpotifyTrack
 import moe.rukamori.archivetune.ui.component.SpotifyTrackListItem
 import moe.rukamori.archivetune.ui.component.YouTubeGridItem
-import moe.rukamori.archivetune.ui.theme.yumaClickable
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
 
 @Composable
 internal fun resolveSpotifySectionTitle(section: SpotifyHomeSection): String {
@@ -100,7 +100,7 @@ internal fun SpotifyTrackSectionRow(
                     track = track,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .yumaClickable(onClick = { onTrackClick(track) }),
+                        .ozoneClickable(onClick = { onTrackClick(track) }),
                 )
             }
         }
@@ -133,7 +133,7 @@ internal fun SpotifyArtistSectionRow(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .width(140.dp)
-                    .yumaClickable(onClick = { onArtistClick(artist) }),
+                    .ozoneClickable(onClick = { onArtistClick(artist) }),
             ) {
                 AsyncImage(
                     model = thumbnail,
@@ -189,7 +189,7 @@ internal fun SpotifyAlbumSectionRow(
                 fillMaxWidth = true,
                 modifier = Modifier
                     .width(150.dp)
-                    .yumaClickable(onClick = { onAlbumClick(album) }),
+                    .ozoneClickable(onClick = { onAlbumClick(album) }),
             )
         }
     }
@@ -231,7 +231,7 @@ internal fun SpotifyPlaylistSectionRow(
                 fillMaxWidth = true,
                 modifier = Modifier
                     .width(150.dp)
-                    .yumaClickable(onClick = { onPlaylistClick(playlist) }),
+                    .ozoneClickable(onClick = { onPlaylistClick(playlist) }),
             )
         }
     }

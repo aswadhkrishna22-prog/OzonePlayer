@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -170,8 +170,8 @@ class ReleaseNotesParserTest {
     fun `canary prose falls back without fabricated sections`() {
         val notes =
             """
-            ## ⚡ YumaPlayer Canary (2026-10-21)
-            Automated test build from [`MuwMx/YumaPlayer:main`](https://github.com/MuwMx/YumaPlayer).
+            ## ⚡ OzonePlayer Canary (2026-10-21)
+            Automated test build from [`aswadhkrishna22-prog/OzonePlayer:main`](https://github.com/aswadhkrishna22-prog/OzonePlayer).
 
             > ⚠️ **Notice:** Contains experimental changes and works in progress.
             """.trimIndent()

@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -60,11 +60,11 @@ import dev.chrisbanes.haze.blur.hazeBlur
 import kotlinx.coroutines.flow.distinctUntilChanged
 import moe.rukamori.archivetune.LocalAnimationsDisabled
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
-import moe.rukamori.archivetune.ui.haptics.LocalYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.LocalOzoneHaptics
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.glassStroke
-import moe.rukamori.archivetune.ui.theme.yumaClickable
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
 
 @Stable
 sealed interface ScrollContract {
@@ -223,7 +223,7 @@ private fun HideOnScrollFabButton(
     blurRadius: Float = SettingsDimensions.BlurRadiusDefault,
     onClick: () -> Unit,
 ) {
-    val haptics = LocalYumaHaptics.current
+    val haptics = LocalOzoneHaptics.current
     val fabShape = CircleShape
     val containerColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer
     val contentColor = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurface
@@ -244,7 +244,7 @@ private fun HideOnScrollFabButton(
         modifier =
             Modifier
                 .padding(16.dp)
-                .yumaClickable(
+                .ozoneClickable(
                     pressedScale = SettingsAnimations.PressScale,
                     onClick = {
                         haptics.click()

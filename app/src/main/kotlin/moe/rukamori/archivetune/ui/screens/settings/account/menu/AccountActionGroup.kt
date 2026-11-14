@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -30,10 +30,10 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.screens.settings.segmentedSettingsItemShape
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.YumaSegmentPosition
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
-import moe.rukamori.archivetune.ui.theme.yumaSegmentPosition
+import moe.rukamori.archivetune.ui.theme.OzoneSegmentPosition
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneSegmentPosition
 
 @Composable
 internal fun AccountActionGroup(
@@ -62,7 +62,7 @@ internal fun AccountActionGroup(
                     icon = painterResource(R.drawable.download),
                     tint = MaterialTheme.colorScheme.primary,
                     shape = segmentedSettingsItemShape(currIndex, actionsCount),
-                    position = yumaSegmentPosition(currIndex, actionsCount),
+                    position = ozoneSegmentPosition(currIndex, actionsCount),
                     onClick = onSaveAccount,
                 )
             }
@@ -73,7 +73,7 @@ internal fun AccountActionGroup(
                 icon = painterResource(R.drawable.add),
                 tint = MaterialTheme.colorScheme.primary,
                 shape = segmentedSettingsItemShape(addIndex, actionsCount),
-                position = yumaSegmentPosition(addIndex, actionsCount),
+                position = ozoneSegmentPosition(addIndex, actionsCount),
                 onClick = {
                     onDismissRequest()
                     onAddAnotherAccount()
@@ -87,7 +87,7 @@ internal fun AccountActionGroup(
                 icon = painterResource(R.drawable.token),
                 tint = MaterialTheme.colorScheme.secondary,
                 shape = segmentedSettingsItemShape(tokenIndex, actionsCount),
-                position = yumaSegmentPosition(tokenIndex, actionsCount),
+                position = ozoneSegmentPosition(tokenIndex, actionsCount),
                 onClick = {
                     onDismissRequest()
                     onAdvancedLogin()
@@ -102,7 +102,7 @@ internal fun AccountActionGroup(
                 textColor = MaterialTheme.colorScheme.error,
                 borderColor = MaterialTheme.colorScheme.error.copy(alpha = 0.5f),
                 shape = segmentedSettingsItemShape(logoutIndex, actionsCount),
-                position = yumaSegmentPosition(logoutIndex, actionsCount),
+                position = ozoneSegmentPosition(logoutIndex, actionsCount),
                 onClick = {
                     onDismissRequest()
                     onLogout()
@@ -115,7 +115,7 @@ internal fun AccountActionGroup(
                 icon = painterResource(R.drawable.login),
                 tint = MaterialTheme.colorScheme.primary,
                 shape = segmentedSettingsItemShape(0, 2),
-                position = yumaSegmentPosition(0, 2),
+                position = ozoneSegmentPosition(0, 2),
                 onClick = {
                     onDismissRequest()
                     onBrowserLogin()
@@ -128,7 +128,7 @@ internal fun AccountActionGroup(
                 icon = painterResource(R.drawable.token),
                 tint = MaterialTheme.colorScheme.secondary,
                 shape = segmentedSettingsItemShape(1, 2),
-                position = yumaSegmentPosition(1, 2),
+                position = ozoneSegmentPosition(1, 2),
                 onClick = {
                     onDismissRequest()
                     onAdvancedLogin()
@@ -143,7 +143,7 @@ private fun AccountActionItem(
     title: String,
     icon: Painter,
     shape: Shape,
-    position: YumaSegmentPosition,
+    position: OzoneSegmentPosition,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
@@ -154,8 +154,8 @@ private fun AccountActionItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .yumaClickable(pressedScale = SettingsAnimations.PressScale, onClick = onClick)
-            .yumaGlassCard(
+            .ozoneClickable(pressedScale = SettingsAnimations.PressScale, onClick = onClick)
+            .ozoneGlassCard(
                 shape = shape,
                 position = position,
                 backgroundColor = MaterialTheme.colorScheme.surfaceContainer,

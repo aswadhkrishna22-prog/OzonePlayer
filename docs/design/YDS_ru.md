@@ -1,4 +1,4 @@
-# Yuma Design System (YDS)
+# Ozone Design System (YDS)
 
 **Version:** 2.1
 
@@ -8,9 +8,9 @@
 
 ## 1. Philosophy
 
-Yuma — дизайн-система, ориентированная на музыку как главный контент. Она задает четкий набор ограничений и правил, создавая легковесный, глубокий и эстетически цельный интерфейс.
+Ozone — дизайн-система, ориентированная на музыку как главный контент. Она задает четкий набор ограничений и правил, создавая легковесный, глубокий и эстетически цельный интерфейс.
 
-Интерфейс отказывается от стандартных монолитных M3-шаблонов со сплошными плоскими списками. Визуальная айдентика Yuma строится на сегментированной стеклянной геометрии, акцентных матовых подложках под иконки, открытом пространстве и физичном микро-отклике на касания.
+Интерфейс отказывается от стандартных монолитных M3-шаблонов со сплошными плоскими списками. Визуальная айдентика Ozone строится на сегментированной стеклянной геометрии, акцентных матовых подложках под иконки, открытом пространстве и физичном микро-отклике на касания.
 
 ---
 
@@ -78,7 +78,7 @@ Yuma — дизайн-система, ориентированная на муз
 
 ### 5.1 Анатомия группы настроек
 
-Каждая строка в группе является **самостоятельной стеклянной карточкой** (`Modifier.yumaGlassCard`), а не элементом внутри одного общего контейнера.
+Каждая строка в группе является **самостоятельной стеклянной карточкой** (`Modifier.ozoneGlassCard`), а не элементом внутри одного общего контейнера.
 
 ```
 ┌─────────────────────────────────────────────────────────┐  ◄── Top Corners: 22dp (SegmentOuter)
@@ -99,25 +99,25 @@ Yuma — дизайн-система, ориентированная на муз
 
 ```
 
-* **Скругления по позиции (`PreferenceGroupPosition` / `YumaSegmentPosition`):**
+* **Скругления по позиции (`PreferenceGroupPosition` / `OzoneSegmentPosition`):**
 * **`Single`:** 22dp со всех четырех сторон.
 * **`First`:** верхние углы 22dp, нижние углы 5dp.
 * **`Middle`:** все углы 5dp.
 * **`Last`:** верхние углы 5dp, нижние углы 22dp.
 
-* **Подсветка группы (`YumaSegmentPosition`, градиентные альфы):**
+* **Подсветка группы (`OzoneSegmentPosition`, градиентные альфы):**
 * Чтобы на стыках не возникали слепящие двойные линии, альфы верхней/нижней границы адаптируются под позицию в группе:
   * **`Single`:** `0.20f → 0.04f`.
   * **`First`:** `0.20f → 0.08f`.
   * **`Middle`:** `0.08f → 0.08f`.
   * **`Last`:** `0.08f → 0.04f`.
 * **Порядок модификаторов:**
-  * Для тактильного сжатия всей карточки `.yumaClickable(...)` ставится строго перед `.yumaGlassCard(...)`:
+  * Для тактильного сжатия всей карточки `.ozoneClickable(...)` ставится строго перед `.ozoneGlassCard(...)`:
     ```kotlin
     Modifier
         .fillMaxWidth()
-        .yumaClickable(pressedScale = 0.96f, onClick = onClick)
-        .yumaGlassCard(
+        .ozoneClickable(pressedScale = 0.96f, onClick = onClick)
+        .ozoneGlassCard(
             shape = shape,
             backgroundColor = backgroundColor,
             borderColor = borderColor,
@@ -142,7 +142,7 @@ Yuma — дизайн-система, ориентированная на муз
 
 Интерактивный переключатель источников (YouTube Music / Spotify):
 
-* Выполнен в виде стеклянной сегментированной карточки `yumaGlassCard`.
+* Выполнен в виде стеклянной сегментированной карточки `ozoneGlassCard`.
 * Содержит направляющую дорожку с плавающим 36dp контейнером (`primary`), плавно анимирующим позицию при смене провайдера.
 * Активный лейбл окрашивается в `onPrimary`, неактивный — в `onSurfaceVariant`.
 
@@ -151,7 +151,7 @@ Yuma — дизайн-система, ориентированная на муз
 ### 5.3 Выпадающие списки и диалоги выбора (Dropdowns & Dialogs)
 
 Выпадающие списки, контекстные диалоги и селекторы единичного выбора строятся по сегментированным стеклянным паттернам **YDS 2.1**:
-* Каждая опция выбора — независимая сегментированная стеклянная карточка с позиционной подсветкой (`YumaSegmentPosition`).
+* Каждая опция выбора — независимая сегментированная стеклянная карточка с позиционной подсветкой (`OzoneSegmentPosition`).
 * Внешняя поверхность модалки — solid `surfaceContainerHigh` со скруглением 28dp и обводкой 0.5dp (`SettingsDimensions.GlassBorderThickness`).
 * Никаких `HorizontalDivider` между опциями; разделение — зазор `SegmentGap = 1.5dp`.
 * Выбранные пункты подсвечиваются тинтом `primary.copy(alpha = 0.16f)` и галочкой справа.
@@ -172,14 +172,14 @@ Yuma — дизайн-система, ориентированная на муз
 ## 7. Component Checklist
 
 ```
-Design Tokens (SettingsDimensions, SettingsAnimations, YdsInsets, LocalYumaColors)
+Design Tokens (SettingsDimensions, SettingsAnimations, YdsInsets, LocalOzoneColors)
                        ↓
 Primitive Modifiers
-(Modifier.yumaGlassCard, Modifier.yumaClickable, yumaSegmentPosition / yumaSegmentAlphas)
+(Modifier.ozoneGlassCard, Modifier.ozoneClickable, ozoneSegmentPosition / ozoneSegmentAlphas)
                        ↓
 Composite Components
 (PreferenceGroup, PreferenceEntry, SwitchPreference, EditTextPreference, SliderPreference, NumberPickerPreference,
-YumaMorphingHeader, FloatingNavigationToolbar / FluidTabsContainer, GlassScaffold, ExpressivePullToRefreshBox)
+OzoneMorphingHeader, FloatingNavigationToolbar / FluidTabsContainer, GlassScaffold, ExpressivePullToRefreshBox)
                        ↓
 Screens
 (SettingsScreen, AccountSettings, AppearanceSettings, HomeScreen, player_0 sheets, etc.)
@@ -192,8 +192,8 @@ Screens
 
 ### ✔ DO
 
-* Использовать `Modifier.yumaGlassCard()` с фоном `glassBackground` и 0.5dp-бордером `glassBorder` для всех строк настроек.
-* Ставить `.yumaClickable(...)` строго перед `.yumaGlassCard(...)` для тактильного сжатия всей карточки.
+* Использовать `Modifier.ozoneGlassCard()` с фоном `glassBackground` и 0.5dp-бордером `glassBorder` для всех строк настроек.
+* Ставить `.ozoneClickable(...)` строго перед `.ozoneGlassCard(...)` для тактильного сжатия всей карточки.
 * Использовать токен `SegmentGap` (1.5dp) для разделения строк вместо `HorizontalDivider`.
 * Применять сегментированные углы (22dp снаружи, 5dp внутри) для объединения элементов группы.
 * Использовать кастомные фигурные подложки под иконки (сквирклы/лепестки).

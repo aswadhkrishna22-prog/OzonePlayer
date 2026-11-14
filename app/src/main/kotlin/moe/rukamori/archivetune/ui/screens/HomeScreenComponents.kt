@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -32,9 +32,9 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
 import moe.rukamori.archivetune.ui.component.horizontalFadingEdge
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
@@ -116,7 +116,7 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.GridThumbnailHeight
 import moe.rukamori.archivetune.constants.ListItemHeight
 import moe.rukamori.archivetune.constants.ListThumbnailSize
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.constants.QuickPicksDisplayMode
 import moe.rukamori.archivetune.constants.ThumbnailCornerRadius
 import moe.rukamori.archivetune.db.entities.Album

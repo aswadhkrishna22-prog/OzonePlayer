@@ -75,7 +75,7 @@
     <string name="radio">Radio</string>
     <string name="cast">Obsadenie</string>
     <string name="cast_devices">Zariadenia s funkciou Cast</string>
-    <string name="cast_sheet_subtitle">Vyberte, kde má YumaPlayer prehrávať</string>
+    <string name="cast_sheet_subtitle">Vyberte, kde má OzonePlayer prehrávať</string>
     <string name="cast_available_devices">Dostupné zariadenia</string>
     <string name="cast_searching_devices">Vyhľadávanie zariadení</string>
     <string name="cast_no_devices">Nenašli sa žiadne zariadenia Cast</string>
@@ -98,7 +98,7 @@
     <string name="play">Prehrať</string>
     <string name="widget_pause">Zastaviť</string>
     <string name="widget_previous">Predošlé</string>
-    <string name="widget_tap_to_open">Ťuknutím otvoríte YumaPlayer</string>
+    <string name="widget_tap_to_open">Ťuknutím otvoríte OzonePlayer</string>
     <string name="widget_insights_title">Poznatky z počúvania</string>
     <string name="widget_recommendations">Odporúčania</string>
     <string name="widget_listening_time_empty">Zatiaľ žiadny čas počúvania</string>
@@ -296,7 +296,7 @@
     <string name="contrast">Kontrast</string>
     <string name="brightness">Jas</string>
     <string name="custom_value">Vlastná hodnota</string>
-    <string name="archivetune_canvas">Plátno YumaPlayer</string>
+    <string name="archivetune_canvas">Plátno OzonePlayer</string>
     <string name="archivetune_canvas_desc">Animovať obal albumu počas prehrávania (poháňané službou BetterLyrics)</string>
     <string name="player_background_style_v8_v9_desc">Nie je k dispozícii so štýlmi prehrávača V8 a V9</string>
     <string name="show_button1_description">Prepnúť viditeľnosť tlačidla 1 v Discord Rich Presence</string>
@@ -327,7 +327,7 @@
     <string name="library_top_mixes_refresh">Obnoviť mixy</string>
     <string name="library_top_mixes_configure_ai">Konfigurácia AI</string>
     <string name="library_top_mixes_ai_not_configured_title">Konfigurovať AI stavať mixy</string>
-    <string name="library_top_mixes_ai_not_configured_desc">Integrácia AI je potrebná pred Yuma môže stavať osobné top mixy.</string>
+    <string name="library_top_mixes_ai_not_configured_desc">Integrácia AI je potrebná pred Ozone môže stavať osobné top mixy.</string>
     <string name="library_top_mixes_no_recent_history_title">Zatiaľ žiadne posledné počúvanie mix</string>
     <string name="library_top_mixes_no_recent_history">Počúvať viac piesní, potom osviežiť budovať UI mixy z vašej nedávnej histórie.</string>
     <string name="all_songs">Všetky piesne</string>

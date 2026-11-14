@@ -51,7 +51,7 @@ import androidx.compose.ui.window.PopupProperties
 import coil3.compose.AsyncImage
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.component.MarqueeText
-import moe.rukamori.archivetune.ui.haptics.LocalYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.LocalOzoneHaptics
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
 import moe.rukamori.archivetune.ui.utils.bounceClick
 import moe.rukamori.archivetune.utils.makeTimeString
@@ -80,7 +80,7 @@ fun CompactPlayerPane(
     availableHeightDp: Float = 300f,
     modifier: Modifier = Modifier,
 ) {
-    val haptics = LocalYumaHaptics.current
+    val haptics = LocalOzoneHaptics.current
     val fontFamily = LocalArchiveTuneFontFamily.current
     var showVolumePopup by remember { mutableStateOf(false) }
 

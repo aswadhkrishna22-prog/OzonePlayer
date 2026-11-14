@@ -1,6 +1,6 @@
 # Architectural Decision Records (ADRs)
 
-This document records the major architectural, design, and technical decisions made for YumaPlayer. 
+This document records the major architectural, design, and technical decisions made for OzonePlayer. 
 Each record captures the context, decision, rationale, and consequences of a key architectural choice.
 
 ---
@@ -28,10 +28,10 @@ Each record captures the context, decision, rationale, and consequences of a key
 
 - **Status:** Accepted
 - **Context:** Music players require distinct visual identity, high contrast legibility, and rich motion while maintaining standard Android accessibility.
-- **Decision:** Adopt Material 3 Expressive principles as the foundation for Yuma Design System (YDS 2.1). Customize shapes (squircled corners, custom radii), elevation, and expressive motion curves.
+- **Decision:** Adopt Material 3 Expressive principles as the foundation for Ozone Design System (YDS 2.1). Customize shapes (squircled corners, custom radii), elevation, and expressive motion curves.
 - **Consequences:**
   - *Positive:* Unique music-centric aesthetic, smooth spring animations, unified design tokens.
-  - *Negative:* Most UI components should be built through Yuma UI Kit wrappers rather than consuming raw Material 3 components directly.
+  - *Negative:* Most UI components should be built through Ozone UI Kit wrappers rather than consuming raw Material 3 components directly.
 
 ---
 
@@ -72,7 +72,7 @@ Each record captures the context, decision, rationale, and consequences of a key
 
 - **Status:** Accepted
 - **Context:** XML layout inflation adds view hierarchy overhead and complex state synchronization code.
-- **Decision:** YumaPlayer UI is declarative Jetpack Compose. XML-based UI layouts are not used for new development.
+- **Decision:** OzonePlayer UI is declarative Jetpack Compose. XML-based UI layouts are not used for new development.
 - **Consequences:**
   - *Positive:* Concise layout code, reactive UI state binding, shared YDS design token system.
   - *Negative:* `AndroidView` interop is strictly restricted to specialized surface engines (e.g., video canvas playback).
@@ -105,7 +105,7 @@ Each record captures the context, decision, rationale, and consequences of a key
 
 - **Status:** Accepted
 - **Context:** A monolithic application module leads to slow build times, tight coupling, and uncontrolled dependencies.
-- **Decision:** Split YumaPlayer into 19 isolated Gradle modules (`:app`, `:designsystem`, `:database`, `:core`, `:core:innertube`, `:lyrics:*` ×7, `:canvas`, `:spotifycore`, `:shazamkit`, `:lastfm`, `:flaccore`, `:moriextractor`, `:morideobfuscator`) with inward dependency rules toward domain core.
+- **Decision:** Split OzonePlayer into 19 isolated Gradle modules (`:app`, `:designsystem`, `:database`, `:core`, `:core:innertube`, `:lyrics:*` ×7, `:canvas`, `:spotifycore`, `:shazamkit`, `:lastfm`, `:flaccore`, `:moriextractor`, `:morideobfuscator`) with inward dependency rules toward domain core.
 - **Consequences:**
   - *Positive:* Parallel Gradle builds, strict feature isolation, modular provider system.
   - *Negative:* Requires managing build logic across multiple module definitions.
@@ -148,7 +148,7 @@ Each record captures the context, decision, rationale, and consequences of a key
 ## ADR-011: Spotify Sync Architecture
 
 - **Status:** Accepted
-- **Context:** Liking, unliking, or adding songs to library in YumaPlayer can optionally mirror into the user's Spotify account when tracks originate from or link to Spotify. Synchronous requests, blocking WorkManager overhead, repeated single-item network calls (N+1 queries), and unguarded sync calls can degrade UI responsiveness or trigger rate limits.
+- **Context:** Liking, unliking, or adding songs to library in OzonePlayer can optionally mirror into the user's Spotify account when tracks originate from or link to Spotify. Synchronous requests, blocking WorkManager overhead, repeated single-item network calls (N+1 queries), and unguarded sync calls can degrade UI responsiveness or trigger rate limits.
 - **Decision:**
   1. **Fire-and-Forget IO Scope:** Use an asynchronous, non-blocking coroutine scope `CoroutineScope(SupervisorJob() + Dispatchers.IO)` in `SpotifySync`. Network sync runs completely decoupled from local database writes, never blocking Room transactions, UI threads, or requiring heavy WorkManager jobs.
   2. **Thread-Safe Session Renewal with Double-Checked Locking:** Token management in `SpotifySync.refreshToken` executes inside `tokenMutex.withLock` with a double-check pattern. Before initiating network token requests, the method re-verifies whether another concurrent coroutine has already refreshed `SpotifyAccessTokenKey` and `SpotifyAccessTokenExpiresAtKey`.

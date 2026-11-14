@@ -1,25 +1,25 @@
-# YumaPlayer Documentation
+# OzonePlayer Documentation
 
-This directory contains internal documentation for YumaPlayer.
+This directory contains internal documentation for OzonePlayer.
 
 It is the primary entry point for contributors and AI assistants working on the project.
 
 ---
 
-## About YumaPlayer
+## About OzonePlayer
 
-YumaPlayer is a modular Android music player focused on maintainability, modularity, and a consistent user experience.
+OzonePlayer is a modular Android music player focused on maintainability, modularity, and a consistent user experience.
 
 The project combines YouTube Music streaming, lossless FLAC streaming, local playback, synchronized lyrics, Spotify Canvas visualizers, Shazam track recognition, and multiple optional service integrations while keeping every subsystem isolated in dedicated modules.
 
-Originally evolved from ArchiveTune (with core dependencies traced back to Metrolist and SimpMusic), YumaPlayer has developed into an independent project with its own architecture, design system, and engineering standards.
+Originally evolved from ArchiveTune (with core dependencies traced back to Metrolist and SimpMusic), OzonePlayer has developed into an independent project with its own architecture, design system, and engineering standards.
 
 ### Architecture Overview
 
 The codebase is organized into independent modules with clearly defined responsibilities. Each module has a single responsibility and communicates through well-defined interfaces:
 
 - **`:app`** — Entry point, application class, and DI composition root (UI, playback, colocated domain).
-- **`:designsystem`** — YDS tokens and Yuma UI Kit.
+- **`:designsystem`** — YDS tokens and Ozone UI Kit.
 - **`:database`** — Room persistence (v36).
 - **`:core` / `:core:innertube`** — Shared logic and InnerTube API client.
 - **`:lyrics:*`** — Isolated lyrics providers (`lrclib`, `kugou`, `simpmusic`, `betterlyrics`, `unison`, `youlyplus`).
@@ -39,14 +39,14 @@ System design, module boundaries, dependencies, and architectural decision recor
 
 ### 2. 🛠️ [Development](./development/)
 Development rules, standards, step-by-step guides, and agent guidelines.
-- **YUMA_RULES.md** — Non-negotiable project constitution and strict constraints.
+- **OZONE_RULES.md** — Non-negotiable project constitution and strict constraints.
 - **CODING_STANDARD.md** — Code style, ViewModel conventions, Mappers, and Coroutine safety.
 - **DEVELOPMENT_GUIDE.md** — Step-by-step recipes (adding screens, lyrics providers, new modules).
 
 ### 3. 🎨 [Design](./design/)
 UI design system, tokens, and component guidelines.
-- **YDS.md** — Yuma Design System 2.1 specification (tokens, HCT color engine, elevation, motion).
-- **COMPONENT_GUIDE.md** — Guidelines for creating stateless Yuma UI Kit components.
+- **YDS.md** — Ozone Design System 2.1 specification (tokens, HCT color engine, elevation, motion).
+- **COMPONENT_GUIDE.md** — Guidelines for creating stateless Ozone UI Kit components.
 
 ---
 
@@ -55,11 +55,11 @@ UI design system, tokens, and component guidelines.
 ### 🆕 If you are new to the project:
 1. **docs/README.md** (this file) — Overview and layout.
 2. **docs/architecture/ARCHITECTURE.md** — Basic architecture concept.
-3. **docs/development/YUMA_RULES.md** — Absolute project prohibitions and rules.
+3. **docs/development/OZONE_RULES.md** — Absolute project prohibitions and rules.
 4. **docs/design/YDS.md** — UI principles and visual language.
 
 ### 🎨 If you are implementing UI / Compose:
-1. **docs/development/YUMA_RULES.md** — UI prohibitions (no raw Material buttons, no nested cards).
+1. **docs/development/OZONE_RULES.md** — UI prohibitions (no raw Material buttons, no nested cards).
 2. **docs/design/YDS.md** — Colors, surfaces, typography, elevation.
 3. **docs/design/COMPONENT_GUIDE.md** — Stateless component rules, previews, state hoisting.
 4. **docs/development/CODING_STANDARD.md** — ViewModel state flows, Compose stability (`@Immutable`, `collectAsStateWithLifecycle`).

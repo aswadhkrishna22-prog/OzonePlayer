@@ -36,10 +36,10 @@ import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.state.PlayerUiState
 import moe.rukamori.archivetune.ui.state.UpdateState
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.darkYumaColorScheme
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.darkOzoneColorScheme
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.ui.utils.ShowMediaInfo
 
 enum class PlayerMenuScreen { SETTINGS, CUSTOMIZATION, SLEEP_TIMER, ABOUT, DETAILS, DOWNLOAD }
@@ -166,10 +166,10 @@ fun FullPlayerOptionsMenu(
                             this.translationY = panelOffsetPx
                             this.alpha = alpha
                         }
-                        .yumaGlassCard(
+                        .ozoneGlassCard(
                             shape = panelShape,
                             backgroundColor = Color(state.darkMutedColor).copy(alpha = 1f),
-                            borderColor = LocalYumaColors.current.glassBorder,
+                            borderColor = LocalOzoneColors.current.glassBorder,
                             strokeWidth = SettingsDimensions.GlassBorderThickness,
                         )
                         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = {})
@@ -183,7 +183,7 @@ fun FullPlayerOptionsMenu(
                     MaterialTheme(colorScheme = darkScheme) {
                         CompositionLocalProvider(
                             LocalContentColor provides Color.White,
-                            LocalYumaColors provides darkYumaColorScheme(darkScheme),
+                            LocalOzoneColors provides darkOzoneColorScheme(darkScheme),
                         ) {
                             Column(modifier = Modifier.fillMaxWidth()) {
                                 Box(
@@ -229,7 +229,7 @@ fun FullPlayerOptionsMenu(
                                             .clip(CircleShape)
                                             .background(
                                                 MaterialTheme.colorScheme.onSurface.copy(
-                                                    alpha = SettingsDimensions.YumaRowArrowAlpha
+                                                    alpha = SettingsDimensions.OzoneRowArrowAlpha
                                                 )
                                             )
                                     )

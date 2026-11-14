@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -65,9 +65,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.viewmodels.AboutLinkCollection
 import moe.rukamori.archivetune.viewmodels.AboutUiModel
 
@@ -79,7 +79,7 @@ internal fun AboutIdentityCard(
     modifier: Modifier = Modifier,
     onOpenGplLicense: () -> Unit = {},
 ) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val cardShape = MaterialTheme.shapes.extraLarge
     val isDark = isSystemInDarkTheme()
 
@@ -200,7 +200,7 @@ internal fun AboutIdentityCard(
                     textDecoration = TextDecoration.Underline,
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .yumaClickable { onOpenUri(AboutContract.UPSTREAM_REPO_URL) }
+                        .ozoneClickable { onOpenUri(AboutContract.UPSTREAM_REPO_URL) }
                         .padding(horizontal = 8.dp, vertical = 4.dp),
                 )
 
@@ -212,7 +212,7 @@ internal fun AboutIdentityCard(
                     textDecoration = TextDecoration.Underline,
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .yumaClickable { onOpenGplLicense() }
+                        .ozoneClickable { onOpenGplLicense() }
                         .padding(horizontal = 8.dp, vertical = 4.dp),
                 )
 

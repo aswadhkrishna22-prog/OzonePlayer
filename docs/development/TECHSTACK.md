@@ -39,12 +39,12 @@ In case of conflict between this file and code, this file takes precedence. In c
 | :--- | :--- | :--- |
 | Retrofit | Ktor / OkHttp is the approved stack. Two HTTP stacks are forbidden | OkHttp singleton from `:app` (`di/NetworkModule.kt`), Ktor client in `:core:innertube` |
 | RxJava / RxKotlin / LiveData for new logic | Approved: Coroutines + `StateFlow` + UDF (ADR-003) | `StateFlow` + `collectAsStateWithLifecycle()` |
-| 3rd-party UI kits, dialog, animation, shimmer libraries | Break YDS 2.1 and 120fps kinematics | Yuma UI Kit + `docs/design/COMPONENT_GUIDE.md` |
+| 3rd-party UI kits, dialog, animation, shimmer libraries | Break YDS 2.1 and 120fps kinematics | Ozone UI Kit + `docs/design/COMPONENT_GUIDE.md` |
 | Legacy XML layouts, Material 2, `AppCompat` widgets | Violates ADR-005 | Jetpack Compose |
 | Glide / Picasso / Fresco | Duplicate Coil | Coil |
 | Gson / Jackson / Moshi | Duplicate Kotlinx Serialization, break R8 | Kotlinx Serialization |
 | EventBus, Otto, SharedFlow event bus instead of UDF | Breaks Single Source of Truth | `UiIntent` -> `ViewModel` -> `UiState` |
-| `runBlocking`, `Thread.sleep`, synchronous I/O on Main | Main-thread blocking is forbidden by `YUMA_RULES.md` | `suspend` functions with an explicit dispatcher |
+| `runBlocking`, `Thread.sleep`, synchronous I/O on Main | Main-thread blocking is forbidden by `OZONE_RULES.md` | `suspend` functions with an explicit dispatcher |
 
 ## 4. Dependency Modification Rules
 

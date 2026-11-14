@@ -58,7 +58,7 @@ private val MascotAssets = listOf(
 )
 
 /**
- * Единый источник правды и бизнес-логики для плеера Yuma.
+ * Единый источник правды и бизнес-логики для плеера Ozone.
  */
 @HiltViewModel
 class PlayerViewModel @Inject constructor(

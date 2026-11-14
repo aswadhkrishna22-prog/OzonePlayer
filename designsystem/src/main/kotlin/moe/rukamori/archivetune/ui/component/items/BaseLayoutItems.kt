@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.constants.GridThumbnailHeight
 import moe.rukamori.archivetune.constants.ListItemHeight
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
 
 // --- Layout Parameters ---
 const val ActiveBoxAlpha = 0.6f
@@ -62,10 +62,10 @@ inline fun ListItem(
     isActive: Boolean = false,
     isSheetActive: Boolean = true,
 ) {
-    val yumaColors = LocalYumaColors.current
-    val titleColor = if (isActive) yumaColors.textPrimary else yumaColors.textPrimary.copy(alpha = 0.85f)
-    val subtitleContentColor = if (isActive) yumaColors.textPrimary.copy(alpha = 0.75f) else yumaColors.textSecondary
-    val trailingContentColor = if (isActive) yumaColors.textPrimary else yumaColors.textSecondary
+    val ozoneColors = LocalOzoneColors.current
+    val titleColor = if (isActive) ozoneColors.textPrimary else ozoneColors.textPrimary.copy(alpha = 0.85f)
+    val subtitleContentColor = if (isActive) ozoneColors.textPrimary.copy(alpha = 0.75f) else ozoneColors.textSecondary
+    val trailingContentColor = if (isActive) ozoneColors.textPrimary else ozoneColors.textSecondary
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -78,7 +78,7 @@ inline fun ListItem(
                     if (isActive) {
                         Modifier
                             .clip(RoundedCornerShape(ActiveItemCornerRadius))
-                            .background(yumaColors.glassBorder.copy(alpha = ActiveGlassAlpha))
+                            .background(ozoneColors.glassBorder.copy(alpha = ActiveGlassAlpha))
                     } else {
                         Modifier
                     },

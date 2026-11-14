@@ -6,7 +6,7 @@
  *
  * Orchard's original source is licensed under the GNU Affero General Public
  * License, version 3 or later. Per AGPLv3 section 13, this file is combined
- * here into YumaPlayer -- a work licensed under the GNU General Public
+ * here into Ozone Player -- a work licensed under the GNU General Public
  * License, version 3 or later -- and remains itself governed by the AGPLv3
  * as part of that combination.
  *
@@ -33,7 +33,7 @@
 // Offline DSP implementation: reusable vectors and percentile copies favor
 // readable whole-track analysis over real-time allocation constraints.
 
-namespace yuma::smart {
+namespace ozone::smart {
 namespace {
 
 constexpr double kPi = 3.14159265358979323846;
@@ -790,4 +790,4 @@ AnalysisResult AnalyzeAudio(
   return result;
 }
 
-}  // namespace yuma::smart
+}  // namespace ozone::smart

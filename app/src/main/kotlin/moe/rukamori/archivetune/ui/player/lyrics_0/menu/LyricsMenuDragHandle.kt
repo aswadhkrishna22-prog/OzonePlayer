@@ -51,7 +51,7 @@ internal fun LyricsMenuDragHandle(
                 .clip(CircleShape)
                 .background(
                     MaterialTheme.colorScheme.onSurface.copy(
-                        alpha = SettingsDimensions.YumaRowArrowAlpha
+                        alpha = SettingsDimensions.OzoneRowArrowAlpha
                     )
                 )
         )

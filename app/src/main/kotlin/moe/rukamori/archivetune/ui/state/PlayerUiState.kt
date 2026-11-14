@@ -13,7 +13,7 @@ import androidx.compose.runtime.Immutable
 @Immutable
 data class PlayerUiState(
     // Метаданные текущего трека
-    val title: String = "Yuma",
+    val title: String = "Ozone",
     val artist: String = "Playback...",
     val album: String? = null,
     val queueTitle: String? = null,

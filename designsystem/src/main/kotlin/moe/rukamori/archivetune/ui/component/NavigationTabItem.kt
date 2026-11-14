@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import moe.rukamori.archivetune.ui.screens.Screens
-import moe.rukamori.archivetune.ui.theme.yumaCombinedClickable
+import moe.rukamori.archivetune.ui.theme.ozoneCombinedClickable
 
 import moe.rukamori.archivetune.constants.NavigationTabContentPaddingVertical
 import moe.rukamori.archivetune.constants.NavigationTabIconSize
@@ -93,7 +93,7 @@ internal fun RowScope.NavigationTabItem(
                 vertical = NavigationTabSlotPaddingVertical,
             )
             .clip(CircleShape)
-            .yumaCombinedClickable(
+            .ozoneCombinedClickable(
                 pressedScale = NavigationTabPressedScale,
                 onClick = onClick,
                 onDoubleClick = onDoubleClick,

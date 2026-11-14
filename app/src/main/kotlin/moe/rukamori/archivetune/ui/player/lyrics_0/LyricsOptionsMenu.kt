@@ -52,9 +52,9 @@ import moe.rukamori.archivetune.ui.player.player_0.buttons.LyricsMenuScreen
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.state.PlayerUiState
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.darkYumaColorScheme
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.darkOzoneColorScheme
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 private val LyricsMenuMaxWidth = 560.dp
 
@@ -144,10 +144,10 @@ fun LyricsOptionsMenu(
                             this.translationY = menuState.panelOffsetPx.value
                             this.alpha = alpha
                         }
-                        .yumaGlassCard(
+                        .ozoneGlassCard(
                             shape = panelShape,
                             backgroundColor = Color(state.darkMutedColor).copy(alpha = 1f),
-                            borderColor = LocalYumaColors.current.glassBorder,
+                            borderColor = LocalOzoneColors.current.glassBorder,
                             strokeWidth = SettingsDimensions.GlassBorderThickness,
                         )
                         .clickable(
@@ -165,7 +165,7 @@ fun LyricsOptionsMenu(
                     MaterialTheme(colorScheme = darkScheme) {
                         CompositionLocalProvider(
                             LocalContentColor provides Color.White,
-                            LocalYumaColors provides darkYumaColorScheme(darkScheme),
+                            LocalOzoneColors provides darkOzoneColorScheme(darkScheme),
                         ) {
                             Column(modifier = Modifier.fillMaxWidth()) {
                                 LyricsMenuDragHandle(

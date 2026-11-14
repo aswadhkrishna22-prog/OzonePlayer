@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -83,7 +83,7 @@ object LastFM {
         extra: Map<String, String> = emptyMap(),
         format: String = "json",
     ) {
-        headers.append(HttpHeaders.UserAgent, "YumaPlayer (https://github.com/MuwMx/YumaPlayer)")
+        headers.append(HttpHeaders.UserAgent, "OzonePlayer (https://github.com/aswadhkrishna22-prog/OzonePlayer)")
         val paramsForSig =
             mutableMapOf(
                 "method" to method,

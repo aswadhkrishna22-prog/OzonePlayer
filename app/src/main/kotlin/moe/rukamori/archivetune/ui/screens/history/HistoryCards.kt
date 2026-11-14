@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -35,9 +35,9 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.HistorySource
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @Composable
 internal fun HistoryOverviewCard(
@@ -53,9 +53,9 @@ internal fun HistoryOverviewCard(
     Box(
         modifier =
             modifier
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = cardShape,
-                    backgroundColor = LocalYumaColors.current.glassBackground,
+                    backgroundColor = LocalOzoneColors.current.glassBackground,
                 )
                 .clip(cardShape),
     ) {
@@ -100,9 +100,9 @@ internal fun HistorySourceSelector(
             modifier =
                 Modifier
                     .height(40.dp)
-                    .yumaGlassCard(
+                    .ozoneGlassCard(
                         shape = CircleShape,
-                        backgroundColor = LocalYumaColors.current.glassBackground,
+                        backgroundColor = LocalOzoneColors.current.glassBackground,
                     )
                     .clip(CircleShape)
                     .padding(horizontal = 16.dp),
@@ -127,7 +127,7 @@ internal fun HistorySourceSelector(
                 if (checked) {
                     MaterialTheme.colorScheme.primary
                 } else {
-                    LocalYumaColors.current.glassBackground
+                    LocalOzoneColors.current.glassBackground
                 }
             val fg =
                 if (checked) {
@@ -140,7 +140,7 @@ internal fun HistorySourceSelector(
                     Modifier
                         .weight(1f)
                         .height(48.dp)
-                        .yumaClickable(
+                        .ozoneClickable(
                             pressedScale = SettingsAnimations.PressScale,
                             onClick = {
                                 if (!checked) {
@@ -152,7 +152,7 @@ internal fun HistorySourceSelector(
                             if (checked) {
                                 Modifier.background(bg, CircleShape)
                             } else {
-                                Modifier.yumaGlassCard(
+                                Modifier.ozoneGlassCard(
                                     shape = CircleShape,
                                     backgroundColor = bg,
                                 )

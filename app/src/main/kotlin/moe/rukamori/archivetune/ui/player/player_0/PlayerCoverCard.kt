@@ -43,7 +43,7 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.ui.haptics.LocalYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.LocalOzoneHaptics
 import moe.rukamori.archivetune.ui.player.CanvasArtworkPlayer
 import moe.rukamori.archivetune.ui.utils.resize
 import kotlin.math.abs
@@ -68,7 +68,7 @@ fun PlayerCoverCard(
     val shadowColor = MaterialTheme.colorScheme.scrim
     val surfaceColor: Color = MaterialTheme.colorScheme.surface
 
-    val haptics = LocalYumaHaptics.current
+    val haptics = LocalOzoneHaptics.current
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
 
