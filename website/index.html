@@ -157,9 +157,27 @@
         </div>
       </div>
 
-      <!-- 3D Gyro Floating Phone Showcase -->
+      <!-- 3D Gyro Multi-Layered Floating Phone Showcase -->
       <div class="hero-viewport">
         <div class="phone-stand-rig" id="phone-rig">
+          
+          <!-- Background Layer Left: Synced Lyrics Screen -->
+          <div class="hero-bg-phone hero-bg-phone-left" aria-hidden="true">
+            <div class="bg-phone-chassis">
+              <img src="assets/shots/lyrics_screen.webp" alt="Synced Lyrics Screen Background Preview" width="540" height="1200" class="bg-chassis-screen">
+              <div class="bg-phone-tint"></div>
+            </div>
+          </div>
+
+          <!-- Background Layer Right: Discovery Feed Screen -->
+          <div class="hero-bg-phone hero-bg-phone-right" aria-hidden="true">
+            <div class="bg-phone-chassis">
+              <img src="assets/shots/main_screen.webp" alt="Discovery Feed Screen Background Preview" width="540" height="1200" class="bg-chassis-screen">
+              <div class="bg-phone-tint"></div>
+            </div>
+          </div>
+
+          <!-- Foreground Layer: Main Floating Player Phone -->
           <div class="hero-floating-phone">
             <div class="floating-phone-chassis">
               <div class="chassis-speaker-notch" aria-hidden="true"></div>
@@ -174,6 +192,7 @@
             </div>
             <div class="hero-phone-ground-shadow" aria-hidden="true"></div>
           </div>
+
         </div>
       </div>
     </div>

@@ -50,8 +50,8 @@ html {
 
 body {
   font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 17px;
+  line-height: 1.65;
   overflow-x: hidden;
   position: relative;
   min-height: 100vh;
@@ -112,16 +112,16 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   position: fixed;
   inset: 0 0 auto;
   z-index: 50;
-  padding: 1.1rem 0;
+  padding: 1.35rem 0;
   transition: background 0.3s ease, border-color 0.3s ease, padding 0.3s ease;
   border-bottom: 1px solid transparent;
 }
 
 .masthead.scrolled {
-  background: rgba(7, 8, 10, 0.9);
+  background: rgba(7, 8, 10, 0.92);
   backdrop-filter: blur(20px);
   border-color: var(--line);
-  padding: 0.75rem 0;
+  padding: 0.95rem 0;
 }
 
 .masthead-grid {
@@ -148,13 +148,13 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .brand-text {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.35rem;
+  font-size: 1.45rem;
   letter-spacing: -0.02em;
 }
 
 .brand-pill {
   font-family: var(--font-display);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   padding: 3px 8px;
@@ -166,8 +166,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .masthead-nav {
   display: flex;
-  gap: 28px;
-  font-size: 14px;
+  gap: 32px;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--text-dim);
 }
 
@@ -180,16 +181,17 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .masthead-cta {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
 }
 
 .gh-link {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: 9px;
+  font-size: 14.5px;
+  font-weight: 600;
   color: var(--text-dim);
-  padding: 6px 12px;
+  padding: 8px 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.02);
@@ -207,18 +209,18 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   align-items: center;
   gap: 4px;
   font-family: var(--font-display);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--amber);
   font-weight: 700;
 }
 
 .action-btn-small {
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 600;
+  padding: 10px 22px;
+  font-size: 14.5px;
+  font-weight: 700;
   background: var(--text-pure);
   color: var(--bg-void);
-  border-radius: 8px;
+  border-radius: 9px;
   transition: transform 0.2s var(--ease-spring), box-shadow 0.2s ease;
 }
 
@@ -282,7 +284,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 
 .monument-subtitle {
-  font-size: 1.4rem;
+  font-size: 1.55rem;
   color: var(--text-dim);
   font-weight: 500;
   letter-spacing: -0.01em;
@@ -290,25 +292,25 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .hero-stage-grid {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 3rem;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 3.5rem;
   align-items: center;
   margin-top: 2rem;
 }
 
 .hero-body {
-  font-size: 1.1rem;
-  line-height: 1.7;
+  font-size: 1.25rem;
+  line-height: 1.75;
   color: var(--text-dim);
   margin-bottom: 2.5rem;
-  max-width: 560px;
+  max-width: 580px;
 }
 
 .hero-button-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 1rem;
+  gap: 1.15rem;
   margin-bottom: 3.5rem;
 }
 
@@ -317,8 +319,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   flex-direction: column;
   background: #ffffff;
   color: #07080a;
-  padding: 0.95rem 1.65rem;
-  border-radius: 12px;
+  padding: 1.05rem 1.85rem;
+  border-radius: 14px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
   transition: transform 0.25s var(--ease-spring), box-shadow 0.25s ease;
 }
@@ -330,13 +332,13 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .btn-main-text {
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 1.18rem;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
 .btn-sub-text {
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   color: #475569;
   font-weight: 600;
   margin-top: 2px;
@@ -345,11 +347,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .action-btn-outline {
   display: inline-flex;
   align-items: center;
-  padding: 1.1rem 1.6rem;
+  padding: 1.2rem 1.8rem;
   border: 1px solid var(--line-strong);
   background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  font-size: 0.95rem;
+  border-radius: 14px;
+  font-size: 1.05rem;
   font-weight: 600;
   color: var(--text-pure);
   transition: all 0.2s ease;
@@ -364,8 +366,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .telemetry-bar {
   display: flex;
   align-items: center;
-  gap: 2rem;
-  padding-top: 1.5rem;
+  gap: 2.25rem;
+  padding-top: 1.75rem;
   border-top: 1px solid var(--line);
 }
 
@@ -376,7 +378,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .telemetry-num {
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: 1.85rem;
   font-weight: 700;
   color: var(--text-pure);
   line-height: 1;
@@ -384,31 +386,31 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .telemetry-unit {
   font-family: var(--font-display);
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   color: var(--text-silver);
   text-transform: uppercase;
 }
 
 .telemetry-desc {
-  font-size: 0.8rem;
+  font-size: 0.92rem;
   color: var(--text-muted);
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .telemetry-divider {
   width: 1px;
-  height: 40px;
+  height: 42px;
   background: var(--line);
 }
 
 /* ==========================================================================
-   HERO FLOATING PHONE RIG (Realistic 3D Levitation & Gyro)
+   HERO FLOATING PHONE RIG (Multi-Layered 3D Levitation & Gyro)
    ========================================================================== */
 .hero-viewport {
   position: relative;
   display: flex;
   justify-content: center;
-  perspective: 1200px;
+  perspective: 1400px;
 }
 
 .phone-stand-rig {
@@ -419,8 +421,53 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   transition: transform 0.15s ease-out;
 }
 
+/* Background Layered Phones peeking behind the main hero phone */
+.hero-bg-phone {
+  position: absolute;
+  top: 6px;
+  width: 88%;
+  pointer-events: none;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-bg-phone-left {
+  left: -52px;
+  z-index: 1;
+  transform: rotate(-10deg) translateY(12px) scale(0.92);
+  filter: drop-shadow(0 18px 36px rgba(0, 0, 0, 0.8));
+}
+
+.hero-bg-phone-right {
+  right: -52px;
+  z-index: 1;
+  transform: rotate(10deg) translateY(18px) scale(0.92);
+  filter: drop-shadow(0 18px 36px rgba(0, 0, 0, 0.8));
+}
+
+.bg-phone-chassis {
+  position: relative;
+  background: #0d0f15;
+  border: 3.5px solid #222633;
+  border-radius: 34px;
+  overflow: hidden;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.9);
+}
+
+.bg-chassis-screen {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.bg-phone-tint {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(7, 8, 10, 0.25) 0%, rgba(7, 8, 10, 0.6) 100%);
+}
+
 .hero-floating-phone {
   position: relative;
+  z-index: 3;
   animation: heroFloat 5.2s ease-in-out infinite;
 }
 
@@ -431,12 +478,12 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .floating-phone-chassis {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   background: #0f1117;
   border: 4px solid #272a34;
   border-radius: 38px;
   overflow: hidden;
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.9), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.92), inset 0 0 0 1px rgba(255, 255, 255, 0.16);
 }
 
 .chassis-speaker-notch {
@@ -548,7 +595,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 
 .section-description {
-  font-size: 1.1rem;
+  font-size: 1.22rem;
   line-height: 1.7;
   color: var(--text-dim);
 }
@@ -579,7 +626,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   align-items: center;
   gap: 8px;
   font-family: var(--font-display);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   letter-spacing: 0.08em;
   color: var(--text-dim);
 }
@@ -593,7 +640,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .hud-readout {
   font-family: var(--font-display);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-pure);
   letter-spacing: 0.02em;
@@ -623,7 +670,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .panel-channel-tag {
   font-family: var(--font-display);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   letter-spacing: 0.08em;
   color: var(--text-muted);
   display: block;
@@ -631,8 +678,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 
 .console-deck-panel.active .panel-channel-tag { color: var(--amber); }
-.panel-song-title { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.25rem; }
-.panel-artist { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1.25rem; }
+.panel-song-title { font-family: var(--font-display); font-size: 1.28rem; font-weight: 700; margin-bottom: 0.25rem; }
+.panel-artist { font-size: 0.95rem; color: var(--text-dim); margin-bottom: 1.25rem; }
 
 .vu-meter {
   height: 6px;
@@ -657,7 +704,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .fader-title {
   font-family: var(--font-display);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   letter-spacing: 0.1em;
   color: var(--text-muted);
   margin-bottom: 1rem;
@@ -692,7 +739,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   width: 100%;
   margin-top: 0.75rem;
   font-family: var(--font-display);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
@@ -702,7 +749,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   gap: 2rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--line);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--text-dim);
 }
 
@@ -754,14 +801,14 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .acoustic-mode-tab strong {
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-pure);
   margin-bottom: 0.25rem;
 }
 
 .acoustic-mode-tab.on strong { color: #ffffff; }
-.acoustic-mode-tab span { font-size: 0.8rem; color: var(--text-muted); }
+.acoustic-mode-tab span { font-size: 0.92rem; color: var(--text-muted); }
 
 .acoustic-graph-display {
   background: #090b10;
@@ -787,14 +834,14 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .spec-metric .spec-label {
   display: block;
   font-family: var(--font-display);
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
   letter-spacing: 0.06em;
 }
 
 .spec-metric .spec-value {
   font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: 1.08rem;
   color: var(--text-pure);
 }
 
@@ -805,18 +852,18 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 3.5rem;
 }
 
 .phone-filter-btn {
-  padding: 8px 18px;
+  padding: 10px 22px;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.02);
   color: var(--text-dim);
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: 0.95rem;
+  font-weight: 600;
   transition: all 0.2s ease;
 }
 
@@ -829,7 +876,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   background: var(--text-pure);
   color: var(--bg-void);
   border-color: var(--text-pure);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .floating-phones-arena {
@@ -928,16 +975,16 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .meta-tag {
   display: inline-block;
   font-family: var(--font-display);
-  font-size: 0.65rem;
+  font-size: 0.74rem;
   letter-spacing: 0.08em;
   color: var(--amber);
   margin-bottom: 4px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .meta-title {
   font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-size: 1.22rem;
   font-weight: 700;
   color: var(--text-pure);
   margin-bottom: 4px;
@@ -945,9 +992,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 
 .meta-desc {
-  font-size: 0.82rem;
+  font-size: 0.92rem;
   color: var(--text-dim);
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 /* ==========================================================================
@@ -975,16 +1022,16 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .arch-card h3 {
   font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-size: 1.45rem;
   font-weight: 700;
   margin-bottom: 0.75rem;
   color: var(--text-pure);
 }
 
 .arch-card p {
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   color: var(--text-dim);
-  line-height: 1.65;
+  line-height: 1.7;
 }
 
 /* ==========================================================================
@@ -1018,7 +1065,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 
 .cta-sub {
-  font-size: 1rem;
+  font-size: 1.15rem;
   color: var(--text-dim);
   margin-bottom: 2.5rem;
 }
