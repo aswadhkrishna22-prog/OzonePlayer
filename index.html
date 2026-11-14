@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ozone Player — Free & Open Source YouTube Music Client for Android (APK Download)</title>
+  
+  <!-- SEO & Search Engine Verification -->
+  <meta name="description" content="Ozone Player is a modern, high-performance open-source YouTube Music & Spotify Canvas client for Android. Experience Hi-Res Lossless FLAC, Dual Play split audio, zero ads, and background playback. Free APK download.">
+  <meta name="keywords" content="Ozone Player, OzonePlayer, Ozone Player APK, Ozone Music Player, YouTube Music client, free YouTube music android, ad-free youtube music, lossless music android, dual play music player, vimusic alternative, innertune alternative, rmusic alternative, open source music player">
+  <meta name="author" content="Aswadh Krishna">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://aswadhkrishna22-prog.github.io/OzonePlayer/">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://aswadhkrishna22-prog.github.io/OzonePlayer/">
+  <meta property="og:title" content="Ozone Player — Free & Open Source YouTube Music Client for Android">
+  <meta property="og:description" content="Experience YouTube Music with Lossless FLAC, Spotify Canvas, Dual Play split audio, and an ultra-fluid glassmorphic UI. 100% Free & Open Source.">
+  <meta property="og:image" content="assets/ozone_logo.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://aswadhkrishna22-prog.github.io/OzonePlayer/">
+  <meta property="twitter:title" content="Ozone Player — Free & Open Source YouTube Music Client for Android">
+  <meta property="twitter:description" content="Experience YouTube Music with Lossless FLAC, Spotify Canvas, Dual Play split audio, and an ultra-fluid glassmorphic UI. 100% Free & Open Source.">
+  <meta property="twitter:image" content="assets/ozone_logo.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/ozone_logo.png">
+  <link rel="apple-touch-icon" href="assets/ozone_logo.png">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- JSON-LD Structured Data for Google Rich Results -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Ozone Player",
+    "operatingSystem": "Android 8.0+",
+    "applicationCategory": "MultimediaApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "description": "High-performance open-source YouTube Music & Spotify Canvas client for Android with Dual Play audio, Lossless FLAC streaming and zero ads.",
+    "downloadUrl": "https://github.com/aswadhkrishna22-prog/OzonePlayer/releases/latest",
+    "author": {
+      "@type": "Person",
+      "name": "Aswadh Krishna"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div class="ambient-glow glow-top"></div>
+  <div class="ambient-glow glow-bottom"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="#" class="brand">
+        <img src="assets/ozone_logo.png" alt="Ozone Player Logo" class="brand-logo">
+        <span class="brand-name">Ozone<span class="accent">Player</span></span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#showcase">Screenshots</a>
+        <a href="#compare">Compare</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div class="nav-actions">
+        <a href="https://github.com/aswadhkrishna22-prog/OzonePlayer" target="_blank" rel="noopener" class="btn btn-github">
+          <svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          <span class="btn-text">Star</span>
+          <span class="star-count" id="github-star-count">★</span>
+        </a>
+        <a href="#download" class="btn btn-primary">Download APK</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="hero-content">
+      <div class="badge-pill">
+        <span class="badge-dot"></span>
+        <span class="badge-text">v1.3.134 Stable • Android 8.0+ FOSS</span>
+      </div>
+      <h1 class="hero-title">
+        The Ultimate Android Music Experience. <br>
+        <span class="text-gradient">Pure Sound, Zero Compromise.</span>
+      </h1>
+      <p class="hero-subtitle">
+        Stream entire YouTube Music catalog without ads. Audiophile-grade <strong>Lossless FLAC</strong>, 
+        exclusive <strong>Dual Play split audio</strong>, real-time <strong>Spotify Canvas</strong>, and silky smooth 120Hz gesture physics.
+      </p>
+
+      <div class="hero-cta">
+        <a href="https://github.com/aswadhkrishna22-prog/OzonePlayer/releases/latest" class="btn btn-download-hero">
+          <svg class="icon-download" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <div>
+            <span class="cta-heading">Download Ozone APK</span>
+            <span class="cta-sub">Free • Ad-Free • No Account Needed</span>
+          </div>
+        </a>
+        <a href="https://github.com/aswadhkrishna22-prog/OzonePlayer" target="_blank" rel="noopener" class="btn btn-secondary-hero">
+          Explore Source on GitHub
+        </a>
+      </div>
+
+      <div class="hero-badges">
+        <div class="mini-feature"><span class="check">✓</span> 100% Free & Open-Source</div>
+        <div class="mini-feature"><span class="check">✓</span> Zero Ads & No Tracking</div>
+        <div class="mini-feature"><span class="check">✓</span> Offline Caching & FLAC</div>
+        <div class="mini-feature"><span class="check">✓</span> Background & Screen-Off Play</div>
+      </div>
+    </div>
+
+    <!-- Hero Mockup Carousel -->
+    <div class="hero-mockup-wrapper">
+      <div class="mockup-frame">
+        <div class="mockup-glass-glow"></div>
+        <img src="assets/screenshots/fullplayer.png" alt="Ozone Player Full Player Interface" class="phone-screenshot active" id="hero-phone-img">
+      </div>
+    </div>
+  </header>
+
+  <!-- Features Grid -->
+  <section class="section" id="features">
+    <div class="section-header">
+      <h2 class="section-title">Built for Music Lovers & Audiophiles</h2>
+      <p class="section-desc">Engineered with high-precision Kotlin, Jetpack Compose, and native C++ audio processing for unrivaled speed and sound fidelity.</p>
+    </div>
+
+    <div class="features-grid">
+      <!-- Feature 1 -->
+      <div class="feature-card">
+        <div class="feature-icon">🎧</div>
+        <h3>Dual Play Split Audio</h3>
+        <p>Listen to two tracks simultaneously with independent volume and balance controls. Split sound between left & right earbuds or DJ mix on the fly.</p>
+        <span class="feature-tag">World First</span>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="feature-card">
+        <div class="feature-icon">💎</div>
+        <h3>Hi-Res Lossless Audio (FLAC)</h3>
+        <p>Uncapped 320kbps & master-quality FLAC audio streams. Direct download to local storage with automated cover tagging and lyric metadata.</p>
+        <span class="feature-tag">Audiophile Grade</span>
+      </div>
+
+      <!-- Feature 3 -->
+      <div class="feature-card">
+        <div class="feature-icon">✨</div>
+        <h3>Spotify Canvas & Daily Mixes</h3>
+        <p>Bring tracks alive with fluid looping video canvases from Spotify, combined with YouTube Music's colossal streaming catalog.</p>
+        <span class="feature-tag">Visual Magic</span>
+      </div>
+
+      <!-- Feature 4 -->
+      <div class="feature-card">
+        <div class="feature-icon">🎛️</div>
+        <h3>Smart DJ Automix & Transitions</h3>
+        <p>C++ frequency-aware bass-swap curves, BPM tempo matching, and continuous seamless crossfade for continuous party mixes.</p>
+        <span class="feature-tag">Native C++ DSP</span>
+      </div>
+
+      <!-- Feature 5 -->
+      <div class="feature-card">
+        <div class="feature-icon">🌊</div>
+        <h3>Liquid Glass Material You UI</h3>
+        <p>Dynamic color extraction matching current artwork, interactive double-tap ripples, and scroll-linked morphing headers designed for 120Hz displays.</p>
+        <span class="feature-tag">Modern Compose</span>
+      </div>
+
+      <!-- Feature 6 -->
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3>Privacy First & Offline Cache</h3>
+        <p>No Google login required. No telemetry, no analytical tracking, and zero ads. Full local playback and offline library storage.</p>
+        <span class="feature-tag">100% Private</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Screenshot Showcase -->
+  <section class="section" id="showcase">
+    <div class="section-header">
+      <h2 class="section-title">Experience Every Screen</h2>
+      <p class="section-desc">Designed from the ground up for seamless one-handed use and eye-candy visuals.</p>
+    </div>
+
+    <div class="showcase-container">
+      <div class="showcase-tabs">
+        <button class="tab-btn active" data-img="assets/screenshots/fullplayer.png">
+          <strong>Now Playing</strong>
+          <span>Dynamic glow & controls</span>
+        </button>
+        <button class="tab-btn" data-img="assets/screenshots/main_screen.png">
+          <strong>Home & Discovery</strong>
+          <span>Personalized smart mixes</span>
+        </button>
+        <button class="tab-btn" data-img="assets/screenshots/lyrics_screen.png">
+          <strong>Live Synced Lyrics</strong>
+          <span>Multi-provider romanization</span>
+        </button>
+        <button class="tab-btn" data-img="assets/screenshots/artist_screen.png">
+          <strong>Artist Explorer</strong>
+          <span>Scroll-morphing hero stage</span>
+        </button>
+        <button class="tab-btn" data-img="assets/screenshots/queue.png">
+          <strong>Dynamic Queue</strong>
+          <span>Drag, drop & automix</span>
+        </button>
+      </div>
+
+      <div class="showcase-display">
+        <div class="phone-bezel">
+          <img src="assets/screenshots/fullplayer.png" alt="Ozone Player Interface" id="showcase-screen">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison Table -->
+  <section class="section" id="compare">
+    <div class="section-header">
+      <h2 class="section-title">How Ozone Player Compares</h2>
+      <p class="section-desc">See why audio enthusiasts and privacy lovers are choosing Ozone Player.</p>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th class="highlight">Ozone Player</th>
+            <th>Official YTM</th>
+            <th>Spotify Free</th>
+            <th>Standard Players</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Zero Audio/Video Ads</td>
+            <td class="highlight"><span class="yes">✓ Yes (Always)</span></td>
+            <td><span class="no">✕ Requires Premium</span></td>
+            <td><span class="no">✕ Ads Every 3 Songs</span></td>
+            <td><span class="yes">✓ Yes</span></td>
+          </tr>
+          <tr>
+            <td>Background & Screen-off Play</td>
+            <td class="highlight"><span class="yes">✓ Yes</span></td>
+            <td><span class="no">✕ Paid Only</span></td>
+            <td><span class="yes">✓ Yes</span></td>
+            <td><span class="yes">✓ Yes</span></td>
+          </tr>
+          <tr>
+            <td>Dual Play (Split Audio)</td>
+            <td class="highlight"><span class="yes">✓ Exclusive</span></td>
+            <td><span class="no">✕ No</span></td>
+            <td><span class="no">✕ No</span></td>
+            <td><span class="no">✕ No</span></td>
+          </tr>
+          <tr>
+            <td>Lossless FLAC Downloads</td>
+            <td class="highlight"><span class="yes">✓ Yes</span></td>
+            <td><span class="no">✕ Lossy Only</span></td>
+            <td><span class="no">✕ Encrypted Lossy</span></td>
+            <td><span class="no">✕ No</span></td>
+          </tr>
+          <tr>
+            <td>Spotify Video Canvas</td>
+            <td class="highlight"><span class="yes">✓ Built-in</span></td>
+            <td><span class="no">✕ No</span></td>
+            <td><span class="yes">✓ Yes</span></td>
+            <td><span class="no">✕ No</span></td>
+          </tr>
+          <tr>
+            <td>No Google Account Required</td>
+            <td class="highlight"><span class="yes">✓ Anonymous</span></td>
+            <td><span class="no">✕ Required</span></td>
+            <td><span class="no">✕ Required</span></td>
+            <td><span class="yes">✓ Yes</span></td>
+          </tr>
+          <tr>
+            <td>100% Free & Open Source</td>
+            <td class="highlight"><span class="yes">✓ GPL v3.0</span></td>
+            <td><span class="no">✕ Proprietary</span></td>
+            <td><span class="no">✕ Proprietary</span></td>
+            <td>Varies</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="section" id="faq">
+    <div class="section-header">
+      <h2 class="section-title">Frequently Asked Questions</h2>
+      <p class="section-desc">Everything you need to know about Ozone Player.</p>
+    </div>
+
+    <div class="faq-accordion">
+      <div class="faq-item">
+        <button class="faq-question">
+          <span>Is Ozone Player completely free?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <p>Yes, 100%! Ozone Player is free software licensed under GNU General Public License v3.0. There are no subscriptions, in-app purchases, or hidden paywalls.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">
+          <span>Do I need to sign in with a Google or Spotify account?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <p>No! Ozone Player works out-of-the-box completely anonymously without logging into any service. You can optionally link your Spotify or Last.fm account for recommendations and scrobbling if you choose.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">
+          <span>How do I install the APK?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <p>Download the latest release APK from our GitHub releases page, open the downloaded file on your Android device, and tap "Install". If prompted, enable "Install unknown apps" for your browser or file manager.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">
+          <span>Does Ozone Player support offline downloads?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <p>Yes. Ozone Player includes a dedicated FLAC and audio downloader that saves high-quality music files with embedded artwork and metadata straight to your device's Music directory.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download Call To Action -->
+  <section class="section download-section" id="download">
+    <div class="download-card">
+      <div class="download-glow"></div>
+      <img src="assets/ozone_logo.png" alt="Ozone Player Icon" class="download-logo">
+      <h2>Ready for pure, uninterrupted music?</h2>
+      <p>Download Ozone Player today and take full control of your listening experience.</p>
+      
+      <div class="download-buttons">
+        <a href="https://github.com/aswadhkrishna22-prog/OzonePlayer/releases/latest" class="btn btn-primary btn-large">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download Latest Release (APK)
+        </a>
+        <a href="https://github.com/aswadhkrishna22-prog/OzonePlayer" target="_blank" rel="noopener" class="btn btn-secondary btn-large">
+          View Repository on GitHub
+        </a>
+      </div>
+
+      <p class="download-meta">
+        Compatible with Android 8.0 (Oreo) and newer • Arm64 & Universal • GPL-3.0 License
+      </p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <img src="assets/ozone_logo.png" alt="Ozone Logo" width="28" height="28">
+        <span>Ozone Player</span>
+      </div>
+      <p class="footer-copy">
+        Crafted with passion for open-source music lovers. Licensed under GNU GPL v3.0.
+      </p>
+      <div class="footer-links">
+        <a href="https://github.com/aswadhkrishna22-prog/OzonePlayer" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/aswadhkrishna22-prog/OzonePlayer/releases" target="_blank" rel="noopener">Releases</a>
+        <a href="https://github.com/aswadhkrishna22-prog/OzonePlayer/blob/main/PRIVACY.md" target="_blank" rel="noopener">Privacy Policy</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
