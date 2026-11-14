@@ -1,24 +1,91 @@
 /**
- * OZONE PLAYER // AURAL ARCHITECTURE INTERACTION ENGINE
- * Zero-dependency, 60fps canvas wave simulation, 3D tilt, and audio consoles
+ * OZONE PLAYER // AURAL ARCHITECTURE PRO SCRIPT
+ * High-precision motion, hardware DSP simulation, audio FFT visualization.
+ * Zero AI slop, zero emojis, verified authentic engineering aesthetics.
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-  initAudioMatrixCanvas();
-  initDevice3DTilt();
-  initDualPlayCrossfader();
-  initLosslessSpectrumAnalyzer();
-  initShowcaseTabs();
-  initBentoSpotlight();
-  initNavbarScroll();
-  fetchGitHubStars();
-});
+(function () {
+  'use strict';
+
+  // 1. PRECISION DOUBLE-RING CURSOR
+  initCustomCursor();
+
+  // 2. AMBIENT ACOUSTIC PARTICLE CANVAS
+  initStageCanvas();
+
+  // 3. 3D GYRO PHONE TILT
+  initPhoneTilt();
+
+  // 4. DUAL PLAY HARDWARE CROSSFADER CONSOLE
+  initDualPlayConsole();
+
+  // 5. ACOUSTIC SPECTROGRAM LAB
+  initAcousticLab();
+
+  // 6. SCREEN SHOWCASE SWITCHER
+  initScreenShowcase();
+
+  // 7. MASTHEAD SCROLL DYNAMICS
+  initMastheadScroll();
+
+  // 8. LIVE GITHUB METRICS
+  fetchGitHubMetrics();
+})();
 
 /* ==========================================================================
-   1. INTERACTIVE HARMONIC SOUNDWAVE CANVAS (BACKGROUND)
+   1. PRECISION DOUBLE-RING CURSOR (Laocoön-Style Lerp Physics)
    ========================================================================== */
-function initAudioMatrixCanvas() {
-  const canvas = document.getElementById('canvas-matrix');
+function initCustomCursor() {
+  const dot = document.getElementById('cursor-dot');
+  const ring = document.getElementById('cursor-ring');
+  if (!dot || !ring) return;
+
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    dot.style.display = 'none';
+    ring.style.display = 'none';
+    return;
+  }
+
+  let mouseX = window.innerWidth / 2;
+  let mouseY = window.innerHeight / 2;
+  let ringX = mouseX;
+  let ringY = mouseY;
+  let isMoving = false;
+
+  window.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    dot.style.left = `${mouseX}px`;
+    dot.style.top = `${mouseY}px`;
+    if (!isMoving) {
+      isMoving = true;
+      dot.style.opacity = '1';
+      ring.style.opacity = '1';
+    }
+  }, { passive: true });
+
+  const interactiveSelector = 'a, button, input, .arch-card, .phone-stand-rig, .acoustic-mode-tab, .showcase-nav-item, .console-deck-panel';
+  const interactives = document.querySelectorAll(interactiveSelector);
+  interactives.forEach(el => {
+    el.addEventListener('mouseenter', () => ring.classList.add('hovering'));
+    el.addEventListener('mouseleave', () => ring.classList.remove('hovering'));
+  });
+
+  function renderCursor() {
+    ringX += (mouseX - ringX) * 0.16;
+    ringY += (mouseY - ringY) * 0.16;
+    ring.style.left = `${ringX}px`;
+    ring.style.top = `${ringY}px`;
+    requestAnimationFrame(renderCursor);
+  }
+  requestAnimationFrame(renderCursor);
+}
+
+/* ==========================================================================
+   2. AMBIENT ACOUSTIC PARTICLE CANVAS (Soda Force-Field Particles)
+   ========================================================================== */
+function initStageCanvas() {
+  const canvas = document.getElementById('stage-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
@@ -26,312 +93,338 @@ function initAudioMatrixCanvas() {
   let width = (canvas.width = window.innerWidth);
   let height = (canvas.height = window.innerHeight);
 
-  let mouseX = width * 0.5;
-  let mouseY = height * 0.3;
-  let targetMouseX = mouseX;
-  let targetMouseY = mouseY;
-
   window.addEventListener('resize', () => {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
   }, { passive: true });
 
+  let mouse = { x: -1000, y: -1000 };
   window.addEventListener('mousemove', (e) => {
-    targetMouseX = e.clientX;
-    targetMouseY = e.clientY;
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
   }, { passive: true });
 
-  window.addEventListener('touchmove', (e) => {
-    if (e.touches.length > 0) {
-      targetMouseX = e.touches[0].clientX;
-      targetMouseY = e.touches[0].clientY;
-    }
-  }, { passive: true });
+  const particleCount = 48;
+  const particles = [];
+  for (let i = 0; i < particleCount; i++) {
+    particles.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: (Math.random() - 0.5) * 0.35,
+      radius: Math.random() * 1.8 + 0.8,
+      baseAlpha: Math.random() * 0.25 + 0.08,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
 
   let time = 0;
-  const waves = [
-    { freq: 0.002, speed: 0.015, amp: 45, color: 'rgba(0, 245, 255, 0.06)' },
-    { freq: 0.003, speed: 0.022, amp: 30, color: 'rgba(99, 102, 241, 0.05)' },
-    { freq: 0.0015, speed: 0.012, amp: 60, color: 'rgba(0, 245, 255, 0.04)' }
-  ];
-
   function render() {
-    time += 1;
-    // Smooth mouse lerp
-    mouseX += (targetMouseX - mouseX) * 0.05;
-    mouseY += (targetMouseY - mouseY) * 0.05;
-
+    time += 0.012;
     ctx.clearRect(0, 0, width, height);
 
-    // Draw harmonic audio waves
-    waves.forEach((w) => {
-      ctx.beginPath();
-      ctx.moveTo(0, height * 0.5);
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      p.x += p.vx + Math.sin(time + p.phase) * 0.2;
+      p.y += p.vy + Math.cos(time + p.phase) * 0.2;
 
-      for (let x = 0; x <= width; x += 15) {
-        // Distance influence from mouse pointer
-        const dx = x - mouseX;
-        const dy = height * 0.5 - mouseY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const mouseWave = Math.sin(dist * 0.01 - time * 0.05) * Math.max(0, 1 - dist / 600) * 40;
+      if (p.x < 0) p.x = width;
+      if (p.x > width) p.x = 0;
+      if (p.y < 0) p.y = height;
+      if (p.y > height) p.y = 0;
 
-        const y =
-          height * 0.5 +
-          Math.sin(x * w.freq + time * w.speed) * w.amp +
-          Math.cos(x * w.freq * 0.5 - time * w.speed * 0.8) * (w.amp * 0.5) +
-          mouseWave;
+      // Pointer deflection force-field
+      const dx = mouse.x - p.x;
+      const dy = mouse.y - p.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const repulseRadius = 160;
 
-        ctx.lineTo(x, y);
+      if (dist < repulseRadius && dist > 0) {
+        const force = (repulseRadius - dist) / repulseRadius;
+        p.x -= (dx / dist) * force * 4;
+        p.y -= (dy / dist) * force * 4;
       }
 
-      ctx.lineTo(width, height);
-      ctx.lineTo(0, height);
-      ctx.closePath();
-
-      ctx.fillStyle = w.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0, 245, 255, ${p.baseAlpha})`;
       ctx.fill();
-    });
+
+      // Connect close neighbors
+      for (let j = i + 1; j < particles.length; j++) {
+        const p2 = particles[j];
+        const cdx = p.x - p2.x;
+        const cdy = p.y - p2.y;
+        const cdist = Math.sqrt(cdx * cdx + cdy * cdy);
+        if (cdist < 90) {
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.strokeStyle = `rgba(0, 245, 255, ${0.04 * (1 - cdist / 90)})`;
+          ctx.stroke();
+        }
+      }
+    }
 
     requestAnimationFrame(render);
   }
-
   requestAnimationFrame(render);
 }
 
 /* ==========================================================================
-   2. 3D GYROSCOPIC TILT FOR PHONE RIG
+   3. 3D GYRO PHONE TILT (Perspective Audio Device Rig)
    ========================================================================== */
-function initDevice3DTilt() {
-  const rig = document.getElementById('device-rig');
-  const hud = document.getElementById('hud-card');
-  if (!rig) return;
+function initPhoneTilt() {
+  const rig = document.getElementById('phone-rig');
+  if (!rig || !window.matchMedia('(hover: hover)').matches) return;
 
-  let currentX = 0;
-  let currentY = 0;
-  let targetX = 0;
-  let targetY = 0;
+  let targetRotX = 0;
+  let targetRotY = 0;
+  let currentRotX = 0;
+  let currentRotY = 0;
 
   window.addEventListener('mousemove', (e) => {
-    const { innerWidth, innerHeight } = window;
-    const normX = (e.clientX / innerWidth - 0.5) * 2;
-    const normY = (e.clientY / innerHeight - 0.5) * 2;
-
-    targetX = -normY * 12; // tilt degrees
-    targetY = normX * 14;
+    const normX = (e.clientX / window.innerWidth - 0.5) * 2;
+    const normY = (e.clientY / window.innerHeight - 0.5) * 2;
+    targetRotY = normX * 10;
+    targetRotX = -normY * 8;
   }, { passive: true });
 
-  function updateTilt() {
-    currentX += (targetX - currentX) * 0.08;
-    currentY += (targetY - currentY) * 0.08;
+  window.addEventListener('mouseleave', () => {
+    targetRotX = 0;
+    targetRotY = 0;
+  });
 
-    rig.style.transform = `rotateX(${currentX}deg) rotateY(${currentY}deg)`;
-    if (hud) {
-      hud.style.transform = `translateZ(45px) translateX(${currentY * 0.6}px)`;
+  function renderTilt() {
+    currentRotX += (targetRotX - currentRotX) * 0.1;
+    currentRotY += (targetRotY - currentRotY) * 0.1;
+    rig.style.transform = `perspective(1200px) rotateX(${currentRotX.toFixed(2)}deg) rotateY(${currentRotY.toFixed(2)}deg)`;
+    requestAnimationFrame(renderTilt);
+  }
+  requestAnimationFrame(renderTilt);
+}
+
+/* ==========================================================================
+   4. DUAL PLAY HARDWARE CONSOLE (Live Stereo Crossfader & VU Flutter)
+   ========================================================================== */
+function initDualPlayConsole() {
+  const fader = document.getElementById('master-fader');
+  const label = document.getElementById('fader-label');
+  const deckA = document.getElementById('deck-panel-a');
+  const deckB = document.getElementById('deck-panel-b');
+  const meterFillA = document.getElementById('meter-fill-a');
+  const meterFillB = document.getElementById('meter-fill-b');
+
+  if (!fader || !label || !meterFillA || !meterFillB) return;
+
+  let targetPctA = 100;
+  let targetPctB = 0;
+
+  function updateMixer(val) {
+    const rawVal = parseInt(val, 10);
+    targetPctA = 100 - rawVal;
+    targetPctB = rawVal;
+
+    if (rawVal === 0) {
+      label.textContent = 'DECK A: 100% | DECK B: 0% (CH A ISOLATED)';
+    } else if (rawVal === 50) {
+      label.textContent = 'DECK A: 50% | DECK B: 50% (DUAL SPLIT STEREO)';
+    } else if (rawVal === 100) {
+      label.textContent = 'DECK A: 0% | DECK B: 100% (CH B ISOLATED)';
+    } else {
+      label.textContent = `DECK A: ${targetPctA}% | DECK B: ${targetPctB}%`;
     }
 
-    requestAnimationFrame(updateTilt);
+    if (rawVal <= 35) {
+      deckA?.classList.add('active');
+      deckB?.classList.remove('active');
+    } else if (rawVal >= 65) {
+      deckB?.classList.add('active');
+      deckA?.classList.remove('active');
+    } else {
+      deckA?.classList.add('active');
+      deckB?.classList.add('active');
+    }
   }
 
-  requestAnimationFrame(updateTilt);
-}
-
-/* ==========================================================================
-   3. INTERACTIVE DUAL PLAY SPLIT CROSSFADER
-   ========================================================================== */
-function initDualPlayCrossfader() {
-  const slider = document.getElementById('crossfader-input');
-  const readout = document.getElementById('crossfader-readout');
-  const deckACard = document.getElementById('deck-a-card');
-  const deckBCard = document.getElementById('deck-b-card');
-
-  if (!slider || !readout) return;
-
-  const meterA = deckACard ? deckACard.querySelector('.deck-meter-bar') : null;
-  const meterB = deckBCard ? deckBCard.querySelector('.deck-meter-bar') : null;
-
-  slider.addEventListener('input', (e) => {
-    const val = parseInt(e.target.value, 10); // 0 to 100
-    const pctA = 100 - val;
-    const pctB = val;
-
-    readout.textContent = `DECK A: ${pctA}% | DECK B: ${pctB}%`;
-
-    if (meterA) meterA.style.width = `${Math.max(8, pctA)}%`;
-    if (meterB) meterB.style.width = `${Math.max(8, pctB)}%`;
-
-    if (val < 40) {
-      deckACard?.classList.add('active');
-      deckBCard?.classList.remove('active');
-    } else if (val > 60) {
-      deckBCard?.classList.add('active');
-      deckACard?.classList.remove('active');
-    } else {
-      deckACard?.classList.add('active');
-      deckBCard?.classList.add('active');
-    }
+  fader.addEventListener('input', (e) => {
+    updateMixer(e.target.value);
   });
+
+  // Natural VU meter audio flutter simulation
+  function flutterVU() {
+    const jitterA = (Math.random() - 0.5) * 8;
+    const jitterB = (Math.random() - 0.5) * 8;
+
+    const liveA = Math.max(0, Math.min(100, targetPctA > 0 ? targetPctA + jitterA : 0));
+    const liveB = Math.max(0, Math.min(100, targetPctB > 0 ? targetPctB + jitterB : 0));
+
+    meterFillA.style.width = `${liveA.toFixed(1)}%`;
+    meterFillB.style.width = `${liveB.toFixed(1)}%`;
+
+    setTimeout(flutterVU, 120);
+  }
+  flutterVU();
 }
 
 /* ==========================================================================
-   4. BIT-PERFECT LOSSLESS FREQUENCY ANALYZER
+   5. ACOUSTIC SPECTROGRAM LAB (Dynamic Canvas FFT Simulation)
    ========================================================================== */
-function initLosslessSpectrumAnalyzer() {
-  const canvas = document.getElementById('spectrum-canvas');
-  const tabs = document.querySelectorAll('.analyzer-tab');
-  const sampleEl = document.getElementById('spec-sample');
-  const freqEl = document.getElementById('spec-freq');
-  const rangeEl = document.getElementById('spec-range');
+function initAcousticLab() {
+  const tabs = document.querySelectorAll('.acoustic-mode-tab');
+  const canvas = document.getElementById('spectrogram-canvas');
+  const specHz = document.getElementById('spec-hz');
+  const specBand = document.getElementById('spec-band');
+  const specDynamic = document.getElementById('spec-dynamic');
 
-  if (!canvas) return;
+  if (!canvas || !tabs.length) return;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  let currentMode = '1411';
-  let animFrame = 0;
+  let activeMode = '1411';
 
-  const modeConfigs = {
+  const modeSpecs = {
     '128': {
-      sample: '44,100 Hz (16-bit)',
-      freq: '20 Hz – 15,800 Hz (Choked)',
-      range: '78 dB (Lossy MP3 Compression)',
-      cutoffRatio: 0.48,
-      accentColor: '#ef4444'
+      hz: '44,100 Hz / 16-Bit',
+      band: '20 Hz – 16,000 Hz (Harsh Lossy Cutoff)',
+      dynamic: 'Compressed ~65 dB Dynamic Range',
+      cutoffFreq: 0.35,
+      noise: 0.15
     },
     '320': {
-      sample: '44,100 Hz (16-bit)',
-      freq: '20 Hz – 19,200 Hz (Standard)',
-      range: '96 dB (Compressed High Quality)',
-      cutoffRatio: 0.68,
-      accentColor: '#f59e0b'
+      hz: '44,100 Hz / 16-Bit',
+      band: '20 Hz – 20,000 Hz (Streaming Ceiling)',
+      dynamic: 'Compressed ~96 dB Dynamic Range',
+      cutoffFreq: 0.55,
+      noise: 0.05
     },
     '1411': {
-      sample: '96,000 Hz (24-bit Studio Master)',
-      freq: '20 Hz – 48,000 Hz (Full Uncapped)',
-      range: '> 120 dB (Pure Dynamic Range)',
-      cutoffRatio: 1.0,
-      accentColor: '#00f5ff'
+      hz: '96,000 Hz / 24-Bit',
+      band: '20 Hz – 48,000 Hz (Full Uncapped)',
+      dynamic: '> 120 dB Studio Master',
+      cutoffFreq: 1.0,
+      noise: 0.0
     }
   };
 
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
+      tabs.forEach(t => t.classList.remove('on'));
+      tab.classList.add('on');
+      activeMode = tab.getAttribute('data-mode') || '1411';
 
-      currentMode = tab.getAttribute('data-mode') || '1411';
-      const config = modeConfigs[currentMode];
-      if (config && sampleEl && freqEl && rangeEl) {
-        sampleEl.textContent = config.sample;
-        freqEl.textContent = config.freq;
-        rangeEl.textContent = config.range;
+      const spec = modeSpecs[activeMode];
+      if (spec) {
+        if (specHz) specHz.textContent = spec.hz;
+        if (specBand) specBand.textContent = spec.band;
+        if (specDynamic) specDynamic.textContent = spec.dynamic;
       }
     });
   });
 
-  function drawSpectrum() {
-    animFrame += 1;
-    const width = canvas.width;
-    const height = canvas.height;
-    ctx.clearRect(0, 0, width, height);
+  // Animated FFT Waterfall / Bars
+  const barCount = 64;
+  let phase = 0;
 
-    const config = modeConfigs[currentMode];
-    const bars = 56;
-    const barWidth = (width / bars) - 3;
-    const cutoffBar = Math.floor(bars * config.cutoffRatio);
+  function renderSpectrogram() {
+    phase += 0.04;
+    const w = canvas.width;
+    const h = canvas.height;
 
-    for (let i = 0; i < bars; i++) {
-      const x = i * (barWidth + 3);
-      let barHeight;
+    ctx.fillStyle = '#090b10';
+    ctx.fillRect(0, 0, w, h);
 
-      if (i > cutoffBar) {
-        // Frequency cutoff zone for lossy formats
-        barHeight = Math.random() * 4 + 2;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-      } else {
-        // Active harmonic frequency oscillation
-        const base = Math.sin((i / bars) * Math.PI + animFrame * 0.08) * 0.5 + 0.5;
-        const jitter = Math.sin(i * 1.5 + animFrame * 0.12) * 20;
-        barHeight = Math.max(10, base * (height - 40) + jitter);
-
-        if (currentMode === '1411') {
-          const grad = ctx.createLinearGradient(0, height, 0, 0);
-          grad.addColorStop(0, '#6366f1');
-          grad.addColorStop(1, '#00f5ff');
-          ctx.fillStyle = grad;
-        } else {
-          ctx.fillStyle = config.accentColor;
-        }
-      }
-
-      ctx.fillRect(x, height - barHeight, barWidth, barHeight);
+    // Grid lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 1;
+    for (let y = 30; y < h; y += 35) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
     }
 
-    // Draw baseline
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.beginPath();
-    ctx.moveTo(0, height - 1);
-    ctx.lineTo(width, height - 1);
-    ctx.stroke();
+    const currentSpec = modeSpecs[activeMode] || modeSpecs['1411'];
+    const barWidth = (w - 40) / barCount;
 
-    requestAnimationFrame(drawSpectrum);
+    for (let i = 0; i < barCount; i++) {
+      const normalizedFreq = i / barCount;
+      let heightFactor = 0;
+
+      if (normalizedFreq <= currentSpec.cutoffFreq) {
+        // Natural frequency harmonics
+        const harmonic = Math.sin(phase + i * 0.18) * 0.35 + Math.cos(phase * 0.7 + i * 0.08) * 0.35 + 0.5;
+        const decay = 1 - Math.pow(normalizedFreq, 1.4) * 0.6;
+        heightFactor = Math.max(0.08, harmonic * decay);
+
+        if (currentSpec.noise > 0) {
+          heightFactor += (Math.random() - 0.5) * currentSpec.noise;
+        }
+      } else {
+        // Hard cut off zone
+        heightFactor = Math.random() * 0.03;
+      }
+
+      const barH = Math.min(h - 20, Math.max(4, heightFactor * (h - 30)));
+      const x = 20 + i * barWidth;
+      const y = h - 10 - barH;
+
+      // Gradient bar fill
+      const grad = ctx.createLinearGradient(0, y, 0, h - 10);
+      if (normalizedFreq > currentSpec.cutoffFreq) {
+        grad.addColorStop(0, 'rgba(239, 68, 68, 0.6)');
+        grad.addColorStop(1, 'rgba(239, 68, 68, 0.05)');
+      } else {
+        grad.addColorStop(0, '#00f5ff');
+        grad.addColorStop(0.5, '#6366f1');
+        grad.addColorStop(1, 'rgba(0, 245, 255, 0.1)');
+      }
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(x, y, barWidth - 2, barH);
+    }
+
+    requestAnimationFrame(renderSpectrogram);
   }
-
-  requestAnimationFrame(drawSpectrum);
+  requestAnimationFrame(renderSpectrogram);
 }
 
 /* ==========================================================================
-   5. SHOWCASE SCREEN TAB SWITCHER
+   6. SCREEN SHOWCASE SWITCHER (Fluid Cross-Fade)
    ========================================================================== */
-function initShowcaseTabs() {
-  const buttons = document.querySelectorAll('.showcase-item-btn');
-  const img = document.getElementById('showcase-img');
-  if (!buttons.length || !img) return;
+function initScreenShowcase() {
+  const stage = document.getElementById('stage-screen');
+  const navItems = document.querySelectorAll('.showcase-nav-item');
+  if (!stage || !navItems.length) return;
 
-  buttons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.classList.contains('active')) return;
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      if (item.classList.contains('on')) return;
+      navItems.forEach(i => i.classList.remove('on'));
+      item.classList.add('on');
 
-      buttons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+      const imgName = item.getAttribute('data-img');
+      if (!imgName) return;
 
-      const newSrc = btn.getAttribute('data-img');
-      if (!newSrc) return;
-
-      img.style.opacity = '0.2';
-      img.style.transform = 'scale(0.98)';
+      stage.style.opacity = '0.2';
+      stage.style.transform = 'scale(0.98)';
 
       setTimeout(() => {
-        img.src = newSrc;
-        img.onload = () => {
-          img.style.opacity = '1';
-          img.style.transform = 'scale(1)';
+        stage.src = `assets/shots/${imgName}.webp`;
+        stage.onload = () => {
+          stage.style.opacity = '1';
+          stage.style.transform = 'scale(1)';
         };
-      }, 150);
+      }, 140);
     });
   });
 }
 
 /* ==========================================================================
-   6. BENTO CARDS SPOTLIGHT EFFECT
+   7. MASTHEAD SCROLL DYNAMICS
    ========================================================================== */
-function initBentoSpotlight() {
-  const cells = document.querySelectorAll('[data-spotlight]');
-  cells.forEach(cell => {
-    cell.addEventListener('mousemove', (e) => {
-      const rect = cell.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      cell.style.setProperty('--mouse-x', `${x}px`);
-      cell.style.setProperty('--mouse-y', `${y}px`);
-    });
-  });
-}
-
-/* ==========================================================================
-   7. NAVBAR SCROLL GLASS BEHAVIOR
-   ========================================================================== */
-function initNavbarScroll() {
-  const masthead = document.querySelector('.masthead');
+function initMastheadScroll() {
+  const masthead = document.getElementById('masthead');
   if (!masthead) return;
 
   window.addEventListener('scroll', () => {
@@ -344,21 +437,20 @@ function initNavbarScroll() {
 }
 
 /* ==========================================================================
-   8. REAL-TIME GITHUB STARS
+   8. LIVE GITHUB METRICS (Zero Banned Characters)
    ========================================================================== */
-async function fetchGitHubStars() {
-  const starCountEl = document.getElementById('github-star-count');
-  if (!starCountEl) return;
+function fetchGitHubMetrics() {
+  const starText = document.getElementById('star-count-text');
+  if (!starText) return;
 
-  try {
-    const res = await fetch('https://api.github.com/repos/aswadhkrishna22-prog/OzonePlayer');
-    if (res.ok) {
-      const data = await res.json();
-      if (typeof data.stargazers_count === 'number') {
-        starCountEl.textContent = `★ ${data.stargazers_count}`;
+  fetch('https://api.github.com/repos/aswadhkrishna22-prog/OzonePlayer')
+    .then(res => res.ok ? res.json() : null)
+    .then(data => {
+      if (data && typeof data.stargazers_count === 'number') {
+        starText.textContent = `${data.stargazers_count} Stars`;
       }
-    }
-  } catch (err) {
-    console.debug('GitHub stars offline:', err);
-  }
+    })
+    .catch(() => {
+      // Graceful fallback to static text
+    });
 }
