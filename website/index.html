@@ -19,7 +19,7 @@
 <meta property="og:description" content="Bit-perfect Lossless FLAC, YouTube Music catalog, Dual Play split audio, and synced lyrics. 100% Free & Open Source.">
 <meta property="og:image" content="assets/ozone_logo.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#07080b">
+<meta name="theme-color" content="#07080a">
 
 <link rel="icon" type="image/png" href="assets/ozone_logo.png">
 <link rel="apple-touch-icon" href="assets/ozone_logo.png">
@@ -41,10 +41,10 @@
 }
 </script>
 
-<!-- Typography: Space Grotesk + Plus Jakarta Sans (Pure Technical & Editorial Craft) -->
+<!-- Typography: Space Grotesk + Plus Jakarta Sans (Precision Technical & Editorial Craft) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -139,18 +139,22 @@
         </div>
       </div>
 
-      <!-- 3D Gyro Device Showcase -->
+      <!-- 3D Gyro Floating Phone Showcase -->
       <div class="hero-viewport">
         <div class="phone-stand-rig" id="phone-rig">
-          <div class="phone-rim-glow" aria-hidden="true"></div>
-          <div class="device-chassis">
-            <div class="chassis-lens-glare" aria-hidden="true"></div>
-            <img src="assets/shots/fullplayer.webp" alt="Ozone Player full screen now playing interface" width="540" height="1200" class="chassis-screen">
-            
-            <div class="device-telemetry-hud">
-              <span class="hud-dot"></span>
-              <span>AUDIO CORE: 1411 KBPS LOSSLESS // DUAL DSP ROUTER ACTIVE</span>
+          <div class="hero-floating-phone">
+            <div class="floating-phone-chassis">
+              <div class="chassis-speaker-notch" aria-hidden="true"></div>
+              <div class="chassis-camera-punch" aria-hidden="true"></div>
+              <div class="chassis-lens-glare" aria-hidden="true"></div>
+              <img src="assets/shots/fullplayer.webp" alt="Ozone Player full screen now playing interface" width="540" height="1200" class="chassis-screen">
+              
+              <div class="device-telemetry-hud">
+                <span class="hud-dot"></span>
+                <span>AUDIO CORE: 1411 KBPS LOSSLESS // DUAL DSP ROUTER ACTIVE</span>
+              </div>
             </div>
+            <div class="hero-phone-ground-shadow" aria-hidden="true"></div>
           </div>
         </div>
       </div>
@@ -268,48 +272,171 @@
   </div>
 </section>
 
-<!-- SECTION 4: REAL INTERFACE SHOWCASE -->
+<!-- SECTION 4: FLOATING PHONES INTERFACE ARENA -->
 <section class="section-container" id="screens">
-  <div class="shell showcase-layout">
-    <div class="showcase-navigator">
-      <h2 class="section-headline">Interface Designed for Real One-Handed Use</h2>
+  <div class="shell">
+    <div class="section-title-wrap text-center-wrap">
+      <h2 class="section-headline">The Interface Architecture</h2>
       <p class="section-description">
-        Fluid gesture navigation, dynamic album art ambient lighting, scroll-linked hero morphing, and Romanized live synchronized lyrics.
+        Engineered natively in Jetpack Compose for fluid one-handed navigation, dynamic album art illumination, scroll-linked hero morphing, and synced Romanized lyrics.
       </p>
-
-      <div class="showcase-nav-list">
-        <button class="showcase-nav-item on" data-img="fullplayer">
-          <span class="nav-item-title">Now Playing Stage</span>
-          <span class="nav-item-sub">Dynamic ambient color glow and gesture swipe-to-skip</span>
-        </button>
-
-        <button class="showcase-nav-item" data-img="main_screen">
-          <span class="nav-item-title">Discovery &amp; Smart Mixes</span>
-          <span class="nav-item-sub">Spotify discovery algorithms backed by YouTube Music catalog</span>
-        </button>
-
-        <button class="showcase-nav-item" data-img="lyrics_screen">
-          <span class="nav-item-title">Synchronized Romanized Lyrics</span>
-          <span class="nav-item-sub">Multi-provider line-by-line sync with automatic romanization</span>
-        </button>
-
-        <button class="showcase-nav-item" data-img="artist_screen">
-          <span class="nav-item-title">Scroll-Linked Artist View</span>
-          <span class="nav-item-sub">Hero cover collapse animation transitioning smoothly on scroll</span>
-        </button>
-
-        <button class="showcase-nav-item" data-img="queue">
-          <span class="nav-item-title">Dynamic Queue &amp; Automix</span>
-          <span class="nav-item-sub">Fast drag-to-reorder with intelligent music continuation</span>
-        </button>
-      </div>
     </div>
 
-    <div class="showcase-viewport">
-      <div class="showcase-device-frame">
-        <div class="device-lens-glare" aria-hidden="true"></div>
-        <img id="stage-screen" src="assets/shots/fullplayer.webp" alt="Ozone Player screen view" width="540" height="1200">
-      </div>
+    <!-- Category Filter Controls -->
+    <div class="phone-filter-bar">
+      <button class="phone-filter-btn active" data-filter="all">All 8 Views</button>
+      <button class="phone-filter-btn" data-filter="playback">Playback &amp; Lyrics</button>
+      <button class="phone-filter-btn" data-filter="discovery">Discovery &amp; Radio</button>
+      <button class="phone-filter-btn" data-filter="library">Queue &amp; Artist</button>
+    </div>
+
+    <!-- 3D Floating Phone Gallery Grid -->
+    <div class="floating-phones-arena" id="phones-arena">
+
+      <!-- Phone 1: Full Player -->
+      <article class="floating-phone-card" data-category="playback">
+        <div class="phone-levitation-wrap float-delay-1">
+          <div class="phone-hardware-chassis">
+            <div class="chassis-speaker-notch" aria-hidden="true"></div>
+            <div class="chassis-camera-punch" aria-hidden="true"></div>
+            <div class="chassis-lens-glare" aria-hidden="true"></div>
+            <img src="assets/shots/fullplayer.webp" alt="Ozone Player Now Playing Full Screen" width="540" height="1200" class="phone-display-img" loading="lazy">
+          </div>
+          <div class="phone-ground-shadow" aria-hidden="true"></div>
+        </div>
+        <div class="phone-card-meta">
+          <span class="meta-tag">NOW PLAYING</span>
+          <h3 class="meta-title">Hi-Res Lossless Player</h3>
+          <p class="meta-desc">Dynamic album art lighting, horizontal drag to skip, and native 24-bit audio playback controls.</p>
+        </div>
+      </article>
+
+      <!-- Phone 2: Synced Lyrics -->
+      <article class="floating-phone-card" data-category="playback">
+        <div class="phone-levitation-wrap float-delay-2">
+          <div class="phone-hardware-chassis">
+            <div class="chassis-speaker-notch" aria-hidden="true"></div>
+            <div class="chassis-camera-punch" aria-hidden="true"></div>
+            <div class="chassis-lens-glare" aria-hidden="true"></div>
+            <img src="assets/shots/lyrics_screen.webp" alt="Ozone Player Synced Romanized Lyrics Screen" width="540" height="1200" class="phone-display-img" loading="lazy">
+          </div>
+          <div class="phone-ground-shadow" aria-hidden="true"></div>
+        </div>
+        <div class="phone-card-meta">
+          <span class="meta-tag">LYRICS ENGINE</span>
+          <h3 class="meta-title">Synchronized Romanized Lyrics</h3>
+          <p class="meta-desc">Multi-provider line-by-line sync with instant automatic romanization for Asian and global tracks.</p>
+        </div>
+      </article>
+
+      <!-- Phone 3: Main Discovery -->
+      <article class="floating-phone-card" data-category="discovery">
+        <div class="phone-levitation-wrap float-delay-3">
+          <div class="phone-hardware-chassis">
+            <div class="chassis-speaker-notch" aria-hidden="true"></div>
+            <div class="chassis-camera-punch" aria-hidden="true"></div>
+            <div class="chassis-lens-glare" aria-hidden="true"></div>
+            <img src="assets/shots/main_screen.webp" alt="Ozone Player Main Discovery Feed" width="540" height="1200" class="phone-display-img" loading="lazy">
+          </div>
+          <div class="phone-ground-shadow" aria-hidden="true"></div>
+        </div>
+        <div class="phone-card-meta">
+          <span class="meta-tag">DISCOVERY</span>
+          <h3 class="meta-title">Smart Recommendations</h3>
+          <p class="meta-desc">Spotify discovery algorithms backed by YouTube Music’s limitless 100M+ global music catalog.</p>
+        </div>
+      </article>
+
+      <!-- Phone 4: Daily Mix -->
+      <article class="floating-phone-card" data-category="discovery">
+        <div class="phone-levitation-wrap float-delay-4">
+          <div class="phone-hardware-chassis">
+            <div class="chassis-speaker-notch" aria-hidden="true"></div>
+            <div class="chassis-camera-punch" aria-hidden="true"></div>
+            <div class="chassis-lens-glare" aria-hidden="true"></div>
+            <img src="assets/shots/spotify_dailymix.webp" alt="Ozone Player Daily Mix Hub" width="540" height="1200" class="phone-display-img" loading="lazy">
+          </div>
+          <div class="phone-ground-shadow" aria-hidden="true"></div>
+        </div>
+        <div class="phone-card-meta">
+          <span class="meta-tag">DAILY MIX</span>
+          <h3 class="meta-title">Personalized Station Hub</h3>
+          <p class="meta-desc">Automated genre clusters and personalized daily listening mixes refreshed continuously.</p>
+        </div>
+      </article>
+
+      <!-- Phone 5: Artist Screen -->
+      <article class="floating-phone-card" data-category="library">
+        <div class="phone-levitation-wrap float-delay-1">
+          <div class="phone-hardware-chassis">
+            <div class="chassis-speaker-notch" aria-hidden="true"></div>
+            <div class="chassis-camera-punch" aria-hidden="true"></div>
+            <div class="chassis-lens-glare" aria-hidden="true"></div>
+            <img src="assets/shots/artist_screen.webp" alt="Ozone Player Artist Discography View" width="540" height="1200" class="phone-display-img" loading="lazy">
+          </div>
+          <div class="phone-ground-shadow" aria-hidden="true"></div>
+        </div>
+        <div class="phone-card-meta">
+          <span class="meta-tag">ARTIST EXPLORER</span>
+          <h3 class="meta-title">Scroll-Linked Discography</h3>
+          <p class="meta-desc">Hero cover collapse animation with complete album discographies, top singles, and related artists.</p>
+        </div>
+      </article>
+
+      <!-- Phone 6: Dynamic Queue -->
+      <article class="floating-phone-card" data-category="library">
+        <div class="phone-levitation-wrap float-delay-2">
+          <div class="phone-hardware-chassis">
+            <div class="chassis-speaker-notch" aria-hidden="true"></div>
+            <div class="chassis-camera-punch" aria-hidden="true"></div>
+            <div class="chassis-lens-glare" aria-hidden="true"></div>
+            <img src="assets/shots/queue.webp" alt="Ozone Player Dynamic Queue Management" width="540" height="1200" class="phone-display-img" loading="lazy">
+          </div>
+          <div class="phone-ground-shadow" aria-hidden="true"></div>
+        </div>
+        <div class="phone-card-meta">
+          <span class="meta-tag">QUEUE CORE</span>
+          <h3 class="meta-title">Drag Reorder &amp; Automix</h3>
+          <p class="meta-desc">Instant reordering with intelligent music continuation that queues related tracks without interruption.</p>
+        </div>
+      </article>
+
+      <!-- Phone 7: Spotify Library -->
+      <article class="floating-phone-card" data-category="discovery">
+        <div class="phone-levitation-wrap float-delay-3">
+          <div class="phone-hardware-chassis">
+            <div class="chassis-speaker-notch" aria-hidden="true"></div>
+            <div class="chassis-camera-punch" aria-hidden="true"></div>
+            <div class="chassis-lens-glare" aria-hidden="true"></div>
+            <img src="assets/shots/spotify.webp" alt="Ozone Player Spotify Library Integration" width="540" height="1200" class="phone-display-img" loading="lazy">
+          </div>
+          <div class="phone-ground-shadow" aria-hidden="true"></div>
+        </div>
+        <div class="phone-card-meta">
+          <span class="meta-tag">INTEGRATION</span>
+          <h3 class="meta-title">Spotify Catalog Bridge</h3>
+          <p class="meta-desc">Import Spotify playlists, sync your favorite artists, and stream uncompressed audio directly.</p>
+        </div>
+      </article>
+
+      <!-- Phone 8: Spotify Radio -->
+      <article class="floating-phone-card" data-category="discovery">
+        <div class="phone-levitation-wrap float-delay-4">
+          <div class="phone-hardware-chassis">
+            <div class="chassis-speaker-notch" aria-hidden="true"></div>
+            <div class="chassis-camera-punch" aria-hidden="true"></div>
+            <div class="chassis-lens-glare" aria-hidden="true"></div>
+            <img src="assets/shots/spotify_radio.webp" alt="Ozone Player Infinite Radio Station" width="540" height="1200" class="phone-display-img" loading="lazy">
+          </div>
+          <div class="phone-ground-shadow" aria-hidden="true"></div>
+        </div>
+        <div class="phone-card-meta">
+          <span class="meta-tag">RADIO ENGINE</span>
+          <h3 class="meta-title">Continuous Artist Radio</h3>
+          <p class="meta-desc">Endless algorithmic radio stations derived from any track, mood, or artist with zero ad interruptions.</p>
+        </div>
+      </article>
+
     </div>
   </div>
 </section>
