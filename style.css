@@ -228,7 +228,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
    HERO: MONUMENT OF SOUND
    ========================================================================== */
 .hero-monument {
-  padding: clamp(7.5rem, 14vw, 11rem) 0 clamp(4rem, 8vw, 6.5rem);
+  padding: 8.5rem 0 5rem;
   position: relative;
 }
 
@@ -256,7 +256,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .monument-title {
   font-family: var(--font-display);
-  font-size: clamp(3.8rem, 12vw, 9.5rem);
+  font-size: 6.5rem;
   font-weight: 700;
   line-height: 0.88;
   letter-spacing: -0.04em;
@@ -265,7 +265,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 
 .monument-subtitle {
-  font-size: clamp(1.2rem, 2vw, 1.8rem);
+  font-size: 1.4rem;
   color: var(--text-dim);
   font-weight: 500;
   letter-spacing: -0.01em;
@@ -274,13 +274,13 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .hero-stage-grid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
-  gap: clamp(2rem, 5vw, 4rem);
+  gap: 3rem;
   align-items: center;
   margin-top: 2rem;
 }
 
 .hero-body {
-  font-size: clamp(1rem, 1.25vw, 1.15rem);
+  font-size: 1.1rem;
   line-height: 1.7;
   color: var(--text-dim);
   margin-bottom: 2.5rem;
@@ -506,7 +506,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
    SECTION COMMON
    ========================================================================== */
 .section-container {
-  padding: clamp(4.5rem, 9vw, 7.5rem) 0;
+  padding: 6rem 0;
   position: relative;
 }
 
@@ -522,7 +522,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .section-headline {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-size: 2.75rem;
   font-weight: 700;
   letter-spacing: -0.025em;
   line-height: 1.15;
@@ -544,7 +544,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   backdrop-filter: blur(20px);
   border: 1px solid var(--line);
   border-radius: 24px;
-  padding: clamp(1.5rem, 3.5vw, 2.5rem);
+  padding: 2.25rem;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
 }
 
@@ -707,7 +707,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   backdrop-filter: blur(20px);
   border: 1px solid var(--line);
   border-radius: 24px;
-  padding: clamp(1.5rem, 3.5vw, 2.5rem);
+  padding: 2.25rem;
 }
 
 .acoustic-switch-row {
@@ -992,7 +992,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .cta-headline {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: 2.6rem;
   font-weight: 700;
   margin-bottom: 0.75rem;
   color: var(--text-pure);
