@@ -1,7 +1,7 @@
 /**
  * OZONE PLAYER // AURAL ARCHITECTURE PRO SCRIPT
- * High-precision motion, hardware DSP simulation, audio FFT visualization.
- * Zero AI slop, zero emojis, verified authentic engineering aesthetics.
+ * Luxury Audiophile Hardware Controls & Floating Phone Dynamics
+ * ZERO NEON · Monochromatic Titanium & Warm Studio Amber
  */
 
 (function () {
@@ -22,8 +22,8 @@
   // 5. ACOUSTIC SPECTROGRAM LAB
   initAcousticLab();
 
-  // 6. SCREEN SHOWCASE SWITCHER
-  initScreenShowcase();
+  // 6. FLOATING PHONES CATEGORY FILTERS
+  initPhoneFilters();
 
   // 7. MASTHEAD SCROLL DYNAMICS
   initMastheadScroll();
@@ -33,7 +33,7 @@
 })();
 
 /* ==========================================================================
-   1. PRECISION DOUBLE-RING CURSOR (Laocoön-Style Lerp Physics)
+   1. PRECISION DOUBLE-RING CURSOR (Monochrome Titanium Lerp Physics)
    ========================================================================== */
 function initCustomCursor() {
   const dot = document.getElementById('cursor-dot');
@@ -64,7 +64,7 @@ function initCustomCursor() {
     }
   }, { passive: true });
 
-  const interactiveSelector = 'a, button, input, .arch-card, .phone-stand-rig, .acoustic-mode-tab, .showcase-nav-item, .console-deck-panel';
+  const interactiveSelector = 'a, button, input, .arch-card, .floating-phone-card, .phone-filter-btn, .acoustic-mode-tab, .console-deck-panel';
   const interactives = document.querySelectorAll(interactiveSelector);
   interactives.forEach(el => {
     el.addEventListener('mouseenter', () => ring.classList.add('hovering'));
@@ -82,7 +82,7 @@ function initCustomCursor() {
 }
 
 /* ==========================================================================
-   2. AMBIENT ACOUSTIC PARTICLE CANVAS (Soda Force-Field Particles)
+   2. AMBIENT ACOUSTIC PARTICLE CANVAS (Monochrome Stardust & Force-Field)
    ========================================================================== */
 function initStageCanvas() {
   const canvas = document.getElementById('stage-canvas');
@@ -104,16 +104,16 @@ function initStageCanvas() {
     mouse.y = e.clientY;
   }, { passive: true });
 
-  const particleCount = 48;
+  const particleCount = 42;
   const particles = [];
   for (let i = 0; i < particleCount; i++) {
     particles.push({
       x: Math.random() * width,
       y: Math.random() * height,
-      vx: (Math.random() - 0.5) * 0.35,
-      vy: (Math.random() - 0.5) * 0.35,
-      radius: Math.random() * 1.8 + 0.8,
-      baseAlpha: Math.random() * 0.25 + 0.08,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      radius: Math.random() * 1.5 + 0.6,
+      baseAlpha: Math.random() * 0.22 + 0.06,
       phase: Math.random() * Math.PI * 2
     });
   }
@@ -137,7 +137,7 @@ function initStageCanvas() {
       const dx = mouse.x - p.x;
       const dy = mouse.y - p.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      const repulseRadius = 160;
+      const repulseRadius = 150;
 
       if (dist < repulseRadius && dist > 0) {
         const force = (repulseRadius - dist) / repulseRadius;
@@ -147,20 +147,20 @@ function initStageCanvas() {
 
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(0, 245, 255, ${p.baseAlpha})`;
+      ctx.fillStyle = `rgba(255, 255, 255, ${p.baseAlpha})`;
       ctx.fill();
 
-      // Connect close neighbors
+      // Subtle connect for neighbors
       for (let j = i + 1; j < particles.length; j++) {
         const p2 = particles[j];
         const cdx = p.x - p2.x;
         const cdy = p.y - p2.y;
         const cdist = Math.sqrt(cdx * cdx + cdy * cdy);
-        if (cdist < 90) {
+        if (cdist < 85) {
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
           ctx.lineTo(p2.x, p2.y);
-          ctx.strokeStyle = `rgba(0, 245, 255, ${0.04 * (1 - cdist / 90)})`;
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.03 * (1 - cdist / 85)})`;
           ctx.stroke();
         }
       }
@@ -172,7 +172,7 @@ function initStageCanvas() {
 }
 
 /* ==========================================================================
-   3. 3D GYRO PHONE TILT (Perspective Audio Device Rig)
+   3. 3D GYRO PHONE TILT (Perspective Floating Rig & Interactive Cards)
    ========================================================================== */
 function initPhoneTilt() {
   const rig = document.getElementById('phone-rig');
@@ -202,10 +202,28 @@ function initPhoneTilt() {
     requestAnimationFrame(renderTilt);
   }
   requestAnimationFrame(renderTilt);
+
+  // Micro 3D tilt for floating phone cards in the arena
+  const phoneCards = document.querySelectorAll('.floating-phone-card');
+  phoneCards.forEach(card => {
+    const chassis = card.querySelector('.phone-hardware-chassis');
+    if (!chassis) return;
+
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      chassis.style.transform = `perspective(800px) rotateY(${x * 14}deg) rotateX(${-y * 14}deg) scale(1.02)`;
+    });
+
+    card.addEventListener('mouseleave', () => {
+      chassis.style.transform = 'perspective(800px) rotateY(0deg) rotateX(0deg) scale(1)';
+    });
+  });
 }
 
 /* ==========================================================================
-   4. DUAL PLAY HARDWARE CONSOLE (Live Stereo Crossfader & VU Flutter)
+   4. DUAL PLAY HARDWARE CONSOLE (Live Stereo Crossfader & Studio Amber VU)
    ========================================================================== */
 function initDualPlayConsole() {
   const fader = document.getElementById('master-fader');
@@ -251,7 +269,7 @@ function initDualPlayConsole() {
     updateMixer(e.target.value);
   });
 
-  // Natural VU meter audio flutter simulation
+  // Natural VU meter audio flutter simulation (warm analog studio tape jitter)
   function flutterVU() {
     const jitterA = (Math.random() - 0.5) * 8;
     const jitterB = (Math.random() - 0.5) * 8;
@@ -268,7 +286,7 @@ function initDualPlayConsole() {
 }
 
 /* ==========================================================================
-   5. ACOUSTIC SPECTROGRAM LAB (Dynamic Canvas FFT Simulation)
+   5. ACOUSTIC SPECTROGRAM LAB (Monochrome & Warm Studio Amber FFT)
    ========================================================================== */
 function initAcousticLab() {
   const tabs = document.querySelectorAll('.acoustic-mode-tab');
@@ -322,7 +340,6 @@ function initAcousticLab() {
     });
   });
 
-  // Animated FFT Waterfall / Bars
   const barCount = 64;
   let phase = 0;
 
@@ -334,7 +351,7 @@ function initAcousticLab() {
     ctx.fillStyle = '#090b10';
     ctx.fillRect(0, 0, w, h);
 
-    // Grid lines
+    // Subtle studio grid
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
     ctx.lineWidth = 1;
     for (let y = 30; y < h; y += 35) {
@@ -352,7 +369,6 @@ function initAcousticLab() {
       let heightFactor = 0;
 
       if (normalizedFreq <= currentSpec.cutoffFreq) {
-        // Natural frequency harmonics
         const harmonic = Math.sin(phase + i * 0.18) * 0.35 + Math.cos(phase * 0.7 + i * 0.08) * 0.35 + 0.5;
         const decay = 1 - Math.pow(normalizedFreq, 1.4) * 0.6;
         heightFactor = Math.max(0.08, harmonic * decay);
@@ -361,7 +377,6 @@ function initAcousticLab() {
           heightFactor += (Math.random() - 0.5) * currentSpec.noise;
         }
       } else {
-        // Hard cut off zone
         heightFactor = Math.random() * 0.03;
       }
 
@@ -369,15 +384,15 @@ function initAcousticLab() {
       const x = 20 + i * barWidth;
       const y = h - 10 - barH;
 
-      // Gradient bar fill
+      // Studio monochrome to warm amber gradient
       const grad = ctx.createLinearGradient(0, y, 0, h - 10);
       if (normalizedFreq > currentSpec.cutoffFreq) {
-        grad.addColorStop(0, 'rgba(239, 68, 68, 0.6)');
-        grad.addColorStop(1, 'rgba(239, 68, 68, 0.05)');
+        grad.addColorStop(0, 'rgba(239, 68, 68, 0.7)');
+        grad.addColorStop(1, 'rgba(239, 68, 68, 0.08)');
       } else {
-        grad.addColorStop(0, '#00f5ff');
-        grad.addColorStop(0.5, '#6366f1');
-        grad.addColorStop(1, 'rgba(0, 245, 255, 0.1)');
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(0.35, '#f59e0b');
+        grad.addColorStop(1, 'rgba(255, 255, 255, 0.08)');
       }
 
       ctx.fillStyle = grad;
@@ -390,32 +405,28 @@ function initAcousticLab() {
 }
 
 /* ==========================================================================
-   6. SCREEN SHOWCASE SWITCHER (Fluid Cross-Fade)
+   6. FLOATING PHONES CATEGORY FILTERS
    ========================================================================== */
-function initScreenShowcase() {
-  const stage = document.getElementById('stage-screen');
-  const navItems = document.querySelectorAll('.showcase-nav-item');
-  if (!stage || !navItems.length) return;
+function initPhoneFilters() {
+  const filterBtns = document.querySelectorAll('.phone-filter-btn');
+  const cards = document.querySelectorAll('.floating-phone-card');
+  if (!filterBtns.length || !cards.length) return;
 
-  navItems.forEach(item => {
-    item.addEventListener('click', () => {
-      if (item.classList.contains('on')) return;
-      navItems.forEach(i => i.classList.remove('on'));
-      item.classList.add('on');
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
 
-      const imgName = item.getAttribute('data-img');
-      if (!imgName) return;
+      const filter = btn.getAttribute('data-filter') || 'all';
 
-      stage.style.opacity = '0.2';
-      stage.style.transform = 'scale(0.98)';
-
-      setTimeout(() => {
-        stage.src = `assets/shots/${imgName}.webp`;
-        stage.onload = () => {
-          stage.style.opacity = '1';
-          stage.style.transform = 'scale(1)';
-        };
-      }, 140);
+      cards.forEach(card => {
+        const category = card.getAttribute('data-category');
+        if (filter === 'all' || category === filter) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
     });
   });
 }
@@ -437,7 +448,7 @@ function initMastheadScroll() {
 }
 
 /* ==========================================================================
-   8. LIVE GITHUB METRICS (Zero Banned Characters)
+   8. LIVE GITHUB METRICS
    ========================================================================== */
 function fetchGitHubMetrics() {
   const starText = document.getElementById('star-count-text');
@@ -450,7 +461,5 @@ function fetchGitHubMetrics() {
         starText.textContent = `${data.stargazers_count} Stars`;
       }
     })
-    .catch(() => {
-      // Graceful fallback to static text
-    });
+    .catch(() => {});
 }

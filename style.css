@@ -1,29 +1,36 @@
 /**
  * OZONE PLAYER // AURAL ARCHITECTURE PRO
- * Anti-slop, authentic engineering aesthetic.
- * Zero emojis, zero generic eyebrows, zero fake index numbers.
+ * Luxury Audiophile Hardware Aesthetic
+ * ZERO NEON · Authentic Titanium, Obsidian & Studio Amber
+ * Fluid 3D Floating Phone Mockups & Precision Motion
  */
 
 :root {
-  --bg-void: #07080b;
-  --bg-card: rgba(17, 20, 28, 0.75);
-  --bg-card-hover: rgba(22, 26, 36, 0.9);
+  --bg-void: #07080a;
+  --bg-surface: #0e1014;
+  --bg-card: rgba(18, 20, 26, 0.78);
+  --bg-card-hover: rgba(26, 29, 38, 0.92);
+  
   --line: rgba(255, 255, 255, 0.08);
   --line-strong: rgba(255, 255, 255, 0.16);
-  
-  --text-pure: #f8fafc;
+  --line-focus: rgba(255, 255, 255, 0.35);
+
+  --text-pure: #ffffff;
+  --text-silver: #e2e8f0;
   --text-dim: #94a3b8;
   --text-muted: #64748b;
-  
-  --cyan: #00f5ff;
-  --cyan-glow: rgba(0, 245, 255, 0.28);
-  --indigo: #6366f1;
-  --green: #10b981;
+
+  /* Studio Hardware Accents (Zero Neon!) */
+  --amber: #f59e0b;
+  --amber-dark: #d97706;
+  --amber-glow: rgba(245, 158, 11, 0.22);
+  --metal-shine: #e2e8f0;
 
   --font-display: 'Space Grotesk', -apple-system, sans-serif;
   --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 *, *::before, *::after {
@@ -47,20 +54,16 @@ body {
   overflow-x: hidden;
   position: relative;
   min-height: 100vh;
-}
-
-body.locked {
-  overflow: hidden;
-  height: 100vh;
+  background-color: var(--bg-void);
 }
 
 a { color: inherit; text-decoration: none; }
 img { display: block; max-width: 100%; }
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 .shell { width: min(1180px, 100% - 48px); margin-inline: auto; position: relative; z-index: 10; }
-:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; border-radius: 6px; }
+:focus-visible { outline: 2px solid var(--text-pure); outline-offset: 3px; border-radius: 6px; }
 
-/* Custom Precision Cursor (Desktop Only) */
+/* Custom Precision Cursor (Monochrome Titanium, No Neon) */
 .cursor-dot, .cursor-ring {
   position: fixed;
   top: 0; left: 0;
@@ -77,22 +80,22 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     display: block;
     width: 6px; height: 6px;
     background: #ffffff;
-    box-shadow: 0 0 8px var(--cyan);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
   }
   .cursor-ring {
     display: block;
     width: 36px; height: 36px;
-    border: 1.5px solid rgba(0, 245, 255, 0.45);
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
     transition: width 0.25s ease, height 0.25s ease, border-color 0.25s ease, background 0.25s ease;
   }
   .cursor-ring.hovering {
     width: 56px; height: 56px;
-    border-color: rgba(255, 255, 255, 0.8);
-    background: rgba(0, 245, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.05);
   }
 }
 
-/* Background Acoustic Stage Canvas */
+/* Background Ambient Acoustic Canvas */
 #stage-canvas {
   position: fixed;
   inset: 0;
@@ -101,21 +104,23 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   pointer-events: none;
 }
 
-/* Top Masthead */
+/* ==========================================================================
+   TOP MASTHEAD
+   ========================================================================== */
 .masthead {
   position: fixed;
   inset: 0 0 auto;
   z-index: 50;
-  padding: 1rem 0;
+  padding: 1.1rem 0;
   transition: background 0.3s ease, border-color 0.3s ease, padding 0.3s ease;
   border-bottom: 1px solid transparent;
 }
 
 .masthead.scrolled {
-  background: rgba(7, 8, 11, 0.88);
+  background: rgba(7, 8, 10, 0.9);
   backdrop-filter: blur(20px);
   border-color: var(--line);
-  padding: 0.65rem 0;
+  padding: 0.75rem 0;
 }
 
 .masthead-grid {
@@ -133,7 +138,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .brand-signature img {
   border-radius: 8px;
-  box-shadow: 0 0 12px var(--cyan-glow);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
 .brand-text {
@@ -149,8 +154,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   font-weight: 700;
   letter-spacing: 0.08em;
   padding: 2px 7px;
-  background: rgba(0, 245, 255, 0.1);
-  color: var(--cyan);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-silver);
+  border: 1px solid var(--line);
   border-radius: 4px;
 }
 
@@ -159,6 +165,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   gap: 28px;
   font-size: 14px;
   color: var(--text-dim);
+}
+
+.masthead-nav a {
+  transition: color 0.2s ease;
 }
 
 .masthead-nav a:hover { color: var(--text-pure); }
@@ -178,12 +188,14 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   padding: 6px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
   transition: all 0.2s ease;
 }
 
 .gh-link:hover {
   color: var(--text-pure);
   border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .star-badge {
@@ -192,7 +204,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   gap: 4px;
   font-family: var(--font-display);
   font-size: 12px;
-  color: var(--cyan);
+  color: var(--amber);
   font-weight: 700;
 }
 
@@ -208,7 +220,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .action-btn-small:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
 }
 
 /* ==========================================================================
@@ -230,15 +242,15 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   font-family: var(--font-display);
   font-size: 0.72rem;
   letter-spacing: 0.1em;
-  color: var(--cyan);
+  color: var(--text-silver);
   margin-bottom: 1rem;
 }
 
 .status-indicator {
   width: 6px; height: 6px;
   border-radius: 50%;
-  background: var(--cyan);
-  box-shadow: 0 0 8px var(--cyan);
+  background: var(--amber);
+  box-shadow: 0 0 8px var(--amber);
 }
 
 .monument-title {
@@ -286,16 +298,16 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   display: inline-flex;
   flex-direction: column;
   background: #ffffff;
-  color: #07080b;
-  padding: 0.9rem 1.6rem;
+  color: #07080a;
+  padding: 0.95rem 1.65rem;
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 20px var(--cyan-glow);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
   transition: transform 0.25s var(--ease-spring), box-shadow 0.25s ease;
 }
 
 .action-btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 16px 40px rgba(0, 245, 255, 0.3);
+  box-shadow: 0 16px 40px rgba(255, 255, 255, 0.2);
 }
 
 .btn-main-text {
@@ -327,7 +339,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .action-btn-outline:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: var(--cyan);
+  border-color: var(--line-focus);
 }
 
 /* Telemetry Stats Bar */
@@ -348,14 +360,14 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   font-family: var(--font-display);
   font-size: 1.6rem;
   font-weight: 700;
-  color: var(--cyan);
+  color: var(--text-pure);
   line-height: 1;
 }
 
 .telemetry-unit {
   font-family: var(--font-display);
   font-size: 0.75rem;
-  color: var(--text-dim);
+  color: var(--text-silver);
   text-transform: uppercase;
 }
 
@@ -371,7 +383,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   background: var(--line);
 }
 
-/* 3D Phone Stand */
+/* ==========================================================================
+   HERO FLOATING PHONE RIG (Realistic 3D Levitation & Gyro)
+   ========================================================================== */
 .hero-viewport {
   position: relative;
   display: flex;
@@ -382,36 +396,62 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .phone-stand-rig {
   position: relative;
   width: 100%;
-  max-width: 330px;
+  max-width: 320px;
   transform-style: preserve-3d;
   transition: transform 0.15s ease-out;
 }
 
-.phone-rim-glow {
-  position: absolute;
-  inset: -15px;
-  background: radial-gradient(circle, var(--cyan-glow) 0%, transparent 65%);
-  filter: blur(35px);
-  z-index: 0;
-  pointer-events: none;
+.hero-floating-phone {
+  position: relative;
+  animation: heroFloat 5.2s ease-in-out infinite;
 }
 
-.device-chassis {
+@keyframes heroFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.floating-phone-chassis {
   position: relative;
-  z-index: 1;
-  background: #11141c;
-  border: 4px solid #1e2433;
-  border-radius: 40px;
+  z-index: 2;
+  background: #0f1117;
+  border: 4px solid #272a34;
+  border-radius: 38px;
   overflow: hidden;
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.9), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.chassis-speaker-notch {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 44px;
+  height: 3.5px;
+  background: #1e212b;
+  border-radius: 3px;
+  z-index: 5;
+}
+
+.chassis-camera-punch {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 9px;
+  height: 9px;
+  background: #07080a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  z-index: 5;
 }
 
 .chassis-lens-glare {
   position: absolute;
   top: 0; left: 0; right: 0; height: 50%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, transparent 60%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 55%);
   pointer-events: none;
-  z-index: 3;
+  z-index: 4;
 }
 
 .chassis-screen {
@@ -421,10 +461,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .device-telemetry-hud {
   position: absolute;
-  bottom: 18px;
+  bottom: 16px;
   left: 14px;
   right: 14px;
-  background: rgba(9, 11, 16, 0.88);
+  background: rgba(10, 12, 16, 0.92);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
@@ -434,7 +474,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   gap: 8px;
   font-family: var(--font-display);
   font-size: 0.65rem;
-  color: var(--cyan);
+  color: var(--text-silver);
   letter-spacing: 0.04em;
   z-index: 4;
 }
@@ -442,8 +482,23 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .hud-dot {
   width: 6px; height: 6px;
   border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 6px var(--green);
+  background: var(--amber);
+  box-shadow: 0 0 6px var(--amber);
+}
+
+.hero-phone-ground-shadow {
+  width: 75%;
+  height: 20px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.8) 0%, transparent 75%);
+  margin: 18px auto 0;
+  border-radius: 50%;
+  filter: blur(6px);
+  animation: heroShadow 5.2s ease-in-out infinite;
+}
+
+@keyframes heroShadow {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(0.85); opacity: 0.45; }
 }
 
 /* ==========================================================================
@@ -457,6 +512,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .section-title-wrap {
   max-width: 720px;
   margin-bottom: 3.5rem;
+}
+
+.text-center-wrap {
+  margin-inline: auto;
+  text-align: center;
 }
 
 .section-headline {
@@ -476,7 +536,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 
 /* ==========================================================================
-   DUAL PLAY MIXER CONSOLE
+   DUAL PLAY MIXER CONSOLE (Hardware Titanium & Amber, No Neon)
    ========================================================================== */
 .mixer-console {
   background: var(--bg-card);
@@ -484,7 +544,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   border: 1px solid var(--line);
   border-radius: 24px;
   padding: clamp(1.5rem, 3.5vw, 2.5rem);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
 }
 
 .console-hud-bar {
@@ -509,15 +569,16 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .hud-led {
   width: 8px; height: 8px;
   border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 8px var(--green);
+  background: var(--amber);
+  box-shadow: 0 0 8px var(--amber);
 }
 
 .hud-readout {
   font-family: var(--font-display);
   font-size: 0.85rem;
   font-weight: 700;
-  color: var(--cyan);
+  color: var(--text-pure);
+  letter-spacing: 0.02em;
 }
 
 .console-body-grid {
@@ -529,7 +590,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 
 .console-deck-panel {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.025);
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 1.5rem;
@@ -537,9 +598,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 
 .console-deck-panel.active {
-  background: rgba(0, 245, 255, 0.06);
-  border-color: var(--cyan);
-  box-shadow: 0 0 30px var(--cyan-glow);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .panel-channel-tag {
@@ -551,7 +612,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   margin-bottom: 0.5rem;
 }
 
-.console-deck-panel.active .panel-channel-tag { color: var(--cyan); }
+.console-deck-panel.active .panel-channel-tag { color: var(--amber); }
 .panel-song-title { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.25rem; }
 .panel-artist { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1.25rem; }
 
@@ -564,7 +625,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .vu-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--indigo), var(--cyan));
+  background: linear-gradient(90deg, #d97706, #f59e0b);
   border-radius: 999px;
   transition: width 0.15s ease-out;
 }
@@ -601,9 +662,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   appearance: none;
   width: 28px; height: 28px;
   border-radius: 8px;
-  background: var(--cyan);
-  box-shadow: 0 0 16px var(--cyan);
-  border: 2px solid #ffffff;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);
+  border: 2px solid #cbd5e1;
   cursor: ew-resize;
 }
 
@@ -634,7 +695,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 
 .console-spec-row svg {
-  color: var(--cyan);
+  color: var(--amber);
 }
 
 /* ==========================================================================
@@ -668,9 +729,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .acoustic-mode-tab:hover { background: rgba(255, 255, 255, 0.05); }
 .acoustic-mode-tab.on {
-  background: rgba(0, 245, 255, 0.08);
-  border-color: var(--cyan);
-  box-shadow: 0 0 25px var(--cyan-glow);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .acoustic-mode-tab strong {
@@ -681,7 +742,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   margin-bottom: 0.25rem;
 }
 
-.acoustic-mode-tab.on strong { color: var(--cyan); }
+.acoustic-mode-tab.on strong { color: #ffffff; }
 .acoustic-mode-tab span { font-size: 0.8rem; color: var(--text-muted); }
 
 .acoustic-graph-display {
@@ -716,81 +777,159 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .spec-metric .spec-value {
   font-family: var(--font-display);
   font-size: 0.95rem;
-  color: var(--cyan);
+  color: var(--text-pure);
 }
 
 /* ==========================================================================
-   SHOWCASE SECTION
+   FLOATING PHONES INTERFACE ARENA (All Screenshots in Floating Phones)
    ========================================================================== */
-.showcase-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  align-items: center;
+.phone-filter-bar {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 3.5rem;
 }
 
-.showcase-nav-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 2rem;
-}
-
-.showcase-nav-item {
-  display: flex;
-  flex-direction: column;
-  padding: 1.1rem 1.4rem;
-  background: rgba(255, 255, 255, 0.02);
+.phone-filter-btn {
+  padding: 8px 18px;
+  border-radius: 999px;
   border: 1px solid var(--line);
-  border-radius: 14px;
-  text-align: left;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  font-weight: 500;
   transition: all 0.2s ease;
 }
 
-.showcase-nav-item:hover { background: rgba(255, 255, 255, 0.05); }
-.showcase-nav-item.on {
-  background: rgba(0, 245, 255, 0.08);
-  border-color: var(--cyan);
-}
-
-.nav-item-title {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 700;
+.phone-filter-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
   color: var(--text-pure);
-  margin-bottom: 2px;
 }
 
-.showcase-nav-item.on .nav-item-title { color: var(--cyan); }
-.nav-item-sub { font-size: 0.85rem; color: var(--text-dim); }
+.phone-filter-btn.active {
+  background: var(--text-pure);
+  color: var(--bg-void);
+  border-color: var(--text-pure);
+  font-weight: 600;
+}
 
-.showcase-viewport {
+.floating-phones-arena {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 2.5rem 2rem;
+  perspective: 1000px;
+}
+
+.floating-phone-card {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  transition: transform 0.3s var(--ease-spring), opacity 0.3s ease;
 }
 
-.showcase-device-frame {
+.floating-phone-card.hidden {
+  display: none;
+}
+
+.phone-levitation-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  transform-style: preserve-3d;
+}
+
+/* Staggered organic levitation keyframes */
+.float-delay-1 { animation: floatA 4.8s ease-in-out infinite; }
+.float-delay-2 { animation: floatB 5.4s ease-in-out infinite 0.9s; }
+.float-delay-3 { animation: floatC 5.0s ease-in-out infinite 1.7s; }
+.float-delay-4 { animation: floatD 5.6s ease-in-out infinite 2.5s; }
+
+@keyframes floatA {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-11px); }
+}
+
+@keyframes floatB {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-13px); }
+}
+
+@keyframes floatC {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes floatD {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+
+.phone-hardware-chassis {
   position: relative;
   width: 100%;
-  max-width: 320px;
-  border: 4px solid #1e2433;
-  border-radius: 36px;
+  max-width: 250px;
+  background: #0f1117;
+  border: 4px solid #242733;
+  border-radius: 34px;
   overflow: hidden;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 35px var(--cyan-glow);
+  box-shadow: 0 25px 55px rgba(0, 0, 0, 0.85), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  transition: transform 0.25s var(--ease-spring), border-color 0.25s ease;
 }
 
-.device-lens-glare {
-  position: absolute;
-  top: 0; left: 0; right: 0; height: 50%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
-  pointer-events: none;
-  z-index: 3;
+.floating-phone-card:hover .phone-hardware-chassis {
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: scale(1.02);
 }
 
-#stage-screen {
+.phone-display-img {
   width: 100%; height: auto;
   display: block;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.phone-ground-shadow {
+  width: 70%;
+  height: 16px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.8) 0%, transparent 75%);
+  margin-top: 14px;
+  border-radius: 50%;
+  filter: blur(5px);
+  animation: shadowPulse 5s ease-in-out infinite;
+}
+
+@keyframes shadowPulse {
+  0%, 100% { transform: scale(1); opacity: 0.75; }
+  50% { transform: scale(0.85); opacity: 0.45; }
+}
+
+.phone-card-meta {
+  padding: 0 4px;
+}
+
+.meta-tag {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: var(--amber);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.meta-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-pure);
+  margin-bottom: 4px;
+  line-height: 1.25;
+}
+
+.meta-desc {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  line-height: 1.5;
 }
 
 /* ==========================================================================
@@ -812,7 +951,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 
 .arch-card:hover {
-  border-color: var(--cyan);
+  border-color: rgba(255, 255, 255, 0.28);
   transform: translateY(-2px);
 }
 
@@ -838,7 +977,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 
 .cta-content-box {
-  background: radial-gradient(circle at 50% 100%, rgba(0, 245, 255, 0.12), transparent 70%);
+  background: radial-gradient(circle at 50% 100%, rgba(255, 255, 255, 0.05), transparent 70%);
   border: 1px solid var(--line);
   border-radius: 28px;
   padding: 4.5rem 2rem;
@@ -847,33 +986,33 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .cta-brand-logo {
   margin: 0 auto 1.5rem;
   border-radius: 16px;
-  box-shadow: 0 10px 30px var(--cyan-glow);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
 }
 
 .cta-headline {
   font-family: var(--font-display);
-  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 700;
   margin-bottom: 0.75rem;
+  color: var(--text-pure);
 }
 
 .cta-sub {
-  font-size: 1.05rem;
+  font-size: 1rem;
   color: var(--text-dim);
   margin-bottom: 2.5rem;
 }
 
 .cta-actions {
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 1rem;
 }
 
 .footer-bar {
+  padding: 4rem 0 3rem;
   border-top: 1px solid var(--line);
-  padding: 3.5rem 0;
-  background: #040507;
 }
 
 .footer-grid {
@@ -885,25 +1024,20 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .footer-logo-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.15rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 
-.footer-description {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  max-width: 440px;
-  line-height: 1.6;
-}
+.footer-logo-row img { border-radius: 6px; }
+.footer-description { font-size: 0.85rem; color: var(--text-dim); max-width: 320px; line-height: 1.6; }
 
 .footer-links-title {
   font-family: var(--font-display);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   letter-spacing: 0.08em;
-  color: var(--cyan);
+  color: var(--text-muted);
   margin-bottom: 1rem;
 }
 
@@ -917,15 +1051,22 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .footer-links-col a:hover { color: var(--text-pure); }
 
-/* Responsive */
+/* ==========================================================================
+   RESPONSIVE QUERIES
+   ========================================================================== */
 @media (max-width: 900px) {
-  .masthead-nav { display: none; }
   .hero-stage-grid { grid-template-columns: 1fr; }
-  .telemetry-bar { flex-wrap: wrap; }
+  .hero-viewport { margin-top: 2rem; }
   .console-body-grid { grid-template-columns: 1fr; }
+  .architecture-grid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr; gap: 2rem; }
   .acoustic-switch-row { grid-template-columns: 1fr; }
   .spectrogram-readouts { grid-template-columns: 1fr; }
-  .showcase-layout { grid-template-columns: 1fr; }
-  .architecture-grid { grid-template-columns: 1fr; }
-  .footer-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .masthead-nav { display: none; }
+  .telemetry-bar { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .telemetry-divider { display: none; }
+  .floating-phones-arena { grid-template-columns: 1fr; }
 }
