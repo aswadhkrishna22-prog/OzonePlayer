@@ -53,6 +53,12 @@ val HidePlayerThumbnailKey = booleanPreferencesKey("hidePlayerThumbnail")
 val ArchiveTuneCanvasKey = booleanPreferencesKey("archiveTuneCanvas")
 val CanvasSourceKey = stringPreferencesKey("canvasSource")
 val CropThumbnailToSquareKey = booleanPreferencesKey("cropThumbnailToSquare")
+val PlaylistCoverStyleKey = stringPreferencesKey("playlistCoverStyle")
+
+enum class PlaylistCoverStyle {
+    DISCS,
+    COLLAGE,
+}
 
 val AodThumbnailShapeKey = stringPreferencesKey("aodThumbnailShape")
 val AodThumbnailSizeKey = floatPreferencesKey("aodThumbnailSize")

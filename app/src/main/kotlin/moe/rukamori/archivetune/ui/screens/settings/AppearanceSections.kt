@@ -46,6 +46,7 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.AppFontPreference
 import moe.rukamori.archivetune.constants.HomeBackgroundStyle
 import moe.rukamori.archivetune.constants.LibraryFilter
+import moe.rukamori.archivetune.constants.PlaylistCoverStyle
 import moe.rukamori.archivetune.constants.QuickPicksDisplayMode
 import moe.rukamori.archivetune.constants.SplashShapePreference
 import moe.rukamori.archivetune.ui.component.EnumListPreference
@@ -399,6 +400,8 @@ fun AppearanceMiscSection(
     AppearanceMiscSection(
         quickPicksDisplayMode = state.quickPicksDisplayMode,
         onQuickPicksDisplayModeChange = actions.onQuickPicksDisplayModeChange,
+        playlistCoverStyle = state.playlistCoverStyle,
+        onPlaylistCoverStyleChange = actions.onPlaylistCoverStyleChange,
         defaultOpenTab = state.defaultOpenTab,
         onDefaultOpenTabChange = actions.onDefaultOpenTabChange,
         defaultChip = state.defaultChip,
@@ -419,6 +422,8 @@ fun AppearanceMiscSection(
 fun AppearanceMiscSection(
     quickPicksDisplayMode: QuickPicksDisplayMode,
     onQuickPicksDisplayModeChange: (QuickPicksDisplayMode) -> Unit,
+    playlistCoverStyle: PlaylistCoverStyle,
+    onPlaylistCoverStyleChange: (PlaylistCoverStyle) -> Unit,
     defaultOpenTab: NavigationTab,
     onDefaultOpenTabChange: (NavigationTab) -> Unit,
     defaultChip: LibraryFilter,
@@ -448,6 +453,21 @@ fun AppearanceMiscSection(
                         QuickPicksDisplayMode.HERO -> stringResource(R.string.quick_picks_display_mode_hero)
                         QuickPicksDisplayMode.CARD -> stringResource(R.string.quick_picks_display_mode_card)
                         QuickPicksDisplayMode.LIST -> stringResource(R.string.quick_picks_display_mode_list)
+                    }
+                },
+            )
+        }
+
+        item {
+            EnumListPreference(
+                title = { Text(stringResource(R.string.playlist_cover_style)) },
+                icon = { Icon(painterResource(R.drawable.queue_music), null, modifier = Modifier.size(24.dp)) },
+                selectedValue = playlistCoverStyle,
+                onValueSelected = onPlaylistCoverStyleChange,
+                valueText = {
+                    when (it) {
+                        PlaylistCoverStyle.DISCS -> stringResource(R.string.playlist_cover_style_discs)
+                        PlaylistCoverStyle.COLLAGE -> stringResource(R.string.playlist_cover_style_collage)
                     }
                 },
             )

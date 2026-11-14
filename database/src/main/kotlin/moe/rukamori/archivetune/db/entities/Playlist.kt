@@ -37,12 +37,29 @@ data class Playlist(
     override val thumbnailUrl: String?
         get() = null
 
+    val isCustomCover: Boolean
+        get() = isCustomPlaylistCover(playlist.thumbnailUrl)
+
     val thumbnails: List<String>
         get() {
-            return if (playlist.thumbnailUrl != null) {
+            return if (isCustomCover && playlist.thumbnailUrl != null) {
                 listOf(playlist.thumbnailUrl)
             } else {
-                songThumbnails.filterNotNull()
+                val songThumbs = songThumbnails.filterNotNull().filter { it.isNotBlank() }
+                if (songThumbs.isNotEmpty()) {
+                    songThumbs
+                } else if (playlist.thumbnailUrl != null) {
+                    listOf(playlist.thumbnailUrl)
+                } else {
+                    emptyList()
+                }
             }
         }
+
+    companion object {
+        fun isCustomPlaylistCover(url: String?): Boolean {
+            if (url.isNullOrBlank()) return false
+            return url.startsWith("content://") || url.startsWith("file://") || url.startsWith("custom://")
+        }
+    }
 }

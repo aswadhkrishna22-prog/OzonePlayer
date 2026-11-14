@@ -57,8 +57,11 @@ import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.AppBarHeight
+import moe.rukamori.archivetune.constants.PlaylistCoverStyle
+import moe.rukamori.archivetune.constants.PlaylistCoverStyleKey
 import moe.rukamori.archivetune.db.entities.Playlist
 import moe.rukamori.archivetune.ui.component.CollapsingPlaylistCover
+import moe.rukamori.archivetune.ui.component.PlaylistCoverView
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.LocalYumaColors
@@ -68,6 +71,7 @@ import moe.rukamori.archivetune.ui.theme.yumaGlassCard
 import moe.rukamori.archivetune.ui.utils.HeaderDownloadProgressIndicator
 import moe.rukamori.archivetune.ui.utils.HeaderDownloadState
 import moe.rukamori.archivetune.utils.makeTimeString
+import moe.rukamori.archivetune.utils.rememberEnumPreference
 
 @Composable
 internal fun MetadataChip(
@@ -247,6 +251,11 @@ fun LocalPlaylistHeroSection(
     modifier: Modifier = Modifier,
 ) {
     val editable = playlist.playlist.isEditable
+    val (coverStyle) =
+        rememberEnumPreference(
+            key = PlaylistCoverStyleKey,
+            defaultValue = PlaylistCoverStyle.DISCS,
+        )
 
     Column(
         modifier =
@@ -311,45 +320,12 @@ fun LocalPlaylistHeroSection(
                     null
                 },
         ) {
-            if (playlist.thumbnails.size == 1) {
-                AsyncImage(
-                    model = playlist.thumbnails[0],
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            } else if (playlist.thumbnails.size > 1) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    listOf(
-                        Alignment.TopStart,
-                        Alignment.TopEnd,
-                        Alignment.BottomStart,
-                        Alignment.BottomEnd,
-                    ).fastForEachIndexed { index, alignment ->
-                        AsyncImage(
-                            model = playlist.thumbnails.getOrNull(index),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier =
-                                Modifier
-                                    .align(alignment)
-                                    .size(120.dp),
-                        )
-                    }
-                }
-            } else {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.queue_music),
-                        contentDescription = null,
-                        modifier = Modifier.size(80.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
+            PlaylistCoverView(
+                thumbnails = playlist.thumbnails,
+                isCustomCover = playlist.isCustomCover,
+                coverStyle = coverStyle,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
 
         Text(

@@ -48,7 +48,12 @@ import coil3.request.allowHardware
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.CropThumbnailToSquareKey
 import moe.rukamori.archivetune.constants.ListThumbnailSize
+import moe.rukamori.archivetune.constants.PlaylistCoverStyle
+import moe.rukamori.archivetune.constants.PlaylistCoverStyleKey
+import moe.rukamori.archivetune.db.entities.Playlist
+import moe.rukamori.archivetune.ui.component.PlaylistCoverView
 import moe.rukamori.archivetune.ui.utils.resize
+import moe.rukamori.archivetune.utils.rememberEnumPreference
 import moe.rukamori.archivetune.utils.rememberPreference
 
 @Composable
@@ -327,82 +332,23 @@ fun PlaylistThumbnail(
     placeHolder: @Composable () -> Unit,
     shape: Shape,
 ) {
-    val context = LocalContext.current
-    val density = LocalDensity.current
-    val sizePx = with(density) { size.roundToPx().coerceAtLeast(1) }
+    val (coverStyle) =
+        rememberEnumPreference(
+            key = PlaylistCoverStyleKey,
+            defaultValue = PlaylistCoverStyle.DISCS,
+        )
 
-    when (thumbnails.size) {
-        0 -> {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier =
-                    Modifier
-                        .size(size)
-                        .clip(shape)
-                        .background(MaterialTheme.colorScheme.surfaceContainer),
-            ) {
-                placeHolder()
-            }
-        }
-
-        1 -> {
-            val request =
-                remember(thumbnails, sizePx) {
-                    ImageRequest
-                        .Builder(context)
-                        .data(thumbnails[0].resize((sizePx * 1.5).toInt(), (sizePx * 1.5).toInt()))
-                        .size(sizePx, sizePx)
-                        .allowHardware(true)
-                        .build()
-                }
-            AsyncImage(
-                model = request,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier =
-                    Modifier
-                        .size(size)
-                        .clip(shape),
-            )
-        }
-
-        else -> {
-            Box(
-                modifier =
-                    Modifier
-                        .size(size)
-                        .clip(shape),
-            ) {
-                listOf(
-                    Alignment.TopStart,
-                    Alignment.TopEnd,
-                    Alignment.BottomStart,
-                    Alignment.BottomEnd,
-                ).fastForEachIndexed { index, alignment ->
-                    val halfPx = (sizePx / 2).coerceAtLeast(1)
-                    val url = thumbnails.getOrNull(index)
-                    val request =
-                        remember(url, halfPx) {
-                            ImageRequest
-                                .Builder(context)
-                                .data(url?.resize((halfPx * 1.5).toInt(), (halfPx * 1.5).toInt()))
-                                .size(halfPx, halfPx)
-                                .allowHardware(true)
-                                .build()
-                        }
-                    AsyncImage(
-                        model = request,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier =
-                            Modifier
-                                .align(alignment)
-                                .size(size / 2),
-                    )
-                }
-            }
-        }
-    }
+    PlaylistCoverView(
+        thumbnails = thumbnails,
+        isCustomCover = Playlist.isCustomPlaylistCover(thumbnails.firstOrNull()),
+        coverStyle = coverStyle,
+        shape = shape,
+        placeHolder = placeHolder,
+        modifier =
+            Modifier
+                .size(size)
+                .clip(shape),
+    )
 }
 
 @Composable

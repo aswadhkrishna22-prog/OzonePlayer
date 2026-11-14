@@ -58,6 +58,8 @@ import moe.rukamori.archivetune.constants.HomeBackgroundStyle
 import moe.rukamori.archivetune.constants.HomeBackgroundStyleKey
 import moe.rukamori.archivetune.constants.LibraryFilter
 import moe.rukamori.archivetune.constants.MarqueeEnabledKey
+import moe.rukamori.archivetune.constants.PlaylistCoverStyle
+import moe.rukamori.archivetune.constants.PlaylistCoverStyleKey
 import moe.rukamori.archivetune.constants.PureBlackKey
 import moe.rukamori.archivetune.constants.QuickPicksDisplayMode
 import moe.rukamori.archivetune.constants.QuickPicksDisplayModeKey
@@ -184,6 +186,11 @@ fun AppearanceSettings(navController: NavController) {
             QuickPicksDisplayModeKey,
             defaultValue = QuickPicksDisplayMode.HERO,
         )
+    val (playlistCoverStyle, onPlaylistCoverStyleChange) =
+        rememberEnumPreference(
+            PlaylistCoverStyleKey,
+            defaultValue = PlaylistCoverStyle.DISCS,
+        )
     val (marqueeEnabled, onMarqueeEnabledChange) =
         rememberPreference(
             MarqueeEnabledKey,
@@ -264,6 +271,7 @@ fun AppearanceSettings(navController: NavController) {
             customFontUri = customFontUri,
             customFontName = customFontName,
             quickPicksDisplayMode = quickPicksDisplayMode,
+            playlistCoverStyle = playlistCoverStyle,
             defaultOpenTab = defaultOpenTab,
             defaultChip = defaultChip,
             showHomeCategoryChips = showHomeCategoryChips,
@@ -298,6 +306,7 @@ fun AppearanceSettings(navController: NavController) {
                 onFontPreferenceChange = onFontPreferenceChange,
                 onPickCustomFont = pickCustomFont,
                 onQuickPicksDisplayModeChange = onQuickPicksDisplayModeChange,
+                onPlaylistCoverStyleChange = onPlaylistCoverStyleChange,
                 onDefaultOpenTabChange = onDefaultOpenTabChange,
                 onDefaultChipChange = onDefaultChipChange,
                 onShowHomeCategoryChipsChange = onShowHomeCategoryChipsChange,

@@ -28,6 +28,7 @@ import moe.rukamori.archivetune.constants.HomeBackgroundStyle
 import moe.rukamori.archivetune.constants.HomeBackgroundStyleKey
 import moe.rukamori.archivetune.constants.LibraryFilter
 import moe.rukamori.archivetune.constants.MarqueeEnabledKey
+import moe.rukamori.archivetune.constants.PlaylistCoverStyle
 import moe.rukamori.archivetune.constants.PureBlackKey
 import moe.rukamori.archivetune.constants.QuickPicksDisplayMode
 import moe.rukamori.archivetune.constants.QuickPicksDisplayModeKey
@@ -89,6 +90,7 @@ data class AppearanceSettingsUiState(
     val customFontUri: String = "",
     val customFontName: String = "",
     val quickPicksDisplayMode: QuickPicksDisplayMode = QuickPicksDisplayMode.HERO,
+    val playlistCoverStyle: PlaylistCoverStyle = PlaylistCoverStyle.DISCS,
     val defaultOpenTab: NavigationTab = NavigationTab.HOME,
     val defaultChip: LibraryFilter = LibraryFilter.LIBRARY,
     val showHomeCategoryChips: Boolean = true,
@@ -124,6 +126,7 @@ data class AppearanceSettingsUiActions(
     val onFontPreferenceChange: (AppFontPreference) -> Unit = {},
     val onPickCustomFont: () -> Unit = {},
     val onQuickPicksDisplayModeChange: (QuickPicksDisplayMode) -> Unit = {},
+    val onPlaylistCoverStyleChange: (PlaylistCoverStyle) -> Unit = {},
     val onDefaultOpenTabChange: (NavigationTab) -> Unit = {},
     val onDefaultChipChange: (LibraryFilter) -> Unit = {},
     val onShowHomeCategoryChipsChange: (Boolean) -> Unit = {},
