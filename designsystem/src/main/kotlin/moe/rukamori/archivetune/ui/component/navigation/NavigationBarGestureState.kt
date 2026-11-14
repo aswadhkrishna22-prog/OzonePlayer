@@ -15,6 +15,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.input.pointer.util.addPointerInputChange
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -47,10 +48,9 @@ internal class NavigationBarGestureState(
         dragJob = null
 
         isDragging = true
-        selectorState.isDragging = true
+        selectorState.onDragStart(offsetX)
 
         coroutineScope.launch {
-            selectorState.onDragStart(offsetX)
             repulsionState.onDragStart(
                 offsetX = offsetX,
                 offsetY = offsetY,
@@ -69,9 +69,10 @@ internal class NavigationBarGestureState(
     ) {
         if (selectorState.items.isEmpty() || selectorState.tabWidthPx <= 0f) return
 
+        selectorState.onDrag(currentTouchX)
+
         dragJob?.cancel()
         dragJob = coroutineScope.launch {
-            selectorState.onDrag(dragAmountX, currentTouchX)
             repulsionState.onDrag(
                 currentTouchX = currentTouchX,
                 currentTouchY = currentTouchY,
@@ -86,8 +87,7 @@ internal class NavigationBarGestureState(
         dragJob = null
         if (selectorState.items.isEmpty() || selectorState.tabWidthPx <= 0f) {
             isDragging = false
-            selectorState.isDragging = false
-            selectorState.candidateIndex = -1
+            selectorState.onRelease(velocityX)
             return
         }
 
@@ -95,15 +95,8 @@ internal class NavigationBarGestureState(
 
         settlingJob?.cancel()
         settlingJob = coroutineScope.launch {
-            val animSelector = launch { selectorState.animateRelease() }
-            val animRepulsion = launch { repulsionState.animateRelease() }
-
-            animSelector.join()
-            animRepulsion.join()
-
+            repulsionState.animateRelease()
             isDragging = false
-            selectorState.isDragging = false
-            selectorState.candidateIndex = -1
         }
     }
 
@@ -112,8 +105,7 @@ internal class NavigationBarGestureState(
         dragJob = null
         if (selectorState.items.isEmpty() || selectorState.tabWidthPx <= 0f) {
             isDragging = false
-            selectorState.isDragging = false
-            selectorState.candidateIndex = -1
+            selectorState.onCancel()
             return
         }
 
@@ -121,15 +113,8 @@ internal class NavigationBarGestureState(
 
         settlingJob?.cancel()
         settlingJob = coroutineScope.launch {
-            val animSelector = launch { selectorState.animateCancel() }
-            val animRepulsion = launch { repulsionState.animateRelease() }
-
-            animSelector.join()
-            animRepulsion.join()
-
+            repulsionState.animateRelease()
             isDragging = false
-            selectorState.isDragging = false
-            selectorState.candidateIndex = -1
         }
     }
 }
@@ -145,7 +130,23 @@ internal fun rememberNavigationBarGestureState(
     val currentIsSelected by androidx.compose.runtime.rememberUpdatedState(isSelected)
     val currentOnItemClick by androidx.compose.runtime.rememberUpdatedState(onItemClick)
     val currentHaptics by androidx.compose.runtime.rememberUpdatedState(haptics)
-    val animationsDisabled = moe.rukamori.archivetune.LocalAnimationsDisabled.current
+    val layoutDirection = androidx.compose.ui.platform.LocalLayoutDirection.current
+    val isRtl = layoutDirection == LayoutDirection.Rtl
+    val currentIsRtl by androidx.compose.runtime.rememberUpdatedState(isRtl)
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val systemAnimationsDisabled = remember(context) {
+        try {
+            android.provider.Settings.Global.getFloat(
+                context.contentResolver,
+                android.provider.Settings.Global.ANIMATOR_DURATION_SCALE,
+                1.0f,
+            ) == 0f
+        } catch (e: Exception) {
+            false
+        }
+    }
+    val animationsDisabled = moe.rukamori.archivetune.LocalAnimationsDisabled.current || systemAnimationsDisabled
     val currentAnimationsDisabled by androidx.compose.runtime.rememberUpdatedState(animationsDisabled)
 
     val selectorState =
@@ -155,6 +156,7 @@ internal fun rememberNavigationBarGestureState(
                 isSelectedProvider = { currentIsSelected },
                 onItemClickProvider = { currentOnItemClick },
                 hapticsProvider = { currentHaptics },
+                isRtlProvider = { currentIsRtl },
                 animationsDisabledProvider = { currentAnimationsDisabled },
                 coroutineScope = coroutineScope,
             )
@@ -223,6 +225,9 @@ internal fun Modifier.navigationTabDragGestures(
                 lastY = currentY
 
                 if (!isDragActive) {
+                    if (kotlin.math.abs(totalDeltaY) > touchSlop && kotlin.math.abs(totalDeltaY) >= kotlin.math.abs(totalDeltaX)) {
+                        break
+                    }
                     if (kotlin.math.abs(totalDeltaX) > touchSlop && kotlin.math.abs(totalDeltaX) > kotlin.math.abs(totalDeltaY) * 1.1f) {
                         isDragActive = true
                         change.consume()
