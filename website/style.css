@@ -134,31 +134,34 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .brand-signature {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .brand-signature img {
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
 }
 
 .brand-text {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   letter-spacing: -0.02em;
 }
 
 .brand-pill {
   font-family: var(--font-display);
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  padding: 2px 7px;
+  padding: 3px 8px;
   background: rgba(255, 255, 255, 0.06);
   color: var(--text-silver);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 5px;
 }
 
 .masthead-nav {
@@ -236,6 +239,21 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   margin-bottom: 2.5rem;
 }
 
+.hero-brand-badge {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.hero-brand-icon {
+  width: 76px;
+  height: 76px;
+  border-radius: 20px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  flex-shrink: 0;
+}
+
 .technical-status-strip {
   display: inline-flex;
   align-items: center;
@@ -244,7 +262,6 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   color: var(--text-silver);
-  margin-bottom: 1rem;
 }
 
 .status-indicator {
@@ -985,9 +1002,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 
 .cta-brand-logo {
+  width: 96px;
+  height: 96px;
   margin: 0 auto 1.5rem;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  border-radius: 22px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 
 .cta-headline {
@@ -1025,13 +1044,19 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .footer-logo-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   font-family: var(--font-display);
   font-weight: 700;
+  font-size: 1.15rem;
   margin-bottom: 1rem;
 }
 
-.footer-logo-row img { border-radius: 6px; }
+.footer-logo-row img {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
 .footer-description { font-size: 0.85rem; color: var(--text-dim); max-width: 320px; line-height: 1.6; }
 
 .footer-links-title {
