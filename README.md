@@ -19,7 +19,7 @@
 
   <p>
     <strong>A hybrid music client for Android focused on usability, clean aesthetics, and audiophile-grade sound.</strong><br>
-    <em>Spotify UI + Discovery Algorithms + YouTube Music Library + Hi-Res Lossless (FLAC) + Dual Play & Smart Automix.</em>
+    <em>Spotify Library Import + YouTube Music Catalog + Hi-Res Lossless (FLAC) + Dual Play & Smart Automix.</em>
   </p>
 
   <p>
@@ -48,7 +48,7 @@
 
 The project is built on **ArchiveTune** (with foundations from **Metrolist** and **SimpMusic**), inspired by **PixelPlayer's** queue mechanics, **Meld's** Spotify integration pipeline, and **Stash's** FLAC architecture. On top of this base, Ozone Player implements a modular 20-module architecture, a dedicated low-level audio DSP engine, the custom **Ozone Design System**, and hardware-accelerated fluid gesture physics.
 
-No subscriptions. No advertisements. Zero telemetry, crash reporters, or third-party trackers. All credentials live exclusively on your device, encrypted with AES-256-GCM via Google Tink, and the codebase is completely open under the GNU General Public License v3.0.
+No subscriptions. No advertisements. Zero telemetry, crash reporters, or third-party trackers. All credentials live exclusively on your device in Android private sandbox storage (Jetpack DataStore), and the codebase is completely open under the GNU General Public License v3.0.
 
 ---
 
@@ -183,7 +183,7 @@ Ozone Player is organized as a 20-module Clean Architecture project following Un
 - **UI & Presentation:** Jetpack Compose, Ozone Glass Design System tokens, GPU-accelerated Haze overlays, fluid gesture physics.
 - **Audio Engine:** Media3 (ExoPlayer), `:core:audio-dsp` (Smart Automix, Dual Play engine, dual-deck continuous crossfader, DJ filter cascade).
 - **Network & Ingestion:** `:core:innertube` (YouTube Music engine), Ktor/Retrofit, SOCKS5 proxy support with JVM Authenticator.
-- **Storage & Security:** Room ORM, hardware-backed secure preferences (AES-256-GCM via Google Tink).
+- **Storage & Security:** Room ORM, Android private sandbox storage via Jetpack DataStore with zero telemetry.
 
 📖 **Detailed Developer Documentation:**
 - [Architecture Overview & Module Graph](docs/architecture/ARCHITECTURE.md)
