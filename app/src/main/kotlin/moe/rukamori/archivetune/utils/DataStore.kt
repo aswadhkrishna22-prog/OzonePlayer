@@ -37,7 +37,7 @@ import moe.rukamori.archivetune.constants.HistoryDuration
 import moe.rukamori.archivetune.extensions.toEnum
 import kotlin.properties.ReadOnlyProperty
 
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
+private val Context.normalDataStore: DataStore<Preferences> by preferencesDataStore(
     name = "settings",
     produceMigrations = { _ ->
         listOf(
@@ -63,6 +63,13 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
         )
     },
 )
+
+private val Context.secureDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "secure_settings",
+)
+
+val Context.dataStore: DataStore<Preferences>
+    get() = SecureDataStoreRegistry.get(this, this.normalDataStore, this.secureDataStore)
 
 object PreferenceStore {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)

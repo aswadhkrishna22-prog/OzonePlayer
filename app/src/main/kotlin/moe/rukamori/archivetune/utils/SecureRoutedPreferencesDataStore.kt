@@ -1,0 +1,252 @@
+/*
+ * Ozone Player (2026)
+ * ArchiveTune (2026) | Original work by © Rukamori
+ * GPL-3.0 License | Contributors: see git history
+ */
+
+package moe.rukamori.archivetune.utils
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.MutablePreferences
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.ConcurrentHashMap
+
+/**
+ * Single source of truth for sensitive preference keys across OzonePlayer.
+ * Any key in this set is stored strictly in `secure_settings.preferences_pb`
+ * and excluded from Android backup and device-to-device transfers.
+ */
+object SensitivePreferences {
+    val KEYS: Set<String> = setOf(
+        // InnerTube & YouTube Session / Auth
+        "innerTubeCookie",
+        "visitorData",
+        "dataSyncId",
+        "poToken",
+        "poTokenGvs",
+        "poTokenPlayer",
+        "poTokenSourceUrl",
+        "webClientPoTokenEnabled",
+        "accountName",
+        "accountEmail",
+        "accountChannelHandle",
+        "savedAccounts",
+        "useLoginForBrowse",
+
+        // Spotify Session & Tokens
+        "spotify_sp_dc",
+        "spotify_sp_key",
+        "spotify_access_token",
+        "spotify_access_token_expires_at",
+        "spotify_account_name",
+        "spotify_account_avatar_url",
+
+        // Discord OAuth & Identity
+        "discordToken",
+        "discordRefreshToken",
+        "discordTokenExpiresAt",
+        "discordUsername",
+        "discordName",
+        "discordAvatarUrl",
+
+        // Qobuz Lossless Streaming Credentials
+        "qobuz_app_id",
+        "qobuz_app_secret",
+        "qobuz_user_auth_token",
+
+        // AI Services
+        "ai_api_key",
+        "ai_custom_endpoint",
+
+        // Scrobblers (Last.fm & ListenBrainz)
+        "lastfmSession",
+        "lastfmUsername",
+        "lastfmApiKeyOverride",
+        "lastfmSecretOverride",
+        "listenbrainz_token",
+
+        // Proxy Auth Credentials
+        "proxyUsername",
+        "proxyPassword",
+    )
+
+    fun isSensitive(keyName: String): Boolean = keyName in KEYS
+}
+
+/**
+ * Composite DataStore that transparently partitions preferences:
+ * - Sensitive keys (tokens, credentials, cookies) -> [secureStore] (`secure_settings.preferences_pb`)
+ * - Non-sensitive UI / app preferences -> [normalStore] (`settings.preferences_pb`)
+ *
+ * It transparently merges both stores for reads, routes updates to the appropriate store,
+ * and migrates legacy sensitive keys out of [normalStore] on existing installations.
+ */
+class SecureRoutedPreferencesDataStore(
+    val normalStore: DataStore<Preferences>,
+    val secureStore: DataStore<Preferences>,
+    private val coroutineScope: CoroutineScope? = null,
+) : DataStore<Preferences> {
+
+    private val writeMutex = Mutex()
+    private val migrationMutex = Mutex()
+    @Volatile private var migrationDone = false
+
+    init {
+        coroutineScope?.launch {
+            runMigration()
+        }
+    }
+
+    suspend fun runMigration() {
+        if (migrationDone) return
+        migrationMutex.withLock {
+            if (migrationDone) return
+            try {
+                val normalPrefs = normalStore.data.first()
+                val sensitiveInNormal = normalPrefs.asMap().filter { (key, _) ->
+                    SensitivePreferences.isSensitive(key.name)
+                }
+                if (sensitiveInNormal.isNotEmpty()) {
+                    secureStore.edit { secMutable ->
+                        for ((k, v) in sensitiveInNormal) {
+                            if (!secMutable.contains(k)) {
+                                @Suppress("UNCHECKED_CAST")
+                                secMutable[k as Preferences.Key<Any>] = v
+                            }
+                        }
+                    }
+                    normalStore.edit { normMutable ->
+                        for ((k, _) in sensitiveInNormal) {
+                            @Suppress("UNCHECKED_CAST")
+                            normMutable.remove(k as Preferences.Key<Any>)
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+                // Ignore transient read errors during startup
+            } finally {
+                migrationDone = true
+            }
+        }
+    }
+
+    override val data: Flow<Preferences> =
+        combine(normalStore.data, secureStore.data) { normal, secure ->
+            merge(normal, secure)
+        }
+
+    private fun merge(normal: Preferences, secure: Preferences): Preferences {
+        val mutable = normal.toMutablePreferences()
+        for ((key, value) in secure.asMap()) {
+            @Suppress("UNCHECKED_CAST")
+            mutable[key as Preferences.Key<Any>] = value
+        }
+        return mutable.toPreferences()
+    }
+
+    override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences =
+        writeMutex.withLock {
+            runMigration()
+
+            val curNormal = normalStore.data.first()
+            val curSecure = secureStore.data.first()
+            val curCombined = merge(curNormal, curSecure)
+
+            val newCombined = transform(curCombined)
+
+            val secureUpdates = mutableMapOf<Preferences.Key<*>, Any>()
+            val secureRemovals = mutableSetOf<Preferences.Key<*>>()
+            val normalUpdates = mutableMapOf<Preferences.Key<*>, Any>()
+            val normalRemovals = mutableSetOf<Preferences.Key<*>>()
+
+            for ((key, value) in newCombined.asMap()) {
+                if (SensitivePreferences.isSensitive(key.name)) {
+                    if (curCombined[key] != value) {
+                        secureUpdates[key] = value
+                    }
+                } else {
+                    if (curCombined[key] != value) {
+                        normalUpdates[key] = value
+                    }
+                }
+            }
+
+            for (key in curCombined.asMap().keys) {
+                if (!newCombined.contains(key)) {
+                    if (SensitivePreferences.isSensitive(key.name)) {
+                        secureRemovals.add(key)
+                    } else {
+                        normalRemovals.add(key)
+                    }
+                }
+            }
+
+            if (secureUpdates.isNotEmpty() || secureRemovals.isNotEmpty()) {
+                secureStore.edit { secMutable ->
+                    for ((k, v) in secureUpdates) {
+                        @Suppress("UNCHECKED_CAST")
+                        secMutable[k as Preferences.Key<Any>] = v
+                    }
+                    for (k in secureRemovals) {
+                        @Suppress("UNCHECKED_CAST")
+                        secMutable.remove(k as Preferences.Key<Any>)
+                    }
+                }
+                val normalPurges = secureUpdates.keys.filter { curNormal.contains(it) } +
+                        secureRemovals.filter { curNormal.contains(it) }
+                if (normalPurges.isNotEmpty()) {
+                    normalStore.edit { normMutable ->
+                        for (k in normalPurges) {
+                            @Suppress("UNCHECKED_CAST")
+                            normMutable.remove(k as Preferences.Key<Any>)
+                        }
+                    }
+                }
+            }
+
+            if (normalUpdates.isNotEmpty() || normalRemovals.isNotEmpty()) {
+                normalStore.edit { normMutable ->
+                    for ((k, v) in normalUpdates) {
+                        @Suppress("UNCHECKED_CAST")
+                        normMutable[k as Preferences.Key<Any>] = v
+                    }
+                    for (k in normalRemovals) {
+                        @Suppress("UNCHECKED_CAST")
+                        normMutable.remove(k as Preferences.Key<Any>)
+                    }
+                }
+            }
+
+            newCombined
+        }
+}
+
+object SecureDataStoreRegistry {
+    private val instances = ConcurrentHashMap<Context, SecureRoutedPreferencesDataStore>()
+
+    fun get(
+        context: Context,
+        normalStore: DataStore<Preferences>,
+        secureStore: DataStore<Preferences>,
+    ): DataStore<Preferences> {
+        val target = context.applicationContext ?: context
+        return instances.computeIfAbsent(target) {
+            SecureRoutedPreferencesDataStore(
+                normalStore = normalStore,
+                secureStore = secureStore,
+                coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
+            )
+        }
+    }
+}

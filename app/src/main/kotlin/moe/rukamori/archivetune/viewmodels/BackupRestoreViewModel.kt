@@ -807,38 +807,6 @@ class BackupRestoreViewModel
             const val SETTINGS_XML_FILENAME = "settings.xml"
             private const val BUFFER_SIZE = 64 * 1024
 
-            val ACCOUNT_PREF_KEYS: Set<String> =
-                setOf(
-                    "innerTubeCookie",
-                    "visitorData",
-                    "dataSyncId",
-                    "poToken",
-                    "poTokenGvs",
-                    "poTokenPlayer",
-                    "poTokenSourceUrl",
-                    "webClientPoTokenEnabled",
-                    "accountName",
-                    "accountEmail",
-                    "accountChannelHandle",
-                    "useLoginForBrowse",
-                    "lastfmSession",
-                    "lastfmUsername",
-                    "lastfmProvider",
-                    "lastfmCustomEndpoint",
-                    "lastfmApiKeyOverride",
-                    "lastfmSecretOverride",
-                    "listenbrainz_token",
-                    "discordToken",
-                    "discordUsername",
-                    "discordName",
-                    "proxyUsername",
-                    "proxyPassword",
-                    "spotify_sp_dc",
-                    "spotify_sp_key",
-                    "spotify_access_token",
-                    "spotify_access_token_expires_at",
-                    "spotify_account_name",
-                    "spotify_account_avatar_url",
-                )
+            val ACCOUNT_PREF_KEYS: Set<String> = moe.rukamori.archivetune.utils.SensitivePreferences.KEYS
         }
     }

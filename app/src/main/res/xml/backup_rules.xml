@@ -13,5 +13,5 @@
     <!-- Exclude sensitive session tokens and authentication credentials from cloud backup -->
     <exclude
         domain="file"
-        path="datastore/settings.preferences_pb" />
+        path="datastore/secure_settings.preferences_pb" />
 </full-backup-content>
