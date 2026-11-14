@@ -135,13 +135,24 @@ class SecureDataStoreTest {
         assertEquals("legacy_spotify_cookie", compositeData[spotifyDcKey])
     }
 
+    private fun resolveResFile(path: String): File {
+        val direct = File(path)
+        if (direct.exists()) return direct
+        val withApp = File("app", path)
+        if (withApp.exists()) return withApp
+        val stripped = path.removePrefix("app/")
+        val strippedFile = File(stripped)
+        if (strippedFile.exists()) return strippedFile
+        return direct
+    }
+
     @Test
     fun testBackupAndDataExtractionRules_onlyExcludeSecureSettings() {
-        val dataExtractionFile = File("app/src/main/res/xml/data_extraction_rules.xml")
-        val backupRulesFile = File("app/src/main/res/xml/backup_rules.xml")
+        val dataExtractionFile = resolveResFile("src/main/res/xml/data_extraction_rules.xml")
+        val backupRulesFile = resolveResFile("src/main/res/xml/backup_rules.xml")
 
-        assertTrue("data_extraction_rules.xml must exist", dataExtractionFile.exists())
-        assertTrue("backup_rules.xml must exist", backupRulesFile.exists())
+        assertTrue("data_extraction_rules.xml must exist: ${dataExtractionFile.absolutePath}", dataExtractionFile.exists())
+        assertTrue("backup_rules.xml must exist: ${backupRulesFile.absolutePath}", backupRulesFile.exists())
 
         val factory = DocumentBuilderFactory.newInstance()
         val builder = factory.newDocumentBuilder()
