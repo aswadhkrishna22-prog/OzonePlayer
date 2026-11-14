@@ -1,24 +1,121 @@
 /**
- * OZONE PLAYER // AURAL ARCHITECTURE INTERACTION ENGINE
- * Zero-dependency, 60fps canvas wave simulation, 3D tilt, and audio consoles
+ * OZONE PLAYER // AURAL ARCHITECTURE PRO
+ * Synthesis of Lumora (precision loader & clock), Soda (force-field repulsion), and Laocoön (double cursor & grid)
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-  initAudioMatrixCanvas();
-  initDevice3DTilt();
-  initDualPlayCrossfader();
-  initLosslessSpectrumAnalyzer();
+(function() {
+  // 1. PRECISION INTRO LOADER (Lumora style)
+  initPageLoader();
+
+  // 2. DOUBLE-RING CURSOR (Laocoön style)
+  initCustomCursor();
+
+  // 3. AMBIENT PARTICLE FORCE-FIELD (Soda style)
+  initAmbientCanvas();
+
+  // 4. LIVE CLOCK (Lumora style)
+  initLiveClock();
+
+  // 5. INTERACTIVE DUAL PLAY CROSSFADER
+  initDualPlayConsole();
+
+  // 6. INTERACTIVE FLAC BITRATE ANALYZER
+  initBitrateSwitcher();
+
+  // 7. 3D GYRO PHONE TILT
+  initPhoneTilt();
+
+  // 8. SCREEN SHOWCASE TABS
   initShowcaseTabs();
-  initBentoSpotlight();
-  initNavbarScroll();
+
+  // 9. NAVBAR SCROLL & STATS COUNT-UP
+  initScrollEffects();
+
+  // 10. GITHUB STARS SYNC
   fetchGitHubStars();
-});
+})();
 
 /* ==========================================================================
-   1. INTERACTIVE HARMONIC SOUNDWAVE CANVAS (BACKGROUND)
+   1. PRECISION INTRO LOADER (Lumora style)
    ========================================================================== */
-function initAudioMatrixCanvas() {
-  const canvas = document.getElementById('canvas-matrix');
+function initPageLoader() {
+  const loader = document.getElementById('page-loader');
+  const fill = document.getElementById('loader-fill');
+  const counter = document.getElementById('loader-counter');
+  if (!loader || !fill || !counter) return;
+
+  document.body.classList.add('locked');
+  const duration = 1200; // ms
+  const startTime = performance.now();
+
+  function easeInOutCubic(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
+  function tick(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(1, elapsed / duration);
+    const eased = easeInOutCubic(progress);
+    const val = Math.round(eased * 100);
+
+    fill.style.width = `${val}%`;
+    counter.textContent = String(val).padStart(3, '0');
+
+    if (progress < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      setTimeout(() => {
+        loader.classList.add('done');
+        document.body.classList.remove('locked');
+      }, 200);
+    }
+  }
+
+  requestAnimationFrame(tick);
+}
+
+/* ==========================================================================
+   2. CUSTOM DOUBLE-RING CURSOR (Laocoön style)
+   ========================================================================== */
+function initCustomCursor() {
+  const inner = document.getElementById('cursor-inner');
+  const outer = document.getElementById('cursor-outer');
+  if (!inner || !outer || !window.matchMedia('(hover: hover)').matches) return;
+
+  let mouseX = window.innerWidth / 2;
+  let mouseY = window.innerHeight / 2;
+  let outerX = mouseX;
+  let outerY = mouseY;
+
+  window.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    inner.style.left = `${mouseX}px`;
+    inner.style.top = `${mouseY}px`;
+  }, { passive: true });
+
+  // Hover state for interactive elements
+  const interactives = document.querySelectorAll('a, button, input, .card, .phone');
+  interactives.forEach(el => {
+    el.addEventListener('mouseenter', () => outer.classList.add('hovering'));
+    el.addEventListener('mouseleave', () => outer.classList.remove('hovering'));
+  });
+
+  function renderCursor() {
+    outerX += (mouseX - outerX) * 0.18;
+    outerY += (mouseY - outerY) * 0.18;
+    outer.style.left = `${outerX}px`;
+    outer.style.top = `${outerY}px`;
+    requestAnimationFrame(renderCursor);
+  }
+  requestAnimationFrame(renderCursor);
+}
+
+/* ==========================================================================
+   3. AMBIENT PARTICLE FORCE-FIELD (Soda style)
+   ========================================================================== */
+function initAmbientCanvas() {
+  const canvas = document.getElementById('ambient-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
@@ -26,285 +123,201 @@ function initAudioMatrixCanvas() {
   let width = (canvas.width = window.innerWidth);
   let height = (canvas.height = window.innerHeight);
 
-  let mouseX = width * 0.5;
-  let mouseY = height * 0.3;
-  let targetMouseX = mouseX;
-  let targetMouseY = mouseY;
-
   window.addEventListener('resize', () => {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
   }, { passive: true });
 
+  let mouse = { x: -1000, y: -1000 };
   window.addEventListener('mousemove', (e) => {
-    targetMouseX = e.clientX;
-    targetMouseY = e.clientY;
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
   }, { passive: true });
 
-  window.addEventListener('touchmove', (e) => {
-    if (e.touches.length > 0) {
-      targetMouseX = e.touches[0].clientX;
-      targetMouseY = e.touches[0].clientY;
-    }
-  }, { passive: true });
+  // Particle cloud with force-field deflection
+  const count = 42;
+  const particles = [];
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      baseX: Math.random() * width,
+      baseY: Math.random() * height,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      radius: Math.random() * 2 + 1,
+      alpha: Math.random() * 0.35 + 0.1,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
 
   let time = 0;
-  const waves = [
-    { freq: 0.002, speed: 0.015, amp: 45, color: 'rgba(0, 245, 255, 0.06)' },
-    { freq: 0.003, speed: 0.022, amp: 30, color: 'rgba(99, 102, 241, 0.05)' },
-    { freq: 0.0015, speed: 0.012, amp: 60, color: 'rgba(0, 245, 255, 0.04)' }
-  ];
-
-  function render() {
-    time += 1;
-    // Smooth mouse lerp
-    mouseX += (targetMouseX - mouseX) * 0.05;
-    mouseY += (targetMouseY - mouseY) * 0.05;
-
+  function renderParticles() {
+    time += 0.015;
     ctx.clearRect(0, 0, width, height);
 
-    // Draw harmonic audio waves
-    waves.forEach((w) => {
-      ctx.beginPath();
-      ctx.moveTo(0, height * 0.5);
+    particles.forEach(p => {
+      // Gentle natural drift
+      p.x += p.vx + Math.sin(time + p.phase) * 0.25;
+      p.y += p.vy + Math.cos(time + p.phase) * 0.25;
 
-      for (let x = 0; x <= width; x += 15) {
-        // Distance influence from mouse pointer
-        const dx = x - mouseX;
-        const dy = height * 0.5 - mouseY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const mouseWave = Math.sin(dist * 0.01 - time * 0.05) * Math.max(0, 1 - dist / 600) * 40;
+      // Wrap around bounds
+      if (p.x < 0) p.x = width;
+      if (p.x > width) p.x = 0;
+      if (p.y < 0) p.y = height;
+      if (p.y > height) p.y = 0;
 
-        const y =
-          height * 0.5 +
-          Math.sin(x * w.freq + time * w.speed) * w.amp +
-          Math.cos(x * w.freq * 0.5 - time * w.speed * 0.8) * (w.amp * 0.5) +
-          mouseWave;
+      // Soda-style pointer repulsion force-field
+      const dx = mouse.x - p.x;
+      const dy = mouse.y - p.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const repulseRadius = 180;
 
-        ctx.lineTo(x, y);
+      if (dist < repulseRadius && dist > 0) {
+        const force = (repulseRadius - dist) / repulseRadius;
+        p.x -= (dx / dist) * force * 5;
+        p.y -= (dy / dist) * force * 5;
       }
 
-      ctx.lineTo(width, height);
-      ctx.lineTo(0, height);
-      ctx.closePath();
-
-      ctx.fillStyle = w.color;
+      // Draw particle
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0, 245, 255, ${p.alpha})`;
       ctx.fill();
     });
 
-    requestAnimationFrame(render);
+    requestAnimationFrame(renderParticles);
   }
-
-  requestAnimationFrame(render);
+  requestAnimationFrame(renderParticles);
 }
 
 /* ==========================================================================
-   2. 3D GYROSCOPIC TILT FOR PHONE RIG
+   4. LIVE LOCAL CLOCK (Lumora style)
    ========================================================================== */
-function initDevice3DTilt() {
-  const rig = document.getElementById('device-rig');
-  const hud = document.getElementById('hud-card');
-  if (!rig) return;
+function initLiveClock() {
+  const clockVal = document.getElementById('clock-val');
+  if (!clockVal) return;
 
-  let currentX = 0;
-  let currentY = 0;
-  let targetX = 0;
-  let targetY = 0;
-
-  window.addEventListener('mousemove', (e) => {
-    const { innerWidth, innerHeight } = window;
-    const normX = (e.clientX / innerWidth - 0.5) * 2;
-    const normY = (e.clientY / innerHeight - 0.5) * 2;
-
-    targetX = -normY * 12; // tilt degrees
-    targetY = normX * 14;
-  }, { passive: true });
-
-  function updateTilt() {
-    currentX += (targetX - currentX) * 0.08;
-    currentY += (targetY - currentY) * 0.08;
-
-    rig.style.transform = `rotateX(${currentX}deg) rotateY(${currentY}deg)`;
-    if (hud) {
-      hud.style.transform = `translateZ(45px) translateX(${currentY * 0.6}px)`;
-    }
-
-    requestAnimationFrame(updateTilt);
+  function updateClock() {
+    const now = new Date();
+    let hours = now.getHours();
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const meridiem = hours >= 12 ? 'pm' : 'am';
+    hours = hours % 12 || 12;
+    clockVal.textContent = `${hours}:${minutes}${meridiem}`;
   }
 
-  requestAnimationFrame(updateTilt);
+  updateClock();
+  setInterval(updateClock, 1000);
 }
 
 /* ==========================================================================
-   3. INTERACTIVE DUAL PLAY SPLIT CROSSFADER
+   5. INTERACTIVE DUAL PLAY SPLIT CROSSFADER
    ========================================================================== */
-function initDualPlayCrossfader() {
-  const slider = document.getElementById('crossfader-input');
-  const readout = document.getElementById('crossfader-readout');
-  const deckACard = document.getElementById('deck-a-card');
-  const deckBCard = document.getElementById('deck-b-card');
+function initDualPlayConsole() {
+  const slider = document.getElementById('crossfade-slider');
+  const readout = document.getElementById('fader-readout');
+  const deckA = document.getElementById('deck-a');
+  const deckB = document.getElementById('deck-b');
+  const meterA = document.getElementById('meter-a');
+  const meterB = document.getElementById('meter-b');
 
   if (!slider || !readout) return;
 
-  const meterA = deckACard ? deckACard.querySelector('.deck-meter-bar') : null;
-  const meterB = deckBCard ? deckBCard.querySelector('.deck-meter-bar') : null;
-
   slider.addEventListener('input', (e) => {
-    const val = parseInt(e.target.value, 10); // 0 to 100
+    const val = parseInt(e.target.value, 10);
     const pctA = 100 - val;
     const pctB = val;
 
-    readout.textContent = `DECK A: ${pctA}% | DECK B: ${pctB}%`;
-
-    if (meterA) meterA.style.width = `${Math.max(8, pctA)}%`;
-    if (meterB) meterB.style.width = `${Math.max(8, pctB)}%`;
+    readout.textContent = `CHANNEL A: ${pctA}% | CHANNEL B: ${pctB}%`;
+    if (meterA) meterA.style.width = `${Math.max(6, pctA)}%`;
+    if (meterB) meterB.style.width = `${Math.max(6, pctB)}%`;
 
     if (val < 40) {
-      deckACard?.classList.add('active');
-      deckBCard?.classList.remove('active');
+      deckA?.classList.add('active');
+      deckB?.classList.remove('active');
     } else if (val > 60) {
-      deckBCard?.classList.add('active');
-      deckACard?.classList.remove('active');
+      deckB?.classList.add('active');
+      deckA?.classList.remove('active');
     } else {
-      deckACard?.classList.add('active');
-      deckBCard?.classList.add('active');
+      deckA?.classList.add('active');
+      deckB?.classList.add('active');
     }
   });
 }
 
 /* ==========================================================================
-   4. BIT-PERFECT LOSSLESS FREQUENCY ANALYZER
+   6. INTERACTIVE BITRATE ANALYZER
    ========================================================================== */
-function initLosslessSpectrumAnalyzer() {
-  const canvas = document.getElementById('spectrum-canvas');
-  const tabs = document.querySelectorAll('.analyzer-tab');
-  const sampleEl = document.getElementById('spec-sample');
-  const freqEl = document.getElementById('spec-freq');
-  const rangeEl = document.getElementById('spec-range');
+function initBitrateSwitcher() {
+  const buttons = document.querySelectorAll('.bitrate-btn');
+  const infoEl = document.getElementById('bitrate-info');
+  if (!buttons.length || !infoEl) return;
 
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  let currentMode = '1411';
-  let animFrame = 0;
-
-  const modeConfigs = {
+  const configs = {
     '128': {
-      sample: '44,100 Hz (16-bit)',
-      freq: '20 Hz – 15,800 Hz (Choked)',
-      range: '78 dB (Lossy MP3 Compression)',
-      cutoffRatio: 0.48,
-      accentColor: '#ef4444'
+      sample: 'SAMPLING: 44,100 Hz / 16-BIT (CHOKED 16kHz)',
+      range: 'DYNAMIC RANGE: LOSSY MP3 COMPRESSION ARTIFACTS'
     },
     '320': {
-      sample: '44,100 Hz (16-bit)',
-      freq: '20 Hz – 19,200 Hz (Standard)',
-      range: '96 dB (Compressed High Quality)',
-      cutoffRatio: 0.68,
-      accentColor: '#f59e0b'
+      sample: 'SAMPLING: 44,100 Hz / 16-BIT (STANDARD AAC)',
+      range: 'DYNAMIC RANGE: COMPRESSED STREAMING CEILING'
     },
     '1411': {
-      sample: '96,000 Hz (24-bit Studio Master)',
-      freq: '20 Hz – 48,000 Hz (Full Uncapped)',
-      range: '> 120 dB (Pure Dynamic Range)',
-      cutoffRatio: 1.0,
-      accentColor: '#00f5ff'
+      sample: 'SAMPLING: 96,000 Hz / 24-BIT (STUDIO MASTER)',
+      range: 'DYNAMIC RANGE: FULL HARMONIC FREQUENCY (> 120 dB)'
     }
   };
 
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
 
-      currentMode = tab.getAttribute('data-mode') || '1411';
-      const config = modeConfigs[currentMode];
-      if (config && sampleEl && freqEl && rangeEl) {
-        sampleEl.textContent = config.sample;
-        freqEl.textContent = config.freq;
-        rangeEl.textContent = config.range;
+      const rate = btn.getAttribute('data-rate') || '1411';
+      const c = configs[rate];
+      if (c) {
+        infoEl.innerHTML = `<span>${c.sample}</span><strong>${c.range}</strong>`;
       }
     });
   });
-
-  function drawSpectrum() {
-    animFrame += 1;
-    const width = canvas.width;
-    const height = canvas.height;
-    ctx.clearRect(0, 0, width, height);
-
-    const config = modeConfigs[currentMode];
-    const bars = 56;
-    const barWidth = (width / bars) - 3;
-    const cutoffBar = Math.floor(bars * config.cutoffRatio);
-
-    for (let i = 0; i < bars; i++) {
-      const x = i * (barWidth + 3);
-      let barHeight;
-
-      if (i > cutoffBar) {
-        // Frequency cutoff zone for lossy formats
-        barHeight = Math.random() * 4 + 2;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-      } else {
-        // Active harmonic frequency oscillation
-        const base = Math.sin((i / bars) * Math.PI + animFrame * 0.08) * 0.5 + 0.5;
-        const jitter = Math.sin(i * 1.5 + animFrame * 0.12) * 20;
-        barHeight = Math.max(10, base * (height - 40) + jitter);
-
-        if (currentMode === '1411') {
-          const grad = ctx.createLinearGradient(0, height, 0, 0);
-          grad.addColorStop(0, '#6366f1');
-          grad.addColorStop(1, '#00f5ff');
-          ctx.fillStyle = grad;
-        } else {
-          ctx.fillStyle = config.accentColor;
-        }
-      }
-
-      ctx.fillRect(x, height - barHeight, barWidth, barHeight);
-    }
-
-    // Draw baseline
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.beginPath();
-    ctx.moveTo(0, height - 1);
-    ctx.lineTo(width, height - 1);
-    ctx.stroke();
-
-    requestAnimationFrame(drawSpectrum);
-  }
-
-  requestAnimationFrame(drawSpectrum);
 }
 
 /* ==========================================================================
-   5. SHOWCASE SCREEN TAB SWITCHER
+   7. 3D GYROSCOPIC PHONE TILT
+   ========================================================================== */
+function initPhoneTilt() {
+  const tilt = document.getElementById('tilt');
+  if (!tilt || !window.matchMedia('(hover: hover)').matches) return;
+
+  window.addEventListener('mousemove', (e) => {
+    const x = (e.clientX / window.innerWidth - 0.5) * 2;
+    const y = (e.clientY / window.innerHeight - 0.5) * 2;
+    tilt.style.transform = `perspective(1000px) rotateY(${x * 10}deg) rotateX(${-y * 8}deg)`;
+  }, { passive: true });
+}
+
+/* ==========================================================================
+   8. SCREEN SHOWCASE TABS
    ========================================================================== */
 function initShowcaseTabs() {
-  const buttons = document.querySelectorAll('.showcase-item-btn');
-  const img = document.getElementById('showcase-img');
-  if (!buttons.length || !img) return;
+  const stage = document.getElementById('stage');
+  const tabs = document.querySelectorAll('.tab');
+  if (!stage || !tabs.length) return;
 
-  buttons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.classList.contains('active')) return;
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      if (tab.classList.contains('on')) return;
+      tabs.forEach(t => t.classList.remove('on'));
+      tab.classList.add('on');
 
-      buttons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      const newSrc = btn.getAttribute('data-img');
-      if (!newSrc) return;
-
-      img.style.opacity = '0.2';
-      img.style.transform = 'scale(0.98)';
-
+      stage.style.opacity = '0.2';
+      stage.style.transform = 'scale(0.98)';
       setTimeout(() => {
-        img.src = newSrc;
-        img.onload = () => {
-          img.style.opacity = '1';
-          img.style.transform = 'scale(1)';
+        stage.src = `assets/shots/${tab.dataset.img}.webp`;
+        stage.onload = () => {
+          stage.style.opacity = '1';
+          stage.style.transform = 'scale(1)';
         };
       }, 150);
     });
@@ -312,53 +325,73 @@ function initShowcaseTabs() {
 }
 
 /* ==========================================================================
-   6. BENTO CARDS SPOTLIGHT EFFECT
+   9. SCROLL EFFECTS & STATS COUNT-UP
    ========================================================================== */
-function initBentoSpotlight() {
-  const cells = document.querySelectorAll('[data-spotlight]');
-  cells.forEach(cell => {
-    cell.addEventListener('mousemove', (e) => {
-      const rect = cell.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      cell.style.setProperty('--mouse-x', `${x}px`);
-      cell.style.setProperty('--mouse-y', `${y}px`);
+function initScrollEffects() {
+  const nav = document.getElementById('nav');
+  const dots = document.querySelectorAll('.grid-dot');
+
+  window.addEventListener('scroll', () => {
+    const scrollY = window.scrollY;
+    if (nav) nav.classList.toggle('s', scrollY > 20);
+
+    // Laocoön style drifting grid dots
+    dots.forEach((dot, i) => {
+      const offset = (scrollY * (0.05 + i * 0.02)) % 80;
+      dot.style.top = `${20 + offset}%`;
     });
+  }, { passive: true });
+
+  // Scroll Reveal Observer
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+
+        // Lumora scroll count-up animation
+        const counters = e.target.querySelectorAll('.counter');
+        counters.forEach(c => {
+          const target = parseInt(c.getAttribute('data-target'), 10);
+          if (isNaN(target) || c.classList.contains('counted')) return;
+          c.classList.add('counted');
+
+          let current = 0;
+          const step = Math.max(1, Math.floor(target / 40));
+          const timer = setInterval(() => {
+            current += step;
+            if (current >= target) {
+              c.textContent = target;
+              clearInterval(timer);
+            } else {
+              c.textContent = current;
+            }
+          }, 25);
+        });
+
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.rv').forEach((el, i) => {
+    el.style.transitionDelay = `${(i % 3) * 60}ms`;
+    io.observe(el);
   });
 }
 
 /* ==========================================================================
-   7. NAVBAR SCROLL GLASS BEHAVIOR
+   10. GITHUB STARS SYNC
    ========================================================================== */
-function initNavbarScroll() {
-  const masthead = document.querySelector('.masthead');
-  if (!masthead) return;
+function fetchGitHubStars() {
+  const starsEl = document.getElementById('stars');
+  if (!starsEl) return;
 
-  window.addEventListener('scroll', () => {
-    if (window.scrollY > 30) {
-      masthead.classList.add('scrolled');
-    } else {
-      masthead.classList.remove('scrolled');
-    }
-  }, { passive: true });
-}
-
-/* ==========================================================================
-   8. REAL-TIME GITHUB STARS
-   ========================================================================== */
-async function fetchGitHubStars() {
-  const starCountEl = document.getElementById('github-star-count');
-  if (!starCountEl) return;
-
-  try {
-    const res = await fetch('https://api.github.com/repos/aswadhkrishna22-prog/OzonePlayer');
-    if (res.ok) {
-      const data = await res.json();
-      if (typeof data.stargazers_count === 'number') {
-        starCountEl.textContent = `★ ${data.stargazers_count}`;
+  fetch('https://api.github.com/repos/aswadhkrishna22-prog/OzonePlayer')
+    .then(res => res.ok ? res.json() : null)
+    .then(data => {
+      if (data && typeof data.stargazers_count === 'number') {
+        starsEl.textContent = `★ ${data.stargazers_count}`;
       }
-    }
-  } catch (err) {
-    console.debug('GitHub stars offline:', err);
-  }
+    })
+    .catch(() => {});
 }
