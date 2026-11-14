@@ -178,6 +178,7 @@ fun OnlinePlaylistScreen(
                         gradientColors = gradientColors,
                         systemBarsTopPadding = systemBarsTopPadding,
                         actions = actions,
+                        lazyListState = lazyListState,
                     )
                 }
 

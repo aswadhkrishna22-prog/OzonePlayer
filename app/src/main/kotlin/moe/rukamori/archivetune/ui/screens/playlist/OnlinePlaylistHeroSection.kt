@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.background
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -57,6 +58,7 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.AppBarHeight
 import moe.rukamori.archivetune.constants.PlaylistDownloadTipShownKey
 import moe.rukamori.archivetune.innertube.models.PlaylistItem
+import moe.rukamori.archivetune.ui.component.CollapsingPlaylistCover
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.LocalYumaColors
@@ -75,6 +77,7 @@ fun OnlinePlaylistHeroSection(
     gradientColors: List<Color>,
     systemBarsTopPadding: Dp,
     actions: OnlinePlaylistActions,
+    lazyListState: LazyListState,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -84,30 +87,21 @@ fun OnlinePlaylistHeroSection(
                 .padding(top = systemBarsTopPadding + AppBarHeight),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(modifier = Modifier.padding(top = 8.dp, bottom = 20.dp)) {
-            Surface(
-                modifier =
-                    Modifier
-                        .size(240.dp)
-                        .shadow(
-                            elevation = 24.dp,
-                            shape = RoundedCornerShape(16.dp),
-                            spotColor =
-                                gradientColors
-                                    .getOrNull(0)
-                                    ?.copy(alpha = 0.5f)
-                                    ?: MaterialTheme.colorScheme.primary
-                                        .copy(alpha = 0.3f),
-                        ),
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                AsyncImage(
-                    model = playlist.thumbnail,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
+        CollapsingPlaylistCover(
+            lazyListState = lazyListState,
+            spotColor =
+                gradientColors
+                    .getOrNull(0)
+                    ?.copy(alpha = 0.5f)
+                    ?: MaterialTheme.colorScheme.primary
+                        .copy(alpha = 0.3f),
+        ) {
+            AsyncImage(
+                model = playlist.thumbnail,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
 
         Text(

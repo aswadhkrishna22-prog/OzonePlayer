@@ -204,6 +204,7 @@ fun LocalPlaylistScreen(
                         systemBarsTopPadding = systemBarsTopPadding,
                         downloadState = downloadUiState.downloadState,
                         actions = actions,
+                        lazyListState = lazyListState,
                     )
 
                     localPlaylistSortHeaderItem(

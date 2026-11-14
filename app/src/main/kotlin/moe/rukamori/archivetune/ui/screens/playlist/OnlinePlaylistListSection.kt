@@ -164,6 +164,7 @@ fun LazyListScope.onlinePlaylistHeaderItem(
     gradientColors: List<Color>,
     systemBarsTopPadding: Dp,
     actions: OnlinePlaylistActions,
+    lazyListState: LazyListState,
 ) {
     item(key = ONLINE_PLAYLIST_KEY_HEADER, contentType = CONTENT_TYPE_ONLINE_PLAYLIST_HEADER) {
         OnlinePlaylistHeroSection(
@@ -173,6 +174,7 @@ fun LazyListScope.onlinePlaylistHeaderItem(
             gradientColors = gradientColors,
             systemBarsTopPadding = systemBarsTopPadding,
             actions = actions,
+            lazyListState = lazyListState,
             modifier = Modifier.animateItem(),
         )
     }

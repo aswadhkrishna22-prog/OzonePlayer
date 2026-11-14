@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -37,6 +38,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -56,6 +58,7 @@ import coil3.compose.AsyncImage
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.AppBarHeight
 import moe.rukamori.archivetune.db.entities.Playlist
+import moe.rukamori.archivetune.ui.component.CollapsingPlaylistCover
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.LocalYumaColors
@@ -240,6 +243,7 @@ fun LocalPlaylistHeroSection(
     systemBarsTopPadding: Dp,
     downloadState: HeaderDownloadState,
     actions: LocalPlaylistActions,
+    lazyListState: LazyListState,
     modifier: Modifier = Modifier,
 ) {
     val editable = playlist.playlist.isEditable
@@ -251,111 +255,99 @@ fun LocalPlaylistHeroSection(
                 .padding(top = systemBarsTopPadding + AppBarHeight),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .padding(top = 8.dp, bottom = 20.dp),
-        ) {
-            if (playlist.thumbnails.size == 1) {
-                Surface(
-                    modifier =
-                        Modifier
-                            .size(240.dp)
-                            .shadow(
-                                elevation = 24.dp,
-                                shape = RoundedCornerShape(16.dp),
-                                spotColor =
-                                    gradientColors.getOrNull(0)?.copy(alpha = 0.5f)
-                                        ?: MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                            ),
-                    shape = RoundedCornerShape(16.dp),
-                ) {
-                    AsyncImage(
-                        model = playlist.thumbnails[0],
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-            } else if (playlist.thumbnails.size > 1) {
-                Surface(
-                    modifier =
-                        Modifier
-                            .size(240.dp)
-                            .shadow(
-                                elevation = 24.dp,
-                                shape = RoundedCornerShape(16.dp),
-                                spotColor =
-                                    gradientColors.getOrNull(0)?.copy(alpha = 0.5f)
-                                        ?: MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                            ),
-                    shape = RoundedCornerShape(16.dp),
-                ) {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        listOf(
-                            Alignment.TopStart,
-                            Alignment.TopEnd,
-                            Alignment.BottomStart,
-                            Alignment.BottomEnd,
-                        ).fastForEachIndexed { index, alignment ->
-                            AsyncImage(
-                                model = playlist.thumbnails.getOrNull(index),
+        CollapsingPlaylistCover(
+            lazyListState = lazyListState,
+            spotColor =
+                gradientColors.getOrNull(0)?.copy(alpha = 0.5f)
+                    ?: MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+            editIcon =
+                if (editable) {
+                    { fractionProvider, animationsDisabled ->
+                        val editCoverLabel = stringResource(R.string.change_playlist_cover)
+                        Box(
+                            modifier =
+                                Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(8.dp)
+                                    .graphicsLayer {
+                                        alpha =
+                                            if (animationsDisabled) {
+                                                1f
+                                            } else {
+                                                (1f - fractionProvider() / 0.40f).coerceIn(0f, 1f)
+                                            }
+                                    }
+                                    .size(44.dp)
+                                    .yumaGlassCard(
+                                        shape = CircleShape,
+                                        backgroundColor = LocalYumaColors.current.glassBackground,
+                                    )
+                                    .clip(CircleShape)
+                                    .yumaClickable(
+                                        onClick = {
+                                            val isTappable =
+                                                animationsDisabled ||
+                                                    ((1f - fractionProvider() / 0.40f) > 0.3f)
+                                            if (isTappable) {
+                                                actions.onPickCover()
+                                            }
+                                        },
+                                    )
+                                    .semantics(mergeDescendants = true) {
+                                        contentDescription = editCoverLabel
+                                        role = Role.Button
+                                    },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.edit),
                                 contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier =
-                                    Modifier
-                                        .align(alignment)
-                                        .size(120.dp),
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                     }
+                } else {
+                    null
+                },
+        ) {
+            if (playlist.thumbnails.size == 1) {
+                AsyncImage(
+                    model = playlist.thumbnails[0],
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else if (playlist.thumbnails.size > 1) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    listOf(
+                        Alignment.TopStart,
+                        Alignment.TopEnd,
+                        Alignment.BottomStart,
+                        Alignment.BottomEnd,
+                    ).fastForEachIndexed { index, alignment ->
+                        AsyncImage(
+                            model = playlist.thumbnails.getOrNull(index),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier =
+                                Modifier
+                                    .align(alignment)
+                                    .size(120.dp),
+                        )
+                    }
                 }
             } else {
-                Surface(
-                    modifier =
-                        Modifier
-                            .size(240.dp)
-                            .shadow(
-                                elevation = 16.dp,
-                                shape = RoundedCornerShape(16.dp),
-                            ),
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.queue_music),
-                            contentDescription = null,
-                            modifier = Modifier.size(80.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-
-            if (editable) {
-                Surface(
-                    onClick = actions.onPickCover,
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shadowElevation = 6.dp,
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(8.dp)
-                            .size(40.dp),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            painter = painterResource(R.drawable.edit),
-                            contentDescription = stringResource(R.string.change_playlist_cover),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
+                    Icon(
+                        painter = painterResource(R.drawable.queue_music),
+                        contentDescription = null,
+                        modifier = Modifier.size(80.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
         }
@@ -611,6 +603,7 @@ fun LazyListScope.localPlaylistHeroItem(
     systemBarsTopPadding: Dp,
     downloadState: HeaderDownloadState,
     actions: LocalPlaylistActions,
+    lazyListState: LazyListState,
 ) {
     item(key = LOCAL_PLAYLIST_KEY_HEADER, contentType = CONTENT_TYPE_LOCAL_PLAYLIST_HEADER) {
         LocalPlaylistHeroSection(
@@ -620,6 +613,7 @@ fun LazyListScope.localPlaylistHeroItem(
             systemBarsTopPadding = systemBarsTopPadding,
             downloadState = downloadState,
             actions = actions,
+            lazyListState = lazyListState,
         )
     }
 }
