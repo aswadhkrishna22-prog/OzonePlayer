@@ -2,7 +2,22 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1200, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=1200, initial-scale=0.33">
+<script>
+(function () {
+  var DESIGN_WIDTH = 1200;
+  var w = Math.min(screen.width, window.innerWidth || screen.width);
+  var m = document.querySelector('meta[name="viewport"]');
+  if (!m) { m = document.createElement('meta'); m.name = 'viewport'; document.head.appendChild(m); }
+  if (w < 900) {
+    var s = (w / DESIGN_WIDTH).toFixed(4);
+    m.setAttribute('content',
+      'width=' + DESIGN_WIDTH + ', initial-scale=' + s + ', minimum-scale=' + s + ', maximum-scale=5, viewport-fit=cover');
+  } else {
+    m.setAttribute('content', 'width=device-width, initial-scale=1, viewport-fit=cover');
+  }
+})();
+</script>
 <title>Ozone Player — Audiophile Lossless Music Client for Android</title>
 
 <!-- Search Console Verification -->
