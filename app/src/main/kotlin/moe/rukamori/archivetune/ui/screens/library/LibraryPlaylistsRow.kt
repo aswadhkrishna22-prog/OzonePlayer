@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -43,9 +43,9 @@ import moe.rukamori.archivetune.db.entities.Playlist
 import moe.rukamori.archivetune.spotify.models.SpotifyPlaylist
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.YumaSegmentPosition
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.OzoneSegmentPosition
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 fun LazyListScope.playlistsRowSection(
     visiblePlaylists: List<Playlist>,
@@ -105,13 +105,13 @@ fun LazyListScope.playlistsRowSection(
                             modifier =
                                 Modifier
                                     .width(130.dp)
-                                    .yumaClickable(
+                                    .ozoneClickable(
                                         pressedScale = SettingsAnimations.PressScale,
                                         onClick = { onOpenPlaylist(playlist) },
                                     )
-                                    .yumaGlassCard(
+                                    .ozoneGlassCard(
                                         shape = RoundedCornerShape(SettingsDimensions.LibraryCardRadius),
-                                        position = YumaSegmentPosition.Single,
+                                        position = OzoneSegmentPosition.Single,
                                     )
                                     .padding(SettingsDimensions.SectionSpacing),
                         ) {
@@ -170,13 +170,13 @@ fun LazyListScope.playlistsRowSection(
                                 modifier =
                                     Modifier
                                         .width(130.dp)
-                                        .yumaClickable(
+                                        .ozoneClickable(
                                             pressedScale = SettingsAnimations.PressScale,
                                             onClick = onOpenSpotifyLiked,
                                         )
-                                        .yumaGlassCard(
+                                        .ozoneGlassCard(
                                             shape = RoundedCornerShape(SettingsDimensions.LibraryCardRadius),
-                                            position = YumaSegmentPosition.Single,
+                                            position = OzoneSegmentPosition.Single,
                                         )
                                         .padding(SettingsDimensions.SectionSpacing),
                             ) {
@@ -249,13 +249,13 @@ fun LazyListScope.playlistsRowSection(
                                 Modifier
                                     .width(130.dp)
                                     .height(168.dp)
-                                    .yumaClickable(
+                                    .ozoneClickable(
                                         pressedScale = SettingsAnimations.PressScale,
                                         onClick = onSeeAll,
                                     )
-                                    .yumaGlassCard(
+                                    .ozoneGlassCard(
                                         shape = RoundedCornerShape(SettingsDimensions.LibraryCardRadius),
-                                        position = YumaSegmentPosition.Single,
+                                        position = OzoneSegmentPosition.Single,
                                     ),
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally,

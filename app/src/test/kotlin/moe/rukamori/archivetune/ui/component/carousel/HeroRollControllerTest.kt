@@ -1,5 +1,5 @@
 /*
- * Ozone Player (2026) | Adapted from YumaPlayer
+ * Ozone Player (2026)
  * GPL-3.0 License
  */
 
@@ -8,7 +8,7 @@ package moe.rukamori.archivetune.ui.component.carousel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import moe.rukamori.archivetune.ui.haptics.NoOpYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.NoOpOzoneHaptics
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -34,7 +34,7 @@ class HeroRollControllerTest {
     @Test
     fun `syncCandidates populates candidates from items`() {
         val state = HeroRollState()
-        val controller = HeroRollController(state, NoOpYumaHaptics, testScope)
+        val controller = HeroRollController(state, NoOpOzoneHaptics, testScope)
         val items = sampleItems(5)
 
         controller.syncCandidates(items)
@@ -46,7 +46,7 @@ class HeroRollControllerTest {
     @Test
     fun `syncCandidates resets stale result when item is removed`() {
         val state = HeroRollState()
-        val controller = HeroRollController(state, NoOpYumaHaptics, testScope)
+        val controller = HeroRollController(state, NoOpOzoneHaptics, testScope)
         val items = sampleItems(5)
 
         controller.syncCandidates(items)
@@ -64,7 +64,7 @@ class HeroRollControllerTest {
     @Test
     fun `cancelRoll resets phase to Idle`() {
         val state = HeroRollState()
-        val controller = HeroRollController(state, NoOpYumaHaptics, testScope)
+        val controller = HeroRollController(state, NoOpOzoneHaptics, testScope)
 
         state.phase = HeroRollPhase.Rolling
         controller.cancelRoll()
@@ -75,7 +75,7 @@ class HeroRollControllerTest {
     @Test
     fun `onActivityChanged cancels roll when carousel becomes inactive`() {
         val state = HeroRollState()
-        val controller = HeroRollController(state, NoOpYumaHaptics, testScope)
+        val controller = HeroRollController(state, NoOpOzoneHaptics, testScope)
 
         state.phase = HeroRollPhase.Rolling
         controller.onActivityChanged(isCarouselActive = false, animationsDisabled = false)
@@ -86,7 +86,7 @@ class HeroRollControllerTest {
     @Test
     fun `roll with animationsDisabled immediately resolves winner and increments token`() {
         val state = HeroRollState()
-        val controller = HeroRollController(state, NoOpYumaHaptics, testScope)
+        val controller = HeroRollController(state, NoOpOzoneHaptics, testScope)
         val items = sampleItems(3)
         controller.syncCandidates(items)
 
@@ -102,7 +102,7 @@ class HeroRollControllerTest {
     @Test
     fun `roll does nothing when pool has fewer than 2 candidates`() {
         val state = HeroRollState()
-        val controller = HeroRollController(state, NoOpYumaHaptics, testScope)
+        val controller = HeroRollController(state, NoOpOzoneHaptics, testScope)
         val items = sampleItems(1)
         controller.syncCandidates(items)
 

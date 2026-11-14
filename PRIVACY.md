@@ -1,18 +1,18 @@
-# YumaPlayer Privacy Notice
+# OzonePlayer Privacy Notice
 
 Last updated: 2026-09-10
 
 ## Scope
 
-This notice covers the Android YumaPlayer app in this repository. It explains what the app stores on your device, what it can send to external services when you use specific features, and what Android permissions it requests.
+This notice covers the Android OzonePlayer app in this repository. It explains what the app stores on your device, what it can send to external services when you use specific features, and what Android permissions it requests.
 
 This notice is based on the current source code and build configuration. It does not replace the privacy terms of YouTube or YouTube Music, Spotify, Qobuz, Last.fm, ListenBrainz, Discord, GitHub, lyrics providers, canvas visualizer services, or any Together server you choose to use.
 
 ## Privacy Summary
 
 - Most core app data is stored locally on your device.
-- YumaPlayer does not secretly harvest, sell, or broker your personal data.
-- YumaPlayer does not silently send your data to unrelated third-party services.
+- OzonePlayer does not secretly harvest, sell, or broker your personal data.
+- OzonePlayer does not silently send your data to unrelated third-party services.
 - Optional network features send only the data needed to provide those features.
 - If data leaves your device, it is because you used a specific online feature or integration that requires that transfer.
 - Android backup and device-transfer features may copy part of the app's local data unless excluded by the app's backup rules.
@@ -36,7 +36,7 @@ The app stores data locally to provide playback, library, search, lyrics, sync, 
 
 ## Data the App May Send Off Your Device
 
-YumaPlayer does not silently forward your data to unrelated services. It only contacts external services when you use online features, and the exact payload depends on the feature you use and how you configure it.
+OzonePlayer does not silently forward your data to unrelated services. It only contacts external services when you use online features, and the exact payload depends on the feature you use and how you configure it.
 
 | Service or feature | Data that may be sent | When it happens |
 | --- | --- | --- |
@@ -71,7 +71,7 @@ The app declares the following Android permissions in the current manifest.
 
 ## Backups, Device Transfer, and Local Retention
 
-YumaPlayer enables standard Android backup support. Backup and data-transfer rules explicitly exclude streaming caches and download directories (`exoplayer_internal.db`, cached audio segments). Local databases (playlists, likes, history) and app preferences may be backed up according to system settings.
+OzonePlayer enables standard Android backup support. Backup and data-transfer rules explicitly exclude streaming caches and download directories (`exoplayer_internal.db`, cached audio segments). Local databases (playlists, likes, history) and app preferences may be backed up according to system settings.
 
 The app also provides a manual backup feature that creates a ZIP archive containing app settings and database files upon explicit user trigger.
 
@@ -90,8 +90,8 @@ Unless removed, app data remains on your device until:
 ## Project Contact
 
 For questions or corrections, use the project repository and issue tracker:
-- Repository: [https://github.com/MuwMx/YumaPlayer](https://github.com/MuwMx/YumaPlayer)
-- Issues: [https://github.com/MuwMx/YumaPlayer/issues](https://github.com/MuwMx/YumaPlayer/issues)
+- Repository: [https://github.com/aswadhkrishna22-prog/OzonePlayer](https://github.com/aswadhkrishna22-prog/OzonePlayer)
+- Issues: [https://github.com/aswadhkrishna22-prog/OzonePlayer/issues](https://github.com/aswadhkrishna22-prog/OzonePlayer/issues)
 
 ## Technical Appendix
 

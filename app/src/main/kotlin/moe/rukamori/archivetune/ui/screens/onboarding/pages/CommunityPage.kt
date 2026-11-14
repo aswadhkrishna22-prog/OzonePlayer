@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -42,11 +42,11 @@ import moe.rukamori.archivetune.ui.screens.onboarding.components.rememberExpress
 import moe.rukamori.archivetune.ui.screens.onboarding.components.segmentedOnboardingItemShape
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.YumaSegmentPosition
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
-import moe.rukamori.archivetune.ui.theme.yumaSegmentPosition
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.OzoneSegmentPosition
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneSegmentPosition
 
 @Composable
 internal fun CommunityPage(
@@ -81,7 +81,7 @@ internal fun CommunityPage(
             ) {
                 uiState.communityActions.forEachIndexed { index, item ->
                     val shape = remember(index, count) { segmentedOnboardingItemShape(index, count) }
-                    val position = remember(index, count) { yumaSegmentPosition(index, count) }
+                    val position = remember(index, count) { ozoneSegmentPosition(index, count) }
                     GlassCommunityRow(
                         action = item,
                         iconShape = expressiveShapes[index % expressiveShapes.size],
@@ -100,17 +100,17 @@ private fun GlassCommunityRow(
     action: OnboardingCommunityActionUiModel,
     iconShape: Shape,
     shape: Shape,
-    position: YumaSegmentPosition,
+    position: OzoneSegmentPosition,
     onCommunityAction: (OnboardingCommunityActionUiModel) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
-                .yumaClickable { onCommunityAction(action) }
-                .yumaGlassCard(
+                .ozoneClickable { onCommunityAction(action) }
+                .ozoneGlassCard(
                     shape = shape,
                     backgroundColor = colors.glassBackground,
                     borderColor = colors.glassBorder,

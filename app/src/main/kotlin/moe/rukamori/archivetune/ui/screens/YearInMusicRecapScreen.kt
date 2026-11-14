@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -41,7 +41,7 @@ import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.DisableBlurKey
 import moe.rukamori.archivetune.ui.component.LocalMenuState
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.ui.menu.ArtistMenu
 import moe.rukamori.archivetune.ui.menu.SongMenu
 import moe.rukamori.archivetune.ui.screens.yearinmusic.RecapBackdrop
@@ -58,7 +58,7 @@ internal fun YearInMusicRecapScreen(
     val context = LocalContext.current
     val view = LocalView.current
     val menuState = LocalMenuState.current
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
     val coroutineScope = rememberCoroutineScope()
     val content = uiState as YearInMusicUiState.Content
     val (disableBlur) = rememberPreference(DisableBlurKey, false)

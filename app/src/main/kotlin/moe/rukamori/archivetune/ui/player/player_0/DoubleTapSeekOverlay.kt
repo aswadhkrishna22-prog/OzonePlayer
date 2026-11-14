@@ -60,7 +60,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.LocalAnimationsDisabled
-import moe.rukamori.archivetune.ui.haptics.LocalYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.LocalOzoneHaptics
 
 // ── AGSL WATER RIPPLE SHADER (PHYSICAL REFRACTION DISTORTION & CREST HIGHLIGHT) ──
 private const val WATER_RIPPLE_SHADER_SRC = """
@@ -254,7 +254,7 @@ fun DoubleTapSeekOverlay(
 
     val context = LocalContext.current
     val density = LocalDensity.current
-    val haptics = LocalYumaHaptics.current
+    val haptics = LocalOzoneHaptics.current
     val coroutineScope = rememberCoroutineScope()
     val textMeasurer = rememberTextMeasurer()
 

@@ -46,7 +46,7 @@ import moe.rukamori.archivetune.ui.component.LocalMenuState
 import moe.rukamori.archivetune.ui.component.NavigationTitle
 import moe.rukamori.archivetune.ui.component.YouTubeGridItem
 import moe.rukamori.archivetune.ui.component.YouTubeListItem
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.ui.menu.YouTubeAlbumMenu
 import moe.rukamori.archivetune.ui.menu.YouTubeArtistMenu
 import moe.rukamori.archivetune.ui.menu.YouTubeSongMenu
@@ -63,7 +63,7 @@ internal fun SuggestedSongsSection(
 
     val playerConnection = LocalPlayerConnection.current ?: return
     val menuState = LocalMenuState.current
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
     val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
 
@@ -143,7 +143,7 @@ internal fun TrendingAlbumsSection(
 
     val playerConnection = LocalPlayerConnection.current ?: return
     val menuState = LocalMenuState.current
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
     val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
@@ -205,7 +205,7 @@ internal fun SuggestedArtistsSection(
     if (artists.isEmpty()) return
 
     val menuState = LocalMenuState.current
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
 
     NavigationTitle(
         title = stringResource(R.string.stats_unique_artists),

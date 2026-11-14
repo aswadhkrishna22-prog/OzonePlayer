@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -48,7 +48,7 @@ import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.ui.component.PreferenceSelectionOption
 import moe.rukamori.archivetune.ui.screens.settings.segmentedSettingsItemShape
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.yumaSegmentPosition
+import moe.rukamori.archivetune.ui.theme.ozoneSegmentPosition
 import moe.rukamori.archivetune.viewmodels.SponsorBlockCategoryUiModel
 
 @Composable
@@ -145,7 +145,7 @@ internal fun SponsorBlockCategoryBottomSheet(
                             segmentedSettingsItemShape(index, values.size)
                         }
                         val position = remember(index, values.size) {
-                            yumaSegmentPosition(index, values.size)
+                            ozoneSegmentPosition(index, values.size)
                         }
                         PreferenceSelectionOption(
                             text = stringResource(option.labelRes),

@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -35,7 +35,7 @@ import moe.rukamori.archivetune.db.entities.Artist
 import moe.rukamori.archivetune.db.entities.Song
 import moe.rukamori.archivetune.db.entities.SongWithStats
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.utils.makeTimeString
 
 @Composable
@@ -95,7 +95,7 @@ private fun StatsHighlightCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .yumaGlassCard(shape = RoundedCornerShape(SettingsDimensions.GroupCardCornerRadius))
+            .ozoneGlassCard(shape = RoundedCornerShape(SettingsDimensions.GroupCardCornerRadius))
             .clickable(onClick = onClick),
     ) {
         Row(

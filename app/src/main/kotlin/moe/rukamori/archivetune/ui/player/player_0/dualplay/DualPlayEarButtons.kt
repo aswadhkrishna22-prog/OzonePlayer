@@ -50,7 +50,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import moe.rukamori.archivetune.playback.dualplay.EarSelection
-import moe.rukamori.archivetune.ui.haptics.LocalYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.LocalOzoneHaptics
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
 import moe.rukamori.archivetune.ui.theme.SoftTextShadow
 
@@ -229,7 +229,7 @@ private fun EarCircleButton(
     fontSize: TextUnit = DefaultLetterSize,
     modifier: Modifier = Modifier,
 ) {
-    val haptics = LocalYumaHaptics.current
+    val haptics = LocalOzoneHaptics.current
     val fontFamily = LocalArchiveTuneFontFamily.current
 
     val interactionSource = remember { MutableInteractionSource() }

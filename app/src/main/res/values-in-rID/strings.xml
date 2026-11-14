@@ -59,7 +59,7 @@
     <string name="play">Putar</string>
     <string name="widget_pause">Jeda</string>
     <string name="widget_previous">Sebelumnya</string>
-    <string name="widget_tap_to_open">Ketuk untuk membuka YumaPlayer</string>
+    <string name="widget_tap_to_open">Ketuk untuk membuka OzonePlayer</string>
     <string name="play_next">Putar setelah ini</string>
     <string name="add_to_queue">Tambahkan ke antrean</string>
     <string name="add_to_library">Tambahkan ke koleksi</string>
@@ -283,7 +283,7 @@
     <string name="contrast">Kontras</string>
     <string name="brightness">Kecerahan</string>
     <string name="custom_value">Nilai kustom</string>
-    <string name="archivetune_canvas">Kanvas YumaPlayer</string>
+    <string name="archivetune_canvas">Kanvas OzonePlayer</string>
     <string name="archivetune_canvas_desc">Menganimasikan sampul album saat diputar (Didukung oleh BetterLyrics)</string>
     <string name="show_button1_description">Alihkan visibilitas tombol 1 di Discord Rich Presence</string>
     <string name="show_button2_description">Alihkan visibilitas tombol 2 di Discord Rich Presence</string>
@@ -314,9 +314,9 @@
     <string name="login">Masuk</string>
     <string name="not_logged_in">Belum masuk</string>
     <string name="playback_confirmation_required">Konfirmasi pemutaran diperlukan</string>
-    <string name="playback_requires_youtube_music_confirmation">Konfirmasikan pemutaran di YouTube Music, lalu kembali ke YumaPlayer.</string>
+    <string name="playback_requires_youtube_music_confirmation">Konfirmasikan pemutaran di YouTube Music, lalu kembali ke OzonePlayer.</string>
     <string name="playback_login_refresh_required">Segarkan login YouTube Music</string>
-    <string name="playback_requires_youtube_music_login_refresh">Segarkan login YouTube Music Anda, lalu kembali ke YumaPlayer.</string>
+    <string name="playback_requires_youtube_music_login_refresh">Segarkan login YouTube Music Anda, lalu kembali ke OzonePlayer.</string>
     <string name="could_not_open_youtube_music">Tidak dapat membuka YouTube Music</string>
     <string name="content_language">Bahasa konten bawaan</string>
     <string name="content_country">Negara konten bawaan</string>
@@ -459,12 +459,12 @@
     <string name="restore_success">Cadangan berhasil dipulihkan</string>
     <string name="restore_failed">Gagal memulihkan cadangan</string>
     <string name="discord_integration">Integrasi Discord</string>
-    <string name="discord_login_description">Hubungkan akun Discord Anda dengan OAuth agar YumaPlayer dapat mempublikasikan Rich Presence.</string>
+    <string name="discord_login_description">Hubungkan akun Discord Anda dengan OAuth agar OzonePlayer dapat mempublikasikan Rich Presence.</string>
     <string name="discord_open_authorization">Buka otorisasi Discord</string>
     <string name="discord_waiting_for_authorization">Menunggu otorisasi Discord...</string>
     <string name="discord_authorization_success">Akun Discord terhubung</string>
     <string name="discord_authorization_failed">Otorisasi Discord gagal</string>
-    <string name="discord_account_ready">YumaPlayer siap mempublikasikan Rich Presence untuk sesi mendengarkan Anda.</string>
+    <string name="discord_account_ready">OzonePlayer siap mempublikasikan Rich Presence untuk sesi mendengarkan Anda.</string>
     <string name="discord_connection_settings">Koneksi</string>
     <string name="discord_activity_content">Isi Aktivitas</string>
     <string name="discord_refresh_success">Discord presence diperbarui</string>
@@ -640,9 +640,9 @@
     <string name="update_notification_channel_name">Pembaruan Aplikasi</string>
     <string name="update_notification_channel_desc">Notifikasi untuk pembaruan aplikasi baru</string>
     <string name="update_notification_title">Pembaruan Tersedia</string>
-    <string name="update_notification_text">YumaPlayer %s kini tersedia</string>
+    <string name="update_notification_text">OzonePlayer %s kini tersedia</string>
     <string name="download">Unduh</string>
-    <string name="permissions_title">Izinkan YumaPlayer bekerja dengan optimal</string>
+    <string name="permissions_title">Izinkan OzonePlayer bekerja dengan optimal</string>
     <string name="permissions_subtitle">Kami menggunakan beberapa izin untuk memutar dan mengelola musik Anda dengan andal. Anda dapat mengubahnya kapan saja di pengaturan sistem.</string>
     <string name="permission_storage_title">Akses penyimpanan</string>
     <string name="permission_storage_desc">Diperlukan untuk membaca file audio lokal dan unduhan Anda untuk diputar.</string>
@@ -655,7 +655,7 @@
     <string name="playlist_suggestion_source_title">Judul playlist</string>
     <string name="playlist_suggestion_source_content">Konten playlist</string>
     <string name="playlist_suggestion_source_both">Judul dan konten playlist</string>
-    <string name="music_together">YumaPlayer Musik Bersama</string>
+    <string name="music_together">OzonePlayer Musik Bersama</string>
     <string name="together_display_name">Nama tampilan</string>
     <string name="together_display_name_placeholder">Nama Anda</string>
     <string name="together_port">Port sesi</string>
@@ -702,10 +702,10 @@
     <string name="together_error_state">Kesalahan</string>
     <string name="got_it">Oke</string>
     <string name="together_dont_show_again">Jangan tampilkan ini lagi</string>
-    <string name="together_welcome_title">Selamat datang di Yuma Musik Bersama</string>
+    <string name="together_welcome_title">Selamat datang di Ozone Musik Bersama</string>
     <string name="together_welcome_body">Musik Bersama memungkinkan beberapa perangkat berbagi sesi langsung dengan antrean dan pemutaran yang tersinkronisasi.</string>
     <string name="together_welcome_host_title">Selenggarakan sesi</string>
-    <string name="together_welcome_host_body">Ketuk Mulai sesi, lalu bagikan tautan sesi. Biarkan YumaPlayer tetap terbuka di latar belakang selama menjadi host.</string>
+    <string name="together_welcome_host_body">Ketuk Mulai sesi, lalu bagikan tautan sesi. Biarkan OzonePlayer tetap terbuka di latar belakang selama menjadi host.</string>
     <string name="together_welcome_join_title">Gabung dari perangkat lain</string>
     <string name="together_welcome_join_body">Buka tautan yang dibagikan, atau masukkan kode dan ketuk Gabung. Antrean dan pemutaran Anda akan mengikuti host.</string>
     <string name="together_welcome_permissions_title">Izin dan keamanan</string>
@@ -733,7 +733,7 @@
     <string name="token_copied">Token disalin ke papan klip</string>
     <string name="extracting_from_url">Mengekstrak token dari URL</string>
     <string name="po_token_account_notice_title">Gunakan akun yang sama</string>
-    <string name="po_token_account_notice_body">Masuk di sini dengan akun Google yang sama yang sudah Anda gunakan untuk YouTube Music di dalam YumaPlayer sebelum membuat token PO.</string>
+    <string name="po_token_account_notice_body">Masuk di sini dengan akun Google yang sama yang sudah Anda gunakan untuk YouTube Music di dalam OzonePlayer sebelum membuat token PO.</string>
     <string name="po_token_account_notice_same_account">Jika WebView ini menggunakan akun yang berbeda, token yang dibuat tidak akan berfungsi dengan benar.</string>
     <string name="po_token_account_notice_mismatch">Gunakan akun yang sesuai, selesaikan alur masuk, lalu buka youtube.com/account dan buat token dari halaman tersebut.</string>
     <string name="saved_accounts">Akun yang disimpan</string>
@@ -790,7 +790,7 @@
     <string name="library_top_mixes_refresh">Segarkan mix</string>
     <string name="library_top_mixes_configure_ai">Konfigurasikan AI</string>
     <string name="library_top_mixes_ai_not_configured_title">Konfigurasikan AI untuk membuat mix</string>
-    <string name="library_top_mixes_ai_not_configured_desc">Integrasi AI diperlukan sebelum YumaPlayer dapat membuat mix teratas pribadi.</string>
+    <string name="library_top_mixes_ai_not_configured_desc">Integrasi AI diperlukan sebelum OzonePlayer dapat membuat mix teratas pribadi.</string>
     <string name="library_top_mixes_no_recent_history_title">Belum ada histori mix</string>
     <string name="library_top_mixes_no_recent_history">Dengarkan lagu lainnya, kemudian segarkan untuk membuat mix AI dari histori mendengarkan Anda.</string>
     <string name="library_top_mixes_failed">Gagal membuat mix teratas</string>
@@ -826,7 +826,7 @@
     <string name="cast_available_devices">Perangkat tersedia</string>
     <string name="most_tracks">Lagu terbanyak</string>
     <string name="least_tracks">Lagu tersedikit</string>
-    <string name="cast_sheet_subtitle">Pilih perangkat untuk memutar musik dari YumaPlayer</string>
+    <string name="cast_sheet_subtitle">Pilih perangkat untuk memutar musik dari OzonePlayer</string>
     <string name="cast_searching_devices">Mencari perangkat</string>
     <string name="cast_no_devices">Tidak ditemukan perangkat Transmisi</string>
     <string name="cast_no_devices_desc">Pastikan perangkat Anda terhubung ke jaringan Wi-Fi yang sama.</string>
@@ -877,7 +877,7 @@
     <string name="translate_lyrics">Terjemahkan Lirik</string>
     <string name="standard_download">Unduhan Standar</string>
     <string name="lyrics_search_results_count">%1$d hasil</string>
-    <string name="app_icon_builtin_description">Ikon YumaPlayer asli</string>
+    <string name="app_icon_builtin_description">Ikon OzonePlayer asli</string>
     <plurals name="app_icon_count">
         <item quantity="other">%d ikon</item>
     </plurals>
@@ -927,14 +927,14 @@
     <string name="player_background_style_v8_v9_desc">Tidak tersedia dengan gaya pemutar V8 dan V9</string>
     <string name="lastfm_endpoint_invalid">Masukkan endpoint HTTP atau HTTPS yang valid.</string>
     <string name="updates_channel_warning_stable_desc">Versi-versi ini telah diuji dan direkomendasikan bagi sebagian besar pengguna.</string>
-    <string name="onboarding_community_subtitle">Ikuti perkembangannya, laporkan masalah, atau dukung YumaPlayer.</string>
+    <string name="onboarding_community_subtitle">Ikuti perkembangannya, laporkan masalah, atau dukung OzonePlayer.</string>
     <string name="onboarding_finish">Mulai mendengarkan</string>
     <string name="onboarding_lets_go">Ayo!</string>
     <string name="onboarding_gms_variant">Edisi GMS</string>
     <string name="onboarding_foss_variant">Edisi FOSS</string>
     <string name="onboarding_version_label">Versi %1$s</string>
     <string name="onboarding_empty_title">Penyiapan tidak tersedia</string>
-    <string name="onboarding_empty_subtitle">Lanjutkan ke YumaPlayer.</string>
+    <string name="onboarding_empty_subtitle">Lanjutkan ke OzonePlayer.</string>
     <string name="onboarding_error_generic">Tidak dapat memuat penyiapan</string>
     <string name="onboarding_permission_unavailable">Tidak tersedia</string>
     <string name="onboarding_permission_notifications_title">Notifikasi</string>
@@ -943,7 +943,7 @@
     <string name="onboarding_permission_network_title">Akses jaringan</string>
     <string name="onboarding_permission_network_desc">Streaming musik, memuat gambar sampul, dan memeriksa konten aplikasi online.</string>
     <string name="onboarding_permission_playback_service_title">Pemutaran di latar belakang</string>
-    <string name="onboarding_permission_playback_service_desc">Pastikan musik tetap diputar dengan lancar saat YumaPlayer berjalan di latar belakang.</string>
+    <string name="onboarding_permission_playback_service_desc">Pastikan musik tetap diputar dengan lancar saat OzonePlayer berjalan di latar belakang.</string>
     <string name="unhide_playlist">Perlihatkan playlist</string>
     <string name="show_hidden_playlists">Tampilkan yang tersembunyi</string>
     <string name="cast_available_device_count">Perangkat ditemukan: %1$d</string>
@@ -1103,7 +1103,7 @@
     <string name="download_apk">Unduh APK</string>
     <string name="all_releases_github">Semua rilis di GitHub</string>
     <string name="download_complete">Unduhan selesai</string>
-    <string name="onboarding_welcome_title">Selamat datang di Yuma</string>
+    <string name="onboarding_welcome_title">Selamat datang di Ozone</string>
     <string name="onboarding_welcome_subtitle">Atur pemutaran, musik lokal, dan izin pembaruan sebelum Anda mulai mendengarkan.</string>
     <string name="onboarding_permissions_title">Tinjau izin</string>
     <string name="onboarding_permissions_subtitle">Berikan izin yang Anda inginkan saja sekarang. Anda dapat melanjutkan dan memberikan izin nanti.</string>
@@ -1152,7 +1152,7 @@
     <string name="duration_seconds_short">%1$ddtk</string>
     <string name="export">Ekspor</string>
     <string name="onboarding_permission_app_installation_title">Menginstal aplikasi</string>
-    <string name="onboarding_permission_app_installation_desc">Instal pembaruan APK yang diunduh dari YumaPlayer.</string>
+    <string name="onboarding_permission_app_installation_desc">Instal pembaruan APK yang diunduh dari OzonePlayer.</string>
     <string name="onboarding_permission_bluetooth_scan_title">Pemindaian Bluetooth</string>
     <string name="onboarding_community_github_desc">Bintangi repositori dan ikuti rilis.</string>
     <string name="onboarding_community_discord_title">Gabung ke Discord</string>
@@ -1181,7 +1181,7 @@
     <string name="qobuz_app_secret">Qobuz App Secret</string>
     <string name="qobuz_user_auth_token">Qobuz User Auth Token</string>
     <string name="updates_nightly_hosting_description">Versi pengembangan yang dibuat secara otomatis tersedia dari eksekusi GitHub Actions yang berhasil.</string>
-    <string name="updates_channel_warning_intro">YumaPlayer menyediakan dua saluran unduhan untuk versi:</string>
+    <string name="updates_channel_warning_intro">OzonePlayer menyediakan dua saluran unduhan untuk versi:</string>
     <string name="updates_channel_warning_nightly_title">Versi nightly</string>
     <string name="updates_channel_warning_nightly_risk">Versi nightly mungkin menyertakan fitur eksperimental, perubahan yang belum selesai, atau regresi sementara.</string>
     <string name="updates_channel_warning_nightly_unstable">Versi nightly disediakan hanya untuk pengujian dan akses awal.\nStabilitas, kompatibilitas, dan fungsionalitas tidak dijamin.</string>

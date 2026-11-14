@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -116,15 +116,15 @@ import moe.rukamori.archivetune.ui.component.IconButton
 import moe.rukamori.archivetune.ui.component.LocalMenuState
 import moe.rukamori.archivetune.ui.component.SongListItem
 import moe.rukamori.archivetune.ui.component.SortHeader
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.ui.menu.SelectionSongMenu
 import moe.rukamori.archivetune.ui.menu.SongMenu
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
 import moe.rukamori.archivetune.ui.theme.PlayerColorExtractor
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.ui.utils.HeaderDownloadItem
 import moe.rukamori.archivetune.ui.utils.HeaderDownloadState
 import moe.rukamori.archivetune.ui.utils.ItemWrapper
@@ -145,7 +145,7 @@ fun TopPlaylistScreen(
 ) {
     val context = LocalContext.current
     val menuState = LocalMenuState.current
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
     val focusManager = LocalFocusManager.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val isPlaying by playerConnection.isPlaying.collectAsState()
@@ -574,7 +574,7 @@ fun TopPlaylistScreen(
                                         modifier =
                                             Modifier
                                                 .size(48.dp)
-                                                .yumaClickable(
+                                                .ozoneClickable(
                                                     pressedScale = SettingsAnimations.PressScale,
                                                     onClick = {
                                                         when (downloadState) {
@@ -598,9 +598,9 @@ fun TopPlaylistScreen(
                                                         }
                                                     },
                                                 )
-                                                .yumaGlassCard(
+                                                .ozoneGlassCard(
                                                     shape = CircleShape,
-                                                    backgroundColor = LocalYumaColors.current.glassBackground,
+                                                    backgroundColor = LocalOzoneColors.current.glassBackground,
                                                 )
                                                 .clip(CircleShape)
                                                 .semantics(mergeDescendants = true) {
@@ -646,7 +646,7 @@ fun TopPlaylistScreen(
                                             Modifier
                                                 .weight(1f)
                                                 .height(48.dp)
-                                                .yumaClickable(
+                                                .ozoneClickable(
                                                     pressedScale = SettingsAnimations.PressScale,
                                                     onClick = {
                                                         playerConnection.playQueue(
@@ -694,7 +694,7 @@ fun TopPlaylistScreen(
                                         modifier =
                                             Modifier
                                                 .size(48.dp)
-                                                .yumaClickable(
+                                                .ozoneClickable(
                                                     pressedScale = SettingsAnimations.PressScale,
                                                     onClick = {
                                                         playerConnection.playQueue(
@@ -705,9 +705,9 @@ fun TopPlaylistScreen(
                                                         )
                                                     },
                                                 )
-                                                .yumaGlassCard(
+                                                .ozoneGlassCard(
                                                     shape = CircleShape,
-                                                    backgroundColor = LocalYumaColors.current.glassBackground,
+                                                    backgroundColor = LocalOzoneColors.current.glassBackground,
                                                 )
                                                 .clip(CircleShape)
                                                 .semantics(mergeDescendants = true) {
@@ -728,7 +728,7 @@ fun TopPlaylistScreen(
                                         modifier =
                                             Modifier
                                                 .size(48.dp)
-                                                .yumaClickable(
+                                                .ozoneClickable(
                                                     pressedScale = SettingsAnimations.PressScale,
                                                     onClick = {
                                                         playerConnection.addToQueue(
@@ -736,9 +736,9 @@ fun TopPlaylistScreen(
                                                         )
                                                     },
                                                 )
-                                                .yumaGlassCard(
+                                                .ozoneGlassCard(
                                                     shape = CircleShape,
-                                                    backgroundColor = LocalYumaColors.current.glassBackground,
+                                                    backgroundColor = LocalOzoneColors.current.glassBackground,
                                                 )
                                                 .clip(CircleShape)
                                                 .semantics(mergeDescendants = true) {

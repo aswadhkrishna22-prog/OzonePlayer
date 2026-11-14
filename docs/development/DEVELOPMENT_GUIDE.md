@@ -1,6 +1,6 @@
-# YumaPlayer Development Guide
+# OzonePlayer Development Guide
 
-This document provides standardized workflows for implementing common features, layers, and modules in YumaPlayer.
+This document provides standardized workflows for implementing common features, layers, and modules in OzonePlayer.
 
 ---
 

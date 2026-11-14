@@ -6,7 +6,7 @@ import org.json.JSONObject
 object TrackFeatures {
     init {
         try {
-            System.loadLibrary("yuma_analysis")
+            System.loadLibrary("ozone_analysis")
         } catch (_: UnsatisfiedLinkError) {
         }
     }

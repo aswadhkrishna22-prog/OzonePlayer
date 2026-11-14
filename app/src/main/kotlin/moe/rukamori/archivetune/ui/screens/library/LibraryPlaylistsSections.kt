@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -78,12 +78,12 @@ import moe.rukamori.archivetune.ui.menu.PlaylistMenu
 import moe.rukamori.archivetune.ui.menu.YouTubePlaylistMenu
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
 import moe.rukamori.archivetune.ui.theme.PlayerColorExtractor
-import moe.rukamori.archivetune.ui.theme.YumaSegmentPosition
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaCombinedClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.OzoneSegmentPosition
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneCombinedClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.utils.rememberPreference
 
 @Composable
@@ -102,7 +102,7 @@ fun ControlRow(
     modifier: Modifier = Modifier,
     filterContent: (@Composable () -> Unit)? = null,
 ) {
-    val yumaColors = LocalYumaColors.current
+    val ozoneColors = LocalOzoneColors.current
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
@@ -151,11 +151,11 @@ fun ControlRow(
                         modifier =
                             Modifier
                                 .height(SettingsDimensions.LibraryChipHeight)
-                                .yumaClickable { showSortMenu = true }
-                                .yumaGlassCard(
+                                .ozoneClickable { showSortMenu = true }
+                                .ozoneGlassCard(
                                     shape = CircleShape,
-                                    backgroundColor = yumaColors.glassBackground,
-                                    borderColor = yumaColors.glassBorder,
+                                    backgroundColor = ozoneColors.glassBackground,
+                                    borderColor = ozoneColors.glassBorder,
                                     strokeWidth = SettingsDimensions.GlassBorderThickness,
                                 )
                                 .clip(CircleShape)
@@ -209,11 +209,11 @@ fun ControlRow(
                         modifier =
                             Modifier
                                 .size(SettingsDimensions.LibraryChipHeight)
-                                .yumaClickable { onSortDescendingChange(!sortDescending) }
-                                .yumaGlassCard(
+                                .ozoneClickable { onSortDescendingChange(!sortDescending) }
+                                .ozoneGlassCard(
                                     shape = CircleShape,
-                                    backgroundColor = yumaColors.glassBackground,
-                                    borderColor = yumaColors.glassBorder,
+                                    backgroundColor = ozoneColors.glassBackground,
+                                    borderColor = ozoneColors.glassBorder,
                                     strokeWidth = SettingsDimensions.GlassBorderThickness,
                                 )
                                 .clip(CircleShape),
@@ -246,11 +246,11 @@ fun ControlRow(
                         modifier =
                             Modifier
                                 .size(SettingsDimensions.LibraryChipHeight)
-                                .yumaClickable { onLockedChange(!locked) }
-                                .yumaGlassCard(
+                                .ozoneClickable { onLockedChange(!locked) }
+                                .ozoneGlassCard(
                                     shape = CircleShape,
-                                    backgroundColor = yumaColors.glassBackground,
-                                    borderColor = yumaColors.glassBorder,
+                                    backgroundColor = ozoneColors.glassBackground,
+                                    borderColor = ozoneColors.glassBorder,
                                     strokeWidth = SettingsDimensions.GlassBorderThickness,
                                 )
                                 .clip(CircleShape),
@@ -272,10 +272,10 @@ fun ControlRow(
                     modifier =
                         Modifier
                             .height(SettingsDimensions.LibraryChipHeight)
-                            .yumaGlassCard(
+                            .ozoneGlassCard(
                                 shape = CircleShape,
-                                backgroundColor = yumaColors.glassBackground,
-                                borderColor = yumaColors.glassBorder,
+                                backgroundColor = ozoneColors.glassBackground,
+                                borderColor = ozoneColors.glassBorder,
                                 strokeWidth = SettingsDimensions.GlassBorderThickness,
                             )
                             .clip(CircleShape)
@@ -288,7 +288,7 @@ fun ControlRow(
                                 .size(32.dp)
                                 .clip(CircleShape)
                                 .background(if (!isGridView) MaterialTheme.colorScheme.primary else Color.Transparent)
-                                .yumaClickable { onGridViewChange(false) },
+                                .ozoneClickable { onGridViewChange(false) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
@@ -304,7 +304,7 @@ fun ControlRow(
                                 .size(32.dp)
                                 .clip(CircleShape)
                                 .background(if (isGridView) MaterialTheme.colorScheme.primary else Color.Transparent)
-                                .yumaClickable { onGridViewChange(true) },
+                                .ozoneClickable { onGridViewChange(true) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
@@ -322,10 +322,10 @@ fun ControlRow(
                     modifier =
                         Modifier
                             .height(SettingsDimensions.LibraryChipHeight)
-                            .yumaGlassCard(
+                            .ozoneGlassCard(
                                 shape = CircleShape,
-                                backgroundColor = yumaColors.glassBackground,
-                                borderColor = yumaColors.glassBorder,
+                                backgroundColor = ozoneColors.glassBackground,
+                                borderColor = ozoneColors.glassBorder,
                                 strokeWidth = SettingsDimensions.GlassBorderThickness,
                             )
                             .clip(CircleShape)
@@ -338,7 +338,7 @@ fun ControlRow(
                                 .size(32.dp)
                                 .clip(CircleShape)
                                 .background(if (showHidden) MaterialTheme.colorScheme.primary else Color.Transparent)
-                                .yumaClickable { onShowHiddenChange(!showHidden) },
+                                .ozoneClickable { onShowHiddenChange(!showHidden) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
@@ -354,7 +354,7 @@ fun ControlRow(
                                 .size(32.dp)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.primary)
-                                .yumaClickable { onCreatePlaylistClick() },
+                                .ozoneClickable { onCreatePlaylistClick() },
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
@@ -574,11 +574,11 @@ fun PlaylistListCard(
     onPlay: () -> Unit,
     onMenuClick: () -> Unit,
     modifier: Modifier = Modifier,
-    position: YumaSegmentPosition = YumaSegmentPosition.Single,
+    position: OzoneSegmentPosition = OzoneSegmentPosition.Single,
     showDragHandle: Boolean = false,
     dragHandleModifier: Modifier = Modifier,
 ) {
-    val yumaColors = LocalYumaColors.current
+    val ozoneColors = LocalOzoneColors.current
     val hiddenAlpha = if (playlist.playlist.isHidden) 0.45f else 1f
 
     Row(
@@ -588,14 +588,14 @@ fun PlaylistListCard(
                 .graphicsLayer {
                     alpha = hiddenAlpha
                 }
-                .yumaClickable(
+                .ozoneClickable(
                     pressedScale = SettingsAnimations.PressScale,
                     onClick = onClick,
                 )
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = RoundedCornerShape(SettingsDimensions.LibrarySheetRadius),
-                    backgroundColor = yumaColors.glassBackground,
-                    borderColor = yumaColors.glassBorder,
+                    backgroundColor = ozoneColors.glassBackground,
+                    borderColor = ozoneColors.glassBorder,
                     position = position,
                 )
                 .clip(RoundedCornerShape(SettingsDimensions.LibrarySheetRadius))
@@ -734,7 +734,7 @@ fun PlaylistGridCard(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val yumaColors = LocalYumaColors.current
+    val ozoneColors = LocalOzoneColors.current
     val hiddenAlpha = if (playlist.playlist.isHidden) 0.45f else 1f
 
     Column(
@@ -744,16 +744,16 @@ fun PlaylistGridCard(
                 .graphicsLayer {
                     alpha = hiddenAlpha
                 }
-                .yumaCombinedClickable(
+                .ozoneCombinedClickable(
                     pressedScale = SettingsAnimations.PressScale,
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = RoundedCornerShape(SettingsDimensions.LibraryCardRadius),
-                    backgroundColor = yumaColors.glassBackground,
-                    borderColor = yumaColors.glassBorder,
-                    position = YumaSegmentPosition.Single,
+                    backgroundColor = ozoneColors.glassBackground,
+                    borderColor = ozoneColors.glassBorder,
+                    position = OzoneSegmentPosition.Single,
                 )
                 .clip(RoundedCornerShape(SettingsDimensions.LibraryCardRadius))
                 .padding(12.dp),

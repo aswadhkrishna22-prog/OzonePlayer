@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -32,9 +32,9 @@ import moe.rukamori.archivetune.home.state.AccountChannelsState
 import moe.rukamori.archivetune.ui.screens.settings.segmentedSettingsItemShape
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
-import moe.rukamori.archivetune.ui.theme.yumaSegmentPosition
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneSegmentPosition
 
 @Composable
 internal fun AccountChannelsSection(
@@ -85,7 +85,7 @@ internal fun AccountChannelsSection(
                     channelList.forEachIndexed { index, channel ->
                         val isSelected = channel.isSelected || channel.dataSyncId == activeDataSyncId
                         val shape = segmentedSettingsItemShape(index, channelList.size)
-                        val position = yumaSegmentPosition(index, channelList.size)
+                        val position = ozoneSegmentPosition(index, channelList.size)
                         val baseBackground = if (isSelected) {
                             MaterialTheme.colorScheme.primaryContainer
                         } else {
@@ -99,11 +99,11 @@ internal fun AccountChannelsSection(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .yumaClickable(pressedScale = SettingsAnimations.PressScale) {
+                                .ozoneClickable(pressedScale = SettingsAnimations.PressScale) {
                                     onDismissRequest()
                                     onSwitchAccountChannel(channel)
                                 }
-                                .yumaGlassCard(
+                                .ozoneGlassCard(
                                     shape = shape,
                                     position = position,
                                     backgroundColor = baseBackground,

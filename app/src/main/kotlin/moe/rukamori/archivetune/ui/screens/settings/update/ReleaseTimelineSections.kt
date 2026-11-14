@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -54,9 +54,9 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.component.MarkdownText
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.utils.ReleaseNoteCategory
 
 @Composable
@@ -68,7 +68,7 @@ internal fun ReleaseTimelineSection(
 ) {
     val title = section.title ?: stringResource(sectionTitleRes(section.category))
     val categoryColors = releaseCategoryColors(section.category)
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val sectionShape = RoundedCornerShape(SettingsDimensions.LibrarySmallRadius)
 
     val stateLabel =
@@ -91,7 +91,7 @@ internal fun ReleaseTimelineSection(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = sectionShape,
                     backgroundColor = colors.glassBackground,
                     borderColor = colors.glassBorder,
@@ -104,7 +104,7 @@ internal fun ReleaseTimelineSection(
                     .fillMaxWidth()
                     .clip(sectionShape)
                     .minimumInteractiveComponentSize()
-                    .yumaClickable(onClick = { onToggle(releaseKey, section.id) })
+                    .ozoneClickable(onClick = { onToggle(releaseKey, section.id) })
                     .padding(
                         horizontal = SettingsDimensions.BadgePaddingH,
                         vertical = SettingsDimensions.BadgeSpacing,
@@ -206,7 +206,7 @@ internal fun ReleaseTimelineSection(
                                 .fillMaxWidth()
                                 .minimumInteractiveComponentSize()
                                 .clip(RoundedCornerShape(6.dp))
-                                .yumaClickable(onClick = { onTogglePreview(releaseKey, section.id) })
+                                .ozoneClickable(onClick = { onTogglePreview(releaseKey, section.id) })
                                 .padding(vertical = SettingsDimensions.BadgeSpacing),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically,
@@ -226,7 +226,7 @@ internal fun ReleaseTimelineSection(
 
 @Composable
 internal fun ReleaseTimelineFallback(markdown: String?) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val sectionShape = RoundedCornerShape(SettingsDimensions.LibrarySmallRadius)
 
     if (markdown.isNullOrBlank()) {
@@ -241,7 +241,7 @@ internal fun ReleaseTimelineFallback(markdown: String?) {
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .yumaGlassCard(
+                    .ozoneGlassCard(
                         shape = sectionShape,
                         backgroundColor = colors.glassBackground,
                         borderColor = colors.glassBorder,

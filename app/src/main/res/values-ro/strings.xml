@@ -84,7 +84,7 @@
     <string name="library_top_mixes_refresh">Împrospătează mixurile</string>
     <string name="library_top_mixes_configure_ai">Configurează IA</string>
     <string name="library_top_mixes_ai_not_configured_title">Configurează IA pentru crearea mixurilor</string>
-    <string name="library_top_mixes_ai_not_configured_desc">Este necesară integrarea IA pentru ca Yuma să poată crea mixuri personalizate.</string>
+    <string name="library_top_mixes_ai_not_configured_desc">Este necesară integrarea IA pentru ca Ozone să poată crea mixuri personalizate.</string>
     <string name="library_top_mixes_no_recent_history_title">Nici un mix ascultat recent</string>
     <string name="library_top_mixes_no_recent_history">Acultă mai multe căntece, apoi reîncarcă pagina pentru a genera mixuri IA pe baza istoricului tău.</string>
     <string name="library_top_mixes_no_valid_mixes">IA nu a returnat nici un mix din istoricul tău.</string>
@@ -144,7 +144,7 @@
     <string name="radio">Radiou</string>
     <string name="cast">Cast</string>
     <string name="cast_devices">Dispozitive Cast</string>
-    <string name="cast_sheet_subtitle">Alege unde redă YumaPlayer</string>
+    <string name="cast_sheet_subtitle">Alege unde redă OzonePlayer</string>
     <string name="cast_available_devices">Dispozitive disponibile</string>
     <string name="cast_searching_devices">Se caută dispozitive</string>
     <string name="cast_no_devices">Nu a fost găsit niciun dispozitiv Cast</string>
@@ -167,7 +167,7 @@
     <string name="play">Play</string>
     <string name="widget_pause">Pauză</string>
     <string name="widget_previous">Precedent</string>
-    <string name="widget_tap_to_open">Atinge pentru a deschide YumaPlayer</string>
+    <string name="widget_tap_to_open">Atinge pentru a deschide OzonePlayer</string>
     <string name="widget_insights_title">Informații din ascultare</string>
     <string name="widget_recommendations">Recomandări</string>
     <string name="widget_listening_time_empty">Încă nu există timp de ascultare</string>

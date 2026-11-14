@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -100,8 +100,8 @@ import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.models.NewsItem
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.ui.utils.backToMain
 import moe.rukamori.archivetune.viewmodels.NewsUiState
 import moe.rukamori.archivetune.viewmodels.NewsViewModel
@@ -368,7 +368,7 @@ private fun NewsListHeader(
     Box(
         modifier =
             modifier
-                .yumaGlassCard(shape = shape)
+                .ozoneGlassCard(shape = shape)
                 .padding(SettingsDimensions.BannerContentPadding),
     ) {
         Row(
@@ -435,11 +435,11 @@ private fun NewsCard(
         modifier =
             modifier
                 .fillMaxWidth()
-                .yumaClickable(
+                .ozoneClickable(
                     enabled = hasId,
                     onClick = onNavigateToArticle,
                 )
-                .yumaGlassCard(shape = shape),
+                .ozoneGlassCard(shape = shape),
     ) {
         Column {
             if (hasImages) {
@@ -749,7 +749,7 @@ private fun NewsCarouselIndicator(
         modifier =
             modifier
                 .heightIn(min = 48.dp)
-                .yumaGlassCard(shape = shape)
+                .ozoneGlassCard(shape = shape)
                 .padding(horizontal = SettingsDimensions.RowHorizontalPadding),
         contentAlignment = Alignment.Center,
     ) {
@@ -793,7 +793,7 @@ private fun NewsLoadingState(modifier: Modifier = Modifier) {
         Box(
             modifier =
                 Modifier
-                    .yumaGlassCard(shape = shape)
+                    .ozoneGlassCard(shape = shape)
                     .padding(32.dp),
             contentAlignment = Alignment.Center,
         ) {
@@ -883,7 +883,7 @@ private fun NewsStatePanel(
                 Modifier
                     .fillMaxWidth()
                     .widthIn(max = 560.dp)
-                    .yumaGlassCard(shape = shape)
+                    .ozoneGlassCard(shape = shape)
                     .padding(28.dp),
         ) {
             Column(

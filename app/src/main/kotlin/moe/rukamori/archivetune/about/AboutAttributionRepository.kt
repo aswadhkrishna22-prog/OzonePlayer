@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -209,7 +209,7 @@ class AboutAttributionRepository
                 client.get(GitHubCommitsUrl) {
                     headers {
                         append("Accept", "application/vnd.github+json")
-                        append("User-Agent", "Yuma")
+                        append("User-Agent", "Ozone")
                     }
                     parameter("path", path)
                     parameter("per_page", GitHubCommitsPageSize)
@@ -226,7 +226,7 @@ class AboutAttributionRepository
                 client.get(GitHubTranslationResourceUrl) {
                     headers {
                         append("Accept", "application/vnd.github+json")
-                        append("User-Agent", "Yuma")
+                        append("User-Agent", "Ozone")
                     }
                 }
             if (response.status.value !in SuccessStatusCodes) {
@@ -470,9 +470,9 @@ class AboutAttributionRepository
         )
 
         private companion object {
-            const val GitHubCommitsUrl = "https://api.github.com/repos/MuwMx/YumaPlayer/commits"
+            const val GitHubCommitsUrl = "https://api.github.com/repos/aswadhkrishna22-prog/OzonePlayer/commits"
             const val GitHubTranslationResourceUrl =
-                "https://api.github.com/repos/MuwMx/YumaPlayer/contents/app/src/main/res"
+                "https://api.github.com/repos/aswadhkrishna22-prog/OzonePlayer/contents/app/src/main/res"
             const val TranslationResourceRoot = "app/src/main/res"
             const val TranslationResourcePrefix = "values-"
             const val TranslationCommitMessagePrefix = "Translated using Weblate"

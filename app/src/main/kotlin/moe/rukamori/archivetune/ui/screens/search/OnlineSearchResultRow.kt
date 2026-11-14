@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -17,7 +17,7 @@ import androidx.compose.ui.res.painterResource
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.innertube.models.YTItem
 import moe.rukamori.archivetune.ui.component.YouTubeListItem
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -29,7 +29,7 @@ internal fun LazyItemScope.OnlineSearchResultRow(
     onMenuClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
     YouTubeListItem(
         item = item,
         isActive = isActive,

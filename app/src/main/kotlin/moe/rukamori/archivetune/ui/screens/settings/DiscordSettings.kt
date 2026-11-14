@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -341,7 +341,7 @@ fun DiscordSettings(navController: NavController) {
     val (button2CustomUrl) =
         rememberPreference(
             key = DiscordActivityButton2CustomUrlKey,
-            defaultValue = "https://github.com/MuwMx/YumaPlayer",
+            defaultValue = "https://github.com/aswadhkrishna22-prog/OzonePlayer",
         )
 
     val (activityType, onActivityTypeChange) =
@@ -1102,7 +1102,7 @@ fun RichPresence(
                                 when (largeImageType.lowercase()) {
                                     "thumbnail" -> song?.song?.thumbnailUrl
                                     "artist" -> song?.artists?.firstOrNull()?.thumbnailUrl
-                                    "appicon" -> "https://raw.githubusercontent.com/MuwMx/YumaPlayer/main/assets/ic_launcher.webp"
+                                    "appicon" -> "https://raw.githubusercontent.com/aswadhkrishna22-prog/OzonePlayer/main/assets/ic_launcher.webp"
                                     "custom" -> largeImageCustomUrl.ifBlank { song?.song?.thumbnailUrl }
                                     else -> song?.song?.thumbnailUrl
                                 }
@@ -1132,7 +1132,7 @@ fun RichPresence(
                                 when (smallImageType.lowercase()) {
                                     "thumbnail" -> songThumb
                                     "artist" -> artistThumb
-                                    "appicon" -> "https://raw.githubusercontent.com/MuwMx/YumaPlayer/main/assets/ic_launcher.webp"
+                                    "appicon" -> "https://raw.githubusercontent.com/aswadhkrishna22-prog/OzonePlayer/main/assets/ic_launcher.webp"
                                     "custom" -> smallImageCustomUrl.takeIf { it.isNotBlank() } ?: songThumb
                                     "dontshow", "none" -> null
                                     else -> artistThumb
