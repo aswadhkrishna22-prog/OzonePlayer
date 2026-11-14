@@ -24,6 +24,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
+import moe.rukamori.archivetune.LocalAnimationsDisabled
 import moe.rukamori.archivetune.core.common.math.lerp
 import moe.rukamori.archivetune.core.common.math.lerp3
 import coil3.compose.AsyncImage
@@ -50,14 +51,15 @@ enum class HeaderType(
 
 @Composable
 fun YumaMorphingHeader(
-    imageUrl: String?,
     collapseFraction: Float,
     type: HeaderType,
     modifier: Modifier = Modifier,
-    overlayContent: @Composable (BoxScope.() -> Unit)? = null
+    overlayContent: @Composable (BoxScope.() -> Unit)? = null,
+    content: @Composable BoxScope.() -> Unit,
 ) {
     val density = LocalDensity.current
     val fraction = collapseFraction.coerceIn(0f, 1f)
+    val animationsDisabled = LocalAnimationsDisabled.current
 
     val screenWidthPx = LocalWindowInfo.current.containerSize.width.toFloat()
     val screenWidthDp = with(density) { screenWidthPx.toDp() }
@@ -92,7 +94,7 @@ fun YumaMorphingHeader(
                     shape = RoundedCornerShape(percent = cornerPercent)
                     clip = true
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !animationsDisabled) {
                         if (fraction > 0.70f) {
                             val blurProgress = (fraction - 0.70f) / 0.30f
                             val blurRadius = lerp(0.1f, 40f, blurProgress)
@@ -102,23 +104,15 @@ fun YumaMorphingHeader(
                         } else {
                             renderEffect = null
                         }
+                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        renderEffect = null
                     }
                 }
                 .height(
                     lerp(expandedHeightDp.value, screenWidthDp.value, (fraction * 2f).coerceIn(0f, 1f)).dp
                 )
         ) {
-            AsyncImage(
-                model = if (type == HeaderType.ARTIST) {
-                    imageUrl?.resize(1080, 1080).orEmpty()
-                } else {
-                    imageUrl.orEmpty()
-                },
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                alignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize()
-            )
+            content()
 
             if (type.showBottomGradient) {
                 Box(
@@ -149,6 +143,34 @@ fun YumaMorphingHeader(
                     .background(Color.Black)
             )
         }
+    }
+}
+
+@Composable
+fun YumaMorphingHeader(
+    imageUrl: String?,
+    collapseFraction: Float,
+    type: HeaderType,
+    modifier: Modifier = Modifier,
+    overlayContent: @Composable (BoxScope.() -> Unit)? = null
+) {
+    YumaMorphingHeader(
+        collapseFraction = collapseFraction,
+        type = type,
+        modifier = modifier,
+        overlayContent = overlayContent,
+    ) {
+        AsyncImage(
+            model = if (type == HeaderType.ARTIST) {
+                imageUrl?.resize(1080, 1080).orEmpty()
+            } else {
+                imageUrl.orEmpty()
+            },
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            alignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 
