@@ -45,6 +45,7 @@ html {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-void);
   color: var(--text-pure);
+  overflow-x: hidden;
 }
 
 body {
@@ -1052,21 +1053,6 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .footer-links-col a:hover { color: var(--text-pure); }
 
 /* ==========================================================================
-   RESPONSIVE QUERIES
+   RESPONSIVE QUERIES — DISABLED
+   Desktop layout is force-scaled on all viewports via viewport meta width=1200.
    ========================================================================== */
-@media (max-width: 900px) {
-  .hero-stage-grid { grid-template-columns: 1fr; }
-  .hero-viewport { margin-top: 2rem; }
-  .console-body-grid { grid-template-columns: 1fr; }
-  .architecture-grid { grid-template-columns: 1fr; }
-  .footer-grid { grid-template-columns: 1fr; gap: 2rem; }
-  .acoustic-switch-row { grid-template-columns: 1fr; }
-  .spectrogram-readouts { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 600px) {
-  .masthead-nav { display: none; }
-  .telemetry-bar { flex-direction: column; align-items: flex-start; gap: 1rem; }
-  .telemetry-divider { display: none; }
-  .floating-phones-arena { grid-template-columns: 1fr; }
-}
