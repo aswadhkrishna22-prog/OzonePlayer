@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -44,9 +44,9 @@ import androidx.compose.ui.unit.sp
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @Composable
 internal fun GlassBottomNavigation(
@@ -115,12 +115,12 @@ internal fun GlassBottomNavigation(
                 exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut(),
             ) {
                 val backShape = RoundedCornerShape(16.dp)
-                val colors = LocalYumaColors.current
+                val colors = LocalOzoneColors.current
                 Box(
                     modifier =
                         Modifier
-                            .yumaClickable(onClick = onBack)
-                            .yumaGlassCard(
+                            .ozoneClickable(onClick = onBack)
+                            .ozoneGlassCard(
                                 shape = backShape,
                                 backgroundColor = colors.glassBackground,
                                 borderColor = colors.glassBorder,
@@ -143,7 +143,7 @@ internal fun GlassBottomNavigation(
                 modifier =
                     Modifier
                         .weight(1f)
-                        .yumaClickable(onClick = onNext),
+                        .ozoneClickable(onClick = onNext),
                 shape = RoundedCornerShape(16.dp),
                 color = MaterialTheme.colorScheme.primary,
             ) {

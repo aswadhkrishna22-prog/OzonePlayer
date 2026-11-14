@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.glassBorder
-import moe.rukamori.archivetune.ui.theme.yumaClickable
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import coil3.request.ImageRequest
@@ -104,7 +104,7 @@ internal fun SpotifyQuickGridCell(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .yumaClickable(onClick = onClick)
+            .ozoneClickable(onClick = onClick)
             .clip(cardShape)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.7f))
             .glassBorder(shape = cardShape, strokeWidth = SettingsDimensions.GlassBorderThickness)

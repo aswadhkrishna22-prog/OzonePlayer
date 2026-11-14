@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Original work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.yumaClickable
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
 
 @Composable
 internal fun TopBarAccountMenuContent(
@@ -61,7 +61,7 @@ internal fun TopBarAccountMenuContent(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp)
-            .yumaClickable(pressedScale = 0.96f, onClick = onNavigateProfile),
+            .ozoneClickable(pressedScale = 0.96f, onClick = onNavigateProfile),
         shape = RoundedCornerShape(16.dp),
         color = Color.Transparent,
     ) {
@@ -178,7 +178,7 @@ private fun TopBarDropdownMenuItem(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 2.dp)
-            .yumaClickable(pressedScale = 0.96f, onClick = onClick),
+            .ozoneClickable(pressedScale = 0.96f, onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         color = Color.Transparent,
     ) {

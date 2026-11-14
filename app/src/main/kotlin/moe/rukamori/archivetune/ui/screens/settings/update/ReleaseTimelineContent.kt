@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -43,7 +43,7 @@ internal fun ReleaseNotesContent(
 ) {
     when {
         entry.sections.isNotEmpty() -> {
-            Column(verticalArrangement = Arrangement.spacedBy(SettingsDimensions.YumaCategorySpacing)) {
+            Column(verticalArrangement = Arrangement.spacedBy(SettingsDimensions.OzoneCategorySpacing)) {
                 entry.sections.forEach { section ->
                     key(section.id) {
                         ReleaseTimelineSection(

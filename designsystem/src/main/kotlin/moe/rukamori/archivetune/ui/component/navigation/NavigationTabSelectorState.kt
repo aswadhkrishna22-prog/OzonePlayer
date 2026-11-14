@@ -13,7 +13,7 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import moe.rukamori.archivetune.ui.haptics.YumaHaptics
+import moe.rukamori.archivetune.ui.haptics.OzoneHaptics
 import moe.rukamori.archivetune.ui.screens.Screens
 
 @Stable
@@ -21,7 +21,7 @@ internal class NavigationTabSelectorState(
     internal val items: List<Screens>,
     private val isSelectedProvider: () -> (Screens) -> Boolean,
     private val onItemClickProvider: () -> (Screens, Boolean) -> Unit,
-    private val hapticsProvider: () -> YumaHaptics,
+    private val hapticsProvider: () -> OzoneHaptics,
     private val animationsDisabledProvider: () -> Boolean,
     private val coroutineScope: CoroutineScope,
 ) {

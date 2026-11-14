@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -32,7 +32,7 @@ import androidx.compose.ui.window.Dialog
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.spotify.SpotifyAccountUiState
 import moe.rukamori.archivetune.ui.screens.settings.SpotifyLoginSheet
-import moe.rukamori.archivetune.ui.theme.yumaClickable
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
 
 @Composable
 fun AccountSpotifyLoginSheet(
@@ -82,7 +82,7 @@ internal fun SpotifyOptionsDialog(
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .yumaClickable(onClick = onConnectSpotify),
+                            .ozoneClickable(onClick = onConnectSpotify),
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
@@ -115,7 +115,7 @@ internal fun SpotifyOptionsDialog(
                         contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .yumaClickable(onClick = {
+                            .ozoneClickable(onClick = {
                                 onShowSpotifyPlaylistsChange(!showSpotifyPlaylists)
                             }),
                     ) {
@@ -154,7 +154,7 @@ internal fun SpotifyOptionsDialog(
                         contentColor = MaterialTheme.colorScheme.error,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .yumaClickable(onClick = onLogout),
+                            .ozoneClickable(onClick = onLogout),
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),

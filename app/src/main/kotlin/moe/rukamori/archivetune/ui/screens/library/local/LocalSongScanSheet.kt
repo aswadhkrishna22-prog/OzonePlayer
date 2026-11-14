@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -67,7 +67,7 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.localmedia.LocalSongScanConfig
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.yumaClickable
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
 import moe.rukamori.archivetune.viewmodels.LocalSongsScanState
 
 @OptIn(
@@ -533,7 +533,7 @@ internal fun LocalSongScanSheet(
                         Modifier
                             .fillMaxWidth()
                             .height(56.dp)
-                            .yumaClickable(
+                            .ozoneClickable(
                                 enabled = !scanState.isScanning,
                                 pressedScale = SettingsAnimations.PressScale,
                                 onClick = onPrimaryAction,

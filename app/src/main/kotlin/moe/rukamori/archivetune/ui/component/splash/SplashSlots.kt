@@ -14,7 +14,7 @@ object SplashSlots {
     const val SHAPE_BOLT = "bolt"
     const val SHAPE_CROSS = "cross"
     const val SHAPE_LOGO = "logo"
-    const val SHAPE_YUMA = "yuma"
+    const val SHAPE_OZONE = "ozone"
 
     var customVectorPath: android.graphics.Path? = null
     var vectorVersion: Int by mutableStateOf(0)
@@ -40,7 +40,7 @@ object SplashSlots {
     fun boxSize(shape: String, width: Float, height: Float, density: Float = 1f): Float =
         when (shape) {
             SHAPE_CROSS -> ldBox(width, height)
-            SHAPE_LOGO, SHAPE_YUMA -> minOf(SplashConfig.Effects.LOGO_TARGET_SIZE_DP * density, minOf(width, height) * 0.42f)
+            SHAPE_LOGO, SHAPE_OZONE -> minOf(SplashConfig.Effects.LOGO_TARGET_SIZE_DP * density, minOf(width, height) * 0.42f)
             else -> boxSize(width, height)
         }
 
@@ -125,7 +125,7 @@ object SplashSlots {
         val totalSlots = SplashConfig.getSlotCount(shape)
         if (width <= 0f || height <= 0f) return ShapeSlots(emptyList(), listOf(0 until totalSlots), emptyList(), android.graphics.Path())
         val (c, size) = boxFrame(shape, width, height, density)
-        if (shape == SHAPE_LOGO || shape == SHAPE_YUMA) {
+        if (shape == SHAPE_LOGO || shape == SHAPE_OZONE) {
             val sourcePath = customVectorPath ?: try {
                 androidx.core.graphics.PathParser.createPathFromPathData(LOGO_PATH)
             } catch (_: Exception) {

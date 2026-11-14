@@ -21,9 +21,9 @@ import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.state.PlayerUiState
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaCombinedClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneCombinedClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @Composable
 fun SleepTimerMenuContent(
@@ -61,17 +61,17 @@ fun SleepTimerMenuContent(
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .yumaCombinedClickable {
+                    .ozoneCombinedClickable {
                         if (isTimerActive) {
                             onAction(PlayerAction.AdjustSleepTimer(-5))
                         } else {
                             if (selectedMinutes > 5) selectedMinutes -= 5
                         }
                     }
-                    .yumaGlassCard(
+                    .ozoneGlassCard(
                         shape = RoundedCornerShape(50),
-                        backgroundColor = LocalYumaColors.current.glassBackground,
-                        borderColor = LocalYumaColors.current.glassBorder,
+                        backgroundColor = LocalOzoneColors.current.glassBackground,
+                        borderColor = LocalOzoneColors.current.glassBorder,
                         strokeWidth = SettingsDimensions.GlassBorderThickness,
                     ),
                 contentAlignment = Alignment.Center
@@ -92,7 +92,7 @@ fun SleepTimerMenuContent(
                 )
                 Text(
                     text = stringResource(R.string.minutes_unit),
-                    color = Color.White.copy(alpha = SettingsDimensions.YumaRowSubtitleAlpha),
+                    color = Color.White.copy(alpha = SettingsDimensions.OzoneRowSubtitleAlpha),
                     fontSize = 12.sp,
                     fontFamily = LocalArchiveTuneFontFamily.current
                 )
@@ -101,17 +101,17 @@ fun SleepTimerMenuContent(
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .yumaCombinedClickable {
+                    .ozoneCombinedClickable {
                         if (isTimerActive) {
                             onAction(PlayerAction.AdjustSleepTimer(5))
                         } else {
                             if (selectedMinutes < 120) selectedMinutes += 5
                         }
                     }
-                    .yumaGlassCard(
+                    .ozoneGlassCard(
                         shape = RoundedCornerShape(50),
-                        backgroundColor = LocalYumaColors.current.glassBackground,
-                        borderColor = LocalYumaColors.current.glassBorder,
+                        backgroundColor = LocalOzoneColors.current.glassBackground,
+                        borderColor = LocalOzoneColors.current.glassBorder,
                         strokeWidth = SettingsDimensions.GlassBorderThickness,
                     ),
                 contentAlignment = Alignment.Center
@@ -128,7 +128,7 @@ fun SleepTimerMenuContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp)
-                .yumaCombinedClickable {
+                .ozoneCombinedClickable {
                     if (isTimerActive) {
                         onAction(PlayerAction.StopSleepTimer)
                     } else {
@@ -136,7 +136,7 @@ fun SleepTimerMenuContent(
                     }
                     onBackClick()
                 }
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = RoundedCornerShape(16.dp),
                     backgroundColor = actionColor,
                     borderColor = Color.Transparent,

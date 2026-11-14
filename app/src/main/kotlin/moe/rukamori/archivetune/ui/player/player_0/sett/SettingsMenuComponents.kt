@@ -17,10 +17,10 @@ import androidx.compose.ui.unit.sp
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaCombinedClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
-import moe.rukamori.archivetune.ui.theme.yumaSegmentPosition
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneCombinedClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneSegmentPosition
 
 @Composable
 fun CompactMenuRow(
@@ -47,16 +47,16 @@ fun CompactMenuRow(
             else -> RoundedCornerShape(small)
         }
     }
-    val position = remember(index, count) { yumaSegmentPosition(index, count) }
-    val colors = LocalYumaColors.current
+    val position = remember(index, count) { ozoneSegmentPosition(index, count) }
+    val colors = LocalOzoneColors.current
     val containerBg = if (isActive) activeIconTint.copy(alpha = 0.15f) else colors.glassBackground
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 44.dp)
-            .yumaCombinedClickable(onClick = onClick)
-            .yumaGlassCard(
+            .ozoneCombinedClickable(onClick = onClick)
+            .ozoneGlassCard(
                 shape = shape,
                 backgroundColor = containerBg,
                 borderColor = if (isActive) activeIconTint.copy(alpha = 0.3f) else colors.glassBorder,
@@ -80,7 +80,7 @@ fun CompactMenuRow(
                 Icon(
                     painter = painterResource(id = iconResId),
                     contentDescription = title,
-                    tint = if (isActive) activeIconTint else Color.White.copy(alpha = SettingsDimensions.YumaRowIconAlpha),
+                    tint = if (isActive) activeIconTint else Color.White.copy(alpha = SettingsDimensions.OzoneRowIconAlpha),
                     modifier = Modifier.size(SettingsDimensions.RowIconInnerSize)
                 )
             }
@@ -102,7 +102,7 @@ fun CompactMenuRow(
                 Spacer(modifier = Modifier.height(1.dp))
                 Text(
                     text = subtitle,
-                    color = Color.White.copy(alpha = SettingsDimensions.YumaRowSubtitleAlpha),
+                    color = Color.White.copy(alpha = SettingsDimensions.OzoneRowSubtitleAlpha),
                     fontSize = 11.sp,
                     lineHeight = 13.sp,
                     fontFamily = LocalArchiveTuneFontFamily.current
@@ -113,7 +113,7 @@ fun CompactMenuRow(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_arrow_right),
                     contentDescription = null,
-                    tint = Color.White.copy(alpha = SettingsDimensions.YumaRowArrowAlpha),
+                    tint = Color.White.copy(alpha = SettingsDimensions.OzoneRowArrowAlpha),
                     modifier = Modifier.size(18.dp)
                 )
             }
@@ -131,15 +131,15 @@ internal fun MenuRowButton(
     modifier: Modifier = Modifier
 ) {
     val contentColor = if (isActive && vibrantColor.luminance() > 0.5f) Color.Black else Color.White
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val backgroundColor = if (isActive) vibrantColor else colors.glassBackground
     val borderColor = if (isActive) Color.Transparent else colors.glassBorder
 
     Box(
         modifier = modifier
             .height(48.dp)
-            .yumaCombinedClickable(onClick = onClick)
-            .yumaGlassCard(
+            .ozoneCombinedClickable(onClick = onClick)
+            .ozoneGlassCard(
                 shape = RoundedCornerShape(16.dp),
                 backgroundColor = backgroundColor,
                 borderColor = borderColor,
@@ -159,7 +159,7 @@ internal fun MenuRowButton(
             Icon(
                 painter = painterResource(id = iconRes),
                 contentDescription = null,
-                tint = if (isActive) contentColor else Color.White.copy(alpha = SettingsDimensions.YumaRowIconAlpha),
+                tint = if (isActive) contentColor else Color.White.copy(alpha = SettingsDimensions.OzoneRowIconAlpha),
                 modifier = Modifier.size(24.dp)
             )
         }

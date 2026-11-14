@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -47,7 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import moe.rukamori.archivetune.designsystem.R
-import moe.rukamori.archivetune.ui.theme.yumaClickable
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -133,7 +133,7 @@ fun StarDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp)
-                            .yumaClickable {
+                            .ozoneClickable {
                                 uriHandler.openUri("https://github.com/aswadhkrishna22-prog/OzonePlayer")
                                 onSupport()
                             }
@@ -166,7 +166,7 @@ fun StarDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp)
-                            .yumaClickable { onLater() }
+                            .ozoneClickable { onLater() }
                             .clip(RoundedCornerShape(14.dp))
                             .border(
                                 width = 1.dp,

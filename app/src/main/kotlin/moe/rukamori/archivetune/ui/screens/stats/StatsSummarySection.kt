@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.db.entities.ListeningSummary
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.utils.makeTimeString
 
 @Composable
@@ -44,7 +44,7 @@ internal fun StatsSummarySection(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .yumaGlassCard(shape = RoundedCornerShape(SettingsDimensions.GroupCardCornerRadius)),
+                .ozoneGlassCard(shape = RoundedCornerShape(SettingsDimensions.GroupCardCornerRadius)),
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -95,7 +95,7 @@ private fun StatMetricCard(
 ) {
     Box(
         modifier = modifier
-            .yumaGlassCard(shape = RoundedCornerShape(SettingsDimensions.GroupCardCornerRadius)),
+            .ozoneGlassCard(shape = RoundedCornerShape(SettingsDimensions.GroupCardCornerRadius)),
     ) {
         Column(
             modifier = Modifier.padding(12.dp),

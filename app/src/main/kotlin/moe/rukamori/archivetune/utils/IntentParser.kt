@@ -96,11 +96,11 @@ object IntentParser {
         val uri = intent.data ?: intent.extras?.getString(Intent.EXTRA_TEXT)?.let { Uri.parse(it) } ?: return null
 
         val authority = uri.authority?.lowercase()
-        if (uri.scheme.equals("yuma", ignoreCase = true) && authority == "together") {
+        if ((uri.scheme.equals("ozone", ignoreCase = true) || uri.scheme.equals("ozoneplayer", ignoreCase = true)) && authority == "together") {
             return ParsedIntentAction.TogetherJoin(uri)
         }
 
-        if (uri.scheme.equals("yuma", ignoreCase = true) && authority == "login") {
+        if ((uri.scheme.equals("ozone", ignoreCase = true) || uri.scheme.equals("ozoneplayer", ignoreCase = true)) && authority == "login") {
             return ParsedIntentAction.Login(uri.getQueryParameter(LOGIN_URL_ARGUMENT))
         }
 

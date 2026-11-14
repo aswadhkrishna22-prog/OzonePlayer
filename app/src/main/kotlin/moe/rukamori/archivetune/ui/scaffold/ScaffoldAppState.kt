@@ -46,8 +46,8 @@ import moe.rukamori.archivetune.rememberPlayerAwareWindowInsets
 import moe.rukamori.archivetune.rememberPlayerBottomSheetState
 import moe.rukamori.archivetune.ui.PlayerViewModel
 import moe.rukamori.archivetune.ui.component.BottomSheetState
-import moe.rukamori.archivetune.ui.haptics.YumaHaptics
-import moe.rukamori.archivetune.ui.haptics.YumaHapticsImpl
+import moe.rukamori.archivetune.ui.haptics.OzoneHaptics
+import moe.rukamori.archivetune.ui.haptics.OzoneHapticsImpl
 import moe.rukamori.archivetune.ui.screens.Screens
 import moe.rukamori.archivetune.ui.screens.findTabForRoute
 import moe.rukamori.archivetune.ui.screens.settings.NavigationTab
@@ -92,7 +92,7 @@ class ScaffoldAppState(
     val playerAwareWindowInsets: WindowInsets,
     val scrollController: ScaffoldScrollController,
     val handlePrimaryNavigationClick: (Screens, Boolean) -> Unit,
-    val yumaHaptics: YumaHaptics,
+    val ozoneHaptics: OzoneHaptics,
     val customHaptic: HapticFeedback,
 )
 
@@ -219,7 +219,7 @@ fun rememberScaffoldAppState(
     val haptic = LocalHapticFeedback.current
     val (enableHapticFeedback) = rememberPreference(EnableHapticFeedbackKey, true)
     val hapticView = LocalView.current
-    val yumaHaptics = remember(enableHapticFeedback, hapticView) { YumaHapticsImpl(hapticView, enableHapticFeedback) }
+    val ozoneHaptics = remember(enableHapticFeedback, hapticView) { OzoneHapticsImpl(hapticView, enableHapticFeedback) }
     val customHaptic = remember(haptic, enableHapticFeedback) {
         object : HapticFeedback {
             override fun performHapticFeedback(hapticFeedbackType: HapticFeedbackType) {
@@ -234,7 +234,7 @@ fun rememberScaffoldAppState(
         blurNavBar, blurRadius, tabOpenedFromShortcut, launchMusicRecognitionFromShortcut, topLevelScreens,
         searchState, shouldShowNavigationBar, shouldShowTopBar, shouldShowHomeShuffleButton, floatingToolbarBottomPadding,
         navVisibleHeight, playerBottomSheetState, isMiniPlayerVisible, playerAwareWindowInsets, scrollController,
-        yumaHaptics, customHaptic,
+        ozoneHaptics, customHaptic,
     ) {
         ScaffoldAppState(
             topInset = topInset, bottomInset = bottomInset, isTvDevice = isTvDevice, useRail = useRail,
@@ -248,7 +248,7 @@ fun rememberScaffoldAppState(
             floatingToolbarBottomPadding = floatingToolbarBottomPadding, navVisibleHeight = navVisibleHeight,
             playerBottomSheetState = playerBottomSheetState, isMiniPlayerVisible = isMiniPlayerVisible,
             playerAwareWindowInsets = playerAwareWindowInsets, scrollController = scrollController,
-            handlePrimaryNavigationClick = handlePrimaryNavigationClick, yumaHaptics = yumaHaptics, customHaptic = customHaptic,
+            handlePrimaryNavigationClick = handlePrimaryNavigationClick, ozoneHaptics = ozoneHaptics, customHaptic = customHaptic,
         )
     }
 }

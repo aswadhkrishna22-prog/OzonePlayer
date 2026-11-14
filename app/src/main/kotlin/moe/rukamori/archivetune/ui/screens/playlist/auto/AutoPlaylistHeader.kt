@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -58,9 +58,9 @@ import moe.rukamori.archivetune.playback.queues.ListQueue
 import moe.rukamori.archivetune.ui.screens.playlist.MetadataChip
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.ui.utils.HeaderDownloadProgressIndicator
 import moe.rukamori.archivetune.ui.utils.HeaderDownloadState
 import moe.rukamori.archivetune.utils.makeTimeString
@@ -159,7 +159,7 @@ internal fun AutoPlaylistHeader(
                 modifier =
                     Modifier
                         .size(48.dp)
-                        .yumaClickable(
+                        .ozoneClickable(
                             pressedScale = SettingsAnimations.PressScale,
                             onClick = {
                                 if (globalProgress != null && globalProgress > 0f && downloadState is HeaderDownloadState.Partial) {
@@ -172,9 +172,9 @@ internal fun AutoPlaylistHeader(
                                 }
                             },
                         )
-                        .yumaGlassCard(
+                        .ozoneGlassCard(
                             shape = CircleShape,
-                            backgroundColor = LocalYumaColors.current.glassBackground,
+                            backgroundColor = LocalOzoneColors.current.glassBackground,
                         )
                         .clip(CircleShape)
                         .semantics(mergeDescendants = true) {
@@ -225,7 +225,7 @@ internal fun AutoPlaylistHeader(
                     Modifier
                         .weight(1f)
                         .height(48.dp)
-                        .yumaClickable(
+                        .ozoneClickable(
                             pressedScale = SettingsAnimations.PressScale,
                             onClick = {
                                 playerConnection.playQueue(
@@ -273,7 +273,7 @@ internal fun AutoPlaylistHeader(
                 modifier =
                     Modifier
                         .size(48.dp)
-                        .yumaClickable(
+                        .ozoneClickable(
                             pressedScale = SettingsAnimations.PressScale,
                             onClick = {
                                 playerConnection.playQueue(
@@ -284,9 +284,9 @@ internal fun AutoPlaylistHeader(
                                 )
                             },
                         )
-                        .yumaGlassCard(
+                        .ozoneGlassCard(
                             shape = CircleShape,
-                            backgroundColor = LocalYumaColors.current.glassBackground,
+                            backgroundColor = LocalOzoneColors.current.glassBackground,
                         )
                         .clip(CircleShape)
                         .semantics(mergeDescendants = true) {
@@ -307,7 +307,7 @@ internal fun AutoPlaylistHeader(
                 modifier =
                     Modifier
                         .size(48.dp)
-                        .yumaClickable(
+                        .ozoneClickable(
                             pressedScale = SettingsAnimations.PressScale,
                             onClick = {
                                 playerConnection.addToQueue(
@@ -315,9 +315,9 @@ internal fun AutoPlaylistHeader(
                                 )
                             },
                         )
-                        .yumaGlassCard(
+                        .ozoneGlassCard(
                             shape = CircleShape,
-                            backgroundColor = LocalYumaColors.current.glassBackground,
+                            backgroundColor = LocalOzoneColors.current.glassBackground,
                         )
                         .clip(CircleShape)
                         .semantics(mergeDescendants = true) {

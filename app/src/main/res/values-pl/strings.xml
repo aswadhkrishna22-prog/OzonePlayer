@@ -73,7 +73,7 @@
     <string name="library_top_mixes_refresh">Odśwież miksy</string>
     <string name="library_top_mixes_configure_ai">Skonfiguruj AI</string>
     <string name="library_top_mixes_ai_not_configured_title">Skonfiguruj AI, by tworzyć miksy</string>
-    <string name="library_top_mixes_ai_not_configured_desc">Yuma potrzebuje AI, aby tworzyć Twoje spersonalizowane top miksy.</string>
+    <string name="library_top_mixes_ai_not_configured_desc">Ozone potrzebuje AI, aby tworzyć Twoje spersonalizowane top miksy.</string>
     <string name="library_top_mixes_no_recent_history_title">Brak ostatnio odtwarzanych miksów</string>
     <string name="library_top_mixes_no_recent_history">Aby zbudować AI miksy z historii ostatnio odtwarzanych, odtwórz więcej piosenek i odśwież aplikację.</string>
     <string name="library_top_mixes_no_valid_mixes">Nie udało się utworzyć żadnych miksów z twojej historii słuchania.</string>
@@ -127,7 +127,7 @@
     <string name="change_playlist_cover">Zmień okładkę playlisty</string>
     <string name="retry">Spróbuj ponownie</string>
     <string name="radio">Radio</string>
-    <string name="cast_sheet_subtitle">Wybierz, gdzie YumaPlayer odtwarza</string>
+    <string name="cast_sheet_subtitle">Wybierz, gdzie OzonePlayer odtwarza</string>
     <string name="cast_available_devices">Dostępne urzadzenia</string>
     <string name="cast_searching_devices">Szukanie urządzeń</string>
     <string name="stats_axis_12am">0</string>
@@ -154,7 +154,7 @@
     <string name="play">Odtwórz</string>
     <string name="widget_pause">Zatrzymaj</string>
     <string name="widget_previous">Poprzedni</string>
-    <string name="widget_tap_to_open">Kliknij, aby otworzyć Yuma Player</string>
+    <string name="widget_tap_to_open">Kliknij, aby otworzyć Ozone Player</string>
     <string name="widget_insights_title">Analiza słuchania</string>
     <string name="widget_recommendations">Rekomendacje</string>
     <string name="widget_listening_time_empty">Nie masz jeszcze czasu słuchania</string>

@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -133,7 +133,7 @@ object DiscordImageResolver {
             }
 
             "appicon" -> {
-                "https://raw.githubusercontent.com/MuwMx/YumaPlayer/main/assets/ic_launcher.webp" // legacy icon path not yet migrated to fastlane
+                "https://raw.githubusercontent.com/aswadhkrishna22-prog/OzonePlayer/main/assets/ic_launcher.webp" // legacy icon path not yet migrated to fastlane
             }
 
             "custom" -> {

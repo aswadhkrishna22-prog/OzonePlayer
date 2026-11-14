@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -59,10 +59,10 @@ import moe.rukamori.archivetune.constants.PlaylistDownloadTipShownKey
 import moe.rukamori.archivetune.innertube.models.PlaylistItem
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaCombinedClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneCombinedClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.utils.rememberPreference
 import moe.rukamori.archivetune.ui.utils.HeaderDownloadProgressIndicator
 import moe.rukamori.archivetune.ui.utils.HeaderDownloadState
@@ -201,13 +201,13 @@ fun OnlinePlaylistHeroSection(
                     modifier =
                         Modifier
                             .size(48.dp)
-                            .yumaClickable(
+                            .ozoneClickable(
                                 pressedScale = SettingsAnimations.PressScale,
                                 onClick = actions.onLike,
                             )
-                            .yumaGlassCard(
+                            .ozoneGlassCard(
                                 shape = CircleShape,
-                                backgroundColor = LocalYumaColors.current.glassBackground,
+                                backgroundColor = LocalOzoneColors.current.glassBackground,
                             )
                             .clip(CircleShape)
                             .semantics(mergeDescendants = true) {
@@ -240,13 +240,13 @@ fun OnlinePlaylistHeroSection(
                     modifier =
                         Modifier
                             .size(48.dp)
-                            .yumaClickable(
+                            .ozoneClickable(
                                 pressedScale = SettingsAnimations.PressScale,
                                 onClick = actions.onRadio,
                             )
-                            .yumaGlassCard(
+                            .ozoneGlassCard(
                                 shape = CircleShape,
-                                backgroundColor = LocalYumaColors.current.glassBackground,
+                                backgroundColor = LocalOzoneColors.current.glassBackground,
                             )
                             .clip(CircleShape)
                             .semantics(mergeDescendants = true) {
@@ -270,7 +270,7 @@ fun OnlinePlaylistHeroSection(
                         Modifier
                             .weight(1f)
                             .height(48.dp)
-                            .yumaClickable(
+                            .ozoneClickable(
                                 pressedScale = SettingsAnimations.PressScale,
                                 onClick = actions.onPlay,
                             )
@@ -313,13 +313,13 @@ fun OnlinePlaylistHeroSection(
                     modifier =
                         Modifier
                             .size(48.dp)
-                            .yumaClickable(
+                            .ozoneClickable(
                                 pressedScale = SettingsAnimations.PressScale,
                                 onClick = actions.onShuffle,
                             )
-                            .yumaGlassCard(
+                            .ozoneGlassCard(
                                 shape = CircleShape,
-                                backgroundColor = LocalYumaColors.current.glassBackground,
+                                backgroundColor = LocalOzoneColors.current.glassBackground,
                             )
                             .clip(CircleShape)
                             .semantics(mergeDescendants = true) {
@@ -347,7 +347,7 @@ fun OnlinePlaylistHeroSection(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .yumaCombinedClickable(
+                            .ozoneCombinedClickable(
                                 pressedScale = SettingsAnimations.PressScale,
                                 onClick = actions.onDownload,
                                 onLongClick = {
@@ -355,9 +355,9 @@ fun OnlinePlaylistHeroSection(
                                     actions.onDownloadLongClick()
                                 },
                             )
-                            .yumaGlassCard(
+                            .ozoneGlassCard(
                                 shape = CircleShape,
-                                backgroundColor = LocalYumaColors.current.glassBackground,
+                                backgroundColor = LocalOzoneColors.current.glassBackground,
                             )
                             .clip(CircleShape)
                             .semantics(mergeDescendants = true) {
@@ -398,7 +398,7 @@ fun OnlinePlaylistHeroSection(
                             Modifier
                                 .offset(y = (-44).dp)
                                 .zIndex(20f)
-                                .yumaClickable(onClick = { onTipShownChange(true) }),
+                                .ozoneClickable(onClick = { onTipShownChange(true) }),
                         shape = RoundedCornerShape(12.dp),
                         color = MaterialTheme.colorScheme.primaryContainer,
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)),

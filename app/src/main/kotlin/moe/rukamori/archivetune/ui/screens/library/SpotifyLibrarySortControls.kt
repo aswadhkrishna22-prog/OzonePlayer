@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -41,9 +41,9 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.PlaylistSortType
 import moe.rukamori.archivetune.spotify.SPOTIFY_LIBRARY_PLAYLIST_SORT_TYPES
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @Composable
 internal fun SpotifyLibrarySortControls(
@@ -54,7 +54,7 @@ internal fun SpotifyLibrarySortControls(
     onSortDescendingChange: (Boolean) -> Unit,
     onGridViewChange: (Boolean) -> Unit,
 ) {
-    val yumaColors = LocalYumaColors.current
+    val ozoneColors = LocalOzoneColors.current
     var showSortMenu by remember { mutableStateOf(false) }
     val currentSortLabel =
         when (sortType) {
@@ -82,11 +82,11 @@ internal fun SpotifyLibrarySortControls(
                     modifier =
                         Modifier
                             .height(SettingsDimensions.LibraryChipHeight)
-                            .yumaClickable { showSortMenu = true }
-                            .yumaGlassCard(
+                            .ozoneClickable { showSortMenu = true }
+                            .ozoneGlassCard(
                                 shape = CircleShape,
-                                backgroundColor = yumaColors.glassBackground,
-                                borderColor = yumaColors.glassBorder,
+                                backgroundColor = ozoneColors.glassBackground,
+                                borderColor = ozoneColors.glassBorder,
                                 strokeWidth = SettingsDimensions.GlassBorderThickness,
                             )
                             .clip(CircleShape)
@@ -137,11 +137,11 @@ internal fun SpotifyLibrarySortControls(
                     modifier =
                         Modifier
                             .size(SettingsDimensions.LibraryChipHeight)
-                            .yumaClickable { onSortDescendingChange(!sortDescending) }
-                            .yumaGlassCard(
+                            .ozoneClickable { onSortDescendingChange(!sortDescending) }
+                            .ozoneGlassCard(
                                 shape = CircleShape,
-                                backgroundColor = yumaColors.glassBackground,
-                                borderColor = yumaColors.glassBorder,
+                                backgroundColor = ozoneColors.glassBackground,
+                                borderColor = ozoneColors.glassBorder,
                                 strokeWidth = SettingsDimensions.GlassBorderThickness,
                             )
                             .clip(CircleShape),
@@ -167,10 +167,10 @@ internal fun SpotifyLibrarySortControls(
             modifier =
                 Modifier
                     .height(SettingsDimensions.LibraryChipHeight)
-                    .yumaGlassCard(
+                    .ozoneGlassCard(
                         shape = CircleShape,
-                        backgroundColor = yumaColors.glassBackground,
-                        borderColor = yumaColors.glassBorder,
+                        backgroundColor = ozoneColors.glassBackground,
+                        borderColor = ozoneColors.glassBorder,
                         strokeWidth = SettingsDimensions.GlassBorderThickness,
                     )
                     .clip(CircleShape)
@@ -183,7 +183,7 @@ internal fun SpotifyLibrarySortControls(
                         .size(32.dp)
                         .clip(CircleShape)
                         .background(if (!isGridView) MaterialTheme.colorScheme.primary else Color.Transparent)
-                        .yumaClickable { onGridViewChange(false) },
+                        .ozoneClickable { onGridViewChange(false) },
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -199,7 +199,7 @@ internal fun SpotifyLibrarySortControls(
                         .size(32.dp)
                         .clip(CircleShape)
                         .background(if (isGridView) MaterialTheme.colorScheme.primary else Color.Transparent)
-                        .yumaClickable { onGridViewChange(true) },
+                        .ozoneClickable { onGridViewChange(true) },
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(

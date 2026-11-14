@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -56,8 +56,8 @@ import moe.rukamori.archivetune.ui.screens.onboarding.components.OnboardingConte
 import moe.rukamori.archivetune.ui.screens.onboarding.components.OnboardingPagePadding
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -81,7 +81,7 @@ internal fun WelcomePage(
 
     val primaryColor = MaterialTheme.colorScheme.primary
     val tertiaryColor = MaterialTheme.colorScheme.tertiary
-    val glassBg = LocalYumaColors.current.glassBackground
+    val glassBg = LocalOzoneColors.current.glassBackground
 
     val glowBrush = remember(primaryColor) {
         Brush.radialGradient(
@@ -203,11 +203,11 @@ private fun OnboardingMetadataPills(uiState: OnboardingUiState) {
 @Composable
 private fun PassivePill(text: String) {
     val pillShape = RoundedCornerShape(12.dp)
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     Box(
         modifier =
             Modifier
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = pillShape,
                     backgroundColor = colors.glassBackground,
                     borderColor = colors.glassBorder,

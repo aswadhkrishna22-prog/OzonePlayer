@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026 MuwMix <https://github.com/MuwMix> (YumaPlayer)
+ * Copyright (C) 2026 Ozone Player
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

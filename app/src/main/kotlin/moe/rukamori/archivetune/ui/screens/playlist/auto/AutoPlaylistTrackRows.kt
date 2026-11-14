@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -43,7 +43,7 @@ import moe.rukamori.archivetune.ui.component.DraggableScrollbar
 import moe.rukamori.archivetune.ui.component.EmptyPlaceholder
 import moe.rukamori.archivetune.ui.component.MenuState
 import moe.rukamori.archivetune.ui.component.SongListItem
-import moe.rukamori.archivetune.ui.haptics.YumaHaptics
+import moe.rukamori.archivetune.ui.haptics.OzoneHaptics
 import moe.rukamori.archivetune.ui.menu.SongMenu
 import moe.rukamori.archivetune.ui.screens.playlist.CONTENT_TYPE_EMPTY
 import moe.rukamori.archivetune.ui.screens.playlist.CONTENT_TYPE_SONG
@@ -106,7 +106,7 @@ internal fun LazyListScope.autoPlaylistTrackRows(
     playerConnection: PlayerConnection,
     navController: NavController,
     menuState: MenuState,
-    haptics: YumaHaptics,
+    haptics: OzoneHaptics,
     downloads: Map<String, Download> = emptyMap(),
     onSongClick: (String) -> Unit = {},
 ) {
@@ -196,7 +196,7 @@ internal fun LazyListScope.songListSection(
     playerConnection: PlayerConnection,
     navController: NavController,
     menuState: MenuState,
-    haptics: YumaHaptics,
+    haptics: OzoneHaptics,
     downloads: Map<String, Download> = emptyMap(),
     onSongClick: (String) -> Unit = {},
 ) {

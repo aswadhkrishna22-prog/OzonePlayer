@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -46,11 +46,11 @@ import moe.rukamori.archivetune.ui.screens.onboarding.components.rememberExpress
 import moe.rukamori.archivetune.ui.screens.onboarding.components.segmentedOnboardingItemShape
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.YumaSegmentPosition
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
-import moe.rukamori.archivetune.ui.theme.yumaSegmentPosition
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.OzoneSegmentPosition
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneSegmentPosition
 
 @Composable
 internal fun PermissionsPage(
@@ -85,7 +85,7 @@ internal fun PermissionsPage(
             ) {
                 uiState.permissions.forEachIndexed { index, item ->
                     val shape = remember(index, count) { segmentedOnboardingItemShape(index, count) }
-                    val position = remember(index, count) { yumaSegmentPosition(index, count) }
+                    val position = remember(index, count) { ozoneSegmentPosition(index, count) }
                     GlassPermissionRow(
                         permission = item,
                         iconShape = expressiveShapes[index % expressiveShapes.size],
@@ -104,7 +104,7 @@ private fun GlassPermissionRow(
     permission: OnboardingPermissionUiModel,
     iconShape: Shape,
     shape: Shape,
-    position: YumaSegmentPosition,
+    position: OzoneSegmentPosition,
     onPermissionAction: (OnboardingPermissionAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -117,17 +117,17 @@ private fun GlassPermissionRow(
                 }
             }
         }
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
 
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
-                .yumaClickable(
+                .ozoneClickable(
                     enabled = action != null,
                     onClick = onClick,
                 )
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = shape,
                     backgroundColor = colors.glassBackground,
                     borderColor = colors.glassBorder,
@@ -178,7 +178,7 @@ private fun PermissionIcon(
             OnboardingPermissionStatus.ALLOWED -> MaterialTheme.colorScheme.primary
             OnboardingPermissionStatus.NEEDS_ACTION -> MaterialTheme.colorScheme.tertiary
             OnboardingPermissionStatus.ALLOWED_BY_INSTALL -> MaterialTheme.colorScheme.secondary
-            OnboardingPermissionStatus.UNAVAILABLE -> LocalYumaColors.current.glassBackground
+            OnboardingPermissionStatus.UNAVAILABLE -> LocalOzoneColors.current.glassBackground
         }
 
     val iconTint =
@@ -211,13 +211,13 @@ private fun PermissionStatusAction(
     onPermissionAction: (OnboardingPermissionAction) -> Unit,
 ) {
     val action = permission.action
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
 
     if (action != null) {
         Surface(
             modifier =
                 Modifier
-                    .yumaClickable { onPermissionAction(action) }
+                    .ozoneClickable { onPermissionAction(action) }
                     .clip(RoundedCornerShape(12.dp)),
             color = MaterialTheme.colorScheme.primary,
         ) {
@@ -235,7 +235,7 @@ private fun PermissionStatusAction(
         Box(
             modifier =
                 Modifier
-                    .yumaGlassCard(
+                    .ozoneGlassCard(
                         shape = badgeShape,
                         backgroundColor = colors.glassBackground,
                         borderColor = colors.glassBorder,

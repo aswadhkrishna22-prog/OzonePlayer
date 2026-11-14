@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -44,9 +44,9 @@ import coil3.compose.AsyncImage
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.YumaSegmentPosition
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.OzoneSegmentPosition
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.viewmodels.MostPlayedAlbumUiModel
 
 @Composable
@@ -65,9 +65,9 @@ internal fun MostPlayedAlbumSpotlightCard(
             modifier
                 .fillMaxWidth()
                 .padding(horizontal = SettingsDimensions.ScreenHorizontalPadding)
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = RoundedCornerShape(SettingsDimensions.SegmentedCornerLarge),
-                    position = YumaSegmentPosition.Single,
+                    position = OzoneSegmentPosition.Single,
                 )
                 .padding(SettingsDimensions.ScreenHorizontalPadding),
     ) {
@@ -76,7 +76,7 @@ internal fun MostPlayedAlbumSpotlightCard(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .yumaClickable(
+                        .ozoneClickable(
                             pressedScale = SettingsAnimations.PressScale,
                             onClick = onOpenAlbum,
                         ),

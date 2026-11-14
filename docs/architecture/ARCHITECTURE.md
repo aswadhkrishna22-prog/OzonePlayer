@@ -1,6 +1,6 @@
-# YumaPlayer Architecture Overview
+# OzonePlayer Architecture Overview
 
-This document outlines the architectural blueprint of YumaPlayer. The application is built following **Clean Architecture** principles combined with **Unidirectional Data Flow (UDF)**, ensuring high testability, feature isolation, and strict separation of concerns.
+This document outlines the architectural blueprint of OzonePlayer. The application is built following **Clean Architecture** principles combined with **Unidirectional Data Flow (UDF)**, ensuring high testability, feature isolation, and strict separation of concerns.
 
 ---
 
@@ -43,7 +43,7 @@ To keep the codebase maintainable as it grows, all modules and layers must stric
 
 ### Presentation Layer (`:app` UI + `:designsystem`)
 - **Responsibilities:** Declarative Jetpack Compose UI rendering, visual state representation, and user input handling.
-- **Components:** Screens under `:app` (`ui/screens/`, `ui/player/player_0/`), Yuma UI Kit + YDS tokens in `:designsystem`, ViewModels (`StateFlow<UiState>`), `UiIntent`, `UiEffect`.
+- **Components:** Screens under `:app` (`ui/screens/`, `ui/player/player_0/`), Ozone UI Kit + YDS tokens in `:designsystem`, ViewModels (`StateFlow<UiState>`), `UiIntent`, `UiEffect`.
 
 ### Domain Layer (colocated `:app` domain packages + `:core` contracts + `:core:audio-dsp` DSP)
 - **Responsibilities:** Pure business rules, application use cases, and core data structures.

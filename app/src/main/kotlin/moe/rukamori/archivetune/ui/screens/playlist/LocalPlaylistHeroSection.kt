@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -60,13 +60,13 @@ import moe.rukamori.archivetune.constants.AppBarHeight
 import moe.rukamori.archivetune.core.common.math.lerp3
 import moe.rukamori.archivetune.db.entities.Playlist
 import moe.rukamori.archivetune.ui.component.HeaderType
-import moe.rukamori.archivetune.ui.component.YumaMorphingHeader
+import moe.rukamori.archivetune.ui.component.OzoneMorphingHeader
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaCombinedClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneCombinedClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.ui.utils.HeaderDownloadProgressIndicator
 import moe.rukamori.archivetune.ui.utils.HeaderDownloadState
 import moe.rukamori.archivetune.utils.makeTimeString
@@ -80,9 +80,9 @@ internal fun MetadataChip(
     Row(
         modifier =
             modifier
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = RoundedCornerShape(SettingsDimensions.LibraryCardRadius),
-                    backgroundColor = LocalYumaColors.current.glassBackground,
+                    backgroundColor = LocalOzoneColors.current.glassBackground,
                 )
                 .clip(RoundedCornerShape(SettingsDimensions.LibraryCardRadius))
                 .padding(horizontal = 8.dp, vertical = 6.dp),
@@ -306,7 +306,7 @@ fun PlaylistMorphingHeader(
     collapseFraction: Float,
     modifier: Modifier = Modifier,
 ) {
-    YumaMorphingHeader(
+    OzoneMorphingHeader(
         collapseFraction = collapseFraction,
         type = HeaderType.PLAYLIST,
         modifier = modifier,
@@ -363,14 +363,14 @@ fun LocalPlaylistHeroSection(
                                 alpha = (1f - fraction * 2.5f).coerceIn(0f, 1f)
                             }
                             .size(48.dp)
-                            .yumaClickable(
+                            .ozoneClickable(
                                 enabled = collapseFractionProvider() < 0.3f,
                                 pressedScale = SettingsAnimations.PressScale,
                                 onClick = actions.onPickCover,
                             )
-                            .yumaGlassCard(
+                            .ozoneGlassCard(
                                 shape = CircleShape,
-                                backgroundColor = LocalYumaColors.current.glassBackground,
+                                backgroundColor = LocalOzoneColors.current.glassBackground,
                             )
                             .clip(CircleShape)
                             .semantics(mergeDescendants = true) {
@@ -453,13 +453,13 @@ fun LocalPlaylistHeroSection(
                     modifier =
                         Modifier
                             .size(48.dp)
-                            .yumaClickable(
+                            .ozoneClickable(
                                 pressedScale = SettingsAnimations.PressScale,
                                 onClick = actions.onDelete,
                             )
-                            .yumaGlassCard(
+                            .ozoneGlassCard(
                                 shape = CircleShape,
-                                backgroundColor = LocalYumaColors.current.glassBackground,
+                                backgroundColor = LocalOzoneColors.current.glassBackground,
                             )
                             .clip(CircleShape)
                             .semantics(mergeDescendants = true) {
@@ -481,13 +481,13 @@ fun LocalPlaylistHeroSection(
                     modifier =
                         Modifier
                             .size(48.dp)
-                            .yumaClickable(
+                            .ozoneClickable(
                                 pressedScale = SettingsAnimations.PressScale,
                                 onClick = actions.onToggleLike,
                             )
-                            .yumaGlassCard(
+                            .ozoneGlassCard(
                                 shape = CircleShape,
-                                backgroundColor = LocalYumaColors.current.glassBackground,
+                                backgroundColor = LocalOzoneColors.current.glassBackground,
                             )
                             .clip(CircleShape)
                             .semantics(mergeDescendants = true) {
@@ -518,7 +518,7 @@ fun LocalPlaylistHeroSection(
                     Modifier
                         .weight(1f)
                         .height(48.dp)
-                        .yumaClickable(
+                        .ozoneClickable(
                             pressedScale = SettingsAnimations.PressScale,
                             onClick = actions.onPlay,
                         )
@@ -559,13 +559,13 @@ fun LocalPlaylistHeroSection(
                 modifier =
                     Modifier
                         .size(48.dp)
-                        .yumaClickable(
+                        .ozoneClickable(
                             pressedScale = SettingsAnimations.PressScale,
                             onClick = actions.onShuffle,
                         )
-                        .yumaGlassCard(
+                        .ozoneGlassCard(
                             shape = CircleShape,
-                            backgroundColor = LocalYumaColors.current.glassBackground,
+                            backgroundColor = LocalOzoneColors.current.glassBackground,
                         )
                         .clip(CircleShape)
                         .semantics(mergeDescendants = true) {
@@ -586,14 +586,14 @@ fun LocalPlaylistHeroSection(
                 modifier =
                     Modifier
                         .size(48.dp)
-                        .yumaCombinedClickable(
+                        .ozoneCombinedClickable(
                             pressedScale = SettingsAnimations.PressScale,
                             onClick = actions.onDownload,
                             onLongClick = actions.onDownloadLongClick,
                         )
-                        .yumaGlassCard(
+                        .ozoneGlassCard(
                             shape = CircleShape,
-                            backgroundColor = LocalYumaColors.current.glassBackground,
+                            backgroundColor = LocalOzoneColors.current.glassBackground,
                         )
                         .clip(CircleShape)
                         .semantics(mergeDescendants = true) {

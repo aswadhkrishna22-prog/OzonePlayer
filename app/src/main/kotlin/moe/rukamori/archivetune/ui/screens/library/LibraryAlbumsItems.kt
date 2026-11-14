@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -49,14 +49,14 @@ import moe.rukamori.archivetune.db.entities.Album
 import moe.rukamori.archivetune.playback.queues.LocalAlbumRadio
 import moe.rukamori.archivetune.ui.component.LibraryEmptyState
 import moe.rukamori.archivetune.ui.component.LocalMenuState
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.ui.menu.AlbumMenu
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.YumaSegmentPosition
-import moe.rukamori.archivetune.ui.theme.yumaCombinedClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.OzoneSegmentPosition
+import moe.rukamori.archivetune.ui.theme.ozoneCombinedClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @Composable
 fun AlbumGridItem(
@@ -71,7 +71,7 @@ fun AlbumGridItem(
             modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(SettingsDimensions.LibraryCardRadius))
-                .yumaCombinedClickable(
+                .ozoneCombinedClickable(
                     pressedScale = SettingsAnimations.PressScale,
                     onClick = onClick,
                     onLongClick = onLongClick,
@@ -133,7 +133,7 @@ fun AlbumGridItem(
     navController: NavController,
     modifier: Modifier = Modifier,
 ) {
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
     val menuState = LocalMenuState.current
     val coroutineScope = rememberCoroutineScope()
     val database = LocalDatabase.current
@@ -171,22 +171,22 @@ fun AlbumListRow(
     onPlayClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val yumaColors = LocalYumaColors.current
+    val ozoneColors = LocalOzoneColors.current
 
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
-                .yumaCombinedClickable(
+                .ozoneCombinedClickable(
                     pressedScale = SettingsAnimations.PressScale,
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = RoundedCornerShape(SettingsDimensions.LibraryCardRadius),
-                    backgroundColor = yumaColors.glassBackground,
-                    borderColor = yumaColors.glassBorder,
-                    position = YumaSegmentPosition.Single,
+                    backgroundColor = ozoneColors.glassBackground,
+                    borderColor = ozoneColors.glassBorder,
+                    position = OzoneSegmentPosition.Single,
                 )
                 .clip(RoundedCornerShape(SettingsDimensions.LibraryCardRadius))
                 .padding(10.dp),
@@ -243,7 +243,7 @@ fun AlbumListRow(
     navController: NavController,
     modifier: Modifier = Modifier,
 ) {
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
     val menuState = LocalMenuState.current
     val coroutineScope = rememberCoroutineScope()
     val database = LocalDatabase.current

@@ -1,6 +1,6 @@
-# YumaPlayer Coding Standard
+# OzonePlayer Coding Standard
 
-This document defines the official code style, architectural conventions, and implementation patterns for YumaPlayer. All Kotlin and Compose code must comply with these standards.
+This document defines the official code style, architectural conventions, and implementation patterns for OzonePlayer. All Kotlin and Compose code must comply with these standards.
 
 ---
 

@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -72,7 +72,7 @@ import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.delay
 import moe.rukamori.archivetune.designsystem.R
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.yumaClickable
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
 
 @Composable
 fun DefaultDialog(
@@ -239,7 +239,7 @@ fun ActionPromptDialog(
                                 TextButton(
                                     onClick = { onReset() },
                                     shapes = ButtonDefaults.shapes(),
-                                    modifier = Modifier.yumaClickable(pressedScale = 0.96f, onClick = { onReset() }),
+                                    modifier = Modifier.ozoneClickable(pressedScale = 0.96f, onClick = { onReset() }),
                                 ) {
                                     Text(stringResource(R.string.reset))
                                 }
@@ -250,7 +250,7 @@ fun ActionPromptDialog(
                             TextButton(
                                 onClick = { onCancel() },
                                 shapes = ButtonDefaults.shapes(),
-                                modifier = Modifier.yumaClickable(pressedScale = 0.96f, onClick = { onCancel() }),
+                                modifier = Modifier.ozoneClickable(pressedScale = 0.96f, onClick = { onCancel() }),
                             ) {
                                 Text(stringResource(android.R.string.cancel))
                             }
@@ -259,7 +259,7 @@ fun ActionPromptDialog(
                         TextButton(
                             onClick = { onConfirm() },
                             shapes = ButtonDefaults.shapes(),
-                            modifier = Modifier.yumaClickable(pressedScale = 0.96f, onClick = { onConfirm() }),
+                            modifier = Modifier.ozoneClickable(pressedScale = 0.96f, onClick = { onConfirm() }),
                         ) {
                             Text(stringResource(android.R.string.ok))
                         }
@@ -371,7 +371,7 @@ fun TextFieldDialog(
             TextButton(
                 onClick = onDismiss,
                 shapes = ButtonDefaults.shapes(),
-                modifier = Modifier.yumaClickable(pressedScale = 0.96f, onClick = onDismiss),
+                modifier = Modifier.ozoneClickable(pressedScale = 0.96f, onClick = onDismiss),
             ) {
                 Text(text = stringResource(android.R.string.cancel))
             }
@@ -391,7 +391,7 @@ fun TextFieldDialog(
                     onDismiss()
                 },
                 shapes = ButtonDefaults.shapes(),
-                modifier = Modifier.yumaClickable(
+                modifier = Modifier.ozoneClickable(
                     enabled = isValid,
                     pressedScale = 0.96f,
                     onClick = {
@@ -494,7 +494,7 @@ fun EditPlaylistDialog(
             TextButton(
                 onClick = onDismiss,
                 shapes = ButtonDefaults.shapes(),
-                modifier = Modifier.yumaClickable(pressedScale = 0.96f, onClick = onDismiss),
+                modifier = Modifier.ozoneClickable(pressedScale = 0.96f, onClick = onDismiss),
             ) {
                 Text(text = stringResource(android.R.string.cancel))
             }
@@ -506,7 +506,7 @@ fun EditPlaylistDialog(
                     onDismiss()
                 },
                 shapes = ButtonDefaults.shapes(),
-                modifier = Modifier.yumaClickable(
+                modifier = Modifier.ozoneClickable(
                     enabled = canSave,
                     pressedScale = 0.96f,
                     onClick = {

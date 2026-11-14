@@ -21,9 +21,9 @@ jobs:
           RESPONSE=$(curl -sSL \
             -H "Accept: application/vnd.github+json" \
             -H "User-Agent: GitHub-Actions" \
-            "https://api.github.com/repos/MuwMx/YumaPlayer/contributors?per_page=20")
+            "https://api.github.com/repos/aswadhkrishna22-prog/OzonePlayer/contributors?per_page=20")
 
-          echo "$RESPONSE" | jq '[.[] | select((.type // "") != "Bot" and ((.login // "") | endswith("[bot]") | not) and (.login != "MuwMx") and (.login != "weblate")) | {login: .login, avatar_url: .avatar_url, html_url: .html_url}]' > .github/contributors.json
+          echo "$RESPONSE" | jq '[.[] | select((.type // "") != "Bot" and ((.login // "") | endswith("[bot]") | not) and (.login != "aswadhkrishna22-prog") and (.login != "weblate")) | {login: .login, avatar_url: .avatar_url, html_url: .html_url}]' > .github/contributors.json
 
           COUNT=$(jq 'length' .github/contributors.json)
           if [ -n "$COUNT" ] && [ "$COUNT" -gt 0 ]; then

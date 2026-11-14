@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -45,9 +45,9 @@ import coil3.compose.AsyncImage
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.YumaSegmentPosition
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.OzoneSegmentPosition
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.viewmodels.LibraryTopMixEmptyReason
 import moe.rukamori.archivetune.viewmodels.LibraryTopMixUiModel
 import moe.rukamori.archivetune.viewmodels.LibraryTopMixesUiState
@@ -171,9 +171,9 @@ private fun TopMixesEmptySection(
                 Modifier
                     .fillMaxWidth()
                     .padding(horizontal = SettingsDimensions.ScreenHorizontalPadding)
-                    .yumaGlassCard(
+                    .ozoneGlassCard(
                         shape = RoundedCornerShape(SettingsDimensions.LibrarySheetRadius),
-                        position = YumaSegmentPosition.Single,
+                        position = OzoneSegmentPosition.Single,
                     )
                     .padding(20.dp),
             contentAlignment = Alignment.Center,
@@ -274,13 +274,13 @@ private fun LibraryTopMixCard(
             modifier
                 .width(180.dp)
                 .height(130.dp)
-                .yumaClickable(
+                .ozoneClickable(
                     pressedScale = SettingsAnimations.PressScale,
                     onClick = onPlay,
                 )
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = RoundedCornerShape(SettingsDimensions.LibrarySheetRadius),
-                    position = YumaSegmentPosition.Single,
+                    position = OzoneSegmentPosition.Single,
                 ),
     ) {
         Column(

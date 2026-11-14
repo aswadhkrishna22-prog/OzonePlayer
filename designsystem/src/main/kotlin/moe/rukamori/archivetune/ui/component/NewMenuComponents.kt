@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -38,10 +38,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.LocalMarqueeEnabled
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
-import moe.rukamori.archivetune.ui.theme.yumaSegmentPosition
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneSegmentPosition
 
 @Composable
 fun NewActionButton(
@@ -53,7 +53,7 @@ fun NewActionButton(
     backgroundColor: Color = Color.Unspecified,
     contentColor: Color = Color.Unspecified,
 ) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val containerColor = if (backgroundColor.isSpecified) backgroundColor else colors.glassBorder.copy(alpha = 0.10f)
     val actionContentColor = if (contentColor.isSpecified) contentColor else colors.textPrimary
 
@@ -62,8 +62,8 @@ fun NewActionButton(
             modifier
                 .fillMaxWidth()
                 .heightIn(min = 84.dp)
-                .yumaClickable(enabled = enabled, pressedScale = 0.96f, onClick = onClick)
-                .yumaGlassCard(
+                .ozoneClickable(enabled = enabled, pressedScale = 0.96f, onClick = onClick)
+                .ozoneGlassCard(
                     shape = RoundedCornerShape(14.dp),
                     backgroundColor = containerColor,
                     borderColor = Color.Transparent,
@@ -119,16 +119,16 @@ fun NewMenuItem(
             else -> RoundedCornerShape(small)
         }
     }
-    val position = remember(index, count) { yumaSegmentPosition(index, count) }
-    val colors = LocalYumaColors.current
+    val position = remember(index, count) { ozoneSegmentPosition(index, count) }
+    val colors = LocalOzoneColors.current
     val isLast = index == count - 1
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(bottom = if (isLast) 0.dp else SettingsDimensions.SegmentedItemGap)
-            .yumaClickable(enabled = enabled && onClick != null, pressedScale = 0.96f, onClick = onClick ?: {})
-            .yumaGlassCard(
+            .ozoneClickable(enabled = enabled && onClick != null, pressedScale = 0.96f, onClick = onClick ?: {})
+            .ozoneGlassCard(
                 shape = shape,
                 backgroundColor = colors.glassBackground,
                 borderColor = colors.glassBorder,
@@ -184,7 +184,7 @@ fun NewMenuSectionHeader(
     text: String,
     modifier: Modifier = Modifier,
 ) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     Text(
         text = text,
         style = MaterialTheme.typography.titleSmall,
@@ -202,7 +202,7 @@ fun NewActionGrid(
 ) {
     if (actions.isEmpty()) return
 
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val columnCount = columns.coerceAtLeast(1)
     val rows = actions.chunked(columnCount)
 
@@ -210,7 +210,7 @@ fun NewActionGrid(
         modifier =
             modifier
                 .fillMaxWidth()
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = RoundedCornerShape(SettingsDimensions.SegmentedCornerLarge),
                     backgroundColor = colors.glassBackground,
                     borderColor = colors.glassBorder,
@@ -283,15 +283,15 @@ fun NewIconButton(
     backgroundColor: Color = Color.Unspecified,
     contentColor: Color = Color.Unspecified,
 ) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val containerColor = if (backgroundColor.isSpecified) backgroundColor else colors.glassBorder.copy(alpha = 0.10f)
     val iconContentColor = if (contentColor.isSpecified) contentColor else colors.textPrimary
 
     Box(
         modifier = modifier
             .size(40.dp)
-            .yumaClickable(enabled = enabled, onClick = onClick)
-            .yumaGlassCard(
+            .ozoneClickable(enabled = enabled, onClick = onClick)
+            .ozoneGlassCard(
                 shape = RoundedCornerShape(12.dp),
                 backgroundColor = containerColor,
                 borderColor = Color.Transparent,

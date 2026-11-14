@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Original work by MuwMix
+ * Ozone Player (2026)
  * GPL-3.0 License | Contributors: see git history
  */
 
@@ -124,7 +124,7 @@ object SettingsDimensions {
     val BackgroundTopAlpha = 0.22f
     val BackgroundMidAlpha = 0.06f
 
-    // -- Yuma glass preferences --------------------------------------------
+    // -- Ozone glass preferences --------------------------------------------
     val GlassCornerRadius = 18.dp
     val GlassBorderThickness = 0.5.dp
     val GlassStartColor = Color(0x1AFFFFFF)
@@ -162,25 +162,25 @@ object SettingsDimensions {
     val BottomSheetShadowElevation = 10.dp
     val BottomSheetActionRowSpacing = 16.dp
     val BottomSheetActionButtonSpacing = 8.dp
-    val YumaTitleFontSize = 12.sp
-    val YumaTitlePaddingStart = 4.dp
-    val YumaTitlePaddingBottom = 8.dp
-    val YumaCategorySpacing = 8.dp
-    val YumaRowIconSize = 26.dp
-    val YumaRowIconSpacing = 12.dp
-    val YumaRowArrowSize = 24.dp
-    val YumaRowArrowSpacing = 8.dp
-    val YumaRowTextSpacing = 2.dp
-    val YumaRowTitleSize = 15.sp
-    val YumaRowSubtitleSize = 11.sp
-    val YumaRowSubtitleLineHeight = 14.sp
-    val YumaRowIconAlpha = 0.8f
-    val YumaRowSubtitleAlpha = 0.65f
-    val YumaRowDisabledAlpha = 0.5f
-    val YumaRowArrowAlpha = 0.3f
-    val YumaSwitchUncheckedThumbAlpha = 0.6f
-    val YumaSwitchTrackAlpha = 0.3f
-    val YumaSwitchUncheckedTrackColor = Color(0x0DFFFFFF)
+    val OzoneTitleFontSize = 12.sp
+    val OzoneTitlePaddingStart = 4.dp
+    val OzoneTitlePaddingBottom = 8.dp
+    val OzoneCategorySpacing = 8.dp
+    val OzoneRowIconSize = 26.dp
+    val OzoneRowIconSpacing = 12.dp
+    val OzoneRowArrowSize = 24.dp
+    val OzoneRowArrowSpacing = 8.dp
+    val OzoneRowTextSpacing = 2.dp
+    val OzoneRowTitleSize = 15.sp
+    val OzoneRowSubtitleSize = 11.sp
+    val OzoneRowSubtitleLineHeight = 14.sp
+    val OzoneRowIconAlpha = 0.8f
+    val OzoneRowSubtitleAlpha = 0.65f
+    val OzoneRowDisabledAlpha = 0.5f
+    val OzoneRowArrowAlpha = 0.3f
+    val OzoneSwitchUncheckedThumbAlpha = 0.6f
+    val OzoneSwitchTrackAlpha = 0.3f
+    val OzoneSwitchUncheckedTrackColor = Color(0x0DFFFFFF)
 
     // -- Library (YDS) -------------------------------------------------------
     val LibraryChipHeight = 36.dp
@@ -194,7 +194,7 @@ object SettingsDimensions {
 }
 
 object SettingsAnimations {
-    // User's Yuma press feedback: slight shrink on press.
+    // User's Ozone press feedback: slight shrink on press.
     val PressScale = 0.96f
     val PressDampingRatio = 0.6f
     val PressStiffness = Spring.StiffnessMedium

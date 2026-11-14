@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -52,9 +52,9 @@ class DiscordRPC(
 ) {
     companion object {
         private const val PAUSE_IMAGE_URL =
-            "https://raw.githubusercontent.com/MuwMx/YumaPlayer/main/assets/ic_launcher.webp" // legacy pause icon not yet migrated
+            "https://raw.githubusercontent.com/aswadhkrishna22-prog/OzonePlayer/main/assets/ic_launcher.webp" // legacy pause icon not yet migrated
         private const val APP_ICON_URL =
-            "https://raw.githubusercontent.com/MuwMx/YumaPlayer/main/assets/ic_launcher.webp" // legacy icon
+            "https://raw.githubusercontent.com/aswadhkrishna22-prog/OzonePlayer/main/assets/ic_launcher.webp" // legacy icon
         private const val TAG = "DiscordRPC"
     }
 
@@ -339,7 +339,7 @@ class DiscordRPC(
         val button2UrlSource = context.dataStore[DiscordActivityButton2UrlSourceKey] ?: "custom"
         val button2CustomUrl =
             context.dataStore[DiscordActivityButton2CustomUrlKey]
-                ?: "https://github.com/MuwMx/YumaPlayer"
+                ?: "https://github.com/aswadhkrishna22-prog/OzonePlayer"
 
         return buildList {
             if (button1Enabled) {

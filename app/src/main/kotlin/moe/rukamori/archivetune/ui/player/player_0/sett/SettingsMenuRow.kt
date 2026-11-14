@@ -17,10 +17,10 @@ import androidx.compose.ui.unit.sp
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaCombinedClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
-import moe.rukamori.archivetune.ui.theme.yumaSegmentPosition
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneCombinedClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneSegmentPosition
 
 @Composable
 fun SettingsMenuRow(
@@ -43,14 +43,14 @@ fun SettingsMenuRow(
             else -> RoundedCornerShape(small)
         }
     }
-    val position = remember(index, count) { yumaSegmentPosition(index, count) }
-    val colors = LocalYumaColors.current
+    val position = remember(index, count) { ozoneSegmentPosition(index, count) }
+    val colors = LocalOzoneColors.current
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .yumaCombinedClickable(onClick = onClick)
-            .yumaGlassCard(
+            .ozoneCombinedClickable(onClick = onClick)
+            .ozoneGlassCard(
                 shape = shape,
                 backgroundColor = colors.glassBackground,
                 borderColor = colors.glassBorder,
@@ -66,7 +66,7 @@ fun SettingsMenuRow(
             Icon(
                 painter = painterResource(id = iconResId),
                 contentDescription = title,
-                tint = Color.White.copy(alpha = SettingsDimensions.YumaRowIconAlpha),
+                tint = Color.White.copy(alpha = SettingsDimensions.OzoneRowIconAlpha),
                 modifier = Modifier.size(24.dp)
             )
 
@@ -83,7 +83,7 @@ fun SettingsMenuRow(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = subtitle,
-                    color = Color.White.copy(alpha = SettingsDimensions.YumaRowSubtitleAlpha),
+                    color = Color.White.copy(alpha = SettingsDimensions.OzoneRowSubtitleAlpha),
                     fontSize = 11.sp,
                     lineHeight = 14.sp,
                     fontFamily = LocalArchiveTuneFontFamily.current
@@ -94,7 +94,7 @@ fun SettingsMenuRow(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_arrow_right),
                     contentDescription = stringResource(R.string.action_go),
-                    tint = Color.White.copy(alpha = SettingsDimensions.YumaRowArrowAlpha),
+                    tint = Color.White.copy(alpha = SettingsDimensions.OzoneRowArrowAlpha),
                     modifier = Modifier.size(24.dp)
                 )
             }

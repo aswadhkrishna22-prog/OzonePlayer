@@ -1,6 +1,6 @@
 /*
- * YumaPlayer (2026) | Original work by MuwMix
- * https://github.com/MuwMx/YumaPlayer
+ * Ozone Player (2026)
+ * https://github.com/aswadhkrishna22-prog/OzonePlayer
  * GPL-3.0 License | Contributors: see git history
  */
 
@@ -63,15 +63,15 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.player.player_0.sett.SettingsMenuRow
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.state.PlayerUiState
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.darkYumaColorScheme
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.darkOzoneColorScheme
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 private val QueueMenuMaxWidth = 560.dp
 private val QueueMenuDismissThreshold = 64.dp
@@ -87,7 +87,7 @@ fun QueueOptionsMenu(
     state: PlayerUiState,
     modifier: Modifier = Modifier,
 ) {
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
     val font = LocalArchiveTuneFontFamily.current
 
     var dismissRequested by remember { mutableStateOf(false) }
@@ -181,10 +181,10 @@ fun QueueOptionsMenu(
                             this.translationY = panelOffsetPx
                             this.alpha = alpha
                         }
-                        .yumaGlassCard(
+                        .ozoneGlassCard(
                             shape = panelShape,
                             backgroundColor = Color(state.darkMutedColor).copy(alpha = 1f),
-                            borderColor = LocalYumaColors.current.glassBorder,
+                            borderColor = LocalOzoneColors.current.glassBorder,
                             strokeWidth = SettingsDimensions.GlassBorderThickness,
                         )
                         .clickable(
@@ -202,7 +202,7 @@ fun QueueOptionsMenu(
                     MaterialTheme(colorScheme = darkScheme) {
                         CompositionLocalProvider(
                             LocalContentColor provides Color.White,
-                            LocalYumaColors provides darkYumaColorScheme(darkScheme),
+                            LocalOzoneColors provides darkOzoneColorScheme(darkScheme),
                         ) {
                             Column(modifier = Modifier.fillMaxWidth()) {
                                 Box(
@@ -248,7 +248,7 @@ fun QueueOptionsMenu(
                                             .clip(CircleShape)
                                             .background(
                                                 MaterialTheme.colorScheme.onSurface.copy(
-                                                    alpha = SettingsDimensions.YumaRowArrowAlpha,
+                                                    alpha = SettingsDimensions.OzoneRowArrowAlpha,
                                                 ),
                                             ),
                                     )

@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -50,7 +50,7 @@ import moe.rukamori.archivetune.ui.component.SpotifyLikedSongsListCard
 import moe.rukamori.archivetune.ui.screens.settings.SpotifyLoginFallback
 import moe.rukamori.archivetune.ui.screens.settings.SpotifyLoginSheet
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.YumaSegmentPosition
+import moe.rukamori.archivetune.ui.theme.OzoneSegmentPosition
 
 @Composable
 fun LibrarySpotifyPlaylistsScreen(
@@ -150,7 +150,7 @@ fun LibrarySpotifyPlaylistsScreen(
                     item(span = { GridItemSpan(maxLineSpan) }, key = "spotify_liked_songs", contentType = "spotify_liked_songs") {
                         SpotifyLikedSongsListCard(
                             likedSongsTotal = likedSongsTotal,
-                            position = YumaSegmentPosition.Single,
+                            position = OzoneSegmentPosition.Single,
                             onClick = { navController.navigate("spotify_liked_songs") },
                             onPlay = playLikedSongs,
                         )
@@ -192,7 +192,7 @@ fun LibrarySpotifyPlaylistsScreen(
                     item(key = "spotify_liked_songs", contentType = "spotify_liked_songs") {
                         SpotifyLikedSongsListCard(
                             likedSongsTotal = likedSongsTotal,
-                            position = YumaSegmentPosition.Single,
+                            position = OzoneSegmentPosition.Single,
                             onClick = { navController.navigate("spotify_liked_songs") },
                             onPlay = playLikedSongs,
                         )
@@ -215,7 +215,7 @@ fun LibrarySpotifyPlaylistsScreen(
                         ) { _, playlist ->
                             SpotifyLibraryPlaylistListItem(
                                 playlist = playlist,
-                                position = YumaSegmentPosition.Single,
+                                position = OzoneSegmentPosition.Single,
                                 navController = navController,
                                 onPlay = { playPlaylist(playlist) },
                             )

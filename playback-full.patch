@@ -68,7 +68,7 @@ index d42336b7..dc4a4788 100644
 +++ b/app/src/main/kotlin/moe/rukamori/archivetune/di/NetworkModule.kt
 @@ -1,37 +1,44 @@
 -/*
-- * YumaPlayer (2026) | Modified work by MuwMix
+- * OzonePlayer (2026) | Modified work by MuwMix
 - * ArchiveTune (2026) | Original work by © Rukamori
 - * GPL-3.0 License | Contributors: see git history
 - */
@@ -105,7 +105,7 @@ index d42336b7..dc4a4788 100644
 -            .build()
 -}
 +/*
-+ * YumaPlayer (2026) | Modified work by MuwMix
++ * OzonePlayer (2026) | Modified work by MuwMix
 + * ArchiveTune (2026) | Original work by © Rukamori
 + * GPL-3.0 License | Contributors: see git history
 + */
@@ -329,7 +329,7 @@ index 00000000..69b24231
 +++ b/app/src/main/kotlin/moe/rukamori/archivetune/utils/resolver/YoutubeiFallbackResolver.kt
 @@ -0,0 +1,329 @@
 +/*
-+ * YumaPlayer (2026) | Modified work by MuwMix
++ * OzonePlayer (2026) | Modified work by MuwMix
 + * ArchiveTune (2026) | Original work by © Rukamori
 + * GPL-3.0 License | Contributors: see git history
 + */
@@ -1573,7 +1573,7 @@ index 00000000..3c325838
 +++ b/core/youtubei/src/main/kotlin/moe/rukamori/archivetune/youtubei/YoutubeiDiskCache.kt
 @@ -0,0 +1,113 @@
 +/*
-+ * YumaPlayer (2026) | Modified work by MuwMix
++ * OzonePlayer (2026) | Modified work by MuwMix
 + * ArchiveTune (2026) | Original work by © Rukamori
 + * GPL-3.0 License | Contributors: see git history
 + */
@@ -1692,7 +1692,7 @@ index 00000000..7c7556b4
 +++ b/core/youtubei/src/main/kotlin/moe/rukamori/archivetune/youtubei/YoutubeiHttpClient.kt
 @@ -0,0 +1,440 @@
 +/*
-+ * YumaPlayer (2026) | Modified work by MuwMix
++ * OzonePlayer (2026) | Modified work by MuwMix
 + * ArchiveTune (2026) | Original work by © Rukamori
 + * GPL-3.0 License | Contributors: see git history
 + */
@@ -2138,7 +2138,7 @@ index 00000000..521cee2e
 +++ b/core/youtubei/src/main/kotlin/moe/rukamori/archivetune/youtubei/YoutubeiModels.kt
 @@ -0,0 +1,84 @@
 +/*
-+ * YumaPlayer (2026) | Modified work by MuwMix
++ * OzonePlayer (2026) | Modified work by MuwMix
 + * ArchiveTune (2026) | Original work by © Rukamori
 + * GPL-3.0 License | Contributors: see git history
 + */
@@ -2228,7 +2228,7 @@ index 00000000..798d4acb
 +++ b/core/youtubei/src/main/kotlin/moe/rukamori/archivetune/youtubei/YoutubeiQuickJsWorker.kt
 @@ -0,0 +1,267 @@
 +/*
-+ * YumaPlayer (2026) | Modified work by MuwMix
++ * OzonePlayer (2026) | Modified work by MuwMix
 + * ArchiveTune (2026) | Original work by © Rukamori
 + * GPL-3.0 License | Contributors: see git history
 + */
@@ -2501,7 +2501,7 @@ index 00000000..9c4c9e3a
 +++ b/core/youtubei/src/main/kotlin/moe/rukamori/archivetune/youtubei/YoutubeiRequestAuthentication.kt
 @@ -0,0 +1,89 @@
 +/*
-+ * YumaPlayer (2026) | Modified work by MuwMix
++ * OzonePlayer (2026) | Modified work by MuwMix
 + * ArchiveTune (2026) | Original work by © Rukamori
 + * GPL-3.0 License | Contributors: see git history
 + */
@@ -2596,7 +2596,7 @@ index 00000000..dffd923b
 +++ b/core/youtubei/src/main/kotlin/moe/rukamori/archivetune/youtubei/YoutubeiResolver.kt
 @@ -0,0 +1,273 @@
 +/*
-+ * YumaPlayer (2026) | Modified work by MuwMix
++ * OzonePlayer (2026) | Modified work by MuwMix
 + * ArchiveTune (2026) | Original work by © Rukamori
 + * GPL-3.0 License | Contributors: see git history
 + */
@@ -2886,16 +2886,16 @@ diff --git a/docs/architecture/MODULES.md b/docs/architecture/MODULES.md
 index f6c0fc48..99888e44 100644
 --- a/docs/architecture/MODULES.md
 +++ b/docs/architecture/MODULES.md
-@@ -16,7 +16,7 @@ This document serves as the official reference for the modular structure of Yuma
+@@ -16,7 +16,7 @@ This document serves as the official reference for the modular structure of Ozone
  
  ## 2. Architecture & Category Hierarchy
  
--YumaPlayer consists of **20 Gradle modules** (verified against `settings.gradle.kts`: `:app`, `:designsystem`, `:database`, `:core`, `:core:innertube`, `:core:audio-dsp`, `:lyrics:*` ×6, `:spotifycore`, `:shazamkit`, `:canvas`, `:lastfm`, `:flaccore`, `:moriextractor`, `:morideobfuscator`). Dependencies point inward toward shared core abstractions. There are no `:feature:*`, `:service:*`, `:core:model`, `:core:domain`, `:core:data`, or `:data` modules — those names are reserved for a possible future split (see §6).
-+YumaPlayer consists of **21 Gradle modules** (verified against `settings.gradle.kts`: `:app`, `:designsystem`, `:database`, `:core`, `:core:innertube`, `:core:audio-dsp`, `:core:youtubei`, `:lyrics:*` ×6, `:spotifycore`, `:shazamkit`, `:canvas`, `:lastfm`, `:flaccore`, `:moriextractor`, `:morideobfuscator`). Dependencies point inward toward shared core abstractions. There are no `:feature:*`, `:service:*`, `:core:model`, `:core:domain`, `:core:data`, or `:data` modules — those names are reserved for a possible future split (see §6).
+-OzonePlayer consists of **20 Gradle modules** (verified against `settings.gradle.kts`: `:app`, `:designsystem`, `:database`, `:core`, `:core:innertube`, `:core:audio-dsp`, `:lyrics:*` ×6, `:spotifycore`, `:shazamkit`, `:canvas`, `:lastfm`, `:flaccore`, `:moriextractor`, `:morideobfuscator`). Dependencies point inward toward shared core abstractions. There are no `:feature:*`, `:service:*`, `:core:model`, `:core:domain`, `:core:data`, or `:data` modules — those names are reserved for a possible future split (see §6).
++OzonePlayer consists of **21 Gradle modules** (verified against `settings.gradle.kts`: `:app`, `:designsystem`, `:database`, `:core`, `:core:innertube`, `:core:audio-dsp`, `:core:youtubei`, `:lyrics:*` ×6, `:spotifycore`, `:shazamkit`, `:canvas`, `:lastfm`, `:flaccore`, `:moriextractor`, `:morideobfuscator`). Dependencies point inward toward shared core abstractions. There are no `:feature:*`, `:service:*`, `:core:model`, `:core:domain`, `:core:data`, or `:data` modules — those names are reserved for a possible future split (see §6).
  
  ```
                   ┌──────────────┐
-@@ -74,6 +74,7 @@ YumaPlayer consists of **20 Gradle modules** (verified against `settings.gradle.
+@@ -74,6 +74,7 @@ OzonePlayer consists of **20 Gradle modules** (verified against `settings.gradle.
  ### ⚙️ Core Infrastructure
  - **`:core`** — Shared pure-Kotlin logic: `core/common/math/` (`lerp3`, palette/color/image math), `core/model/packed/` models.
  - **`:core:innertube`** — InnerTube API client for YouTube Music (`InnerTube.kt`, `YouTube.kt` facade, `utils/`, `pages/`, `models/`, `proxy/`).
@@ -2911,7 +2911,7 @@ index 00000000..31f1b349
 @@ -0,0 +1,88 @@
 +# Playback Phase 2 / Phase 3 execution ledger
 +
-+Updated: 2026-10-12. Target: YumaPlayer. Sole reference: `../ArchiveTune`, commit `24459219a`. Historical plan: `.omo/plans/PLAYBACK_ROADMAP.md`.
++Updated: 2026-10-12. Target: OzonePlayer. Sole reference: `../ArchiveTune`, commit `24459219a`. Historical plan: `.omo/plans/PLAYBACK_ROADMAP.md`.
 +
 +## Progress Ledger
 +
@@ -2925,7 +2925,7 @@ index 00000000..31f1b349
 +
 +## Architecture and dependency findings
 +
-+Media3 1.10.1 `DefaultAudioProcessorChain` already supplies SilenceSkipping and Sonic. The historical missing-silence-processor premise was false. YumaPlayer supplied an additional inactive Sonic. The new PCM chain contains exactly one DJ filter, one standard Media3 silence processor and one Sonic; no custom DSP algorithm.
++Media3 1.10.1 `DefaultAudioProcessorChain` already supplies SilenceSkipping and Sonic. The historical missing-silence-processor premise was false. OzonePlayer supplied an additional inactive Sonic. The new PCM chain contains exactly one DJ filter, one standard Media3 silence processor and one Sonic; no custom DSP algorithm.
 +
 +The threshold is 64 PCM units, approximately -54 dBFS, with standard retention/fades. Media3 1.10.1 derives its silence-buffer byte count from a frame count: the nominal 1-second constructor parameter preserves sub-250-ms stereo and sub-500-ms mono pauses. Multichannel behavior is unverified. Skip Silence now requires PCM and temporarily disables offload without erasing either stored preference. Secondary players receive the setting; existing reserve-deck reuse copies active state. Position/skipped-frame accounting and flush remain Media3-owned.
 +
