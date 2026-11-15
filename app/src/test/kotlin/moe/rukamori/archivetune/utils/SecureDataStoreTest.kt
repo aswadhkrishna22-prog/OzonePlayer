@@ -12,27 +12,37 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 import java.io.File
+import java.io.IOException
 import javax.xml.parsers.DocumentBuilderFactory
 
 class FakePreferencesDataStore(initialPreferences: Preferences = emptyPreferences()) : DataStore<Preferences> {
     private val state = MutableStateFlow(initialPreferences)
     override val data: Flow<Preferences> = state.asStateFlow()
 
+    @Volatile var failOnUpdate: Throwable? = null
+    @Volatile var updateCount: Int = 0
+
     override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences {
+        failOnUpdate?.let { throw it }
         val updated = transform(state.value)
         state.value = updated
+        updateCount++
         return updated
     }
 }
@@ -133,6 +143,276 @@ class SecureDataStoreTest {
         val compositeData = compositeStore.data.first()
         assertEquals("ED5564", compositeData[themeColorKey])
         assertEquals("legacy_spotify_cookie", compositeData[spotifyDcKey])
+    }
+
+    @Test
+    fun testTransientMigrationFailure_followedBySuccessfulRetry() = runTest {
+        val normalStore = FakePreferencesDataStore()
+        val secureStore = FakePreferencesDataStore()
+
+        normalStore.edit { prefs ->
+            prefs[themeColorKey] = "ED5564"
+            prefs[spotifyDcKey] = "transient_secret"
+            prefs[discordTokenKey] = "transient_discord"
+        }
+
+        val compositeStore = SecureRoutedPreferencesDataStore(normalStore, secureStore)
+
+        // Inject transient I/O failure on normalStore update (e.g. during delete phase)
+        normalStore.failOnUpdate = IOException("Disk I/O failure during migration")
+
+        try {
+            compositeStore.runMigration()
+            fail("runMigration() must propagate I/O failure and NOT swallow it")
+        } catch (e: IOException) {
+            assertEquals("Disk I/O failure during migration", e.message)
+        }
+
+        // Must NOT mark migrationDone after failure
+        assertFalse("Migration must NOT be marked done after failure", compositeStore.isMigrationDone)
+
+        // Normal store must still retain credentials so data is never lost prematurely
+        val normalDataAfterFail = normalStore.data.first()
+        assertEquals("transient_secret", normalDataAfterFail[spotifyDcKey])
+        assertEquals("transient_discord", normalDataAfterFail[discordTokenKey])
+
+        // I/O recovers
+        normalStore.failOnUpdate = null
+
+        // Subsequent retry must succeed
+        compositeStore.runMigration()
+        assertTrue("Migration must be marked done after successful retry", compositeStore.isMigrationDone)
+
+        val normalDataFinal = normalStore.data.first()
+        assertNull("Sensitive key must be purged from normalStore after retry", normalDataFinal[spotifyDcKey])
+        assertNull("Sensitive key must be purged from normalStore after retry", normalDataFinal[discordTokenKey])
+        assertEquals("ED5564", normalDataFinal[themeColorKey])
+
+        val secureDataFinal = secureStore.data.first()
+        assertEquals("transient_secret", secureDataFinal[spotifyDcKey])
+        assertEquals("transient_discord", secureDataFinal[discordTokenKey])
+
+        val compositeFinal = compositeStore.data.first()
+        assertEquals("ED5564", compositeFinal[themeColorKey])
+        assertEquals("transient_secret", compositeFinal[spotifyDcKey])
+        assertEquals("transient_discord", compositeFinal[discordTokenKey])
+    }
+
+    @Test
+    fun testFailureAfterSecureWriteBeforeNormalDeletion_subsequentLaunchSafelyCompletes() = runTest {
+        val normalStore = FakePreferencesDataStore()
+        val secureStore = FakePreferencesDataStore()
+
+        // Simulate crash right after secureStore write succeeded, but before normalStore deletion
+        normalStore.edit { prefs ->
+            prefs[themeColorKey] = "00AAFF"
+            prefs[spotifyDcKey] = "persisted_secret_token"
+            prefs[discordTokenKey] = "discord_token_abc"
+        }
+        secureStore.edit { prefs ->
+            prefs[spotifyDcKey] = "persisted_secret_token"
+            prefs[discordTokenKey] = "discord_token_abc"
+        }
+
+        // New launch starts
+        val compositeStore = SecureRoutedPreferencesDataStore(normalStore, secureStore)
+        assertFalse(compositeStore.isMigrationDone)
+
+        compositeStore.runMigration()
+        assertTrue(compositeStore.isMigrationDone)
+
+        // Normal store has cleaned up duplicate sensitive keys without touching UI preferences
+        val normalData = normalStore.data.first()
+        assertEquals("00AAFF", normalData[themeColorKey])
+        assertNull(normalData[spotifyDcKey])
+        assertNull(normalData[discordTokenKey])
+
+        // Secure store retains intact credentials
+        val secureData = secureStore.data.first()
+        assertEquals("persisted_secret_token", secureData[spotifyDcKey])
+        assertEquals("discord_token_abc", secureData[discordTokenKey])
+        assertNull(secureData[themeColorKey])
+
+        // Merged output is pristine
+        val compositeData = compositeStore.data.first()
+        assertEquals("00AAFF", compositeData[themeColorKey])
+        assertEquals("persisted_secret_token", compositeData[spotifyDcKey])
+        assertEquals("discord_token_abc", compositeData[discordTokenKey])
+    }
+
+    @Test
+    fun testPublicDataFlow_doesNotExposePreferencesUntilMigrationSucceeds() = runTest {
+        val normalStore = FakePreferencesDataStore()
+        val secureStore = FakePreferencesDataStore()
+
+        normalStore.edit { prefs ->
+            prefs[themeColorKey] = "FFAA00"
+            prefs[spotifyDcKey] = "sensitive_cookie_99"
+        }
+
+        // Fail secureStore update so migration cannot complete
+        secureStore.failOnUpdate = IOException("Secure storage unavailable")
+
+        val compositeStore = SecureRoutedPreferencesDataStore(normalStore, secureStore)
+
+        var collected = false
+        try {
+            compositeStore.data.first()
+            collected = true
+            fail("Data flow must not emit preferences before migration completes successfully")
+        } catch (e: IOException) {
+            assertEquals("Secure storage unavailable", e.message)
+        }
+        assertFalse(collected)
+        assertFalse(compositeStore.isMigrationDone)
+
+        // Recover secure store
+        secureStore.failOnUpdate = null
+
+        // Now collecting data flow succeeds and emits migrated preferences
+        val emitted = compositeStore.data.first()
+        assertEquals("FFAA00", emitted[themeColorKey])
+        assertEquals("sensitive_cookie_99", emitted[spotifyDcKey])
+        assertTrue(compositeStore.isMigrationDone)
+    }
+
+    @Test
+    fun testRepeatedMigration_idempotentWithoutLossOrDuplicates() = runTest {
+        val normalStore = FakePreferencesDataStore()
+        val secureStore = FakePreferencesDataStore()
+
+        normalStore.edit { prefs ->
+            prefs[themeColorKey] = "AABBCC"
+            prefs[discordTokenKey] = "discord_123"
+        }
+
+        val compositeStore = SecureRoutedPreferencesDataStore(normalStore, secureStore)
+
+        repeat(5) {
+            compositeStore.runMigration()
+            assertTrue(compositeStore.isMigrationDone)
+        }
+
+        val normalData = normalStore.data.first()
+        val secureData = secureStore.data.first()
+        val compositeData = compositeStore.data.first()
+
+        assertEquals("AABBCC", normalData[themeColorKey])
+        assertNull(normalData[discordTokenKey])
+
+        assertEquals("discord_123", secureData[discordTokenKey])
+        assertNull(secureData[themeColorKey])
+
+        assertEquals("AABBCC", compositeData[themeColorKey])
+        assertEquals("discord_123", compositeData[discordTokenKey])
+    }
+
+    @Test
+    fun testConcurrentUpdates_threadSafeRouting() = runTest {
+        val normalStore = FakePreferencesDataStore()
+        val secureStore = FakePreferencesDataStore()
+        val compositeStore = SecureRoutedPreferencesDataStore(normalStore, secureStore)
+
+        val jobCount = 10
+        val iterationsPerJob = 5
+
+        coroutineScope {
+            for (jobId in 0 until jobCount) {
+                launch(Dispatchers.Default) {
+                    for (iter in 0 until iterationsPerJob) {
+                        val isSensitive = (jobId % 2 == 0)
+                        if (isSensitive) {
+                            val key = stringPreferencesKey("spotify_access_token")
+                            compositeStore.edit { prefs ->
+                                prefs[key] = "token_${jobId}_$iter"
+                            }
+                        } else {
+                            val key = stringPreferencesKey("customThemeColor")
+                            compositeStore.edit { prefs ->
+                                prefs[key] = "color_${jobId}_$iter"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        val normalData = normalStore.data.first()
+        val secureData = secureStore.data.first()
+
+        assertNull("Normal store must NOT contain sensitive key", normalData[stringPreferencesKey("spotify_access_token")])
+        assertNotNull("Normal store must contain non-sensitive UI key", normalData[stringPreferencesKey("customThemeColor")])
+
+        assertNull("Secure store must NOT contain UI key", secureData[stringPreferencesKey("customThemeColor")])
+        assertNotNull("Secure store must contain sensitive token", secureData[stringPreferencesKey("spotify_access_token")])
+    }
+
+    @Test
+    fun testEveryKeyInSensitivePreferences_properlyPartitionedAndPurged() = runTest {
+        val normalStore = FakePreferencesDataStore()
+        val secureStore = FakePreferencesDataStore()
+
+        val allKeys = SensitivePreferences.KEYS + setOf("flac_kv_custom_dynamic_key")
+
+        // 1. Populate normalStore with every sensitive key plus UI preference (legacy state)
+        normalStore.edit { prefs ->
+            prefs[themeColorKey] = "ORIGINAL_THEME"
+            for (keyName in allKeys) {
+                val key = stringPreferencesKey(keyName)
+                prefs[key] = "legacy_val_$keyName"
+            }
+        }
+
+        val compositeStore = SecureRoutedPreferencesDataStore(normalStore, secureStore)
+        compositeStore.runMigration()
+        assertTrue(compositeStore.isMigrationDone)
+
+        val normalData = normalStore.data.first()
+        val secureData = secureStore.data.first()
+        val compositeData = compositeStore.data.first()
+
+        assertEquals("ORIGINAL_THEME", normalData[themeColorKey])
+
+        for (keyName in allKeys) {
+            val key = stringPreferencesKey(keyName)
+            assertNull(
+                "Key '$keyName' must be completely purged from normalStore",
+                normalData[key]
+            )
+            assertEquals(
+                "Key '$keyName' must be safely present in secureStore",
+                "legacy_val_$keyName",
+                secureData[key]
+            )
+            assertEquals(
+                "Key '$keyName' must be accessible through compositeStore",
+                "legacy_val_$keyName",
+                compositeData[key]
+            )
+        }
+
+        // 2. Direct write of each key through compositeStore.edit
+        compositeStore.edit { prefs ->
+            for (keyName in allKeys) {
+                val key = stringPreferencesKey(keyName)
+                prefs[key] = "fresh_val_$keyName"
+            }
+        }
+
+        val normalDataFresh = normalStore.data.first()
+        val secureDataFresh = secureStore.data.first()
+        for (keyName in allKeys) {
+            val key = stringPreferencesKey(keyName)
+            assertNull(
+                "Fresh write of '$keyName' must NOT touch normalStore",
+                normalDataFresh[key]
+            )
+            assertEquals(
+                "Fresh write of '$keyName' must land in secureStore",
+                "fresh_val_$keyName",
+                secureDataFresh[key]
+            )
+        }
     }
 
     private fun resolveResFile(path: String): File {

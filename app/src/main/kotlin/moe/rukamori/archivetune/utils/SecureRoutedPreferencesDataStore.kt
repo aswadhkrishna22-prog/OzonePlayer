@@ -16,7 +16,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -64,6 +66,8 @@ object SensitivePreferences {
         "qobuz_app_id",
         "qobuz_app_secret",
         "qobuz_user_auth_token",
+        "flac_kv_pasted_token",
+        "flac_kv_pinned_token",
 
         // AI Services
         "ai_api_key",
@@ -81,7 +85,7 @@ object SensitivePreferences {
         "proxyPassword",
     )
 
-    fun isSensitive(keyName: String): Boolean = keyName in KEYS
+    fun isSensitive(keyName: String): Boolean = keyName in KEYS || keyName.startsWith("flac_kv_")
 }
 
 /**
@@ -102,52 +106,75 @@ class SecureRoutedPreferencesDataStore(
     private val migrationMutex = Mutex()
     @Volatile private var migrationDone = false
 
+    val isMigrationDone: Boolean
+        get() = migrationDone
+
     init {
         coroutineScope?.launch {
-            runMigration()
+            try {
+                ensureMigrated()
+            } catch (_: Exception) {
+                // Background migration attempt failed (e.g. transient I/O).
+                // migrationDone remains false so subsequent read or write retries safely.
+            }
         }
+    }
+
+    suspend fun ensureMigrated() {
+        if (migrationDone) return
+        runMigration()
     }
 
     suspend fun runMigration() {
         if (migrationDone) return
         migrationMutex.withLock {
             if (migrationDone) return
-            try {
-                val normalPrefs = normalStore.data.first()
-                val sensitiveInNormal = normalPrefs.asMap().filter { (key, _) ->
-                    SensitivePreferences.isSensitive(key.name)
-                }
-                if (sensitiveInNormal.isNotEmpty()) {
-                    secureStore.edit { secMutable ->
-                        for ((k, v) in sensitiveInNormal) {
-                            if (!secMutable.contains(k)) {
-                                @Suppress("UNCHECKED_CAST")
-                                secMutable[k as Preferences.Key<Any>] = v
-                            }
-                        }
-                    }
-                    normalStore.edit { normMutable ->
-                        for ((k, _) in sensitiveInNormal) {
-                            @Suppress("UNCHECKED_CAST")
-                            normMutable.remove(k as Preferences.Key<Any>)
-                        }
-                    }
-                }
-            } catch (_: Exception) {
-                // Ignore transient read errors during startup
-            } finally {
-                migrationDone = true
+
+            val normalPrefs = normalStore.data.first()
+            val sensitiveInNormal = normalPrefs.asMap().filter { (key, _) ->
+                SensitivePreferences.isSensitive(key.name)
             }
+            if (sensitiveInNormal.isNotEmpty()) {
+                // Step 1: Write sensitive credentials to secureStore FIRST
+                secureStore.edit { secMutable ->
+                    for ((k, v) in sensitiveInNormal) {
+                        if (!secMutable.contains(k)) {
+                            @Suppress("UNCHECKED_CAST")
+                            secMutable[k as Preferences.Key<Any>] = v
+                        }
+                    }
+                }
+                // Step 2: Delete sensitive credentials from normalStore
+                normalStore.edit { normMutable ->
+                    for ((k, _) in sensitiveInNormal) {
+                        @Suppress("UNCHECKED_CAST")
+                        normMutable.remove(k as Preferences.Key<Any>)
+                    }
+                }
+            }
+            // Mark migrationDone ONLY after all migration steps succeed without error
+            migrationDone = true
         }
     }
 
-    override val data: Flow<Preferences> =
-        combine(normalStore.data, secureStore.data) { normal, secure ->
-            merge(normal, secure)
-        }
+    override val data: Flow<Preferences> = flow {
+        ensureMigrated()
+        emitAll(
+            combine(normalStore.data, secureStore.data) { normal, secure ->
+                merge(normal, secure)
+            }
+        )
+    }
 
     private fun merge(normal: Preferences, secure: Preferences): Preferences {
         val mutable = normal.toMutablePreferences()
+        // Defense-in-depth: Never expose sensitive keys from normal store even if lingering
+        for (key in normal.asMap().keys) {
+            if (SensitivePreferences.isSensitive(key.name)) {
+                @Suppress("UNCHECKED_CAST")
+                mutable.remove(key as Preferences.Key<Any>)
+            }
+        }
         for ((key, value) in secure.asMap()) {
             @Suppress("UNCHECKED_CAST")
             mutable[key as Preferences.Key<Any>] = value
@@ -157,7 +184,7 @@ class SecureRoutedPreferencesDataStore(
 
     override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences =
         writeMutex.withLock {
-            runMigration()
+            ensureMigrated()
 
             val curNormal = normalStore.data.first()
             val curSecure = secureStore.data.first()
