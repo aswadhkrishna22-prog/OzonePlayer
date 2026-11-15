@@ -170,6 +170,28 @@ fun EqualizerDialog(
                             )
                         }
                     },
+                    actions = {
+                        var showAutoEq by remember { mutableStateOf(false) }
+                        if (showAutoEq) {
+                            AutoEqPickerDialog(onDismiss = { showAutoEq = false })
+                        }
+                        var showSignalPath by remember { mutableStateOf(false) }
+                        if (showSignalPath) {
+                            SignalPathDialog(onDismiss = { showSignalPath = false })
+                        }
+                        IconButton(onClick = { showSignalPath = true }) {
+                            Icon(
+                                painter = painterResource(R.drawable.waves),
+                                contentDescription = "Signal Path",
+                            )
+                        }
+                        IconButton(onClick = { showAutoEq = true }) {
+                            Icon(
+                                painter = painterResource(R.drawable.headphones),
+                                contentDescription = "AutoEq Headphone Correction",
+                            )
+                        }
+                    },
                     colors =
                         TopAppBarDefaults.topAppBarColors(
                             containerColor = MaterialTheme.colorScheme.surface,

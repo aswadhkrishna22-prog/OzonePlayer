@@ -27,6 +27,8 @@ import moe.rukamori.archivetune.ui.component.DualPlayBetaInfoButton
 import moe.rukamori.archivetune.ui.component.PreferenceEntry
 import moe.rukamori.archivetune.ui.component.PreferenceGroup
 import moe.rukamori.archivetune.ui.component.SwitchPreference
+import moe.rukamori.archivetune.ui.menu.AutoEqPickerDialog
+import moe.rukamori.archivetune.ui.menu.SignalPathDialog
 
 @Composable
 internal fun PlayerAudioSection(
@@ -68,6 +70,32 @@ internal fun PlayerAudioSection(
                 description = "Soundstage, crossfeed, and acoustic balance",
                 icon = { Icon(painterResource(R.drawable.waves), null) },
                 onClick = actions.onSpatialAudioClick,
+                showChevron = true,
+            )
+        }
+        item {
+            var showAutoEqDialog by remember { mutableStateOf(false) }
+            if (showAutoEqDialog) {
+                AutoEqPickerDialog(onDismiss = { showAutoEqDialog = false })
+            }
+            PreferenceEntry(
+                title = { Text("Headphone Correction (AutoEq)") },
+                description = "Harmonic curve correction for 8,000+ headphones",
+                icon = { Icon(painterResource(R.drawable.headphones), null) },
+                onClick = { showAutoEqDialog = true },
+                showChevron = true,
+            )
+        }
+        item {
+            var showSignalPathDialog by remember { mutableStateOf(false) }
+            if (showSignalPathDialog) {
+                SignalPathDialog(onDismiss = { showSignalPathDialog = false })
+            }
+            PreferenceEntry(
+                title = { Text("Audio Signal Path") },
+                description = "Source, decoder, DSP, and output telemetry",
+                icon = { Icon(painterResource(R.drawable.volume_up), null) },
+                onClick = { showSignalPathDialog = true },
                 showChevron = true,
             )
         }

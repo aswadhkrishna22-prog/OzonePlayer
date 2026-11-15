@@ -598,6 +598,21 @@ class MusicService :
         connectivityObserver = NetworkConnectivityObserver(this)
 
         serviceLifecycle.onCreate()
+
+        ioScope.launch {
+            kotlinx.coroutines.flow.combine(
+                moe.rukamori.archivetune.playback.autoeq.AutoEqRepository.isEnabled,
+                moe.rukamori.archivetune.playback.autoeq.AutoEqRepository.activeProfile,
+            ) { enabled, profile ->
+                moe.rukamori.archivetune.playback.processor.AutoEqAudioProcessor.instance.enabled = enabled
+                moe.rukamori.archivetune.playback.processor.AutoEqAudioProcessor.instance.profile = profile
+                moe.rukamori.archivetune.playback.dsp.PipelineTelemetry.updateDsp(
+                    dualPlayActive = dualPlayEngine.isEnabled,
+                    dualPlayEar = if (dualPlayEngine.isEnabled) "Deck A (Left)" else null,
+                )
+            }.collect()
+        }
+        moe.rukamori.archivetune.playback.dsp.PipelineTelemetry.updateSink(this)
     }
 
     internal fun ensureScopesActive() {
