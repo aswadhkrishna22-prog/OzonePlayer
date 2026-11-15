@@ -81,7 +81,26 @@ fun PlayerCoverCard(
     var currentPainter by remember { mutableStateOf<Painter?>(null) }
     var activeVibrantColor by remember { mutableStateOf(Color.Transparent) }
 
-    val cleanUrl = coverUrl?.trim()?.takeIf(String::isNotBlank)
+    val coversMap by moe.rukamori.archivetune.playback.covers.UltraHdArtworkRepository.coversFlow.collectAsState()
+    val hdCoverUrl = remember(songTitle, artistName, coversMap) {
+        if (!songTitle.isNullOrBlank() && !artistName.isNullOrBlank()) {
+            moe.rukamori.archivetune.playback.covers.UltraHdArtworkRepository.getCachedHdCover(songTitle, artistName, null)
+        } else null
+    }
+
+    LaunchedEffect(songTitle, artistName) {
+        if (!songTitle.isNullOrBlank() && !artistName.isNullOrBlank()) {
+            moe.rukamori.archivetune.playback.covers.UltraHdArtworkRepository.resolveUltraHdArtwork(
+                rawTitle = songTitle,
+                rawArtist = artistName,
+                rawAlbum = null,
+                durationMs = 0L,
+            )
+        }
+    }
+
+    val effectiveCoverUrl = hdCoverUrl ?: coverUrl
+    val cleanUrl = effectiveCoverUrl?.trim()?.takeIf(String::isNotBlank)
     val isLowData by moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive.collectAsState()
     val targetData = remember(cleanUrl, isLowData) {
         if (isLowData && cleanUrl != null) {
