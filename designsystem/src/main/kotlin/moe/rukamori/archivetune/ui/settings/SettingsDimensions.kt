@@ -32,13 +32,6 @@ object SettingsDimensions {
     val GroupCardCornerRadius = 18.dp
     val BannerCardCornerRadius = 18.dp
 
-    const val BlurRadiusMin = 4f
-    const val BlurRadiusMax = 40f
-    const val BlurRadiusDefault = 24f
-    const val HazeNoiseFactor = 0f
-    const val HazeQualityFraction = 0.33f
-    const val HazePureBlackTintAlpha = 0.65f
-    const val HazeDefaultTintAlpha = 0.55f
     val HeaderFadeFeather: Dp = 14.dp
 
     // -- Screen layout -----------------------------------------------------
