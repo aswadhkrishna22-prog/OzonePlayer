@@ -873,11 +873,16 @@ class SecureDataStoreTest {
             }
         }
 
-        // Also scan src/main/kotlin to guarantee no key anywhere in the project is missed
-        val srcDir = resolveResFile("src/main/kotlin")
-        if (srcDir.exists()) {
-            val keyPattern = Regex("""(?:stringPreferencesKey|booleanPreferencesKey|intPreferencesKey|longPreferencesKey|floatPreferencesKey|doublePreferencesKey|stringSetPreferencesKey)\s*\(\s*["']([^"']+)["']\s*\)""")
-            srcDir.walkTopDown().filter { it.extension == "kt" && it.name != "PlainPreferences.kt" }.forEach { file ->
+        // Also scan src/main/kotlin across modules to guarantee no key anywhere in the project is missed
+        val searchDirs = listOf(
+            resolveResFile("src/main/kotlin"),
+            resolveResFile("../designsystem/src/main/kotlin"),
+            resolveResFile("designsystem/src/main/kotlin"),
+        ).filter { it.exists() }
+
+        val keyPattern = Regex("""(?:stringPreferencesKey|booleanPreferencesKey|intPreferencesKey|longPreferencesKey|floatPreferencesKey|doublePreferencesKey|stringSetPreferencesKey)\s*\(\s*["']([^"']+)["']\s*\)""")
+        for (dir in searchDirs) {
+            dir.walkTopDown().filter { it.extension == "kt" && it.name != "PlainPreferences.kt" && it.name != "SecureDataStoreTest.kt" }.forEach { file ->
                 keyPattern.findAll(file.readText()).forEach { match ->
                     discoveredKeys.add(match.groupValues[1])
                 }
@@ -939,13 +944,15 @@ class SecureDataStoreTest {
     fun testKeyClassificationGuard_uiKeysRemainPlain() {
         // Proves non-sensitive UI keys remain classified as PLAIN and never marked SECURE
         val uiKeys = listOf(
-            "themeColor",
-            "fontSelection",
-            "blurIntensity",
-            "dynamicColors",
-            "useBlackBackground",
-            "thumbnailRoundness",
-            "playerStyle",
+            "customThemeColor",
+            "dynamicTheme",
+            "fontPreference",
+            "disableBlur",
+            "blurRadius",
+            "blurNavBar",
+            "pureBlack",
+            "customFontName",
+            "thumbnailCornerRadius",
         )
         for (key in uiKeys) {
             assertTrue("UI key '$key' must be in PlainPreferences.KEYS", key in PlainPreferences.KEYS)

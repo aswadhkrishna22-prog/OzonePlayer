@@ -325,6 +325,7 @@ object PlainPreferences {
         "streamBypassProxy",
         "swipeSensitivity",
         "swipeThumbnail",
+        "thumbnailCornerRadius",
         "together_allow_guests_add_tracks",
         "together_allow_guests_control_playback",
         "together_client_id",
