@@ -319,7 +319,7 @@ class ChannelSplitProcessorTest {
         DualPlayChannelState.modeA = EarMode.LEFT_ONLY // ignored because master mode is OFF
 
         val input = ByteBuffer.allocateDirect(40).order(ByteOrder.nativeOrder())
-        repeat(10) { input.putShort(5000.toShort()); input.putShort(-5000.toShort()) }
+        repeat(10) { input.putShort(5000.toShort()); input.putShort((-5000).toShort()) }
         input.flip()
 
         processor.queueInput(input)
