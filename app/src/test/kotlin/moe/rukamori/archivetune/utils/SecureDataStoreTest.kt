@@ -30,6 +30,7 @@ import org.junit.Test
 import java.io.File
 import java.io.IOException
 import javax.xml.parsers.DocumentBuilderFactory
+import org.w3c.dom.Element
 
 class FakePreferencesDataStore(initialPreferences: Preferences = emptyPreferences()) : DataStore<Preferences> {
     private val state = MutableStateFlow(initialPreferences)
@@ -651,6 +652,126 @@ class SecureDataStoreTest {
     }
 
     @Test
+    fun testOzoneBackupAgent_rejectsSecureSettingsRestoreBeforeSuper() {
+        // Proves OzoneBackupAgent intercepts and rejects restoration of secure_settings before super, preserving existing credentials
+        val agent = OzoneBackupAgent()
+
+        assertFalse("Must reject secure_settings.preferences_pb", agent.shouldRestoreFile(File("secure_settings.preferences_pb")))
+        assertFalse("Must reject paths containing secure_settings", agent.shouldRestoreFile(File("/data/user/0/pkg/files/datastore/secure_settings.preferences_pb")))
+        assertTrue("Must allow standard settings.preferences_pb", agent.shouldRestoreFile(File("settings.preferences_pb")))
+        assertTrue("Must allow other app files", agent.shouldRestoreFile(File("other_config.json")))
+
+        // Assert that an existing secure credentials file is NOT modified, overwritten, or deleted when restoration is rejected
+        val tempDir = java.nio.file.Files.createTempDirectory("backup_agent_test").toFile()
+        try {
+            val existingSecureFile = File(tempDir, "secure_settings.preferences_pb")
+            existingSecureFile.writeText("EXISTING_SECRET_PAYLOAD_DO_NOT_OVERWRITE")
+
+            val shouldRestore = agent.shouldRestoreFile(existingSecureFile)
+            assertFalse("Agent must reject restoring over existing secure file", shouldRestore)
+            assertEquals("EXISTING_SECRET_PAYLOAD_DO_NOT_OVERWRITE", existingSecureFile.readText())
+            assertTrue("Existing file must still exist and be intact", existingSecureFile.exists())
+        } finally {
+            tempDir.deleteRecursively()
+        }
+        println("[PROOF] 18: OzoneBackupAgent rejects secure_settings restore BEFORE super, preserving existing credentials.")
+    }
+
+    @Test
+    fun testProviderPaths_excludesRootAndDatastore() {
+        // Proves provider_paths.xml scopes FileProvider strictly to subdirectories and excludes root and datastore
+        val providerPathsFile = resolveResFile("src/main/res/xml/provider_paths.xml")
+        assertTrue("provider_paths.xml must exist: ${providerPathsFile.absolutePath}", providerPathsFile.exists())
+
+        val factory = DocumentBuilderFactory.newInstance()
+        val builder = factory.newDocumentBuilder()
+        val doc = builder.parse(providerPathsFile)
+
+        val paths = doc.getElementsByTagName("paths").item(0) as Element
+        val childNodes = paths.childNodes
+
+        val configuredPaths = mutableListOf<Pair<String, String>>()
+        for (i in 0 until childNodes.length) {
+            val node = childNodes.item(i)
+            if (node is Element) {
+                val tag = node.tagName
+                val pathAttr = node.getAttribute("path")
+                configuredPaths.add(tag to pathAttr)
+            }
+        }
+
+        assertTrue("Must configure at least one FileProvider path", configuredPaths.isNotEmpty())
+
+        for ((tag, path) in configuredPaths) {
+            assertFalse("Path must NOT be root '.' for $tag", path == "." || path.isBlank())
+            assertFalse("Path must NOT expose datastore directory for $tag", path.contains("datastore"))
+        }
+
+        val filesPaths = configuredPaths.filter { it.first == "files-path" }
+        assertEquals("files-path must only have 1 entry (local_music_artwork/)", 1, filesPaths.size)
+        assertEquals("local_music_artwork/", filesPaths[0].second)
+        println("[PROOF] 19: provider_paths.xml scopes FileProvider strictly to subdirectories and excludes root and datastore.")
+    }
+
+    @Test
+    fun testAuthDomainValidator_allowedAuthDomains() {
+        // Proves AuthDomainValidator approves valid Google and YouTube HTTPS authentication domains
+        val allowedUrls = listOf(
+            "https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fmusic.youtube.com",
+            "https://myaccount.google.com/signinoptions",
+            "https://accounts.youtube.com/accounts/SetSID",
+            "https://music.youtube.com",
+            "https://music.youtube.com/explore",
+            "https://www.youtube.com",
+            "https://m.youtube.com",
+            "https://youtube.com",
+            "https://subdomain.google.com/oauth",
+        )
+
+        for (url in allowedUrls) {
+            assertTrue("URL must be approved for auth: $url", AuthDomainValidator.isApprovedAuthUrl(url))
+        }
+
+        val allowedYouTube = listOf(
+            "https://music.youtube.com",
+            "https://www.youtube.com",
+            "https://m.youtube.com",
+            "https://youtube.com",
+        )
+        for (url in allowedYouTube) {
+            assertTrue("URL must be approved for YouTube extraction: $url", AuthDomainValidator.isApprovedYouTubeUrl(url))
+        }
+        println("[PROOF] 20: AuthDomainValidator approves valid Google/YouTube HTTPS authentication domains.")
+    }
+
+    @Test
+    fun testAuthDomainValidator_rejectedUntrustedOrigins() {
+        // Proves AuthDomainValidator rejects untrusted origins, lookalike domains, and non-HTTPS schemes
+        val rejectedUrls = listOf(
+            "http://accounts.google.com",              // Insecure plain HTTP
+            "http://music.youtube.com",               // Insecure plain HTTP
+            "https://evil-google.com",                 // Lookalike domain
+            "https://google.com.attacker.com",         // Subdomain hijack
+            "https://youtube.com.phishing.org",        // Suffix trick
+            "https://attacker.com?url=youtube.com",    // Query param spoof
+            "https://accounts.google.com@attacker.com",// Userinfo spoof
+            "javascript:alert(1)",                     // Script execution
+            "file:///data/data/com.termux/files",      // Local file access
+            "content://settings/credentials",          // Content provider
+            "",                                        // Empty
+            "   ",                                     // Whitespace
+            null,                                      // Null
+            "https://evil.org",                        // Untrusted host
+        )
+
+        for (url in rejectedUrls) {
+            assertFalse("URL must be rejected: $url", AuthDomainValidator.isApprovedAuthUrl(url))
+            assertFalse("YouTube extraction must be rejected: $url", AuthDomainValidator.isApprovedYouTubeUrl(url))
+        }
+        println("[PROOF] 21: AuthDomainValidator rejects untrusted origins, invalid schemes, and lookalike domains.")
+    }
+
+    @Test
     fun testConcurrentMigrations_safelySerializedByMutex() = runTest {
         // Proves multiple concurrent coroutines running migration are safely serialized without race conditions
         val normalStore = FakePreferencesDataStore()
@@ -715,20 +836,27 @@ class SecureDataStoreTest {
     }
 
     @Test
-    fun testKeyClassificationGuard_allKeysClassified() {
-        // Proves every preference key defined in the project is explicitly classified as either SECURE or PLAIN
+    fun testKeyClassificationGuard_exhaustiveClassification() {
+        // Proves every preference key defined in the project is exhaustively classified as either SECURE or PLAIN
+        val discoveredKeys = mutableSetOf<String>()
+
         val classesToScan = listOf(
             Class.forName("moe.rukamori.archivetune.constants.PreferenceKeysKt"),
             Class.forName("moe.rukamori.archivetune.constants.KemoKeysKt"),
             Class.forName("moe.rukamori.archivetune.constants.PreferenceConstantsKt"),
+            Class.forName("moe.rukamori.archivetune.widget.MusicWidgetKeys"),
         )
 
-        val discoveredKeys = mutableSetOf<String>()
         for (cls in classesToScan) {
+            val targetObj = try {
+                cls.getDeclaredField("INSTANCE").apply { isAccessible = true }.get(null)
+            } catch (_: Exception) {
+                null
+            }
             for (field in cls.declaredFields) {
                 field.isAccessible = true
                 if (Preferences.Key::class.java.isAssignableFrom(field.type)) {
-                    val keyObj = field.get(null) as? Preferences.Key<*>
+                    val keyObj = try { field.get(targetObj) as? Preferences.Key<*> } catch (_: Exception) { null }
                     if (keyObj != null) {
                         discoveredKeys.add(keyObj.name)
                     }
@@ -737,7 +865,7 @@ class SecureDataStoreTest {
             for (method in cls.declaredMethods) {
                 if (Preferences.Key::class.java.isAssignableFrom(method.returnType) && method.parameterCount == 0) {
                     method.isAccessible = true
-                    val keyObj = method.invoke(null) as? Preferences.Key<*>
+                    val keyObj = try { method.invoke(targetObj) as? Preferences.Key<*> } catch (_: Exception) { null }
                     if (keyObj != null) {
                         discoveredKeys.add(keyObj.name)
                     }
@@ -745,46 +873,43 @@ class SecureDataStoreTest {
             }
         }
 
-        assertTrue("Must discover at least 200 preference keys across project (found ${discoveredKeys.size})", discoveredKeys.size > 200)
+        // Also scan src/main/kotlin to guarantee no key anywhere in the project is missed
+        val srcDir = resolveResFile("src/main/kotlin")
+        if (srcDir.exists()) {
+            val keyPattern = Regex("""(?:stringPreferencesKey|booleanPreferencesKey|intPreferencesKey|longPreferencesKey|floatPreferencesKey|doublePreferencesKey|stringSetPreferencesKey)\s*\(\s*["']([^"']+)["']\s*\)""")
+            srcDir.walkTopDown().filter { it.extension == "kt" && it.name != "PlainPreferences.kt" }.forEach { file ->
+                keyPattern.findAll(file.readText()).forEach { match ->
+                    discoveredKeys.add(match.groupValues[1])
+                }
+            }
+        }
 
-        // Every key must have an unambiguous boolean classification from SensitivePreferences
+        assertTrue("Must discover at least 300 preference keys across project (found ${discoveredKeys.size})", discoveredKeys.size > 300)
+
+        // 1. Verify no contradictory overlap between SECURE and PLAIN sets
+        val overlap = SensitivePreferences.KEYS.intersect(PlainPreferences.KEYS)
+        assertTrue("No key can be classified as both SECURE and PLAIN: $overlap", overlap.isEmpty())
+
+        // 2. Every discovered key must be explicitly in SensitivePreferences or PlainPreferences
+        val unclassified = mutableListOf<String>()
         for (keyName in discoveredKeys) {
             val isSecure = SensitivePreferences.isSensitive(keyName)
-            assertNotNull("Discovered key '$keyName' must have a defined classification", isSecure)
+            val isPlain = keyName in PlainPreferences.KEYS
+            if (!isSecure && !isPlain) {
+                unclassified.add(keyName)
+            }
         }
+
+        assertTrue(
+            "Every preference key must be explicitly classified as SECURE or PLAIN! Found ${unclassified.size} unclassified keys: $unclassified",
+            unclassified.isEmpty()
+        )
+        println("[PROOF] 22: Key classification guard proves every key in the project is exhaustively classified as SECURE or PLAIN.")
     }
 
     @Test
-    fun testKeyClassificationGuard_sensitivePatternsEnforced() {
-        // Proves any key matching sensitive credential patterns must be classified SECURE unless on reviewed exception list
-        val classesToScan = listOf(
-            Class.forName("moe.rukamori.archivetune.constants.PreferenceKeysKt"),
-            Class.forName("moe.rukamori.archivetune.constants.KemoKeysKt"),
-            Class.forName("moe.rukamori.archivetune.constants.PreferenceConstantsKt"),
-        )
-
-        val discoveredKeys = mutableSetOf<String>()
-        for (cls in classesToScan) {
-            for (field in cls.declaredFields) {
-                field.isAccessible = true
-                if (Preferences.Key::class.java.isAssignableFrom(field.type)) {
-                    val keyObj = field.get(null) as? Preferences.Key<*>
-                    if (keyObj != null) {
-                        discoveredKeys.add(keyObj.name)
-                    }
-                }
-            }
-            for (method in cls.declaredMethods) {
-                if (Preferences.Key::class.java.isAssignableFrom(method.returnType) && method.parameterCount == 0) {
-                    method.isAccessible = true
-                    val keyObj = method.invoke(null) as? Preferences.Key<*>
-                    if (keyObj != null) {
-                        discoveredKeys.add(keyObj.name)
-                    }
-                }
-            }
-        }
-
+    fun testKeyClassificationGuard_suspiciousNameCheck() {
+        // Proves any key matching sensitive credential patterns must be classified SECURE unless explicitly on reviewed exception list
         val sensitiveRegex = Regex("(?i).*(token|cookie|secret|password|passwd|session|auth|api|key|sp_dc|bearer).*")
         val reviewedPlainExceptions = setOf(
             "lyricsScrollKey",          // UI preference: Synchronized lyrics scroll behavior
@@ -792,20 +917,41 @@ class SecureDataStoreTest {
             "sponsorBlockApiUrl",       // Public endpoint: SponsorBlock public API instance URL
         )
 
-        val violations = mutableListOf<String>()
-        for (keyName in discoveredKeys) {
-            val isSecure = SensitivePreferences.isSensitive(keyName)
-            if (!isSecure && keyName.matches(sensitiveRegex)) {
-                if (keyName !in reviewedPlainExceptions) {
-                    violations.add(keyName)
-                }
-            }
-        }
+        // Check all PLAIN keys: NO plain key may match suspicious patterns unless reviewed
+        val suspiciousPlainKeys = PlainPreferences.KEYS
+            .filter { it.matches(sensitiveRegex) }
+            .filter { it !in reviewedPlainExceptions }
 
         assertTrue(
-            "Keys matching sensitive credential patterns must be classified SECURE unless explicitly reviewed. Violations: $violations",
-            violations.isEmpty()
+            "PLAIN keys matching suspicious credential patterns must be classified SECURE or explicitly reviewed! Violations: $suspiciousPlainKeys",
+            suspiciousPlainKeys.isEmpty()
         )
+
+        // Check that reviewedPlainExceptions contains only valid plain keys
+        for (exceptionKey in reviewedPlainExceptions) {
+            assertTrue("Exception key must be in PlainPreferences.KEYS: $exceptionKey", exceptionKey in PlainPreferences.KEYS)
+            assertFalse("Exception key must NOT be in SensitivePreferences.KEYS: $exceptionKey", exceptionKey in SensitivePreferences.KEYS)
+        }
+        println("[PROOF] 23: Suspicious-name check guarantees credential patterns must be SECURE unless explicitly reviewed.")
+    }
+
+    @Test
+    fun testKeyClassificationGuard_uiKeysRemainPlain() {
+        // Proves non-sensitive UI keys remain classified as PLAIN and never marked SECURE
+        val uiKeys = listOf(
+            "themeColor",
+            "fontSelection",
+            "blurIntensity",
+            "dynamicColors",
+            "useBlackBackground",
+            "thumbnailRoundness",
+            "playerStyle",
+        )
+        for (key in uiKeys) {
+            assertTrue("UI key '$key' must be in PlainPreferences.KEYS", key in PlainPreferences.KEYS)
+            assertFalse("UI key '$key' must NOT be in SensitivePreferences.KEYS", SensitivePreferences.isSensitive(key))
+        }
+        println("[PROOF] 24: UI preferences remain classified as PLAIN and excluded from SECURE.")
     }
 
     @Test

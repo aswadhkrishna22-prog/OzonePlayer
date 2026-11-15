@@ -11,12 +11,15 @@ package moe.rukamori.archivetune.ui.screens.settings
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.webkit.JavascriptInterface
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
+import moe.rukamori.archivetune.utils.AuthDomainValidator
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -315,10 +318,40 @@ class PoTokenExtractionActivity : ComponentActivity() {
 
                         webViewClient =
                             object : WebViewClient() {
+                                override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                                    val destinationUrl = request?.url?.toString()
+                                    if (!AuthDomainValidator.isApprovedAuthUrl(destinationUrl)) {
+                                        view?.removeJavascriptInterface("Android")
+                                        return true
+                                    }
+                                    return false
+                                }
+
+                                @Deprecated("Deprecated in Java")
+                                override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                                    if (!AuthDomainValidator.isApprovedAuthUrl(url)) {
+                                        view?.removeJavascriptInterface("Android")
+                                        return true
+                                    }
+                                    return false
+                                }
+
+                                override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                                    super.onPageStarted(view, url, favicon)
+                                    if (!AuthDomainValidator.isApprovedAuthUrl(url)) {
+                                        view?.removeJavascriptInterface("Android")
+                                        view?.stopLoading()
+                                    }
+                                }
+
                                 override fun onPageFinished(
                                     view: WebView,
                                     url: String?,
                                 ) {
+                                    if (!AuthDomainValidator.isApprovedAuthUrl(url)) {
+                                        view.removeJavascriptInterface("Android")
+                                        return
+                                    }
                                     currentUrl = url.orEmpty()
                                 }
                             }

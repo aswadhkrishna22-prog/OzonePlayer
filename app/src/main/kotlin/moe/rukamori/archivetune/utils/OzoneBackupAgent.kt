@@ -56,10 +56,35 @@ class OzoneBackupAgent : BackupAgentHelper() {
         mode: Long,
         mtime: Long
     ) {
+        if (!shouldRestoreFile(destination)) {
+            Timber.w("OzoneBackupAgent: rejecting restoration of %s to preserve existing secure credentials", destination?.name)
+            if (data != null && size > 0) {
+                drainStream(data, size)
+            }
+            return
+        }
         super.onRestoreFile(data, size, destination, type, mode, mtime)
-        if (destination != null && (destination.name == "secure_settings.preferences_pb" || destination.name.contains("secure_settings"))) {
-            destination.delete()
-            Timber.w("OzoneBackupAgent: removed restored secure_settings file to prevent untrusted overwrite")
+    }
+
+    internal fun shouldRestoreFile(destination: File?): Boolean {
+        if (destination == null) return true
+        val name = destination.name
+        return !(name == "secure_settings.preferences_pb" || name.contains("secure_settings"))
+    }
+
+    internal fun drainStream(pfd: ParcelFileDescriptor, size: Long) {
+        try {
+            val stream = java.io.FileInputStream(pfd.fileDescriptor)
+            val buffer = ByteArray(8192)
+            var bytesLeft = size
+            while (bytesLeft > 0) {
+                val toRead = minOf(buffer.size.toLong(), bytesLeft).toInt()
+                val read = stream.read(buffer, 0, toRead)
+                if (read < 0) break
+                bytesLeft -= read
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "OzoneBackupAgent: error draining skipped stream for restore file")
         }
     }
 

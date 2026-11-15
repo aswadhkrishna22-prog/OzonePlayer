@@ -7,12 +7,16 @@
 package moe.rukamori.archivetune.ui.screens
 
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
 import android.net.Uri
 import android.webkit.CookieManager
 import android.webkit.JavascriptInterface
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
+import timber.log.Timber
+import moe.rukamori.archivetune.utils.AuthDomainValidator
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -114,11 +118,44 @@ fun LoginScreen(
                         val cookieManager = CookieManager.getInstance()
                         webViewClient =
                             object : WebViewClient() {
+                                override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                                    val destinationUrl = request?.url?.toString()
+                                    if (!AuthDomainValidator.isApprovedAuthUrl(destinationUrl)) {
+                                        Timber.w("LoginScreen: blocked navigation to unapproved URL: %s", destinationUrl)
+                                        view?.removeJavascriptInterface("Android")
+                                        return true
+                                    }
+                                    return false
+                                }
+
+                                @Deprecated("Deprecated in Java")
+                                override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                                    if (!AuthDomainValidator.isApprovedAuthUrl(url)) {
+                                        Timber.w("LoginScreen: blocked navigation to unapproved URL: %s", url)
+                                        view?.removeJavascriptInterface("Android")
+                                        return true
+                                    }
+                                    return false
+                                }
+
+                                override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                                    super.onPageStarted(view, url, favicon)
+                                    if (!AuthDomainValidator.isApprovedAuthUrl(url)) {
+                                        Timber.w("LoginScreen: unapproved origin detected onPageStarted (%s), removing JS bridge", url)
+                                        view?.removeJavascriptInterface("Android")
+                                        view?.stopLoading()
+                                    }
+                                }
+
                                 override fun onPageFinished(
                                     view: WebView,
                                     url: String?,
                                 ) {
-                                    val isYouTubePage = url?.contains("youtube.com", ignoreCase = true) == true
+                                    if (!AuthDomainValidator.isApprovedAuthUrl(url)) {
+                                        view.removeJavascriptInterface("Android")
+                                        return
+                                    }
+                                    val isYouTubePage = AuthDomainValidator.isApprovedYouTubeUrl(url)
                                     if (isYouTubePage) {
                                         loadUrl(
                                             "javascript:void((function(){try{var c=window.ytcfg;if(c&&c.get){var v=c.get('VISITOR_DATA');if(v){Android.onRetrieveVisitorData(v);return}}var y=window.yt&&window.yt.config_;if(y&&y.VISITOR_DATA){Android.onRetrieveVisitorData(y.VISITOR_DATA);return}var s=document.querySelectorAll('script');for(var i=0;i<s.length;i++){var m=s[i].textContent.match(/\"VISITOR_DATA\":\"([^\"]+)\"/);if(m){Android.onRetrieveVisitorData(m[1]);return}}}catch(e){}})())",
@@ -179,7 +216,8 @@ fun LoginScreen(
                             },
                             "Android",
                         )
-                        loadUrl(startUrl ?: DEFAULT_LOGIN_URL)
+                        val targetUrl = startUrl?.takeIf { AuthDomainValidator.isApprovedAuthUrl(it) } ?: DEFAULT_LOGIN_URL
+                        loadUrl(targetUrl)
                         webView = this
                     }
                 },
