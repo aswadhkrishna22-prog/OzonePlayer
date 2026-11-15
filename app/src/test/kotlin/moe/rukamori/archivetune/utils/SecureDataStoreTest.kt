@@ -241,6 +241,57 @@ class SecureDataStoreTest {
     }
 
     @Test
+    fun testMigrationConflict_divergentValuesPreservesBothWithoutSilentOverwrite() = runTest {
+        val normalStore = FakePreferencesDataStore()
+        val secureStore = FakePreferencesDataStore()
+
+        // Setup a genuine conflict: normalStore has a legacy token, secureStore has a divergent token
+        normalStore.edit { prefs ->
+            prefs[themeColorKey] = "00FF88"
+            prefs[spotifyDcKey] = "legacy_spotify_dc_value"
+            prefs[discordTokenKey] = "identical_discord_token"
+        }
+        secureStore.edit { prefs ->
+            prefs[spotifyDcKey] = "secure_spotify_dc_value"
+            prefs[discordTokenKey] = "identical_discord_token"
+        }
+
+        val compositeStore = SecureRoutedPreferencesDataStore(normalStore, secureStore)
+        compositeStore.runMigration()
+        assertTrue(compositeStore.isMigrationDone)
+
+        val normalData = normalStore.data.first()
+        val secureData = secureStore.data.first()
+        val compositeData = compositeStore.data.first()
+
+        // 1. Normal store must have ALL sensitive keys purged (safe for backup)
+        assertNull("spotify_sp_dc must be purged from normalStore", normalData[spotifyDcKey])
+        assertNull("discordToken must be purged from normalStore", normalData[discordTokenKey])
+        assertEquals("00FF88", normalData[themeColorKey])
+
+        // 2. Conflict policy:
+        // - Primary active key in secureStore retains secureStore's value (no silent overwrite)
+        assertEquals("secure_spotify_dc_value", secureData[spotifyDcKey])
+        assertEquals("secure_spotify_dc_value", compositeData[spotifyDcKey])
+
+        // - Divergent legacy value is archived under typed conflict key in secureStore (zero data loss)
+        val conflictKey = stringPreferencesKey("spotify_sp_dc__conflict_legacy")
+        assertEquals("legacy_spotify_dc_value", secureData[conflictKey])
+        assertEquals("legacy_spotify_dc_value", compositeData[conflictKey])
+
+        // - Identical value (discordToken) had no conflict, so no conflict key created
+        val discordConflictKey = stringPreferencesKey("discordToken__conflict_legacy")
+        assertNull(secureData[discordConflictKey])
+        assertEquals("identical_discord_token", secureData[discordTokenKey])
+
+        // 3. Idempotency check: Re-running migration produces identical state without duplicates or overwrites
+        compositeStore.runMigration()
+        val secureDataRerun = secureStore.data.first()
+        assertEquals("secure_spotify_dc_value", secureDataRerun[spotifyDcKey])
+        assertEquals("legacy_spotify_dc_value", secureDataRerun[conflictKey])
+    }
+
+    @Test
     fun testPublicDataFlow_doesNotExposePreferencesUntilMigrationSucceeds() = runTest {
         val normalStore = FakePreferencesDataStore()
         val secureStore = FakePreferencesDataStore()
@@ -498,5 +549,26 @@ class SecureDataStoreTest {
             "full-backup-content must NOT exclude datastore/settings.preferences_pb",
             fullBackupExcludes.contains("datastore/settings.preferences_pb")
         )
+    }
+
+    @Test
+    fun testOzoneBackupAgent_manifestRegistration() {
+        val manifestFile = resolveResFile("src/main/AndroidManifest.xml")
+        assertTrue("AndroidManifest.xml must exist: ${manifestFile.absolutePath}", manifestFile.exists())
+
+        val factory = DocumentBuilderFactory.newInstance()
+        val builder = factory.newDocumentBuilder()
+        val doc = builder.parse(manifestFile)
+
+        val applicationNode = doc.getElementsByTagName("application").item(0)
+        assertNotNull("<application> node must exist in AndroidManifest.xml", applicationNode)
+
+        val backupAgentAttr = applicationNode.attributes.getNamedItem("android:backupAgent")
+        assertNotNull("android:backupAgent must be declared", backupAgentAttr)
+        assertEquals(".utils.OzoneBackupAgent", backupAgentAttr.nodeValue)
+
+        val allowBackupAttr = applicationNode.attributes.getNamedItem("android:allowBackup")
+        assertNotNull("android:allowBackup must be declared", allowBackupAttr)
+        assertEquals("true", allowBackupAttr.nodeValue)
     }
 }

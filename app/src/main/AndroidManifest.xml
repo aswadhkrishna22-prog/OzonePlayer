@@ -38,6 +38,7 @@
     </queries>
     <application
         android:name=".App"
+        android:backupAgent=".utils.OzoneBackupAgent"
         android:allowBackup="true"
         android:largeHeap="true"
         android:allowAudioPlaybackCapture="true"

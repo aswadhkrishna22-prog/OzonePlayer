@@ -10,7 +10,13 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -85,7 +91,28 @@ object SensitivePreferences {
         "proxyPassword",
     )
 
-    fun isSensitive(keyName: String): Boolean = keyName in KEYS || keyName.startsWith("flac_kv_")
+    const val CONFLICT_SUFFIX = "__conflict_legacy"
+
+    fun isConflictKey(keyName: String): Boolean = keyName.endsWith(CONFLICT_SUFFIX)
+
+    fun isSensitive(keyName: String): Boolean {
+        val baseName = keyName.removeSuffix(CONFLICT_SUFFIX)
+        return baseName in KEYS || baseName.startsWith("flac_kv_")
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun conflictKeyFor(key: Preferences.Key<*>, value: Any): Preferences.Key<Any> {
+        val conflictName = "${key.name}$CONFLICT_SUFFIX"
+        return when (value) {
+            is String -> stringPreferencesKey(conflictName)
+            is Boolean -> booleanPreferencesKey(conflictName)
+            is Int -> intPreferencesKey(conflictName)
+            is Long -> longPreferencesKey(conflictName)
+            is Float -> floatPreferencesKey(conflictName)
+            is Set<*> -> stringSetPreferencesKey(conflictName)
+            else -> stringPreferencesKey(conflictName)
+        } as Preferences.Key<Any>
+    }
 }
 
 /**
@@ -139,9 +166,23 @@ class SecureRoutedPreferencesDataStore(
                 secureStore.edit { secMutable ->
                     for ((k, v) in sensitiveInNormal) {
                         if (!secMutable.contains(k)) {
+                            // Clean migration: key not yet in secureStore
                             @Suppress("UNCHECKED_CAST")
                             secMutable[k as Preferences.Key<Any>] = v
+                        } else if (secMutable[k] != v) {
+                            // Conflict policy: Divergent values between normalStore and secureStore.
+                            // In the absence of timestamps/versions, neither value can be assumed 'newer'.
+                            // To prevent silent overwrite or data loss:
+                            // 1. secMutable[k] remains the active value in secureStore.
+                            // 2. The legacy conflicting value v is safely archived in secureStore
+                            //    under a typed conflict key ("${k.name}__conflict_legacy").
+                            val conflictKey = SensitivePreferences.conflictKeyFor(k, v)
+                            if (!secMutable.contains(conflictKey)) {
+                                secMutable[conflictKey] = v
+                            }
                         }
+                        // If secMutable[k] == v, it is an identical duplicate (e.g. from crash after step 1),
+                        // so no action needed in secureStore.
                     }
                 }
                 // Step 2: Delete sensitive credentials from normalStore
