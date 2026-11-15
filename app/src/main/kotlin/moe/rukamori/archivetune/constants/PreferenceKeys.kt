@@ -618,6 +618,29 @@ enum class MiniPlayerBackgroundStyle {
     GLOW,
 }
 
+val PlayerSkinKey = stringPreferencesKey("playerSkinPreference")
+
+enum class PlayerSkinPreference {
+    DEFAULT,
+    CASSETTE,
+    HALO,
+    POLAROID;
+
+    fun next(): PlayerSkinPreference = when (this) {
+        DEFAULT -> CASSETTE
+        CASSETTE -> HALO
+        HALO -> POLAROID
+        POLAROID -> DEFAULT
+    }
+
+    val label: String get() = when (this) {
+        DEFAULT -> "Classic"
+        CASSETTE -> "Cassette"
+        HALO -> "Halo"
+        POLAROID -> "Polaroid"
+    }
+}
+
 enum class HomeBackgroundStyle {
     OFF,
     TONAL,

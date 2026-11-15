@@ -6,12 +6,15 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -34,6 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -43,9 +47,15 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.constants.PlayerSkinKey
+import moe.rukamori.archivetune.constants.PlayerSkinPreference
 import moe.rukamori.archivetune.ui.haptics.LocalOzoneHaptics
 import moe.rukamori.archivetune.ui.player.CanvasArtworkPlayer
+import moe.rukamori.archivetune.ui.player.player_0.skins.CassetteSkin
+import moe.rukamori.archivetune.ui.player.player_0.skins.HaloSkin
+import moe.rukamori.archivetune.ui.player.player_0.skins.PolaroidSkin
 import moe.rukamori.archivetune.ui.utils.resize
+import moe.rukamori.archivetune.utils.rememberEnumPreference
 import kotlin.math.abs
 
 @Composable
@@ -59,6 +69,7 @@ fun PlayerCoverCard(
     songTitle: String? = null,
     artistName: String? = null,
     isPlaying: Boolean = false,
+    progress: Float = 0f,
     canvasState: PlayerCanvasState = rememberPlayerCanvasState(mediaId, songTitle, artistName),
     onCoverLoaded: () -> Unit = {}, // <-- Новый колбэк
     onNext: () -> Unit = {},
@@ -217,41 +228,96 @@ fun PlayerCoverCard(
             .background(surfaceColor),
         contentAlignment = Alignment.Center
     ) {
-        val isCanvasActive = canvasState.isCanvasEnabled && canvasState.artwork != null
+        val (playerSkin, setPlayerSkin) = rememberEnumPreference(PlayerSkinKey, defaultValue = PlayerSkinPreference.DEFAULT)
         val placeholder = painterResource(id = placeholderResId)
+        val effectivePainter = currentPainter ?: previousPainter ?: placeholder
 
-        val bgPainter = previousPainter ?: currentPainter ?: placeholder
-        Image(
-            painter = bgPainter,
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
-        )
+        when (playerSkin) {
+            PlayerSkinPreference.DEFAULT -> {
+                val isCanvasActive = canvasState.isCanvasEnabled && canvasState.artwork != null
+                val bgPainter = previousPainter ?: currentPainter ?: placeholder
+                Image(
+                    painter = bgPainter,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                )
 
-        if (currentPainter != null && currentPainter != previousPainter) {
-            Image(
-                painter = currentPainter!!,
-                contentDescription = stringResource(R.string.album_art_large),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        alpha = newArtAlpha.value
-                    },
-                contentScale = ContentScale.Crop,
-            )
-        }
+                if (currentPainter != null && currentPainter != previousPainter) {
+                    Image(
+                        painter = currentPainter!!,
+                        contentDescription = stringResource(R.string.album_art_large),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                alpha = newArtAlpha.value
+                            },
+                        contentScale = ContentScale.Crop,
+                    )
+                }
 
-        // Canvas
-        if (isCanvasActive) {
-            key(mediaId) {
-                CanvasArtworkPlayer(
-                    primaryUrl = canvasState.primaryUrl,
-                    fallbackUrl = canvasState.fallbackUrl,
+                // Canvas
+                if (isCanvasActive) {
+                    key(mediaId) {
+                        CanvasArtworkPlayer(
+                            primaryUrl = canvasState.primaryUrl,
+                            fallbackUrl = canvasState.fallbackUrl,
+                            isPlaying = isPlaying,
+                            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+            }
+
+            PlayerSkinPreference.CASSETTE -> {
+                CassetteSkin(
+                    coverPainter = effectivePainter,
+                    songTitle = songTitle,
+                    artistName = artistName,
                     isPlaying = isPlaying,
-                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM,
+                    progress = progress,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
+
+            PlayerSkinPreference.HALO -> {
+                HaloSkin(
+                    coverPainter = effectivePainter,
+                    isPlaying = isPlaying,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+
+            PlayerSkinPreference.POLAROID -> {
+                PolaroidSkin(
+                    coverPainter = effectivePainter,
+                    songTitle = songTitle,
+                    artistName = artistName,
+                    isPlaying = isPlaying,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+
+        // Quick skin toggle pill badge
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(8.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.Black.copy(alpha = 0.45f))
+                .clickable {
+                    setPlayerSkin(playerSkin.next())
+                }
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+        ) {
+            Text(
+                text = playerSkin.label,
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White.copy(alpha = 0.85f),
+                fontWeight = FontWeight.Bold,
+            )
         }
     }
 }
