@@ -42,10 +42,11 @@ import kotlinx.coroutines.withContext
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.PreferredLyricsProvider
 import moe.rukamori.archivetune.constants.PreferredLyricsProviderKey
+import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.lyrics.CandidateState
 import moe.rukamori.archivetune.lyrics.LyricsCandidatesManager
 import moe.rukamori.archivetune.lyrics.LyricsSyncKind
-import moe.rukamori.archivetune.ui.main.LocalPlayerConnection
+import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.player.player_0.sett.SettingsMenuRow
 import moe.rukamori.archivetune.ui.screens.settings.displayName
@@ -62,7 +63,7 @@ internal fun LyricsMenuProviders(
 ) {
     val font = LocalArchiveTuneFontFamily.current
     val playerConnection = LocalPlayerConnection.current
-    val mediaMetadata by playerConnection?.mediaMetadata?.collectAsState() ?: remember { mutableStateOf(null) }
+    val currentMetadata = playerConnection?.mediaMetadata?.collectAsState()?.value
 
     val (currentProviderStr, setProviderStr) = rememberPreference(
         PreferredLyricsProviderKey,
@@ -74,11 +75,11 @@ internal fun LyricsMenuProviders(
 
     val availableProviders = PreferredLyricsProvider.entries
 
-    val songId = mediaMetadata?.id ?: state.trackUrl
-    val title = mediaMetadata?.title ?: state.title
-    val artist = mediaMetadata?.artists?.joinToString { it.name } ?: state.artist
-    val album = mediaMetadata?.album?.title ?: state.album
-    val duration = mediaMetadata?.duration ?: (state.durationMs / 1000).toInt()
+    val songId = currentMetadata?.id ?: state.trackUrl
+    val title = currentMetadata?.title ?: state.title
+    val artist = currentMetadata?.artists?.joinToString { it.name } ?: state.artist
+    val album = currentMetadata?.album?.title ?: state.album
+    val duration = currentMetadata?.duration ?: (state.durationMs / 1000).toInt()
 
     val cachedStates = LyricsCandidatesManager.getCached(songId)
 
