@@ -10,7 +10,6 @@ import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.net.Uri
 import android.webkit.CookieManager
-import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -122,7 +121,6 @@ fun LoginScreen(
                                     val destinationUrl = request?.url?.toString()
                                     if (!AuthDomainValidator.isApprovedAuthUrl(destinationUrl)) {
                                         Timber.w("LoginScreen: blocked navigation to unapproved URL: %s", destinationUrl)
-                                        view?.removeJavascriptInterface("Android")
                                         return true
                                     }
                                     return false
@@ -132,7 +130,6 @@ fun LoginScreen(
                                 override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
                                     if (!AuthDomainValidator.isApprovedAuthUrl(url)) {
                                         Timber.w("LoginScreen: blocked navigation to unapproved URL: %s", url)
-                                        view?.removeJavascriptInterface("Android")
                                         return true
                                     }
                                     return false
@@ -141,8 +138,7 @@ fun LoginScreen(
                                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                                     super.onPageStarted(view, url, favicon)
                                     if (!AuthDomainValidator.isApprovedAuthUrl(url)) {
-                                        Timber.w("LoginScreen: unapproved origin detected onPageStarted (%s), removing JS bridge", url)
-                                        view?.removeJavascriptInterface("Android")
+                                        Timber.w("LoginScreen: unapproved origin detected onPageStarted (%s), stopping load", url)
                                         view?.stopLoading()
                                     }
                                 }
@@ -152,20 +148,34 @@ fun LoginScreen(
                                     url: String?,
                                 ) {
                                     if (!AuthDomainValidator.isApprovedAuthUrl(url)) {
-                                        view.removeJavascriptInterface("Android")
                                         return
                                     }
                                     val isYouTubePage = AuthDomainValidator.isApprovedYouTubeUrl(url)
                                     if (isYouTubePage) {
-                                        loadUrl(
-                                            "javascript:void((function(){try{var c=window.ytcfg;if(c&&c.get){var v=c.get('VISITOR_DATA');if(v){Android.onRetrieveVisitorData(v);return}}var y=window.yt&&window.yt.config_;if(y&&y.VISITOR_DATA){Android.onRetrieveVisitorData(y.VISITOR_DATA);return}var s=document.querySelectorAll('script');for(var i=0;i<s.length;i++){var m=s[i].textContent.match(/\"VISITOR_DATA\":\"([^\"]+)\"/);if(m){Android.onRetrieveVisitorData(m[1]);return}}}catch(e){}})())",
-                                        )
-                                        loadUrl(
-                                            "javascript:void((function(){try{var c=window.ytcfg;if(c&&c.get){var d=c.get('DATASYNC_ID');if(d){Android.onRetrieveDataSyncId(d);return}}var y=window.yt&&window.yt.config_;if(y&&y.DATASYNC_ID){Android.onRetrieveDataSyncId(y.DATASYNC_ID);return}var s=document.querySelectorAll('script');for(var i=0;i<s.length;i++){var m=s[i].textContent.match(/[\\\"'](?:DATASYNC_ID|dataSyncId)[\\\"']\\s*:\\s*[\\\"']([^\\\"']+)[\\\"']/);if(m){Android.onRetrieveDataSyncId(m[1]);return}}}catch(e){}})())",
-                                        )
-                                        loadUrl(
-                                            "javascript:void((function(){try{var c=window.ytcfg;if(c&&c.get){var t=c.get('PO_TOKEN');if(t){Android.onRetrievePoToken(t);return}}var s=document.querySelectorAll('script');for(var i=0;i<s.length;i++){var m=s[i].textContent.match(/\"PO_TOKEN\":\"([^\"]+)\"/);if(m){Android.onRetrievePoToken(m[1]);return}}}catch(e){}})())",
-                                        )
+                                        view.evaluateJavascript(
+                                            "(function(){try{var c=window.ytcfg;if(c&&c.get){var v=c.get('VISITOR_DATA');if(v){return v;}}var y=window.yt&&window.yt.config_;if(y&&y.VISITOR_DATA){return y.VISITOR_DATA;}var s=document.querySelectorAll('script');for(var i=0;i<s.length;i++){var m=s[i].textContent.match(/\"VISITOR_DATA\":\"([^\"]+)\"/);if(m){return m[1];}}}catch(e){}return '';})()",
+                                        ) { result ->
+                                            val visitorData = AuthDomainValidator.parseJsResult(result)
+                                            if (visitorData.isNotBlank()) {
+                                                viewModel.onVisitorDataExtracted(visitorData)
+                                            }
+                                        }
+                                        view.evaluateJavascript(
+                                            "(function(){try{var c=window.ytcfg;if(c&&c.get){var d=c.get('DATASYNC_ID');if(d){return d;}}var y=window.yt&&window.yt.config_;if(y&&y.DATASYNC_ID){return y.DATASYNC_ID;}var s=document.querySelectorAll('script');for(var i=0;i<s.length;i++){var m=s[i].textContent.match(/[\\\"'](?:DATASYNC_ID|dataSyncId)[\\\"']\\s*:\\s*[\\\"']([^\\\"']+)[\\\"']/);if(m){return m[1];}}}catch(e){}return '';})()",
+                                        ) { result ->
+                                            val dataSyncId = AuthDomainValidator.parseJsResult(result)
+                                            if (dataSyncId.isNotBlank()) {
+                                                viewModel.onDataSyncIdExtracted(dataSyncId)
+                                            }
+                                        }
+                                        view.evaluateJavascript(
+                                            "(function(){try{var c=window.ytcfg;if(c&&c.get){var t=c.get('PO_TOKEN');if(t){return t;}}var s=document.querySelectorAll('script');for(var i=0;i<s.length;i++){var m=s[i].textContent.match(/\"PO_TOKEN\":\"([^\"]+)\"/);if(m){return m[1];}}}catch(e){}return '';})()",
+                                        ) { result ->
+                                            val poToken = AuthDomainValidator.parseJsResult(result)
+                                            if (poToken.isNotBlank()) {
+                                                viewModel.onPoTokenExtracted(poToken)
+                                            }
+                                        }
                                     }
 
                                     mergeYouTubeCookies(cookieManager, url)?.let { cookie ->
@@ -197,25 +207,6 @@ fun LoginScreen(
                             displayZoomControls = false
                             userAgentString = cleanUa
                         }
-                        addJavascriptInterface(
-                            object {
-                                @JavascriptInterface
-                                fun onRetrieveVisitorData(visitorData: String) {
-                                    viewModel.onVisitorDataExtracted(visitorData)
-                                }
-
-                                @JavascriptInterface
-                                fun onRetrieveDataSyncId(dataSyncId: String) {
-                                    viewModel.onDataSyncIdExtracted(dataSyncId)
-                                }
-
-                                @JavascriptInterface
-                                fun onRetrievePoToken(poToken: String) {
-                                    viewModel.onPoTokenExtracted(poToken)
-                                }
-                            },
-                            "Android",
-                        )
                         val targetUrl = startUrl?.takeIf { AuthDomainValidator.isApprovedAuthUrl(it) } ?: DEFAULT_LOGIN_URL
                         loadUrl(targetUrl)
                         webView = this
@@ -272,8 +263,8 @@ private fun String?.toYouTubeCookieOrigin(): String? {
 
     val scheme =
         parsed.scheme
-            ?.takeIf { it.equals("https", ignoreCase = true) || it.equals("http", ignoreCase = true) }
-            ?: "https"
+            ?.takeIf { it.equals("https", ignoreCase = true) }
+            ?: return null
 
     return "$scheme://$host"
 }

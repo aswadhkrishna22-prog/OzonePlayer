@@ -19,6 +19,7 @@ object AuthDomainValidator {
     private val APPROVED_AUTH_HOST_SUFFIXES = listOf(
         "google.com",
         "youtube.com",
+        "recaptcha.net",
     )
 
     private val APPROVED_YOUTUBE_HOST_SUFFIXES = listOf(
@@ -64,5 +65,28 @@ object AuthDomainValidator {
         return approvedSuffixes.any { approved ->
             host == approved || host.endsWith(".$approved")
         }
+    }
+
+    /**
+     * Parses the JSON-encoded string returned by WebView.evaluateJavascript.
+     * Unwraps surrounding quotes and decodes escaped characters.
+     */
+    fun parseJsResult(raw: String?): String {
+        val text = raw?.trim().orEmpty()
+        if (text.isBlank() || text == "null") return ""
+        val unwrapped =
+            if (text.length >= 2 && text.first() == '"' && text.last() == '"') {
+                text.substring(1, text.length - 1)
+            } else {
+                text
+            }
+        return unwrapped
+            .replace("\\\\", "\\")
+            .replace("\\\"", "\"")
+            .replace("\\n", "\n")
+            .replace("\\u003C", "<")
+            .replace("\\u003E", ">")
+            .replace("\\u0026", "&")
+            .trim()
     }
 }

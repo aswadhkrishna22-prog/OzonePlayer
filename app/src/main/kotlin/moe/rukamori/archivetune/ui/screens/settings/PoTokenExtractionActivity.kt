@@ -14,7 +14,6 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
-import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -156,24 +155,7 @@ class PoTokenExtractionActivity : ComponentActivity() {
             }
         }
 
-        fun parseJsResult(raw: String?): String {
-            val text = raw?.trim().orEmpty()
-            if (text.isBlank() || text == "null") return ""
-            val unwrapped =
-                if (text.length >= 2 && text.first() == '"' && text.last() == '"') {
-                    text.substring(1, text.length - 1)
-                } else {
-                    text
-                }
-            return unwrapped
-                .replace("\\\\", "\\")
-                .replace("\\\"", "\"")
-                .replace("\\n", "\n")
-                .replace("\\u003C", "<")
-                .replace("\\u003E", ">")
-                .replace("\\u0026", "&")
-                .trim()
-        }
+        fun parseJsResult(raw: String?): String = AuthDomainValidator.parseJsResult(raw)
 
         fun closeCanceled(error: String? = null) {
             isExtracting = false
@@ -295,33 +277,11 @@ class PoTokenExtractionActivity : ComponentActivity() {
                         settings.builtInZoomControls = true
                         settings.displayZoomControls = false
 
-                        addJavascriptInterface(
-                            object {
-                                @JavascriptInterface
-                                fun onRetrieveVisitorData(newVisitorData: String?) {
-                                    if (!newVisitorData.isNullOrBlank()) {
-                                        extractedVisitorData = newVisitorData
-                                        runOnUiThread { completeIfReady() }
-                                    }
-                                }
-
-                                @JavascriptInterface
-                                fun onRetrievePoToken(newPoToken: String?) {
-                                    if (!newPoToken.isNullOrBlank()) {
-                                        extractedGvsToken = newPoToken
-                                        runOnUiThread { completeIfReady() }
-                                    }
-                                }
-                            },
-                            "Android",
-                        )
-
                         webViewClient =
                             object : WebViewClient() {
                                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                                     val destinationUrl = request?.url?.toString()
                                     if (!AuthDomainValidator.isApprovedAuthUrl(destinationUrl)) {
-                                        view?.removeJavascriptInterface("Android")
                                         return true
                                     }
                                     return false
@@ -330,7 +290,6 @@ class PoTokenExtractionActivity : ComponentActivity() {
                                 @Deprecated("Deprecated in Java")
                                 override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
                                     if (!AuthDomainValidator.isApprovedAuthUrl(url)) {
-                                        view?.removeJavascriptInterface("Android")
                                         return true
                                     }
                                     return false
@@ -339,7 +298,6 @@ class PoTokenExtractionActivity : ComponentActivity() {
                                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                                     super.onPageStarted(view, url, favicon)
                                     if (!AuthDomainValidator.isApprovedAuthUrl(url)) {
-                                        view?.removeJavascriptInterface("Android")
                                         view?.stopLoading()
                                     }
                                 }
@@ -349,7 +307,6 @@ class PoTokenExtractionActivity : ComponentActivity() {
                                     url: String?,
                                 ) {
                                     if (!AuthDomainValidator.isApprovedAuthUrl(url)) {
-                                        view.removeJavascriptInterface("Android")
                                         return
                                     }
                                     currentUrl = url.orEmpty()

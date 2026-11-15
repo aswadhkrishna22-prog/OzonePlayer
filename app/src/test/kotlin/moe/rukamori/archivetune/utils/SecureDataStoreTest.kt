@@ -715,7 +715,7 @@ class SecureDataStoreTest {
 
     @Test
     fun testAuthDomainValidator_allowedAuthDomains() {
-        // Proves AuthDomainValidator approves valid Google and YouTube HTTPS authentication domains
+        // Proves AuthDomainValidator approves valid Google, YouTube, and reCAPTCHA HTTPS authentication domains
         val allowedUrls = listOf(
             "https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fmusic.youtube.com",
             "https://myaccount.google.com/signinoptions",
@@ -726,6 +726,8 @@ class SecureDataStoreTest {
             "https://m.youtube.com",
             "https://youtube.com",
             "https://subdomain.google.com/oauth",
+            "https://recaptcha.net",
+            "https://www.recaptcha.net/recaptcha/api.js",
         )
 
         for (url in allowedUrls) {
@@ -741,7 +743,7 @@ class SecureDataStoreTest {
         for (url in allowedYouTube) {
             assertTrue("URL must be approved for YouTube extraction: $url", AuthDomainValidator.isApprovedYouTubeUrl(url))
         }
-        println("[PROOF] 20: AuthDomainValidator approves valid Google/YouTube HTTPS authentication domains.")
+        println("[PROOF] 20: AuthDomainValidator approves valid Google/YouTube/reCAPTCHA HTTPS authentication domains.")
     }
 
     @Test
@@ -750,8 +752,11 @@ class SecureDataStoreTest {
         val rejectedUrls = listOf(
             "http://accounts.google.com",              // Insecure plain HTTP
             "http://music.youtube.com",               // Insecure plain HTTP
+            "http://recaptcha.net",                   // Insecure plain HTTP
             "https://evil-google.com",                 // Lookalike domain
+            "https://evil-recaptcha.net",              // Lookalike domain
             "https://google.com.attacker.com",         // Subdomain hijack
+            "https://recaptcha.net.attacker.com",      // Subdomain hijack
             "https://youtube.com.phishing.org",        // Suffix trick
             "https://attacker.com?url=youtube.com",    // Query param spoof
             "https://accounts.google.com@attacker.com",// Userinfo spoof
@@ -769,6 +774,19 @@ class SecureDataStoreTest {
             assertFalse("YouTube extraction must be rejected: $url", AuthDomainValidator.isApprovedYouTubeUrl(url))
         }
         println("[PROOF] 21: AuthDomainValidator rejects untrusted origins, invalid schemes, and lookalike domains.")
+    }
+
+    @Test
+    fun testAuthDomainValidator_parseJsResult() {
+        // Proves parseJsResult unquotes and decodes JSON-wrapped evaluation results
+        assertEquals("test_visitor_data_123", AuthDomainValidator.parseJsResult("\"test_visitor_data_123\""))
+        assertEquals("", AuthDomainValidator.parseJsResult(null))
+        assertEquals("", AuthDomainValidator.parseJsResult(""))
+        assertEquals("", AuthDomainValidator.parseJsResult("   "))
+        assertEquals("", AuthDomainValidator.parseJsResult("null"))
+        assertEquals("escaped\"quotes", AuthDomainValidator.parseJsResult("\"escaped\\\"quotes\""))
+        assertEquals("line\nbreak", AuthDomainValidator.parseJsResult("\"line\\nbreak\""))
+        assertEquals("unicode<tag>&val>", AuthDomainValidator.parseJsResult("\"unicode\\u003Ctag\\u003E\\u0026val\\u003E\""))
     }
 
     @Test
@@ -997,5 +1015,37 @@ class SecureDataStoreTest {
 
         val debugResult = HttpRedactor.redactBody(bodyContent, isDebug = true)
         assertEquals(bodyContent, debugResult)
+    }
+
+    @Test
+    fun testWebView_noJavascriptInterfaceInAuthComponents() {
+        // Proves LoginScreen.kt and PoTokenExtractionActivity.kt do not register addJavascriptInterface,
+        // eliminating cross-frame / iframe JavaScript bridge injection vulnerabilities.
+        val loginScreen = resolveResFile("src/main/kotlin/moe/rukamori/archivetune/ui/screens/LoginScreen.kt")
+        val poTokenActivity = resolveResFile("src/main/kotlin/moe/rukamori/archivetune/ui/screens/settings/PoTokenExtractionActivity.kt")
+
+        assertTrue("LoginScreen.kt must exist", loginScreen.exists())
+        assertTrue("PoTokenExtractionActivity.kt must exist", poTokenActivity.exists())
+
+        val loginSource = loginScreen.readText()
+        val poTokenSource = poTokenActivity.readText()
+
+        assertFalse("LoginScreen must not call addJavascriptInterface", loginSource.contains("addJavascriptInterface"))
+        assertFalse("PoTokenExtractionActivity must not call addJavascriptInterface", poTokenSource.contains("addJavascriptInterface"))
+        println("[PROOF] 25: LoginScreen and PoTokenExtractionActivity eliminate addJavascriptInterface to protect against iframe bridge injection.")
+    }
+
+    @Test
+    fun testBuildOzoneWorkflow_includesSecureDataStoreTest() {
+        // Proves .github/workflows/build_ozone.yml runs SecureDataStoreTest before release packaging
+        val buildOzoneWorkflow = resolveResFile("../.github/workflows/build_ozone.yml").takeIf { it.exists() }
+            ?: resolveResFile(".github/workflows/build_ozone.yml")
+        assertTrue("build_ozone.yml must exist", buildOzoneWorkflow.exists())
+        val workflowText = buildOzoneWorkflow.readText()
+        assertTrue(
+            "build_ozone.yml must include SecureDataStoreTest in pre-gate unit test suite",
+            workflowText.contains("SecureDataStoreTest")
+        )
+        println("[PROOF] 26: Release workflow build_ozone.yml includes SecureDataStoreTest pre-gate.")
     }
 }

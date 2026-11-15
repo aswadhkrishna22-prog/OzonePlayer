@@ -87,6 +87,7 @@ jobs:
       - name: Run Core Test Suite Validation
         run: |
           ./gradlew :flaccore:test testGmsMobileUniversalDebugUnitTest \
+            --tests "moe.rukamori.archivetune.utils.SecureDataStoreTest" \
             --tests "moe.rukamori.archivetune.kemo.KemoStateTest" \
             --tests "moe.rukamori.archivetune.beastmode.BeastModeTest" \
             --tests "moe.rukamori.archivetune.playback.queue.SongVibeMatcherTest" \
