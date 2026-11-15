@@ -64,7 +64,7 @@ internal object LyricsContract {
     val QueueLyricsPreloadCount = QueueLyricsPreloadCountKey
 }
 
-internal fun PreferredLyricsProvider.displayName(): String =
+fun PreferredLyricsProvider.displayName(): String =
     when (this) {
         PreferredLyricsProvider.LRCLIB -> "LrcLib"
         PreferredLyricsProvider.KUGOU -> "KuGou"

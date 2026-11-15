@@ -79,6 +79,7 @@ val SeekExtraSeconds = booleanPreferencesKey("seekExtraSeconds")
 val DisableBlurKey = booleanPreferencesKey("disableBlur")
 val BlurRadiusKey = floatPreferencesKey("blurRadius")
 val BlurNavBarKey = booleanPreferencesKey("blurNavBar")
+val GraphicsPresetAppliedKey = booleanPreferencesKey("graphicsPresetApplied")
 val GlassAlphaKey = floatPreferencesKey("glassAlpha")
 
 // Backdrop blur for detail pages

@@ -1397,4 +1397,24 @@
     <string name="playlist_download_storage_warning_title">Storage Warning</string>
     <string name="playlist_download_storage_warning_message">Estimated download size (~%1$s) exceeds available space (~%2$s) in download storage. Download anyway?</string>
     <string name="playlist_download_started">Downloading %1$d songs</string>
+
+    <string name="lyrics_provider">Lyrics provider</string>
+    <string name="lyrics_provider_desc">Select provider for lyrics fetching</string>
+    <string name="lyrics_provider_active">Active</string>
+    <string name="lyrics_provider_select">Select</string>
+    <string name="lyrics_provider_checking">Checking…</string>
+    <string name="lyrics_provider_found">Found</string>
+    <string name="lyrics_provider_not_found">Not found</string>
+    <string name="lyrics_provider_automatic">Automatic</string>
+    <string name="lyrics_provider_in_use">In use: %1$s</string>
+    <string name="lyrics_provider_searching">Searching lyrics…</string>
+    <string name="settings_graphics_summary">Blur, procedural backgrounds, refresh rate</string>
+    <string name="settings_graphics_hud_title">Device Load &amp; GPU</string>
+    <string name="settings_graphics_hud_status_optimal">Optimal</string>
+    <string name="settings_graphics_hud_status_alert">Alert</string>
+    <string name="settings_graphics_hud_status_high">High Load</string>
+    <string name="settings_graphics_hud_status_throttle">Throttle</string>
+    <string name="settings_graphics_hud_load_value">Render load: %1$d%%</string>
+    <string name="settings_graphics_blur_group">Blur effects</string>
+    <string name="settings_graphics_performance_group">Performance &amp; animations</string>
 </resources>
