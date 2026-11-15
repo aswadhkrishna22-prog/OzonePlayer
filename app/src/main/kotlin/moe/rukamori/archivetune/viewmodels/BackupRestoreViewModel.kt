@@ -42,6 +42,7 @@ import moe.rukamori.archivetune.extensions.zipInputStream
 import moe.rukamori.archivetune.extensions.zipOutputStream
 import moe.rukamori.archivetune.playback.MusicService
 import moe.rukamori.archivetune.playback.QueuePersistenceStore.Companion.PERSISTENT_QUEUE_FILE
+import moe.rukamori.archivetune.utils.SensitivePreferences
 import moe.rukamori.archivetune.utils.dataStore
 import moe.rukamori.archivetune.utils.reportException
 import org.xmlpull.v1.XmlPullParser
@@ -326,8 +327,15 @@ class BackupRestoreViewModel
                         stream.zipInputStream().use { zip ->
                             var entry = zip.nextEntry
                             while (entry != null) {
-                                entryNames.add(entry.name)
-                                if (entry.name == InternalDatabase.DB_NAME) hasDb = true
+                                val entryName = entry.name
+                                if (entryName.contains("..") || entryName.startsWith("/") || entryName.contains("\\") || entryName.contains(":")) {
+                                    throw SecurityException("Malicious path detected in backup archive: $entryName")
+                                }
+                                if (entryName == "secure_settings.preferences_pb" || entryName.contains("secure_settings")) {
+                                    throw SecurityException("Restoring secure_settings directly is forbidden: $entryName")
+                                }
+                                entryNames.add(entryName)
+                                if (entryName == InternalDatabase.DB_NAME) hasDb = true
                                 entry = zip.nextEntry
                             }
                         }
@@ -369,6 +377,7 @@ class BackupRestoreViewModel
                         completedUnits++
                     }
 
+                    val totalRestoredBytes = java.util.concurrent.atomic.AtomicLong(0L)
                     context.applicationContext.contentResolver.openInputStream(uri)?.use { stream ->
                         stream.zipInputStream().use { zip ->
                             var entry = zip.nextEntry
@@ -388,8 +397,12 @@ class BackupRestoreViewModel
                                         emit(context.getString(R.string.restore_step_restoring_settings), indeterminate = true)
                                         val settingsDir = context.filesDir / "datastore"
                                         if (!settingsDir.exists()) settingsDir.mkdirs()
-                                        (settingsDir / SETTINGS_FILENAME).outputStream().use { out ->
-                                            zip.copyTo(out)
+                                        val targetFile = settingsDir / SETTINGS_FILENAME
+                                        if (!targetFile.canonicalPath.startsWith(settingsDir.canonicalPath)) {
+                                            throw SecurityException("Path traversal outside settings dir: ${targetFile.canonicalPath}")
+                                        }
+                                        targetFile.outputStream().use { out ->
+                                            copyBounded(zip, out, MAX_RESTORE_ENTRY_SIZE_BYTES, totalRestoredBytes)
                                         }
                                     }
 
@@ -400,11 +413,15 @@ class BackupRestoreViewModel
                                     -> {
                                         emit(context.getString(R.string.restore_step_restoring_file, name), indeterminate = true)
                                         val dbFile = context.getDatabasePath(name)
+                                        val dbParent = dbFile.parentFile ?: throw SecurityException("Database parent dir missing")
+                                        if (!dbFile.canonicalPath.startsWith(dbParent.canonicalPath)) {
+                                            throw SecurityException("Path traversal outside database dir: ${dbFile.canonicalPath}")
+                                        }
                                         if (dbFile.exists()) {
                                             dbFile.delete()
                                         }
                                         FileOutputStream(dbFile).use { out ->
-                                            zip.copyTo(out)
+                                            copyBounded(zip, out, MAX_RESTORE_ENTRY_SIZE_BYTES, totalRestoredBytes)
                                         }
                                     }
                                 }
@@ -444,6 +461,32 @@ class BackupRestoreViewModel
             }
         }
 
+        private const val MAX_RESTORE_ENTRY_SIZE_BYTES = 50L * 1024L * 1024L // 50 MB
+        private const val MAX_TOTAL_RESTORE_SIZE_BYTES = 150L * 1024L * 1024L // 150 MB
+
+        private fun copyBounded(
+            input: java.io.InputStream,
+            output: java.io.OutputStream,
+            maxBytes: Long,
+            totalBytesTracker: java.util.concurrent.atomic.AtomicLong
+        ): Long {
+            val buffer = ByteArray(8192)
+            var bytesReadTotal = 0L
+            var read: Int
+            while (input.read(buffer).also { read = it } != -1) {
+                bytesReadTotal += read
+                if (bytesReadTotal > maxBytes) {
+                    throw SecurityException("Backup entry exceeds single file size limit of $maxBytes bytes")
+                }
+                val currentTotal = totalBytesTracker.addAndGet(read.toLong())
+                if (currentTotal > MAX_TOTAL_RESTORE_SIZE_BYTES) {
+                    throw SecurityException("Backup archive exceeds total decompressed size limit of $MAX_TOTAL_RESTORE_SIZE_BYTES bytes")
+                }
+                output.write(buffer, 0, read)
+            }
+            return bytesReadTotal
+        }
+
         private suspend fun writeSettingsToXml(
             context: Context,
             outputStream: java.io.OutputStream,
@@ -460,7 +503,7 @@ class BackupRestoreViewModel
             serializer.startTag(null, "Settings")
 
             for ((key, value) in prefs) {
-                if (key.name in excludedKeyNames) continue
+                if (key.name in excludedKeyNames || SensitivePreferences.isSensitive(key.name)) continue
                 val tagName =
                     when (value) {
                         is Boolean -> "boolean"
@@ -517,7 +560,7 @@ class BackupRestoreViewModel
                     val name = parser.name
                     val keyName = parser.getAttributeValue(null, "name")
 
-                    if (keyName != null && keyName !in excludedKeyNames) {
+                    if (keyName != null && keyName !in excludedKeyNames && !SensitivePreferences.isSensitive(keyName)) {
                         when (name) {
                             "boolean" -> {
                                 val value = parser.getAttributeValue(null, "value")?.toBoolean()

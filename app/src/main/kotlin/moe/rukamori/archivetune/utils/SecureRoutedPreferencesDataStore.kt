@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import timber.log.Timber
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -91,28 +92,8 @@ object SensitivePreferences {
         "proxyPassword",
     )
 
-    const val CONFLICT_SUFFIX = "__conflict_legacy"
-
-    fun isConflictKey(keyName: String): Boolean = keyName.endsWith(CONFLICT_SUFFIX)
-
-    fun isSensitive(keyName: String): Boolean {
-        val baseName = keyName.removeSuffix(CONFLICT_SUFFIX)
-        return baseName in KEYS || baseName.startsWith("flac_kv_")
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    fun conflictKeyFor(key: Preferences.Key<*>, value: Any): Preferences.Key<Any> {
-        val conflictName = "${key.name}$CONFLICT_SUFFIX"
-        return when (value) {
-            is String -> stringPreferencesKey(conflictName)
-            is Boolean -> booleanPreferencesKey(conflictName)
-            is Int -> intPreferencesKey(conflictName)
-            is Long -> longPreferencesKey(conflictName)
-            is Float -> floatPreferencesKey(conflictName)
-            is Set<*> -> stringSetPreferencesKey(conflictName)
-            else -> stringPreferencesKey(conflictName)
-        } as Preferences.Key<Any>
-    }
+    fun isSensitive(keyName: String): Boolean =
+        keyName in KEYS || keyName.startsWith("flac_kv_")
 }
 
 /**
@@ -161,31 +142,59 @@ class SecureRoutedPreferencesDataStore(
             val sensitiveInNormal = normalPrefs.asMap().filter { (key, _) ->
                 SensitivePreferences.isSensitive(key.name)
             }
-            if (sensitiveInNormal.isNotEmpty()) {
-                // Step 1: Write sensitive credentials to secureStore FIRST
+            val securePrefsBefore = secureStore.data.first()
+
+            // Safe cleanup of any legacy __conflict_legacy archive keys in secureStore if present
+            val legacyConflictKeys = securePrefsBefore.asMap().keys.filter { it.name.endsWith("__conflict_legacy") }
+            if (legacyConflictKeys.isNotEmpty()) {
                 secureStore.edit { secMutable ->
-                    for ((k, v) in sensitiveInNormal) {
-                        if (!secMutable.contains(k)) {
-                            // Clean migration: key not yet in secureStore
-                            @Suppress("UNCHECKED_CAST")
-                            secMutable[k as Preferences.Key<Any>] = v
-                        } else if (secMutable[k] != v) {
-                            // Conflict policy: Divergent values between normalStore and secureStore.
-                            // In the absence of timestamps/versions, neither value can be assumed 'newer'.
-                            // To prevent silent overwrite or data loss:
-                            // 1. secMutable[k] remains the active value in secureStore.
-                            // 2. The legacy conflicting value v is safely archived in secureStore
-                            //    under a typed conflict key ("${k.name}__conflict_legacy").
-                            val conflictKey = SensitivePreferences.conflictKeyFor(k, v)
-                            if (!secMutable.contains(conflictKey)) {
-                                secMutable[conflictKey] = v
-                            }
-                        }
-                        // If secMutable[k] == v, it is an identical duplicate (e.g. from crash after step 1),
-                        // so no action needed in secureStore.
+                    for (conflictKey in legacyConflictKeys) {
+                        @Suppress("UNCHECKED_CAST")
+                        secMutable.remove(conflictKey as Preferences.Key<Any>)
                     }
                 }
-                // Step 2: Delete sensitive credentials from normalStore
+            }
+
+            if (sensitiveInNormal.isNotEmpty()) {
+                val currentSecure = secureStore.data.first()
+                val keysToWrite = sensitiveInNormal.filter { (k, _) ->
+                    !currentSecure.contains(k)
+                }
+
+                // Conflict policy: If credential exists in both stores with different values,
+                // SECURE VALUE WINS; legacy value is verified-then-deleted. NO archive of old credentials.
+                // Log key NAME only (never log credential values).
+                for ((k, v) in sensitiveInNormal) {
+                    if (currentSecure.contains(k) && currentSecure[k] != v) {
+                        Timber.w(
+                            "SecureRoutedPreferencesDataStore: migration conflict on key '%s'; secure store value retained, legacy value deleted",
+                            k.name
+                        )
+                    }
+                }
+
+                // Step 1: Write sensitive credentials to secureStore FIRST (never delete first)
+                if (keysToWrite.isNotEmpty()) {
+                    secureStore.edit { secMutable ->
+                        for ((k, v) in keysToWrite) {
+                            @Suppress("UNCHECKED_CAST")
+                            secMutable[k as Preferences.Key<Any>] = v
+                        }
+                    }
+                }
+
+                // Step 2: Read back and compare: verify all keys are in secureStore before deleting from legacy!
+                val verifiedSecurePrefs = secureStore.data.first()
+                for ((k, v) in sensitiveInNormal) {
+                    if (!verifiedSecurePrefs.contains(k)) {
+                        throw IllegalStateException("Verification failed: key '${k.name}' missing from secureStore prior to legacy deletion")
+                    }
+                    if (k in keysToWrite && verifiedSecurePrefs[k] != v) {
+                        throw IllegalStateException("Verification failed: key '${k.name}' value mismatch on read-back from secureStore")
+                    }
+                }
+
+                // Step 3: Only after read-back verification succeeds, remove sensitive credentials from normalStore
                 normalStore.edit { normMutable ->
                     for ((k, _) in sensitiveInNormal) {
                         @Suppress("UNCHECKED_CAST")
@@ -209,13 +218,16 @@ class SecureRoutedPreferencesDataStore(
 
     private fun merge(normal: Preferences, secure: Preferences): Preferences {
         val mutable = normal.toMutablePreferences()
-        // Defense-in-depth: Never expose sensitive keys from normal store even if lingering
-        for (key in normal.asMap().keys) {
-            if (SensitivePreferences.isSensitive(key.name)) {
-                @Suppress("UNCHECKED_CAST")
-                mutable.remove(key as Preferences.Key<Any>)
+        if (migrationDone) {
+            // Defense-in-depth: After migration completes, never expose sensitive keys from normal store even if lingering
+            for (key in normal.asMap().keys) {
+                if (SensitivePreferences.isSensitive(key.name)) {
+                    @Suppress("UNCHECKED_CAST")
+                    mutable.remove(key as Preferences.Key<Any>)
+                }
             }
         }
+        // Secure store values always take precedence (secure preferred)
         for ((key, value) in secure.asMap()) {
             @Suppress("UNCHECKED_CAST")
             mutable[key as Preferences.Key<Any>] = value

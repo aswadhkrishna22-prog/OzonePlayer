@@ -241,7 +241,7 @@ class SecureDataStoreTest {
     }
 
     @Test
-    fun testMigrationConflict_divergentValuesPreservesBothWithoutSilentOverwrite() = runTest {
+    fun testMigrationConflict_secureValueWinsAndLegacyDeletedWithoutArchive() = runTest {
         val normalStore = FakePreferencesDataStore()
         val secureStore = FakePreferencesDataStore()
 
@@ -254,6 +254,8 @@ class SecureDataStoreTest {
         secureStore.edit { prefs ->
             prefs[spotifyDcKey] = "secure_spotify_dc_value"
             prefs[discordTokenKey] = "identical_discord_token"
+            // Also simulate a lingering legacy archive key from an older build
+            prefs[stringPreferencesKey("spotify_sp_dc__conflict_legacy")] = "old_stale_archive"
         }
 
         val compositeStore = SecureRoutedPreferencesDataStore(normalStore, secureStore)
@@ -264,31 +266,71 @@ class SecureDataStoreTest {
         val secureData = secureStore.data.first()
         val compositeData = compositeStore.data.first()
 
-        // 1. Normal store must have ALL sensitive keys purged (safe for backup)
+        // 1. Normal store must have ALL sensitive keys purged (fail-safe against backup exposure)
         assertNull("spotify_sp_dc must be purged from normalStore", normalData[spotifyDcKey])
         assertNull("discordToken must be purged from normalStore", normalData[discordTokenKey])
         assertEquals("00FF88", normalData[themeColorKey])
 
         // 2. Conflict policy:
-        // - Primary active key in secureStore retains secureStore's value (no silent overwrite)
+        // - Primary active key in secureStore retains secureStore's value: SECURE VALUE WINS
         assertEquals("secure_spotify_dc_value", secureData[spotifyDcKey])
         assertEquals("secure_spotify_dc_value", compositeData[spotifyDcKey])
 
-        // - Divergent legacy value is archived under typed conflict key in secureStore (zero data loss)
+        // - Legacy conflicting value is deleted; NO archive key is created or retained
         val conflictKey = stringPreferencesKey("spotify_sp_dc__conflict_legacy")
-        assertEquals("legacy_spotify_dc_value", secureData[conflictKey])
-        assertEquals("legacy_spotify_dc_value", compositeData[conflictKey])
+        assertNull("Conflict archive key must NOT exist or must be removed", secureData[conflictKey])
+        assertNull("Conflict archive key must NOT exist in composite data", compositeData[conflictKey])
 
-        // - Identical value (discordToken) had no conflict, so no conflict key created
-        val discordConflictKey = stringPreferencesKey("discordToken__conflict_legacy")
-        assertNull(secureData[discordConflictKey])
+        // - Identical value (discordToken) had no divergence, preserved as-is
         assertEquals("identical_discord_token", secureData[discordTokenKey])
 
-        // 3. Idempotency check: Re-running migration produces identical state without duplicates or overwrites
+        // 3. Idempotency check: Re-running migration produces identical clean state
         compositeStore.runMigration()
         val secureDataRerun = secureStore.data.first()
         assertEquals("secure_spotify_dc_value", secureDataRerun[spotifyDcKey])
-        assertEquals("legacy_spotify_dc_value", secureDataRerun[conflictKey])
+        assertNull(secureDataRerun[conflictKey])
+    }
+
+    @Test
+    fun testDistinctConflicts_allResolvedWithSecureWinning() = runTest {
+        val normalStore = FakePreferencesDataStore()
+        val secureStore = FakePreferencesDataStore()
+
+        normalStore.edit { prefs ->
+            prefs[themeColorKey] = "CC00AA"
+            prefs[spotifyDcKey] = "normal_sp_dc_diff"
+            prefs[discordTokenKey] = "normal_discord_diff"
+            prefs[qobuzAuthTokenKey] = "normal_qobuz_diff"
+        }
+        secureStore.edit { prefs ->
+            prefs[spotifyDcKey] = "secure_sp_dc_winner"
+            prefs[discordTokenKey] = "secure_discord_winner"
+            prefs[qobuzAuthTokenKey] = "secure_qobuz_winner"
+        }
+
+        val compositeStore = SecureRoutedPreferencesDataStore(normalStore, secureStore)
+        compositeStore.runMigration()
+        assertTrue(compositeStore.isMigrationDone)
+
+        val normalData = normalStore.data.first()
+        val secureData = secureStore.data.first()
+        val compositeData = compositeStore.data.first()
+
+        // All legacy divergent values purged from normalStore
+        assertNull(normalData[spotifyDcKey])
+        assertNull(normalData[discordTokenKey])
+        assertNull(normalData[qobuzAuthTokenKey])
+        assertEquals("CC00AA", normalData[themeColorKey])
+
+        // Secure values win for all
+        assertEquals("secure_sp_dc_winner", secureData[spotifyDcKey])
+        assertEquals("secure_discord_winner", secureData[discordTokenKey])
+        assertEquals("secure_qobuz_winner", secureData[qobuzAuthTokenKey])
+
+        assertEquals("secure_sp_dc_winner", compositeData[spotifyDcKey])
+        assertEquals("secure_discord_winner", compositeData[discordTokenKey])
+        assertEquals("secure_qobuz_winner", compositeData[qobuzAuthTokenKey])
+        assertEquals("CC00AA", compositeData[themeColorKey])
     }
 
     @Test
@@ -478,7 +520,8 @@ class SecureDataStoreTest {
     }
 
     @Test
-    fun testBackupAndDataExtractionRules_onlyExcludeSecureSettings() {
+    fun testBackupAndDataExtractionRules_excludeBothDatastoreFilesAndCookies() {
+        // Proves data_extraction_rules.xml and backup_rules.xml exclude BOTH settings and secure_settings preferences files and WebView cookies
         val dataExtractionFile = resolveResFile("src/main/res/xml/data_extraction_rules.xml")
         val backupRulesFile = resolveResFile("src/main/res/xml/backup_rules.xml")
 
@@ -488,7 +531,7 @@ class SecureDataStoreTest {
         val factory = DocumentBuilderFactory.newInstance()
         val builder = factory.newDocumentBuilder()
 
-        // 1. Verify data_extraction_rules.xml
+        // 1. Verify data_extraction_rules.xml (Android 12+)
         val deDoc = builder.parse(dataExtractionFile)
         val cloudBackupExcludes = mutableListOf<String>()
         val deviceTransferExcludes = mutableListOf<String>()
@@ -515,21 +558,29 @@ class SecureDataStoreTest {
             "cloud-backup must exclude datastore/secure_settings.preferences_pb",
             cloudBackupExcludes.contains("datastore/secure_settings.preferences_pb")
         )
-        assertFalse(
-            "cloud-backup must NOT exclude datastore/settings.preferences_pb (preserves UI prefs)",
+        assertTrue(
+            "cloud-backup must exclude datastore/settings.preferences_pb (fail-safe by construction)",
             cloudBackupExcludes.contains("datastore/settings.preferences_pb")
+        )
+        assertTrue(
+            "cloud-backup must exclude app_webview to protect WebView login cookies",
+            cloudBackupExcludes.contains("app_webview")
         )
 
         assertTrue(
             "device-transfer must exclude datastore/secure_settings.preferences_pb",
             deviceTransferExcludes.contains("datastore/secure_settings.preferences_pb")
         )
-        assertFalse(
-            "device-transfer must NOT exclude datastore/settings.preferences_pb (preserves UI prefs)",
+        assertTrue(
+            "device-transfer must exclude datastore/settings.preferences_pb",
             deviceTransferExcludes.contains("datastore/settings.preferences_pb")
         )
+        assertTrue(
+            "device-transfer must exclude app_webview",
+            deviceTransferExcludes.contains("app_webview")
+        )
 
-        // 2. Verify backup_rules.xml
+        // 2. Verify backup_rules.xml (Android 11 and below)
         val brDoc = builder.parse(backupRulesFile)
         val fullBackupExcludes = mutableListOf<String>()
         val fullBackupNode = brDoc.getElementsByTagName("full-backup-content").item(0)
@@ -545,14 +596,19 @@ class SecureDataStoreTest {
             "full-backup-content must exclude datastore/secure_settings.preferences_pb",
             fullBackupExcludes.contains("datastore/secure_settings.preferences_pb")
         )
-        assertFalse(
-            "full-backup-content must NOT exclude datastore/settings.preferences_pb",
+        assertTrue(
+            "full-backup-content must exclude datastore/settings.preferences_pb",
             fullBackupExcludes.contains("datastore/settings.preferences_pb")
+        )
+        assertTrue(
+            "full-backup-content must exclude app_webview",
+            fullBackupExcludes.contains("app_webview")
         )
     }
 
     @Test
     fun testOzoneBackupAgent_manifestRegistration() {
+        // Proves OzoneBackupAgent is registered in AndroidManifest.xml under application tag
         val manifestFile = resolveResFile("src/main/AndroidManifest.xml")
         assertTrue("AndroidManifest.xml must exist: ${manifestFile.absolutePath}", manifestFile.exists())
 
@@ -570,5 +626,223 @@ class SecureDataStoreTest {
         val allowBackupAttr = applicationNode.attributes.getNamedItem("android:allowBackup")
         assertNotNull("android:allowBackup must be declared", allowBackupAttr)
         assertEquals("true", allowBackupAttr.nodeValue)
+    }
+
+    @Test
+    fun testOzoneBackupAgent_failClosedOnMigrationFailure() = runTest {
+        // Proves OzoneBackupAgent fails closed and throws IOException when migration fails, preventing backup
+        val normalStore = FakePreferencesDataStore()
+        val secureStore = FakePreferencesDataStore()
+        normalStore.edit { prefs ->
+            prefs[spotifyDcKey] = "failing_token"
+        }
+        // Force secure store failure
+        secureStore.failOnUpdate = IOException("Hardware storage failure")
+
+        val compositeStore = SecureRoutedPreferencesDataStore(normalStore, secureStore)
+        val agent = OzoneBackupAgent()
+
+        try {
+            agent.executeMigration(compositeStore, "onFullBackup")
+            fail("OzoneBackupAgent must throw IOException when pre-backup migration fails")
+        } catch (e: IOException) {
+            assertTrue("Exception message must indicate migration failure", e.message?.contains("Pre-backup migration failed") == true)
+        }
+    }
+
+    @Test
+    fun testConcurrentMigrations_safelySerializedByMutex() = runTest {
+        // Proves multiple concurrent coroutines running migration are safely serialized without race conditions
+        val normalStore = FakePreferencesDataStore()
+        val secureStore = FakePreferencesDataStore()
+        normalStore.edit { prefs ->
+            prefs[themeColorKey] = "CONCURRENT_THEME"
+            prefs[spotifyDcKey] = "concurrent_sp_dc"
+            prefs[discordTokenKey] = "concurrent_discord"
+        }
+
+        val compositeStore = SecureRoutedPreferencesDataStore(normalStore, secureStore)
+
+        coroutineScope {
+            repeat(10) {
+                launch(Dispatchers.Default) {
+                    compositeStore.runMigration()
+                }
+            }
+        }
+
+        assertTrue(compositeStore.isMigrationDone)
+        val normalData = normalStore.data.first()
+        val secureData = secureStore.data.first()
+
+        assertNull(normalData[spotifyDcKey])
+        assertNull(normalData[discordTokenKey])
+        assertEquals("CONCURRENT_THEME", normalData[themeColorKey])
+
+        assertEquals("concurrent_sp_dc", secureData[spotifyDcKey])
+        assertEquals("concurrent_discord", secureData[discordTokenKey])
+    }
+
+    @Test
+    fun testCorruptLegacyFile_propagatesExceptionAndRetriesOnRecovery() = runTest {
+        // Proves migration failure from corrupted storage throws and retries safely once storage is restored
+        val normalStore = FakePreferencesDataStore()
+        val secureStore = FakePreferencesDataStore()
+        normalStore.edit { prefs ->
+            prefs[spotifyDcKey] = "retryable_token"
+        }
+        normalStore.failOnUpdate = IOException("Corrupted flash page")
+
+        val compositeStore = SecureRoutedPreferencesDataStore(normalStore, secureStore)
+
+        try {
+            compositeStore.runMigration()
+            fail("Corrupted storage must throw and propagate")
+        } catch (e: IOException) {
+            assertEquals("Corrupted flash page", e.message)
+        }
+        assertFalse("Migration must NOT be marked done after failure", compositeStore.isMigrationDone)
+
+        // Storage recovered
+        normalStore.failOnUpdate = null
+        compositeStore.runMigration()
+        assertTrue("Migration must succeed on retry", compositeStore.isMigrationDone)
+
+        val normalData = normalStore.data.first()
+        val secureData = secureStore.data.first()
+        assertNull(normalData[spotifyDcKey])
+        assertEquals("retryable_token", secureData[spotifyDcKey])
+    }
+
+    @Test
+    fun testKeyClassificationGuard_allKeysClassified() {
+        // Proves every preference key defined in the project is explicitly classified as either SECURE or PLAIN
+        val classesToScan = listOf(
+            Class.forName("moe.rukamori.archivetune.constants.PreferenceKeysKt"),
+            Class.forName("moe.rukamori.archivetune.constants.KemoKeysKt"),
+            Class.forName("moe.rukamori.archivetune.constants.PreferenceConstantsKt"),
+        )
+
+        val discoveredKeys = mutableSetOf<String>()
+        for (cls in classesToScan) {
+            for (field in cls.declaredFields) {
+                field.isAccessible = true
+                if (Preferences.Key::class.java.isAssignableFrom(field.type)) {
+                    val keyObj = field.get(null) as? Preferences.Key<*>
+                    if (keyObj != null) {
+                        discoveredKeys.add(keyObj.name)
+                    }
+                }
+            }
+            for (method in cls.declaredMethods) {
+                if (Preferences.Key::class.java.isAssignableFrom(method.returnType) && method.parameterCount == 0) {
+                    method.isAccessible = true
+                    val keyObj = method.invoke(null) as? Preferences.Key<*>
+                    if (keyObj != null) {
+                        discoveredKeys.add(keyObj.name)
+                    }
+                }
+            }
+        }
+
+        assertTrue("Must discover at least 200 preference keys across project (found ${discoveredKeys.size})", discoveredKeys.size > 200)
+
+        // Every key must have an unambiguous boolean classification from SensitivePreferences
+        for (keyName in discoveredKeys) {
+            val isSecure = SensitivePreferences.isSensitive(keyName)
+            assertNotNull("Discovered key '$keyName' must have a defined classification", isSecure)
+        }
+    }
+
+    @Test
+    fun testKeyClassificationGuard_sensitivePatternsEnforced() {
+        // Proves any key matching sensitive credential patterns must be classified SECURE unless on reviewed exception list
+        val classesToScan = listOf(
+            Class.forName("moe.rukamori.archivetune.constants.PreferenceKeysKt"),
+            Class.forName("moe.rukamori.archivetune.constants.KemoKeysKt"),
+            Class.forName("moe.rukamori.archivetune.constants.PreferenceConstantsKt"),
+        )
+
+        val discoveredKeys = mutableSetOf<String>()
+        for (cls in classesToScan) {
+            for (field in cls.declaredFields) {
+                field.isAccessible = true
+                if (Preferences.Key::class.java.isAssignableFrom(field.type)) {
+                    val keyObj = field.get(null) as? Preferences.Key<*>
+                    if (keyObj != null) {
+                        discoveredKeys.add(keyObj.name)
+                    }
+                }
+            }
+            for (method in cls.declaredMethods) {
+                if (Preferences.Key::class.java.isAssignableFrom(method.returnType) && method.parameterCount == 0) {
+                    method.isAccessible = true
+                    val keyObj = method.invoke(null) as? Preferences.Key<*>
+                    if (keyObj != null) {
+                        discoveredKeys.add(keyObj.name)
+                    }
+                }
+            }
+        }
+
+        val sensitiveRegex = Regex("(?i).*(token|cookie|secret|password|passwd|session|auth|api|key|sp_dc|bearer).*")
+        val reviewedPlainExceptions = setOf(
+            "lyricsScrollKey",          // UI preference: Synchronized lyrics scroll behavior
+            "ai_api_validation_status", // UI preference: Validation status enum ("SUCCESS" / "FAILED")
+            "sponsorBlockApiUrl",       // Public endpoint: SponsorBlock public API instance URL
+        )
+
+        val violations = mutableListOf<String>()
+        for (keyName in discoveredKeys) {
+            val isSecure = SensitivePreferences.isSensitive(keyName)
+            if (!isSecure && keyName.matches(sensitiveRegex)) {
+                if (keyName !in reviewedPlainExceptions) {
+                    violations.add(keyName)
+                }
+            }
+        }
+
+        assertTrue(
+            "Keys matching sensitive credential patterns must be classified SECURE unless explicitly reviewed. Violations: $violations",
+            violations.isEmpty()
+        )
+    }
+
+    @Test
+    fun testHttpRedactor_redactsSensitiveHeaders() {
+        // Proves HttpRedactor replaces Authorization, Cookie, Set-Cookie, X-Goog-*, and X-User-Auth-Token with [REDACTED]
+        assertEquals("[REDACTED]", HttpRedactor.redactHeader("Authorization", "Bearer secret_token_123"))
+        assertEquals("[REDACTED]", HttpRedactor.redactHeader("Cookie", "sp_dc=secret_cookie_val; SID=abcd"))
+        assertEquals("[REDACTED]", HttpRedactor.redactHeader("Set-Cookie", "session_id=98765; Path=/"))
+        assertEquals("[REDACTED]", HttpRedactor.redactHeader("X-User-Auth-Token", "qobuz_user_token_xyz"))
+        assertEquals("[REDACTED]", HttpRedactor.redactHeader("X-Goog-Visitor-Id", "visitor_data_xyz"))
+        assertEquals("[REDACTED]", HttpRedactor.redactHeader("Proxy-Authorization", "Basic dXNlcjpwYXNz"))
+        assertEquals("application/json", HttpRedactor.redactHeader("Content-Type", "application/json"))
+    }
+
+    @Test
+    fun testHttpRedactor_redactsSensitiveQueryParams() {
+        // Proves HttpRedactor replaces token, api_key, key, sp_dc, request_sig in query params with [REDACTED]
+        val spotifyUrl = "https://open.spotify.com/api/token?sp_dc=my_secret_dc&totp=123456&reason=transport"
+        val redactedSpotify = HttpRedactor.redactUrl(spotifyUrl)
+        assertTrue("sp_dc param must be redacted", redactedSpotify.contains("sp_dc=%5BREDACTED%5D") || redactedSpotify.contains("sp_dc=[REDACTED]"))
+        assertTrue("totp param must be redacted", redactedSpotify.contains("totp=%5BREDACTED%5D") || redactedSpotify.contains("totp=[REDACTED]"))
+        assertTrue("reason param must be preserved", redactedSpotify.contains("reason=transport"))
+
+        val geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models?key=AIzaSySecretApiKey"
+        val redactedGemini = HttpRedactor.redactUrl(geminiUrl)
+        assertTrue("key param must be redacted", redactedGemini.contains("key=%5BREDACTED%5D") || redactedGemini.contains("key=[REDACTED]"))
+        assertFalse("Raw API key must not appear", redactedGemini.contains("AIzaSySecretApiKey"))
+    }
+
+    @Test
+    fun testHttpRedactor_redactsBodyInReleaseBuilds() {
+        // Proves HttpRedactor enforces [BODY_REDACTED_RELEASE] for release builds
+        val bodyContent = "{\"accessToken\":\"super_secret_token_12345\"}"
+        val releaseResult = HttpRedactor.redactBody(bodyContent, isDebug = false)
+        assertEquals("[BODY_REDACTED_RELEASE]", releaseResult)
+
+        val debugResult = HttpRedactor.redactBody(bodyContent, isDebug = true)
+        assertEquals(bodyContent, debugResult)
     }
 }

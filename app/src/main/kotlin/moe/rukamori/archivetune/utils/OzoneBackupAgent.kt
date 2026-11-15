@@ -11,7 +11,10 @@ import android.app.backup.BackupDataOutput
 import android.app.backup.FullBackupDataOutput
 import android.os.ParcelFileDescriptor
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import timber.log.Timber
+import java.io.File
+import java.io.IOException
 
 /**
  * Custom [BackupAgentHelper] ensuring any pending migration of sensitive credentials
@@ -19,20 +22,15 @@ import timber.log.Timber
  * synchronously BEFORE Android's backup framework packages files for Cloud Backup
  * or Device-to-Device transfer.
  *
- * This mitigates the risk on existing installations where the app is updated in the
- * background (e.g. by Google Play) and Android initiates an automated cloud backup
- * before the user has launched the application.
+ * Fail-Closed Guarantee:
+ * In accordance with AOSP BackupAgent architecture, throwing [IOException] from
+ * [onFullBackup] or [onBackup] aborts the backup operation with AGENT_ERROR, preventing
+ * Android's framework from uploading un-migrated or corrupt state. Errors are never
+ * silently swallowed.
  *
- * Known Android Backup Limitations:
- * 1. Historical Snapshots: If an existing device previously performed an Auto Backup
- *    under an older version of the app, Google Drive may already store an older snapshot
- *    of `settings.preferences_pb` containing credentials. That remote snapshot cannot be
- *    retroactively rewritten by local client code until a new backup cycle completes.
- * 2. Unencrypted at Rest: Excluding `secure_settings.preferences_pb` from backup prevents
- *    cloud extraction, but internal storage files remain unencrypted at rest without
- *    hardware-backed Keystore encryption.
- * 3. OEM / ADB Tools: Low-level tools like `adb backup` or rooted transfer utilities
- *    bypass `data_extraction_rules.xml`.
+ * Restored files:
+ * Any restored `secure_settings.preferences_pb` file is dropped and deleted, and
+ * [runMigration] is invoked immediately in [onRestoreFinished] to partition legacy state.
  */
 class OzoneBackupAgent : BackupAgentHelper() {
 
@@ -50,22 +48,62 @@ class OzoneBackupAgent : BackupAgentHelper() {
         super.onBackup(oldState, data, newState)
     }
 
-    override fun onRestoreFinished() {
-        super.onRestoreFinished()
-        runPreBackupMigration("onRestoreFinished")
+    override fun onRestoreFile(
+        data: ParcelFileDescriptor?,
+        size: Long,
+        destination: File?,
+        type: Int,
+        mode: Long,
+        mtime: Long
+    ) {
+        super.onRestoreFile(data, size, destination, type, mode, mtime)
+        if (destination != null && (destination.name == "secure_settings.preferences_pb" || destination.name.contains("secure_settings"))) {
+            destination.delete()
+            Timber.w("OzoneBackupAgent: removed restored secure_settings file to prevent untrusted overwrite")
+        }
     }
 
-    internal fun runPreBackupMigration(trigger: String) {
+    override fun onRestoreFinished() {
+        super.onRestoreFinished()
         try {
             val store = applicationContext.dataStore
             if (store is SecureRoutedPreferencesDataStore) {
                 runBlocking {
-                    store.runMigration()
+                    withTimeout(BACKUP_MIGRATION_TIMEOUT_MS) {
+                        store.runMigration()
+                    }
                 }
-                Timber.d("OzoneBackupAgent: migration verified before %s", trigger)
+                Timber.d("OzoneBackupAgent: migration verified after restore")
             }
         } catch (e: Exception) {
-            Timber.e(e, "OzoneBackupAgent: pre-backup migration error during %s", trigger)
+            Timber.e(e, "OzoneBackupAgent: post-restore migration error")
         }
+    }
+
+    @Throws(IOException::class)
+    internal fun runPreBackupMigration(trigger: String) {
+        val store = applicationContext.dataStore
+        executeMigration(store, trigger)
+    }
+
+    @Throws(IOException::class)
+    internal fun executeMigration(store: androidx.datastore.core.DataStore<androidx.datastore.preferences.core.Preferences>, trigger: String) {
+        if (store is SecureRoutedPreferencesDataStore) {
+            try {
+                runBlocking {
+                    withTimeout(BACKUP_MIGRATION_TIMEOUT_MS) {
+                        store.runMigration()
+                    }
+                }
+                Timber.d("OzoneBackupAgent: migration verified before %s", trigger)
+            } catch (e: Exception) {
+                Timber.e(e, "OzoneBackupAgent: pre-backup migration error during %s", trigger)
+                throw IOException("OzoneBackupAgent: Pre-backup migration failed during $trigger", e)
+            }
+        }
+    }
+
+    companion object {
+        const val BACKUP_MIGRATION_TIMEOUT_MS = 5000L
     }
 }
