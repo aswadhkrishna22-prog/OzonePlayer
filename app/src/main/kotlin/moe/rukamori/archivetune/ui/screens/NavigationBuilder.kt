@@ -105,6 +105,9 @@ fun NavGraphBuilder.navigationBuilder(
     composable(Screens.MoodAndGenres.route) {
         MoodAndGenresScreen(navController)
     }
+    composable("internet_radio") {
+        moe.rukamori.archivetune.ui.screens.radio.RadioScreen(navController)
+    }
     composable("account") {
         AccountScreen(navController, scrollBehavior)
     }
