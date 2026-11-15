@@ -74,7 +74,7 @@ class SpotifySearchScorer(private val matcher: TrackMatcher) {
         val cleanA = cleanArtist(artist)
         return candidateArtists.any { cand ->
             val cleanC = cleanArtist(cand)
-            cleanA.equals(cleanC, ignoreCase = true) || matcher.tokenSimilarity(cleanA, cleanC) >= CREDITED_ARTIST_SIM
+            cleanA.equals(cleanC, ignoreCase = true) || matcher.jaroWinklerSimilarity(cleanA, cleanC) >= CREDITED_ARTIST_SIM
         }
     }
 

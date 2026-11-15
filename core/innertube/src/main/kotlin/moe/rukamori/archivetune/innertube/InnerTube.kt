@@ -44,6 +44,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 @OptIn(ExperimentalEncodingApi::class)
 class InnerTube {
     private var httpClient = createClient()
+    internal val client: HttpClient get() = httpClient
 
     private companion object {
         const val HTTP_HEADER_ACCEPT_LANGUAGE = "Accept-Language"
