@@ -57,6 +57,9 @@ import javax.inject.Inject
 import kotlin.math.roundToInt
 import kotlin.system.exitProcess
 
+private const val MAX_RESTORE_ENTRY_SIZE_BYTES = 50L * 1024L * 1024L // 50 MB
+private const val MAX_TOTAL_RESTORE_SIZE_BYTES = 150L * 1024L * 1024L // 150 MB
+
 data class BackupRestoreProgressUi(
     val title: String,
     val step: String,
@@ -460,9 +463,6 @@ class BackupRestoreViewModel
                 }
             }
         }
-
-        private const val MAX_RESTORE_ENTRY_SIZE_BYTES = 50L * 1024L * 1024L // 50 MB
-        private const val MAX_TOTAL_RESTORE_SIZE_BYTES = 150L * 1024L * 1024L // 150 MB
 
         private fun copyBounded(
             input: java.io.InputStream,
