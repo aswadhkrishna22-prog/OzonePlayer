@@ -99,4 +99,27 @@ object HttpRedactor {
             body
         }
     }
+
+    /**
+     * Sanitizes a URL for secure logging by extracting only the scheme and host,
+     * completely stripping OAuth authorization codes, session tokens, query parameters,
+     * user credentials, paths, and URL fragments.
+     * Prevents private authentication state and sensitive redirect parameters from reaching logs.
+     */
+    fun sanitizeUrlForLogging(urlString: String?): String {
+        if (urlString.isNullOrBlank()) return "[empty]"
+        val uri = try {
+            java.net.URI.create(urlString.trim())
+        } catch (_: Exception) {
+            return "[invalid_url]"
+        }
+        val scheme = uri.scheme ?: "unknown"
+        val host = uri.host
+        return if (!host.isNullOrBlank()) {
+            "$scheme://$host"
+        } else {
+            // For non-hierarchical or custom schemes (e.g. javascript:, file:, about:)
+            "$scheme://[non_host_origin]"
+        }
+    }
 }

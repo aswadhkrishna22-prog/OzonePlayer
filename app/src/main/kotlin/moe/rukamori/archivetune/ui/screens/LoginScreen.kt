@@ -16,6 +16,7 @@ import android.webkit.WebViewClient
 import android.widget.Toast
 import timber.log.Timber
 import moe.rukamori.archivetune.utils.AuthDomainValidator
+import moe.rukamori.archivetune.utils.HttpRedactor
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -120,7 +121,10 @@ fun LoginScreen(
                                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                                     val destinationUrl = request?.url?.toString()
                                     if (!AuthDomainValidator.isApprovedAuthUrl(destinationUrl)) {
-                                        Timber.w("LoginScreen: blocked navigation to unapproved URL: %s", destinationUrl)
+                                        Timber.w(
+                                            "LoginScreen: blocked navigation to unapproved host: %s (unapproved domain)",
+                                            HttpRedactor.sanitizeUrlForLogging(destinationUrl),
+                                        )
                                         return true
                                     }
                                     return false
@@ -129,7 +133,10 @@ fun LoginScreen(
                                 @Deprecated("Deprecated in Java")
                                 override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
                                     if (!AuthDomainValidator.isApprovedAuthUrl(url)) {
-                                        Timber.w("LoginScreen: blocked navigation to unapproved URL: %s", url)
+                                        Timber.w(
+                                            "LoginScreen: blocked navigation to unapproved host: %s (unapproved domain)",
+                                            HttpRedactor.sanitizeUrlForLogging(url),
+                                        )
                                         return true
                                     }
                                     return false
@@ -138,7 +145,10 @@ fun LoginScreen(
                                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                                     super.onPageStarted(view, url, favicon)
                                     if (!AuthDomainValidator.isApprovedAuthUrl(url)) {
-                                        Timber.w("LoginScreen: unapproved origin detected onPageStarted (%s), stopping load", url)
+                                        Timber.w(
+                                            "LoginScreen: unapproved origin detected onPageStarted: %s (stopping load)",
+                                            HttpRedactor.sanitizeUrlForLogging(url),
+                                        )
                                         view?.stopLoading()
                                     }
                                 }

@@ -1048,4 +1048,45 @@ class SecureDataStoreTest {
         )
         println("[PROOF] 26: Release workflow build_ozone.yml includes SecureDataStoreTest pre-gate.")
     }
+
+    @Test
+    fun testHttpRedactor_sanitizeUrlForLogging() {
+        // Proves sanitizeUrlForLogging extracts only scheme and host, completely stripping
+        // OAuth authorization codes, session tokens, query parameters, paths, and fragments.
+        val oauthCallbackUrl = "https://untrusted-auth.com/oauth/callback?code=SECRET_AUTH_CODE_12345&state=xyz789#access_token=SENSITIVE_BEARER"
+        val sanitized = HttpRedactor.sanitizeUrlForLogging(oauthCallbackUrl)
+
+        assertEquals("https://untrusted-auth.com", sanitized)
+        assertFalse("Must not contain OAuth code", sanitized.contains("SECRET_AUTH_CODE_12345"))
+        assertFalse("Must not contain state param", sanitized.contains("xyz789"))
+        assertFalse("Must not contain access token fragment", sanitized.contains("SENSITIVE_BEARER"))
+        assertFalse("Must not contain query mark", sanitized.contains("?"))
+        assertFalse("Must not contain fragment mark", sanitized.contains("#"))
+        assertFalse("Must not contain path", sanitized.contains("oauth/callback"))
+
+        // Test non-hierarchical / script schemes
+        assertEquals("javascript://[non_host_origin]", HttpRedactor.sanitizeUrlForLogging("javascript:alert(document.cookie)"))
+        assertEquals("file://[non_host_origin]", HttpRedactor.sanitizeUrlForLogging("file:///data/data/com.termux/files/secrets.txt"))
+
+        // Test edge cases
+        assertEquals("[empty]", HttpRedactor.sanitizeUrlForLogging(""))
+        assertEquals("[empty]", HttpRedactor.sanitizeUrlForLogging("   "))
+        assertEquals("[empty]", HttpRedactor.sanitizeUrlForLogging(null))
+        assertEquals("[invalid_url]", HttpRedactor.sanitizeUrlForLogging("http://bad uri with spaces and ^^^"))
+        println("[PROOF] 27: HttpRedactor.sanitizeUrlForLogging strips all query params, tokens, codes, and fragments.")
+    }
+
+    @Test
+    fun testLoginScreen_usesSanitizedUrlLogging() {
+        // Proves LoginScreen uses HttpRedactor.sanitizeUrlForLogging for navigation logging
+        // and does not print raw URLs or query parameters to Timber.
+        val loginScreen = resolveResFile("src/main/kotlin/moe/rukamori/archivetune/ui/screens/LoginScreen.kt")
+        assertTrue("LoginScreen.kt must exist", loginScreen.exists())
+        val source = loginScreen.readText()
+
+        assertTrue("LoginScreen must call sanitizeUrlForLogging", source.contains("HttpRedactor.sanitizeUrlForLogging"))
+        assertFalse("LoginScreen must not print raw destinationUrl to Timber", source.contains("Timber.w(\"LoginScreen: blocked navigation to unapproved URL: %s\", destinationUrl)"))
+        assertFalse("LoginScreen must not print raw url to Timber", source.contains("Timber.w(\"LoginScreen: blocked navigation to unapproved URL: %s\", url)"))
+        println("[PROOF] 28: LoginScreen strictly uses sanitized origin logging without exposing parameters.")
+    }
 }
