@@ -610,7 +610,7 @@ class MusicService :
                     dualPlayActive = dualPlayEngine.isEnabled,
                     dualPlayEar = if (dualPlayEngine.isEnabled) "Deck A (Left)" else null,
                 )
-            }.collect()
+            }.collect {}
         }
         moe.rukamori.archivetune.playback.dsp.PipelineTelemetry.updateSink(this)
     }
