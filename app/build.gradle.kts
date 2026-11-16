@@ -131,6 +131,12 @@ android {
                 ?: ""
         buildConfigField("String", "EXTRACTOR_BEARER", "\"$extractorBearer\"")
 
+        val botguardApiKey =
+            localProperties.getProperty("BOTGUARD_API_KEY")
+                ?: System.getenv("BOTGUARD_API_KEY")
+                ?: ""
+        buildConfigField("String", "BOTGUARD_API_KEY", "\"$botguardApiKey\"")
+
         val nightlyBuildHash =
             (
                 canaryDate

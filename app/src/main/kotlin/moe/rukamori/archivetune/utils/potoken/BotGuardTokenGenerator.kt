@@ -70,7 +70,18 @@ object BotGuardTokenGenerator {
     private const val CREATE_URL = "https://www.youtube.com/api/jnn/v1/Create"
     private const val GENERATE_IT_URL = "https://www.youtube.com/api/jnn/v1/GenerateIT"
     private const val REQUEST_KEY = "O43z0dpjhgX20SCx4KAo"
-    private const val API_KEY = "AIzaSyDyT5W0Jh49F30Pqqtyfdf7pDLFKLJoAnw"
+
+    /**
+     * Configurable BotGuard API key injected securely at build time via BuildConfig
+     * (from local.properties or BOTGUARD_API_KEY environment variable) or configured at runtime.
+     * No sensitive credentials are ever committed to source code or git.
+     */
+    @Volatile
+    var customApiKey: String? = null
+
+    val apiKey: String
+        get() = customApiKey?.takeIf { it.isNotBlank() }
+            ?: moe.rukamori.archivetune.BuildConfig.BOTGUARD_API_KEY
     private const val WV_USER_AGENT =
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.3"
     private const val JS_BRIDGE = "BotGuardBridge"
@@ -127,7 +138,7 @@ object BotGuardTokenGenerator {
      */
     suspend fun preWarm(sessionId: String) {
         val ctx = appContext ?: return
-        if (permanentlyBroken) return
+        if (permanentlyBroken || apiKey.isBlank()) return
         if (sessionId.isBlank()) return
 
         try {
@@ -166,6 +177,10 @@ object BotGuardTokenGenerator {
                 return null
             }
         if (permanentlyBroken) return null
+        if (apiKey.isBlank()) {
+            Timber.tag(TAG).d("BotGuard API key is not configured; skipping PoToken generation")
+            return null
+        }
 
         val cachedResult =
             mutex.withLock {
@@ -528,6 +543,11 @@ object BotGuardTokenGenerator {
             jsonBody: String,
             onSuccess: (String) -> Unit,
         ) {
+            val key = apiKey
+            if (key.isBlank()) {
+                signalError(PoTokenException("BotGuard API key is not configured"))
+                return
+            }
             scope.launch(exceptionHandler) {
                 val request =
                     okhttp3.Request
@@ -539,7 +559,7 @@ object BotGuardTokenGenerator {
                                 "User-Agent" to WV_USER_AGENT,
                                 "Accept" to "application/json",
                                 "Content-Type" to "application/json+protobuf",
-                                "x-goog-api-key" to API_KEY,
+                                "x-goog-api-key" to key,
                                 "x-user-agent" to "grpc-web-javascript/0.1",
                             ).toHeaders(),
                         ).build()
