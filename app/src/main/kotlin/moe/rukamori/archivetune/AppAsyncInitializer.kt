@@ -65,6 +65,7 @@ internal fun App.initializeDeferredAsync() {
 
     applicationScope.launch(Dispatchers.IO) {
         try {
+            moe.rukamori.archivetune.ui.screens.settings.graphics.DeviceGraphicsClassifier.applyDefaultGraphicsPresetIfFirstRun(this@initializeDeferredAsync)
             val prefs = dataStore.data.first()
 
             prefs[ContentCountryKey]?.takeIf { it != SYSTEM_DEFAULT }?.let { country ->

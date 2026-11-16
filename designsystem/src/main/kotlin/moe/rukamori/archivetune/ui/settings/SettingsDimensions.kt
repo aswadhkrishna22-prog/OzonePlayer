@@ -32,6 +32,8 @@ object SettingsDimensions {
     val GroupCardCornerRadius = 18.dp
     val BannerCardCornerRadius = 18.dp
 
+    val HeaderFadeFeather: Dp = 14.dp
+
     // -- Screen layout -----------------------------------------------------
     val ScreenHorizontalPadding = 16.dp
     val ScreenBottomPadding = 24.dp

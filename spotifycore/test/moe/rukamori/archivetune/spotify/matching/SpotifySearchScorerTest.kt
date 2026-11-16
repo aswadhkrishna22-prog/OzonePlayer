@@ -123,4 +123,23 @@ class SpotifySearchScorerTest {
 
         assertNull(scorer.pick(query, listOf(candidate)).accepted)
     }
+
+    @Test
+    fun `pick rejects karaoke and off vocal uploads`() {
+        val query = TrackQuery(artist = "ALI", title = "LOST IN PARADISE", durationMs = 210_000L)
+        val candidate = SpotifyTrack(
+            id = "1",
+            name = "LOST IN PARADISE (No Guide Melody)",
+            artists = listOf(SpotifySimpleArtist(name = "ALI")),
+            durationMs = 210_000,
+        )
+
+        assertNull(scorer.pick(query, listOf(candidate)).accepted)
+    }
+
+    @Test
+    fun `isCreditedTo recognizes exact and high similarity artist credits`() {
+        org.junit.Assert.assertTrue(scorer.isCreditedTo("Daft Punk", listOf("Daft Punk", "Pharrell Williams")))
+        org.junit.Assert.assertFalse(scorer.isCreditedTo("Daft Punk", listOf("Taylor Swift")))
+    }
 }

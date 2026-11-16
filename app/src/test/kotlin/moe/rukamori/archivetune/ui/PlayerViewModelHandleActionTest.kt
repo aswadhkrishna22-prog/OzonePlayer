@@ -150,6 +150,9 @@ class PlayerViewModelHandleActionTest {
         // Act & Assert: TranslateLyrics
         viewModel.handleAction(PlayerAction.TranslateLyrics("RU", false))
         verify { viewModel["translateLyrics"]("RU", false) }
+
+        // Act & Assert: ApplyLyrics
+        viewModel.handleAction(PlayerAction.ApplyLyrics("song1", "lrc text"))
     }
 
     @Test
