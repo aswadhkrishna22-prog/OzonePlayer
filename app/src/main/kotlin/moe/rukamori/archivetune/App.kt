@@ -102,6 +102,7 @@ class App :
         moe.rukamori.archivetune.beastmode.BeastModeManager.initialize(this)
         moe.rukamori.archivetune.playback.autoeq.AutoEqRepository.init(this)
         moe.rukamori.archivetune.playback.covers.UltraHdArtworkRepository.init(this)
+        moe.rukamori.archivetune.radio.RadioRepository.init(this)
         moe.rukamori.archivetune.playback.queue.SongVibeMatcher.initialize(this)
         ProxyAuth.init()
         CanvasArtworkPlaybackCache.init(this)
