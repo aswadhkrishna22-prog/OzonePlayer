@@ -104,8 +104,20 @@ fun rememberPlayerCanvasState(
                 allowNetwork = true,
                 source = canvasSource,
             )
-        Timber.tag("PlayerCanvas").i("Resolved result for $mediaId: ${if (resolved != null) "primaryUrl=${resolved.preferredAnimationUrl}, videoUrl=${resolved.videoUrl}" else "null"}")
-        canvasState.artwork = resolved
+        val appleMotion = if (resolved == null && canvasSource.accepts(CanvasSource.APPLE_MUSIC)) {
+            moe.rukamori.archivetune.playback.covers.UltraHdArtworkRepository.getCachedMotionUrl(currentTitle ?: "", currentArtist ?: "", null)
+        } else null
+
+        val finalArtwork = resolved ?: if (appleMotion != null) {
+            CanvasArtwork(
+                source = CanvasSource.APPLE_MUSIC,
+                videoUrl = appleMotion,
+                animated = appleMotion,
+            )
+        } else null
+
+        Timber.tag("PlayerCanvas").i("Resolved result for $mediaId: ${if (finalArtwork != null) "primaryUrl=${finalArtwork.preferredAnimationUrl}, videoUrl=${finalArtwork.videoUrl}" else "null"}")
+        canvasState.artwork = finalArtwork
     }
 
     return canvasState
