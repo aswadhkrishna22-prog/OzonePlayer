@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -26,7 +26,7 @@ import moe.rukamori.archivetune.db.entities.Artist
 import moe.rukamori.archivetune.ui.component.LocalArtistsGrid
 import moe.rukamori.archivetune.ui.component.MenuState
 import moe.rukamori.archivetune.ui.component.NavigationTitle
-import moe.rukamori.archivetune.ui.haptics.YumaHaptics
+import moe.rukamori.archivetune.ui.haptics.OzoneHaptics
 import moe.rukamori.archivetune.ui.menu.ArtistMenu
 import moe.rukamori.archivetune.utils.joinByBullet
 import moe.rukamori.archivetune.utils.makeTimeString
@@ -37,7 +37,7 @@ internal fun LazyListScope.statsArtistsSection(
     navController: NavController,
     menuState: MenuState,
     coroutineScope: CoroutineScope,
-    haptics: YumaHaptics,
+    haptics: OzoneHaptics,
 ) {
     item(key = "mostPlayedArtists", contentType = "sectionHeader") {
         NavigationTitle(

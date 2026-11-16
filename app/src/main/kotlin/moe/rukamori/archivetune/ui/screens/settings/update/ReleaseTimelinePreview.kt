@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -46,7 +46,7 @@ private fun ReleaseTimelinePreview() {
                                 isInstalled = true,
                                 isPrerelease = false,
                                 imageUrl = null,
-                                htmlUrl = "https://github.com/MuwMx/YumaPlayer/releases",
+                                htmlUrl = "https://github.com/aswadhkrishna22-prog/OzonePlayer/releases",
                                 sections = sections,
                                 summary = summary,
                                 fallbackMarkdown = null,
@@ -60,7 +60,7 @@ private fun ReleaseTimelinePreview() {
                                 isInstalled = false,
                                 isPrerelease = false,
                                 imageUrl = null,
-                                htmlUrl = "https://github.com/MuwMx/YumaPlayer/releases",
+                                htmlUrl = "https://github.com/aswadhkrishna22-prog/OzonePlayer/releases",
                                 sections = sections,
                                 summary = summary,
                                 fallbackMarkdown = null,

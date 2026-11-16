@@ -1,6 +1,6 @@
 /*
- * YumaPlayer (2026) | Original work by MuwMix
- * https://github.com/MuwMx/YumaPlayer
+ * Ozone Player (2026)
+ * https://github.com/aswadhkrishna22-prog/OzonePlayer
  * GPL-3.0 License | Contributors: see git history
  */
 
@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import moe.rukamori.archivetune.db.entities.LyricsEntity
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.playback.dualplay.DualPlaySheetTarget
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.ui.player.lyrics_0.LyricsColumn
 import moe.rukamori.archivetune.ui.player.lyrics_0.LyricsHeader
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
@@ -49,7 +49,7 @@ internal fun PlayerLyricsLayer(
     lyricsOverride: Flow<LyricsEntity?>? = null,
     sheetTarget: DualPlaySheetTarget = DualPlaySheetTarget.PLAYER_A,
 ) {
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
 
     val lyricsListState = rememberLazyListState()
     val canDragLyrics by remember(lyricsListState) {

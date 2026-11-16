@@ -1,6 +1,6 @@
 /*
- * YumaPlayer (2026) | Original work by MuwMix
- * https://github.com/MuwMx/YumaPlayer
+ * Ozone Player (2026)
+ * https://github.com/aswadhkrishna22-prog/OzonePlayer
  * GPL-3.0 License | Contributors: see git history
  */
 

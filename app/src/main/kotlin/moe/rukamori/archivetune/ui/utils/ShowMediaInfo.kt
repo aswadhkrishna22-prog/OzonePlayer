@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -423,7 +423,7 @@ fun ShowMediaInfo(videoId: String) {
 }
 
 /**
- * Фирменная стильная кнопка действия YumaPlayer с правильной иконкой 18dp
+ * Фирменная стильная кнопка действия OzonePlayer с правильной иконкой 18dp
  */
 @Composable
 private fun MediaInfoActionButton(
@@ -478,7 +478,7 @@ private fun MediaInfoActionButton(
 }
 
 /**
- * Переключатель вкладок в дизайне YumaPlayer
+ * Переключатель вкладок в дизайне OzonePlayer
  */
 @Composable
 private fun MediaInfoTabSelector(

@@ -33,8 +33,8 @@ import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.state.PlayerUiState
 import moe.rukamori.archivetune.ui.state.UpdateState
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
-import moe.rukamori.archivetune.ui.theme.yumaCombinedClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneCombinedClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.utils.SpeedDialPin
 import moe.rukamori.archivetune.utils.SpeedDialPinType
 import moe.rukamori.archivetune.utils.parseSpeedDialPins
@@ -108,10 +108,10 @@ fun SettingsMenuContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 10.dp)
-                    .yumaCombinedClickable {
+                    .ozoneCombinedClickable {
                         uriHandler.openUri(updateState.updateUrl)
                     }
-                    .yumaGlassCard(
+                    .ozoneGlassCard(
                         shape = RoundedCornerShape(SettingsDimensions.SegmentedCornerLarge),
                         backgroundColor = Color(0xFFB33A3A).copy(alpha = 0.8f),
                         borderColor = Color.White.copy(alpha = 0.2f),
@@ -130,7 +130,7 @@ fun SettingsMenuContent(
                     Column {
                         val formattedVer = if (updateState.versionName.startsWith("v", ignoreCase = true)) updateState.versionName else "v${updateState.versionName}"
                         Text(text = stringResource(R.string.update_available_format, formattedVer), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold, fontFamily = LocalArchiveTuneFontFamily.current)
-                        Text(text = stringResource(R.string.update_download_telegram), color = Color.White.copy(alpha = SettingsDimensions.YumaRowSubtitleAlpha), fontSize = 12.sp, fontFamily = LocalArchiveTuneFontFamily.current)
+                        Text(text = stringResource(R.string.update_download_telegram), color = Color.White.copy(alpha = SettingsDimensions.OzoneRowSubtitleAlpha), fontSize = 12.sp, fontFamily = LocalArchiveTuneFontFamily.current)
                     }
                 }
             }

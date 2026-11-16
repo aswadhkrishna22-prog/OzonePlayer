@@ -6,7 +6,7 @@
  *
  * Orchard's original source is licensed under the GNU Affero General Public
  * License, version 3 or later. Per AGPLv3 section 13, this file is combined
- * here into YumaPlayer -- a work licensed under the GNU General Public
+ * here into Ozone Player -- a work licensed under the GNU General Public
  * License, version 3 or later -- and remains itself governed by the AGPLv3
  * as part of that combination.
  *
@@ -77,7 +77,7 @@ void AppendDoubles(std::string& out, const std::vector<double>& values) {
   out += ']';
 }
 
-void AppendEnergyCurve(std::string& out, const std::vector<yuma::smart::EnergyPoint>& points) {
+void AppendEnergyCurve(std::string& out, const std::vector<ozone::smart::EnergyPoint>& points) {
   out += '[';
   for (size_t index = 0; index < points.size(); ++index) {
     if (index > 0) out += ',';
@@ -90,7 +90,7 @@ void AppendEnergyCurve(std::string& out, const std::vector<yuma::smart::EnergyPo
   out += ']';
 }
 
-void AppendCuePoints(std::string& out, const std::vector<yuma::smart::MixCuePoint>& points) {
+void AppendCuePoints(std::string& out, const std::vector<ozone::smart::MixCuePoint>& points) {
   out += '[';
   for (size_t index = 0; index < points.size(); ++index) {
     if (index > 0) out += ',';
@@ -130,8 +130,8 @@ Java_moe_rukamori_archivetune_playback_smart_TrackFeatures_nativeAnalyze(
     env->GetFloatArrayRegion(samples, 0, count, input.data());
   }
 
-  const yuma::smart::AnalysisResult result =
-      yuma::smart::AnalyzeAudio(input, sample_rate, duration);
+  const ozone::smart::AnalysisResult result =
+      ozone::smart::AnalyzeAudio(input, sample_rate, duration);
 
   std::string json;
   // A whole-track energy curve dominates the output; reserving up front keeps
@@ -187,7 +187,7 @@ Java_moe_rukamori_archivetune_playback_smart_TrackFeatures_nativeEnergyCliff(
   if (count > 0) {
     env->GetFloatArrayRegion(samples, 0, count, input.data());
   }
-  return yuma::smart::FindFullSpanMixOut(input, sample_rate, duration);
+  return ozone::smart::FindFullSpanMixOut(input, sample_rate, duration);
 }
 
 JNIEXPORT jdouble JNICALL
@@ -215,7 +215,7 @@ Java_moe_rukamori_archivetune_playback_smart_TrackFeatures_nativeResample(
   }
 
   const std::vector<float> resampled =
-      yuma::smart::Resample(input, input_rate, output_rate);
+      ozone::smart::Resample(input, input_rate, output_rate);
 
   const jsize produced = static_cast<jsize>(resampled.size());
   jfloatArray result = env->NewFloatArray(produced);

@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -55,7 +55,7 @@ import moe.rukamori.archivetune.ui.screens.onboarding.pages.CustomizationPage
 import moe.rukamori.archivetune.ui.screens.onboarding.pages.PermissionsPage
 import moe.rukamori.archivetune.ui.screens.onboarding.pages.WelcomePage
 import moe.rukamori.archivetune.ui.theme.LocalArchiveTuneFontFamily
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @Composable
 fun OnboardingRoute(
@@ -196,7 +196,7 @@ private fun MessageContent(
             modifier =
                 Modifier
                     .widthIn(max = OnboardingContentMaxWidth)
-                    .yumaGlassCard(shape = RoundedCornerShape(28.dp))
+                    .ozoneGlassCard(shape = RoundedCornerShape(28.dp))
                     .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),

@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -55,10 +55,10 @@ import moe.rukamori.archivetune.db.entities.Song
 import moe.rukamori.archivetune.ui.component.ItemThumbnail
 import moe.rukamori.archivetune.ui.component.LibraryEmptyState
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.YumaSegmentPosition
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.OzoneSegmentPosition
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.utils.makeTimeString
 
 @Composable
@@ -114,15 +114,15 @@ fun SongsFilterRow(
         }
 
         Box {
-            val yumaColors = LocalYumaColors.current
+            val ozoneColors = LocalOzoneColors.current
             Row(
                 modifier = Modifier
                     .height(SettingsDimensions.LibraryChipHeight)
-                    .yumaClickable { showSortMenu = true }
-                    .yumaGlassCard(
+                    .ozoneClickable { showSortMenu = true }
+                    .ozoneGlassCard(
                         shape = CircleShape,
-                        backgroundColor = yumaColors.glassBackground,
-                        borderColor = yumaColors.glassBorder,
+                        backgroundColor = ozoneColors.glassBackground,
+                        borderColor = ozoneColors.glassBorder,
                         strokeWidth = SettingsDimensions.GlassBorderThickness,
                     )
                     .clip(CircleShape)
@@ -170,15 +170,15 @@ fun SongsFilterRow(
         }
 
         Spacer(modifier = Modifier.width(4.dp))
-        val yumaColors = LocalYumaColors.current
+        val ozoneColors = LocalOzoneColors.current
         Box(
             modifier = Modifier
                 .height(SettingsDimensions.LibraryChipHeight)
-                .yumaClickable { onSortDescendingChange(!sortDescending) }
-                .yumaGlassCard(
+                .ozoneClickable { onSortDescendingChange(!sortDescending) }
+                .ozoneGlassCard(
                     shape = CircleShape,
-                    backgroundColor = yumaColors.glassBackground,
-                    borderColor = yumaColors.glassBorder,
+                    backgroundColor = ozoneColors.glassBackground,
+                    borderColor = ozoneColors.glassBorder,
                     strokeWidth = SettingsDimensions.GlassBorderThickness,
                 )
                 .clip(CircleShape)
@@ -229,9 +229,9 @@ fun SongsSpotlightCard(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = SettingsDimensions.ScreenHorizontalPadding)
-            .yumaGlassCard(
+            .ozoneGlassCard(
                 shape = RoundedCornerShape(SettingsDimensions.LibraryCardRadius),
-                position = YumaSegmentPosition.Single,
+                position = OzoneSegmentPosition.Single,
             )
             .clip(RoundedCornerShape(SettingsDimensions.LibraryCardRadius))
             .padding(20.dp),
@@ -444,16 +444,16 @@ fun SongSubFilterChip(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    val yumaColors = LocalYumaColors.current
+    val ozoneColors = LocalOzoneColors.current
     val backgroundColor = if (selected) {
         MaterialTheme.colorScheme.primaryContainer
     } else {
-        yumaColors.glassBackground
+        ozoneColors.glassBackground
     }
     val borderColor = if (selected) {
         Color.Transparent
     } else {
-        yumaColors.glassBorder
+        ozoneColors.glassBorder
     }
     val contentColor = if (selected) {
         MaterialTheme.colorScheme.onPrimaryContainer
@@ -464,8 +464,8 @@ fun SongSubFilterChip(
     Row(
         modifier = Modifier
             .height(SettingsDimensions.LibraryChipHeight)
-            .yumaClickable(onClick = onClick)
-            .yumaGlassCard(
+            .ozoneClickable(onClick = onClick)
+            .ozoneGlassCard(
                 shape = CircleShape,
                 backgroundColor = backgroundColor,
                 borderColor = borderColor,

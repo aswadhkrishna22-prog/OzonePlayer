@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -55,9 +55,9 @@ import moe.rukamori.archivetune.ui.component.CreatePlaylistDialog
 import moe.rukamori.archivetune.ui.component.ExpressivePullToRefreshBox
 import moe.rukamori.archivetune.ui.component.LibraryEmptyState
 import moe.rukamori.archivetune.ui.component.LocalMenuState
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.YumaSegmentPosition
+import moe.rukamori.archivetune.ui.theme.OzoneSegmentPosition
 import moe.rukamori.archivetune.utils.rememberEnumPreference
 import moe.rukamori.archivetune.utils.rememberPreference
 import moe.rukamori.archivetune.viewmodels.LibraryPlaylistsViewModel
@@ -76,7 +76,7 @@ fun LibraryPlaylistsScreen(
     val coroutineScope = rememberCoroutineScope()
     val database = LocalDatabase.current
     val playerConnection = LocalPlayerConnection.current
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
 
     val (sortType, onSortTypeChange) =
         rememberEnumPreference(
@@ -264,7 +264,7 @@ fun LibraryPlaylistsScreen(
                             ) {
                                 PlaylistListCard(
                                     playlist = playlist,
-                                    position = YumaSegmentPosition.Single,
+                                    position = OzoneSegmentPosition.Single,
                                     onClick = {
                                         openPlaylist(navController, playlist)
                                     },

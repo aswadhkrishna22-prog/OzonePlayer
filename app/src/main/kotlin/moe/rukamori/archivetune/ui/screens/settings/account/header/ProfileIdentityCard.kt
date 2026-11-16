@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -47,8 +47,8 @@ import moe.rukamori.archivetune.home.state.AccountChannelsState
 import moe.rukamori.archivetune.ui.component.LocalPreferenceGroupPosition
 import moe.rukamori.archivetune.ui.component.PreferenceGroupPosition
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
 import moe.rukamori.archivetune.utils.SavedAccount
 import moe.rukamori.archivetune.utils.SavedAccountCollection
 
@@ -82,7 +82,7 @@ fun ProfileIdentityCard(
         label = "accountMenuChevron",
     )
 
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
 
     val groupPosition = LocalPreferenceGroupPosition.current
     val resolvedShape = shape ?: when (groupPosition) {
@@ -171,7 +171,7 @@ fun ProfileIdentityCard(
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier
                                 .height(38.dp)
-                                .yumaClickable(pressedScale = 0.95f, onClick = onPrimaryAction),
+                                .ozoneClickable(pressedScale = 0.95f, onClick = onPrimaryAction),
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
@@ -198,7 +198,7 @@ fun ProfileIdentityCard(
                                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier
                                     .size(38.dp)
-                                    .yumaClickable(
+                                    .ozoneClickable(
                                         pressedScale = 0.95f,
                                         onClick = { accountMenuExpanded = !accountMenuExpanded },
                                     ),
@@ -235,7 +235,7 @@ fun ProfileIdentityCard(
 
             Box(
                 modifier = Modifier
-                    .yumaClickable(
+                    .ozoneClickable(
                         pressedScale = 0.94f,
                         onClick = onSecondaryAction,
                     )

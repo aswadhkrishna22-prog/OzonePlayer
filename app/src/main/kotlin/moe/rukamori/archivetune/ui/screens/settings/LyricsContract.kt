@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -64,7 +64,7 @@ internal object LyricsContract {
     val QueueLyricsPreloadCount = QueueLyricsPreloadCountKey
 }
 
-internal fun PreferredLyricsProvider.displayName(): String =
+fun PreferredLyricsProvider.displayName(): String =
     when (this) {
         PreferredLyricsProvider.LRCLIB -> "LrcLib"
         PreferredLyricsProvider.KUGOU -> "KuGou"

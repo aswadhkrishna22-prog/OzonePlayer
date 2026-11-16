@@ -6,7 +6,7 @@
  *
  * Orchard's original source is licensed under the GNU Affero General Public
  * License, version 3 or later. Per AGPLv3 section 13, this file is combined
- * here into YumaPlayer -- a work licensed under the GNU General Public
+ * here into Ozone Player -- a work licensed under the GNU General Public
  * License, version 3 or later -- and remains itself governed by the AGPLv3
  * as part of that combination.
  *
@@ -39,7 +39,7 @@
 #include <numeric>
 #include <vector>
 
-namespace yuma::smart {
+namespace ozone::smart {
 namespace {
 
 constexpr double kPi = 3.14159265358979323846;
@@ -550,4 +550,4 @@ TempoResult AnalyzeTempo(
   return result;
 }
 
-}  // namespace yuma::smart
+}  // namespace ozone::smart

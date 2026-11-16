@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -34,8 +34,8 @@ object AiTextService {
     private const val ClaudeModelsEndpoint = "https://api.anthropic.com/v1/models"
     private const val OpenRouterEndpoint = "https://openrouter.ai/api/v1/chat/completions"
     private const val OpenRouterModelsEndpoint = "https://openrouter.ai/api/v1/models?output_modalities=text"
-    private const val OpenRouterReferer = "https://github.com/MuwMx/YumaPlayer"
-    private const val OpenRouterTitle = "YumaPlayer"
+    private const val OpenRouterReferer = "https://github.com/aswadhkrishna22-prog/OzonePlayer"
+    private const val OpenRouterTitle = "OzonePlayer"
 
     private val client =
         HttpClient(OkHttp) {

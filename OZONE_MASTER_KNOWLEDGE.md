@@ -1,9 +1,9 @@
 # OzonePlayer — Master Knowledge & Architecture Base (A to Z)
 
 ## 1. Project Background & Identity
-- **Original Upstream:** YumaPlayer (`https://github.com/MuwMx/YumaPlayer.git`)
+- **Original Upstream:** OzonePlayer (`https://github.com/aswadhkrishna22-prog/OzonePlayer.git`)
 - **Fork / Active Repository:** `https://github.com/aswadhkrishna22-prog/OzonePlayer.git`
-- **Application Name:** Ozone Player (rebranded from YumaPlayer).
+- **Application Name:** Ozone Player (rebranded from OzonePlayer).
 - **Package / Namespace:** `moe.rukamori.archivetune`
 - **Stack:** Modern Android, Kotlin, Jetpack Compose, AndroidX Media3 (ExoPlayer), Room Database, Hilt/Dependency Injection, Coil for image/artwork loading, DataStore for preferences.
 

@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -81,7 +81,7 @@ fun ContentSettings(navController: NavController) {
     val (lengthTop, onLengthTopChange) = rememberPreference(key = TopSize, defaultValue = "50")
     val (quickPicks, onQuickPicksChange) = rememberEnumPreference(key = QuickPicksKey, defaultValue = QuickPicks.QUICK_PICKS)
 
-    YumaSettingsScaffold(
+    OzoneSettingsScaffold(
         title = { Text(stringResource(R.string.content)) },
         onBackClick = navController::navigateUp,
         onBackLongClick = navController::backToMain,

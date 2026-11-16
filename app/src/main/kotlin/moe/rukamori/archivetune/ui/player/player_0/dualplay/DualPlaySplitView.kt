@@ -76,7 +76,7 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.playback.dualplay.DualPlayEngine
 import moe.rukamori.archivetune.playback.dualplay.DualPlayState
 import moe.rukamori.archivetune.playback.dualplay.EarSelection
-import moe.rukamori.archivetune.ui.haptics.LocalYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.LocalOzoneHaptics
 import moe.rukamori.archivetune.ui.player.player_0.FullPlayerControlsDefaults
 import moe.rukamori.archivetune.ui.player.player_0.PlayerBackgroundLayers
 import moe.rukamori.archivetune.ui.player.player_0.PlayerControls
@@ -141,7 +141,7 @@ fun DualPlaySplitView(
     queueFractionProvider: () -> Float = { 0f },
     modifier: Modifier = Modifier,
 ) {
-    val haptics = LocalYumaHaptics.current
+    val haptics = LocalOzoneHaptics.current
     val playerConnection = LocalPlayerConnection.current
     val engine = playerConnection?.dualPlayEngine ?: return
 
@@ -840,7 +840,7 @@ private fun DualPlayPaneOptionsMenu(
     onOpenSettings: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
-    val haptics = LocalYumaHaptics.current
+    val haptics = LocalOzoneHaptics.current
     val fontFamily = LocalArchiveTuneFontFamily.current
     var currentSubScreen by remember { mutableStateOf(DualPlayMenuSubScreen.MAIN) }
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }

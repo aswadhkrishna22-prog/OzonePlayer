@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -63,8 +63,8 @@ import moe.rukamori.archivetune.spotify.SpotifyAuth
 import moe.rukamori.archivetune.utils.resetAuthWebViewSession
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @Composable
 fun SpotifyLoginFallback(
@@ -74,7 +74,7 @@ fun SpotifyLoginFallback(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .yumaGlassCard(shape = RoundedCornerShape(24.dp))
+            .ozoneGlassCard(shape = RoundedCornerShape(24.dp))
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -96,7 +96,7 @@ fun SpotifyLoginFallback(
             modifier = Modifier
                 .clip(RoundedCornerShape(16.dp))
                 .background(MaterialTheme.colorScheme.primaryContainer)
-                .yumaClickable(onClick = onLoginClick)
+                .ozoneClickable(onClick = onLoginClick)
                 .padding(horizontal = 24.dp, vertical = 12.dp),
             contentAlignment = Alignment.Center,
         ) {

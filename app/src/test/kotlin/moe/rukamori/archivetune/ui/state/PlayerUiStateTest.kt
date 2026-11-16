@@ -28,7 +28,7 @@ class PlayerUiStateTest {
     @Test
     fun `test default values`() {
         val state = PlayerUiState()
-        assertEquals("Yuma", state.title)
+        assertEquals("Ozone", state.title)
         assertEquals("Playback...", state.artist)
         assertEquals(emptyList<LyricsEntry>(), state.lyricsList)
         assertNull(state.lyricsRomanizationPrefs)

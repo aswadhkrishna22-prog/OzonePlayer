@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -26,9 +26,9 @@ import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.viewmodels.AboutContributorsUiState
 
 @Composable
@@ -39,7 +39,7 @@ internal fun ContributorsSection(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
 
     Column(
         modifier = modifier,
@@ -60,7 +60,7 @@ internal fun ContributorsSection(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .yumaGlassCard(
+                        .ozoneGlassCard(
                             shape = RoundedCornerShape(18.dp),
                             backgroundColor = colors.glassBackground,
                             borderColor = colors.glassBorder,
@@ -112,7 +112,7 @@ private fun ContributorStatusContent(
                 modifier = Modifier
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
-                    .yumaClickable(
+                    .ozoneClickable(
                         pressedScale = SettingsAnimations.PressScale,
                         onClick = onRetry,
                     )

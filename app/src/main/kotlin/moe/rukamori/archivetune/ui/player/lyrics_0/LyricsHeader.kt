@@ -1,6 +1,6 @@
 /*
- * YumaPlayer (2026) | Original work by MuwMix
- * https://github.com/MuwMx/YumaPlayer
+ * Ozone Player (2026)
+ * https://github.com/aswadhkrishna22-prog/OzonePlayer
  * GPL-3.0 License | Contributors: see git history
  */
 
@@ -80,8 +80,9 @@ fun LyricsHeader(
 
     // Isolated vinyl record spin animation (15s continuous)
     val rotation = remember { Animatable(0f) }
-    LaunchedEffect(state.isPlaying, isVisible) {
-        if (state.isPlaying && isVisible) {
+    val isAudible = state.isPlaying && state.isReady
+    LaunchedEffect(isAudible, isVisible) {
+        if (isAudible && isVisible) {
             while (true) {
                 val currentDegree = rotation.value % 360f
                 rotation.snapTo(currentDegree)

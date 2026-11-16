@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -95,8 +95,8 @@ import moe.rukamori.archivetune.viewmodels.IconScreenState
 import moe.rukamori.archivetune.viewmodels.IconScreenUiModel
 import moe.rukamori.archivetune.viewmodels.IconViewModel
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @Composable
 fun IconScreen(
@@ -341,10 +341,10 @@ private fun CurrentIconCard(
     modifier: Modifier = Modifier,
 ) {
     val name = appIconName(icon)
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
 
     Box(
-        modifier = modifier.yumaGlassCard(
+        modifier = modifier.ozoneGlassCard(
             shape = MaterialTheme.shapes.extraLarge,
             backgroundColor = colors.glassBackground,
             borderColor = colors.glassBorder,

@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * GPL-3.0 License | Contributors: see git history
  */
 
@@ -56,11 +56,11 @@ import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.CropThumbnailToSquareKey
 import moe.rukamori.archivetune.constants.EnableHapticFeedbackKey
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.state.QueueUiState
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.darkYumaColorScheme
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.darkOzoneColorScheme
 import moe.rukamori.archivetune.utils.rememberPreference
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -87,7 +87,7 @@ fun QueueScreen(
 
     val (enableHapticFeedback) = rememberPreference(EnableHapticFeedbackKey, true)
     val (cropToSquare) = rememberPreference(CropThumbnailToSquareKey, false)
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
     val hapticView = LocalView.current
     val playerConnection = LocalPlayerConnection.current
     val configuration = LocalConfiguration.current
@@ -210,11 +210,11 @@ fun QueueScreen(
 
     val fadeHeight = 24.dp
     val darkScheme = remember { darkColorScheme() }
-    val yumaColors = remember(darkScheme) { darkYumaColorScheme(darkScheme) }
+    val ozoneColors = remember(darkScheme) { darkOzoneColorScheme(darkScheme) }
     MaterialTheme(colorScheme = darkScheme) {
         CompositionLocalProvider(
             LocalContentColor provides Color.White,
-            LocalYumaColors provides yumaColors,
+            LocalOzoneColors provides ozoneColors,
         ) {
             val surfaceColor = MaterialTheme.colorScheme.surface
 

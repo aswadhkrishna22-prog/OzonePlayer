@@ -1,6 +1,6 @@
-# YumaPlayer Module Directory & Dependency Graph
+# OzonePlayer Module Directory & Dependency Graph
 
-This document serves as the official reference for the modular structure of YumaPlayer. It defines module categories, layer responsibilities, and explicit dependency rules to maintain architectural integrity and prevent circular dependencies.
+This document serves as the official reference for the modular structure of OzonePlayer. It defines module categories, layer responsibilities, and explicit dependency rules to maintain architectural integrity and prevent circular dependencies.
 
 ---
 
@@ -16,7 +16,7 @@ This document serves as the official reference for the modular structure of Yuma
 
 ## 2. Architecture & Category Hierarchy
 
-YumaPlayer consists of **20 Gradle modules** (verified against `settings.gradle.kts`: `:app`, `:designsystem`, `:database`, `:core`, `:core:innertube`, `:core:audio-dsp`, `:lyrics:*` ×6, `:spotifycore`, `:shazamkit`, `:canvas`, `:lastfm`, `:flaccore`, `:moriextractor`, `:morideobfuscator`). Dependencies point inward toward shared core abstractions. There are no `:feature:*`, `:service:*`, `:core:model`, `:core:domain`, `:core:data`, or `:data` modules — those names are reserved for a possible future split (see §6).
+OzonePlayer consists of **20 Gradle modules** (verified against `settings.gradle.kts`: `:app`, `:designsystem`, `:database`, `:core`, `:core:innertube`, `:core:audio-dsp`, `:lyrics:*` ×6, `:spotifycore`, `:shazamkit`, `:canvas`, `:lastfm`, `:flaccore`, `:moriextractor`, `:morideobfuscator`). Dependencies point inward toward shared core abstractions. There are no `:feature:*`, `:service:*`, `:core:model`, `:core:domain`, `:core:data`, or `:data` modules — those names are reserved for a possible future split (see §6).
 
 ```
                  ┌──────────────┐
@@ -55,7 +55,7 @@ YumaPlayer consists of **20 Gradle modules** (verified against `settings.gradle.
 
 ### 🎨 Design System
 - **`:designsystem`**
-  - **Responsibility:** YDS tokens (`ui/settings/SettingsDimensions.kt`, `ui/settings/SettingsAnimations.kt`, `ui/theme/YdsInsets.kt`, `ui/theme/YumaTheme.kt` / `LocalYumaColors`), primitive modifiers (`ui/theme/YumaModifiers.kt`: `yumaGlassCard`, `yumaClickable`, `yumaSegmentPosition`), and the Yuma UI Kit (`ui/component/`: preferences, `YumaMorphingHeader`, `FloatingNavigationToolbar`, `GlassScaffold`, shimmer placeholders, `YumaHaptics`).
+  - **Responsibility:** YDS tokens (`ui/settings/SettingsDimensions.kt`, `ui/settings/SettingsAnimations.kt`, `ui/theme/YdsInsets.kt`, `ui/theme/OzoneTheme.kt` / `LocalOzoneColors`), primitive modifiers (`ui/theme/OzoneModifiers.kt`: `ozoneGlassCard`, `ozoneClickable`, `ozoneSegmentPosition`), and the Ozone UI Kit (`ui/component/`: preferences, `OzoneMorphingHeader`, `FloatingNavigationToolbar`, `GlassScaffold`, shimmer placeholders, `OzoneHaptics`).
   - **Rule:** Pure UI, no business logic, no dependency on `:app` or `:database`.
 
 ### 💾 Persistence

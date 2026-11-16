@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -37,9 +37,9 @@ import moe.rukamori.archivetune.spotify.SpotifyMapper
 import moe.rukamori.archivetune.spotify.models.SpotifyPlaylist
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.YumaSegmentPosition
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.OzoneSegmentPosition
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @Composable
 internal fun SpotifyPlaylistCompactCard(
@@ -53,13 +53,13 @@ internal fun SpotifyPlaylistCompactCard(
         modifier =
             modifier
                 .width(130.dp)
-                .yumaClickable(
+                .ozoneClickable(
                     pressedScale = SettingsAnimations.PressScale,
                     onClick = onClick,
                 )
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = RoundedCornerShape(SettingsDimensions.LibraryCardRadius),
-                    position = YumaSegmentPosition.Single,
+                    position = OzoneSegmentPosition.Single,
                 )
                 .padding(SettingsDimensions.SectionSpacing),
     ) {

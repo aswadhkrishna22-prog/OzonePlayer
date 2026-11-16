@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -39,9 +39,9 @@ import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.utils.GitCommit
 
 @Composable
@@ -54,7 +54,7 @@ internal fun CommitHistorySection(
     onToggleExpanded: () -> Unit,
     onCommitClick: (GitCommit) -> Unit,
 ) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val cardRadius = RoundedCornerShape(SettingsDimensions.GlassCornerRadius)
 
     Column(
@@ -65,11 +65,11 @@ internal fun CommitHistorySection(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .yumaClickable(
+                    .ozoneClickable(
                         pressedScale = SettingsAnimations.PressScale,
                         onClick = onToggleExpanded,
                     )
-                    .yumaGlassCard(
+                    .ozoneGlassCard(
                         shape = cardRadius,
                         backgroundColor = colors.glassBackground,
                         borderColor = colors.glassBorder,
@@ -120,7 +120,7 @@ internal fun CommitHistorySection(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .yumaGlassCard(
+                                .ozoneGlassCard(
                                     shape = cardRadius,
                                     backgroundColor = colors.glassBackground,
                                     borderColor = colors.glassBorder,
@@ -148,7 +148,7 @@ internal fun CommitHistorySection(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .yumaGlassCard(
+                                .ozoneGlassCard(
                                     shape = cardRadius,
                                     backgroundColor = colors.glassBackground,
                                     borderColor = colors.glassBorder,

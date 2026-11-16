@@ -287,7 +287,7 @@
     <string name="automix_title">Автомикс</string>
     <string name="automix_description">Адаптивные переходы с нормализацией темпа</string>
     <string name="about_position_mo_agamy">Базовая структура | Metrolist</string>
-    <string name="about_position_zion_huang">Создатель InnerTune · Основатель проектов Metrolist, YumaPlayer и других форков</string>
+    <string name="about_position_zion_huang">Создатель InnerTune · Основатель проектов Metrolist, OzonePlayer и других форков</string>
     <string name="about_content_desc_github">GitHub</string>
     <string name="about_content_desc_website">Веб-сайт</string>
     <string name="about_content_desc_discord">Discord</string>

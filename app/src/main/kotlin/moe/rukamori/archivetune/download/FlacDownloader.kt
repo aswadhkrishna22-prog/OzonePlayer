@@ -79,8 +79,8 @@ object FlacDownloader {
                 safDirectoryManager.clearCache()
             } else {
                 val musicDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
-                val yumaDir = File(musicDir, "YumaPlayer")
-                val artistDir = File(yumaDir, sanitizeFileName(artist))
+                val ozoneDir = File(musicDir, "OzonePlayer")
+                val artistDir = File(ozoneDir, sanitizeFileName(artist))
                 val albumDir = File(artistDir, sanitizeFileName(album))
                 val file = File(albumDir, "${sanitizeFileName(title)}.flac")
                 if (file.exists()) {

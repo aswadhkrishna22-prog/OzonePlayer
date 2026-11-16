@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -46,8 +46,8 @@ import moe.rukamori.archivetune.constants.SpeedDialSongIdsKey
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.ui.component.BottomSheetState
 import moe.rukamori.archivetune.ui.player.rememberDeviceMusicVolumeController
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.darkYumaColorScheme
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.darkOzoneColorScheme
 import moe.rukamori.archivetune.utils.SpeedDialPin
 import moe.rukamori.archivetune.utils.SpeedDialPinType
 import moe.rukamori.archivetune.utils.isLocalMediaId
@@ -161,7 +161,7 @@ fun PlayerMenu(
     MaterialTheme(colorScheme = darkScheme) {
         CompositionLocalProvider(
             LocalContentColor provides Color.White,
-            LocalYumaColors provides darkYumaColorScheme(darkScheme),
+            LocalOzoneColors provides darkOzoneColorScheme(darkScheme),
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 PlayerMenuHeader(

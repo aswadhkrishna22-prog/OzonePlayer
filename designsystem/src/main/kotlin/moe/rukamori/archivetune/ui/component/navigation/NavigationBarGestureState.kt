@@ -19,8 +19,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import moe.rukamori.archivetune.ui.haptics.LocalYumaHaptics
-import moe.rukamori.archivetune.ui.haptics.YumaHaptics
+import moe.rukamori.archivetune.ui.haptics.LocalOzoneHaptics
+import moe.rukamori.archivetune.ui.haptics.OzoneHaptics
 import moe.rukamori.archivetune.ui.screens.Screens
 
 @Stable
@@ -140,7 +140,7 @@ internal fun rememberNavigationBarGestureState(
     isSelected: (Screens) -> Boolean,
     onItemClick: (Screens, Boolean) -> Unit,
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
-    haptics: YumaHaptics = LocalYumaHaptics.current,
+    haptics: OzoneHaptics = LocalOzoneHaptics.current,
 ): NavigationBarGestureState {
     val currentIsSelected by androidx.compose.runtime.rememberUpdatedState(isSelected)
     val currentOnItemClick by androidx.compose.runtime.rememberUpdatedState(onItemClick)
@@ -257,7 +257,7 @@ internal fun rememberNavigationTabDragState(
     isSelected: (Screens) -> Boolean,
     onItemClick: (Screens, Boolean) -> Unit,
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
-    haptics: YumaHaptics = LocalYumaHaptics.current,
+    haptics: OzoneHaptics = LocalOzoneHaptics.current,
 ): NavigationBarGestureState = rememberNavigationBarGestureState(items, isSelected, onItemClick, coroutineScope, haptics)
 
 internal typealias NavigationTabDragState = NavigationBarGestureState

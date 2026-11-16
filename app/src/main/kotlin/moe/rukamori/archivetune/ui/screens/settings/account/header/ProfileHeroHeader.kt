@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Original work by MuwMix
+ * Ozone Player (2026)
  * GPL-3.0 License | Contributors: see git history
  */
 
@@ -38,7 +38,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.ui.theme.yumaClickable
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
 import moe.rukamori.archivetune.ui.utils.LocalPlayerIsExpanded
 
 @Composable
@@ -143,7 +143,7 @@ fun ProfileHeroHeader(
                 modifier = Modifier
                     .padding(top = 12.dp)
                     .height(36.dp)
-                    .yumaClickable(pressedScale = 0.95f, onClick = onAccountActionClick)
+                    .ozoneClickable(pressedScale = 0.95f, onClick = onAccountActionClick)
                     .border(
                         width = 1.dp,
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.20f),

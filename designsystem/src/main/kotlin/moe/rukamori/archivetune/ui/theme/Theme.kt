@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -194,7 +194,7 @@ fun ArchiveTuneTheme(
             typography = typography,
             shapes = expressiveShapes,
         ) {
-            YumaTheme(
+            OzoneTheme(
                 darkTheme = darkTheme,
                 content = content
             )

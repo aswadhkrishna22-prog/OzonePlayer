@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -46,10 +46,10 @@ import moe.rukamori.archivetune.spotify.models.SpotifyPlaylist
 import moe.rukamori.archivetune.spotify.models.SpotifyTrack
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.YumaSegmentPosition
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.OzoneSegmentPosition
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.ui.utils.resize
 import moe.rukamori.archivetune.utils.joinByBullet
 import moe.rukamori.archivetune.utils.makeTimeString
@@ -60,23 +60,23 @@ fun SpotifyLibraryPlaylistListItem(
     navController: NavController,
     onPlay: () -> Unit,
     modifier: Modifier = Modifier,
-    position: YumaSegmentPosition = YumaSegmentPosition.Single,
+    position: OzoneSegmentPosition = OzoneSegmentPosition.Single,
 ) {
     val thumbnailUrl = remember(playlist) { SpotifyMapper.getPlaylistThumbnail(playlist) }
-    val yumaColors = LocalYumaColors.current
+    val ozoneColors = LocalOzoneColors.current
 
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
-                .yumaClickable(
+                .ozoneClickable(
                     pressedScale = SettingsAnimations.PressScale,
                     onClick = { navController.navigate("spotify_playlist/${playlist.id}") },
                 )
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = RoundedCornerShape(SettingsDimensions.LibrarySheetRadius),
-                    backgroundColor = yumaColors.glassBackground,
-                    borderColor = yumaColors.glassBorder,
+                    backgroundColor = ozoneColors.glassBackground,
+                    borderColor = ozoneColors.glassBorder,
                     position = position,
                 )
                 .clip(RoundedCornerShape(SettingsDimensions.LibrarySheetRadius))
@@ -171,22 +171,22 @@ fun SpotifyLikedSongsListCard(
     onClick: () -> Unit,
     onPlay: () -> Unit,
     modifier: Modifier = Modifier,
-    position: YumaSegmentPosition = YumaSegmentPosition.Single,
+    position: OzoneSegmentPosition = OzoneSegmentPosition.Single,
 ) {
-    val yumaColors = LocalYumaColors.current
+    val ozoneColors = LocalOzoneColors.current
 
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
-                .yumaClickable(
+                .ozoneClickable(
                     pressedScale = SettingsAnimations.PressScale,
                     onClick = onClick,
                 )
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = RoundedCornerShape(SettingsDimensions.LibrarySheetRadius),
-                    backgroundColor = yumaColors.glassBackground,
-                    borderColor = yumaColors.glassBorder,
+                    backgroundColor = ozoneColors.glassBackground,
+                    borderColor = ozoneColors.glassBorder,
                     position = position,
                 )
                 .clip(RoundedCornerShape(SettingsDimensions.LibrarySheetRadius))

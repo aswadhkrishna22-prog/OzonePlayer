@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -24,7 +24,7 @@ import moe.rukamori.archivetune.models.toMediaMetadata
 import moe.rukamori.archivetune.playback.PlayerConnection
 import moe.rukamori.archivetune.playback.queues.YouTubeQueue
 import moe.rukamori.archivetune.ui.component.MenuState
-import moe.rukamori.archivetune.ui.haptics.YumaHaptics
+import moe.rukamori.archivetune.ui.haptics.OzoneHaptics
 import moe.rukamori.archivetune.ui.menu.YouTubePlaylistMenu
 import moe.rukamori.archivetune.ui.menu.YouTubeSongMenu
 import moe.rukamori.archivetune.ui.utils.HeaderDownloadItem
@@ -127,7 +127,7 @@ fun rememberOnlinePlaylistActions(
     navController: NavController,
     menuState: MenuState,
     context: Context,
-    haptics: YumaHaptics,
+    haptics: OzoneHaptics,
     onRetry: () -> Unit,
     onLoadMore: () -> Unit,
     onDownloadLongClick: () -> Unit = {},

@@ -24,7 +24,7 @@ private const val ANIMATED_TIME_WRAP_MS = 3_600_000f
 
 /**
  * Time accumulator that respects a [speedMultiplier] and steps once per 16ms.
- * Preserves compatibility with all Yuma backgrounds.
+ * Preserves compatibility with all Ozone backgrounds.
  */
 @Composable
 fun rememberAnimatedTime(

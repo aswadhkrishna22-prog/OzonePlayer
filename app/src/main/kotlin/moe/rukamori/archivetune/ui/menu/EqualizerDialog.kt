@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -167,6 +167,28 @@ fun EqualizerDialog(
                             Icon(
                                 painter = painterResource(R.drawable.close),
                                 contentDescription = null,
+                            )
+                        }
+                    },
+                    actions = {
+                        var showAutoEq by remember { mutableStateOf(false) }
+                        if (showAutoEq) {
+                            AutoEqPickerDialog(onDismiss = { showAutoEq = false })
+                        }
+                        var showSignalPath by remember { mutableStateOf(false) }
+                        if (showSignalPath) {
+                            SignalPathDialog(onDismiss = { showSignalPath = false })
+                        }
+                        IconButton(onClick = { showSignalPath = true }) {
+                            Icon(
+                                painter = painterResource(R.drawable.waves),
+                                contentDescription = "Signal Path",
+                            )
+                        }
+                        IconButton(onClick = { showAutoEq = true }) {
+                            Icon(
+                                painter = painterResource(R.drawable.headphones),
+                                contentDescription = "AutoEq Headphone Correction",
                             )
                         }
                     },

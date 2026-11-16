@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | work by MuwMix
+ * OzonePlayer (2026) | work by MuwMix
  * GPL-3.0 License | Contributors: see git history
  */
 
@@ -82,10 +82,10 @@ fun PseudoGlassPreview() {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             val positions = listOf(
-                YumaSegmentPosition.Single,
-                YumaSegmentPosition.First,
-                YumaSegmentPosition.Middle,
-                YumaSegmentPosition.Last,
+                OzoneSegmentPosition.Single,
+                OzoneSegmentPosition.First,
+                OzoneSegmentPosition.Middle,
+                OzoneSegmentPosition.Last,
             )
             positions.forEach { position ->
                 Box(
@@ -97,7 +97,7 @@ fun PseudoGlassPreview() {
                 ) {
                     Text(
                         text = position.name,
-                        color = LocalYumaColors.current.textPrimary
+                        color = LocalOzoneColors.current.textPrimary
                     )
                 }
             }

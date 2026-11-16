@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.ui.state.PlayerUiState
 
 // =================================================================
@@ -39,7 +39,7 @@ fun PlayerControlCapsule(
     onAction: (PlayerAction) -> Unit, /* Одна лямбда вместо кучи пробросов */
     modifier: Modifier = Modifier
 ) {
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
     var lastLikeClickTime by remember { mutableLongStateOf(0L) }
 
     val heartColor by animateColorAsState(

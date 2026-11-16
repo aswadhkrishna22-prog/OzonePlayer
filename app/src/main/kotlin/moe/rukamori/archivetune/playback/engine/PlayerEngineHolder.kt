@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -24,6 +24,7 @@ import moe.rukamori.archivetune.audiodsp.DjFilterAudioProcessor
 import moe.rukamori.archivetune.audiodsp.DualForwardingPlayer
 import moe.rukamori.archivetune.audiodsp.DualPlayerRoleHolder
 import moe.rukamori.archivetune.playback.processor.SpatialProcessor
+import moe.rukamori.archivetune.playback.processor.AutoEqAudioProcessor
 import moe.rukamori.archivetune.playback.dualplay.ProcessorSide
 import moe.rukamori.archivetune.playback.dualplay.ChannelSplitProcessor
 import moe.rukamori.archivetune.extensions.setOffloadEnabled
@@ -237,10 +238,9 @@ class PlayerEngineHolder {
                 .Builder(context)
                 .setEnableFloatOutput(false)
                 .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
-                // One SpatialProcessor, DjFilter, and ChannelSplitProcessor instance per sink (never shared between decks).
-                // Always active; mode = OFF → transparent passthrough (no seek/re-prepare needed).
-                // Placed at the END of the audio processor array so no downstream processor can re-mix or bleed channels.
-                .setAudioProcessors(arrayOf(SpatialProcessor(), djFilter, ChannelSplitProcessor(ProcessorSide.LEFT)))
+                // AutoEqAudioProcessor linearizes headphone frequency response to Harman neutral curve first.
+                // SpatialProcessor, DjFilter, and ChannelSplitProcessor follow in series.
+                .setAudioProcessors(arrayOf(AutoEqAudioProcessor.instance, SpatialProcessor(), djFilter, ChannelSplitProcessor(ProcessorSide.LEFT)))
                 .build()
         }
 

@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -39,9 +39,9 @@ import coil3.compose.AsyncImage
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.utils.GitCommit
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -54,18 +54,18 @@ internal fun CommitItem(
     count: Int,
     onClick: () -> Unit,
 ) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val itemShape = remember(index, count) { segmentedSettingsItemShape(index, count) }
 
     Box(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .yumaClickable(
+                .ozoneClickable(
                     pressedScale = SettingsAnimations.PressScale,
                     onClick = onClick,
                 )
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = itemShape,
                     backgroundColor = colors.glassBackground,
                     borderColor = if (index == 0) colors.glassBorder else Color.Transparent,
@@ -135,12 +135,12 @@ internal fun CommitItem(
 
 @Composable
 internal fun CommitAvatar(avatarUrl: String?) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     Box(
         modifier =
             Modifier
                 .size(38.dp)
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = CircleShape,
                     backgroundColor = colors.glassBackground,
                     borderColor = Color.Transparent,

@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -30,9 +30,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @Composable
 internal fun HistoryStateCard(
@@ -48,9 +48,9 @@ internal fun HistoryStateCard(
         modifier =
             modifier
                 .fillMaxWidth()
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = cardShape,
-                    backgroundColor = LocalYumaColors.current.glassBackground,
+                    backgroundColor = LocalOzoneColors.current.glassBackground,
                 )
                 .clip(cardShape),
     ) {
@@ -84,7 +84,7 @@ internal fun HistoryStateCard(
                     modifier =
                         Modifier
                             .height(48.dp)
-                            .yumaClickable(
+                            .ozoneClickable(
                                 pressedScale = SettingsAnimations.PressScale,
                                 onClick = onActionClick,
                             )

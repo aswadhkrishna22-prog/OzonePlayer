@@ -47,7 +47,7 @@ import moe.rukamori.archivetune.ui.component.MenuState
 import moe.rukamori.archivetune.ui.component.shimmer.ShimmerTheme
 import moe.rukamori.archivetune.ui.component.splash.OzoneLaunchAnimation
 import moe.rukamori.archivetune.ui.component.splash.SplashConfig
-import moe.rukamori.archivetune.ui.haptics.LocalYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.LocalOzoneHaptics
 import moe.rukamori.archivetune.ui.scaffold.ScaffoldNavigationRail
 import moe.rukamori.archivetune.ui.scaffold.ScaffoldSearchBarHost
 import moe.rukamori.archivetune.ui.scaffold.ScaffoldTopAppBar
@@ -80,7 +80,7 @@ fun ScaffoldShell(
         )
 
         CompositionLocalProvider(
-            LocalYumaHaptics provides appState.yumaHaptics,
+            LocalOzoneHaptics provides appState.ozoneHaptics,
             LocalHapticFeedback provides appState.customHaptic,
             LocalAnimationsDisabled provides disableAnimations,
             LocalMarqueeEnabled provides marqueeEnabled,

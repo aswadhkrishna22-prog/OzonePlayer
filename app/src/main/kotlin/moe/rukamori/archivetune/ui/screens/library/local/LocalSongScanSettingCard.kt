@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -30,8 +30,8 @@ import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @Composable
 internal fun LocalSongScanSettingCard(
@@ -92,11 +92,11 @@ internal fun LocalSongScanSettingCard(
                                 Modifier
                                     .padding(top = 8.dp)
                                     .heightIn(min = 40.dp)
-                                    .yumaClickable(
+                                    .ozoneClickable(
                                         pressedScale = SettingsAnimations.PressScale,
                                         onClick = onActionClick,
                                     )
-                                    .yumaGlassCard(
+                                    .ozoneGlassCard(
                                         shape = RoundedCornerShape(SettingsDimensions.LibrarySmallRadius),
                                         backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
                                     )

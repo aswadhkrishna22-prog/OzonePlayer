@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Original work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.yumaClickable
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
 
 @Composable
 internal fun TopBarAccountAnchor(
@@ -38,7 +38,7 @@ internal fun TopBarAccountAnchor(
     Box(
         modifier = modifier
             .size(48.dp)
-            .yumaClickable(
+            .ozoneClickable(
                 pressedScale = 0.94f,
                 onClick = onClick,
             ),

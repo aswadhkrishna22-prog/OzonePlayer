@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -49,9 +49,9 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.db.entities.AlbumWithSongs
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.ui.utils.HeaderDownloadProgressIndicator
 import moe.rukamori.archivetune.ui.utils.HeaderDownloadState
 import moe.rukamori.archivetune.utils.makeTimeString
@@ -71,7 +71,7 @@ internal fun AlbumHeroLikeButton(
         if (isBookmarked) {
             MaterialTheme.colorScheme.primaryContainer
         } else {
-            LocalYumaColors.current.glassBackground
+            LocalOzoneColors.current.glassBackground
         }
     val likeFg =
         if (isBookmarked) {
@@ -83,11 +83,11 @@ internal fun AlbumHeroLikeButton(
         modifier =
             modifier
                 .size(48.dp)
-                .yumaClickable(
+                .ozoneClickable(
                     pressedScale = SettingsAnimations.PressScale,
                     onClick = { actions.onLike() },
                 )
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = CircleShape,
                     backgroundColor = likeBg,
                 )
@@ -121,7 +121,7 @@ internal fun RowScope.AlbumHeroPlayButton(
             modifier
                 .weight(1f)
                 .height(48.dp)
-                .yumaClickable(
+                .ozoneClickable(
                     pressedScale = SettingsAnimations.PressScale,
                     onClick = { actions.onPlay() },
                 )

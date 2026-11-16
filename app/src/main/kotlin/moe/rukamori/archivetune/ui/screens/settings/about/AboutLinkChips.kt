@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -32,9 +32,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.viewmodels.AboutLinkCollection
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -85,14 +85,14 @@ internal fun InteractiveLinkChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val shape = RoundedCornerShape(12.dp)
 
     Box(
         modifier =
             modifier
-                .yumaClickable(pressedScale = 0.93f, onClick = onClick)
-                .yumaGlassCard(
+                .ozoneClickable(pressedScale = 0.93f, onClick = onClick)
+                .ozoneGlassCard(
                     shape = shape,
                     backgroundColor = colors.glassBackground,
                     borderColor = colors.glassBorder,

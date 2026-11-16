@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -30,7 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
 import moe.rukamori.archivetune.utils.ColorExtractor
 import moe.rukamori.archivetune.viewmodels.TeamMember
 import androidx.core.graphics.toColorInt
@@ -50,7 +50,7 @@ internal fun LeadDeveloperSection(
     ) {
         AboutSectionHeader(title = stringResource(R.string.about_lead_developer))
 
-        val colors = LocalYumaColors.current
+        val colors = LocalOzoneColors.current
         val cardShape = MaterialTheme.shapes.extraLarge
 
         val extractedColor = remember(extractedColorHex) {

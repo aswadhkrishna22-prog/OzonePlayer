@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -47,8 +47,8 @@ import moe.rukamori.archivetune.ui.component.LocalPreferenceGroupPosition
 import moe.rukamori.archivetune.ui.component.PreferenceGroupPosition
 import moe.rukamori.archivetune.ui.component.rememberPreferenceIconShape
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 private val RowIconSize = 42.dp
 
@@ -60,7 +60,7 @@ fun ExpressiveSegmentedRow(
     selectedValue: Boolean,
     onValueSelected: (Boolean) -> Unit,
 ) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val groupPosition = LocalPreferenceGroupPosition.current
 
     val shape = when (groupPosition) {
@@ -85,7 +85,7 @@ fun ExpressiveSegmentedRow(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = shape,
                     backgroundColor = colors.glassBackground,
                     borderColor = colors.glassBorder,

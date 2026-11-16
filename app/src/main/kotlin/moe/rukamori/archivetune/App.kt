@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -100,6 +100,9 @@ class App :
     private fun initializeCriticalSync() {
         moe.rukamori.archivetune.lowdata.LowDataManager.initialize(this)
         moe.rukamori.archivetune.beastmode.BeastModeManager.initialize(this)
+        moe.rukamori.archivetune.playback.autoeq.AutoEqRepository.init(this)
+        moe.rukamori.archivetune.playback.covers.UltraHdArtworkRepository.init(this)
+        moe.rukamori.archivetune.radio.RadioRepository.init(this)
         moe.rukamori.archivetune.playback.queue.SongVibeMatcher.initialize(this)
         ProxyAuth.init()
         CanvasArtworkPlaybackCache.init(this)

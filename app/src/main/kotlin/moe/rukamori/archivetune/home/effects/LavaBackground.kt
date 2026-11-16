@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 Morphe | Adapted for YumaPlayer
+ * Copyright 2026 Morphe | Adapted for Ozone Player
  * GPL-3.0 License
  */
 

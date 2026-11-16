@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.flowOf
 import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.player.player_0.dualplay.FullPlayerToolbarEarButtons
 
@@ -58,7 +58,7 @@ fun PlayerMetadata(
     likeEnabled: Boolean = true,
     earButtons: @Composable (() -> Unit)? = null,
 ) {
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
     val gradientEdgeColor = Color.Black
 
     val playerConnection = LocalPlayerConnection.current

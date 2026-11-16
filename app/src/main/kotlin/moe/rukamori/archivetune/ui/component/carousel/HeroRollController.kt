@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * Adapted from Mochy Music (GPL-3.0)
  * GPL-3.0 License | Contributors: see git history
  */
@@ -24,15 +24,15 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import moe.rukamori.archivetune.ui.haptics.YumaHaptics
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.OzoneHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
 @Stable
 internal class HeroRollController(
     val state: HeroRollState,
-    private val haptics: YumaHaptics,
+    private val haptics: OzoneHaptics,
     private val scope: CoroutineScope,
 ) {
     private var rollJob: Job? = null
@@ -143,7 +143,7 @@ internal class HeroRollController(
 @Composable
 internal fun rememberHeroRollController(
     state: HeroRollState = remember { HeroRollState() },
-    haptics: YumaHaptics = rememberYumaHaptics(),
+    haptics: OzoneHaptics = rememberOzoneHaptics(),
     scope: CoroutineScope = rememberCoroutineScope(),
 ): HeroRollController = remember(state, haptics, scope) {
     HeroRollController(state, haptics, scope)
@@ -156,7 +156,7 @@ internal fun HeroRollEffects(
     isCarouselActive: Boolean,
     animationsDisabled: Boolean,
     context: Context = LocalContext.current,
-    haptics: YumaHaptics = rememberYumaHaptics(),
+    haptics: OzoneHaptics = rememberOzoneHaptics(),
     scope: CoroutineScope = rememberCoroutineScope(),
 ) {
     val state = controller.state

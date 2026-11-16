@@ -2,7 +2,7 @@
 
 **Status:** Mandatory.
 **Purpose:** Agents must design from failure, not from the ideal scenario.
-**Global rule:** Every failure maps to `UiState.Error` or a structured domain error. Empty `catch` blocks, `null` instead of an error, crashes, and infinite `Loading` are forbidden (`YUMA_RULES.md`).
+**Global rule:** Every failure maps to `UiState.Error` or a structured domain error. Empty `catch` blocks, `null` instead of an error, crashes, and infinite `Loading` are forbidden (`OZONE_RULES.md`).
 
 ---
 

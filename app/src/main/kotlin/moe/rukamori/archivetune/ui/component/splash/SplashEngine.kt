@@ -121,7 +121,7 @@ class SplashEngine {
             SplashPhase.Gather -> {
                 val gatherLimit = when {
                     shape == SplashSlots.SHAPE_CROSS -> SplashConfig.Timings.GATHER_CROSS_MS
-                    shape == SplashSlots.SHAPE_LOGO || shape == SplashSlots.SHAPE_YUMA -> SplashConfig.Timings.GATHER_LOGO_MS
+                    shape == SplashSlots.SHAPE_LOGO || shape == SplashSlots.SHAPE_OZONE -> SplashConfig.Timings.GATHER_LOGO_MS
                     isShort -> SplashConfig.Timings.GATHER_SHORT_MS
                     else -> SplashConfig.Timings.GATHER_BOLT_MS
                 }

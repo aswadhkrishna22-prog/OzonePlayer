@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -21,7 +21,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.zIndex
 import moe.rukamori.archivetune.ui.component.HeaderType
-import moe.rukamori.archivetune.ui.component.YumaMorphingHeader
+import moe.rukamori.archivetune.ui.component.OzoneMorphingHeader
 
 internal fun calculateAlbumGradientAlpha(
     firstVisibleItemIndex: Int,
@@ -177,7 +177,7 @@ internal fun AlbumMorphingHeader(
     collapseFraction: Float,
 ) {
     if (thumbnailUrl != null) {
-        YumaMorphingHeader(
+        OzoneMorphingHeader(
             imageUrl = thumbnailUrl,
             collapseFraction = collapseFraction,
             type = HeaderType.ALBUM,

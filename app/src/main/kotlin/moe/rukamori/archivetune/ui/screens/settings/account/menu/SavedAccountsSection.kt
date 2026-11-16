@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -29,9 +29,9 @@ import moe.rukamori.archivetune.ui.component.IconButton
 import moe.rukamori.archivetune.ui.screens.settings.segmentedSettingsItemShape
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
-import moe.rukamori.archivetune.ui.theme.yumaSegmentPosition
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneSegmentPosition
 import moe.rukamori.archivetune.utils.SavedAccount
 import moe.rukamori.archivetune.utils.SavedAccountCollection
 
@@ -60,7 +60,7 @@ internal fun SavedAccountsSection(
         savedAccounts.accounts.forEachIndexed { index, account ->
             val isCurrent = account.innerTubeCookie == activeInnerTubeCookie
             val shape = segmentedSettingsItemShape(index, savedAccounts.accounts.size)
-            val position = yumaSegmentPosition(index, savedAccounts.accounts.size)
+            val position = ozoneSegmentPosition(index, savedAccounts.accounts.size)
             val baseBackground = if (isCurrent) {
                 MaterialTheme.colorScheme.primaryContainer
             } else {
@@ -74,11 +74,11 @@ internal fun SavedAccountsSection(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .yumaClickable(enabled = !isCurrent, pressedScale = SettingsAnimations.PressScale) {
+                    .ozoneClickable(enabled = !isCurrent, pressedScale = SettingsAnimations.PressScale) {
                         onDismissRequest()
                         onSwitchAccount(account)
                     }
-                    .yumaGlassCard(
+                    .ozoneGlassCard(
                         shape = shape,
                         position = position,
                         backgroundColor = baseBackground,

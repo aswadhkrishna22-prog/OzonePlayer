@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -86,9 +86,9 @@ import moe.rukamori.archivetune.ui.component.ItemThumbnail
 import moe.rukamori.archivetune.ui.component.shimmer.GridItemPlaceHolder
 import moe.rukamori.archivetune.ui.screens.HomeSectionHeader
 import moe.rukamori.archivetune.ui.screens.search.onlineSearchResultRoute
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 internal fun LazyListScope.homeTrendingSection(
     trendingState: TrendingUiState?,
@@ -160,7 +160,7 @@ private fun TrendingSourceChipsRow(
     onSourceSelected: (TrendingSource) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -206,7 +206,7 @@ private fun TrendingChip(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val bgColor =
         if (isSelected) {
             MaterialTheme.colorScheme.primaryContainer
@@ -225,12 +225,12 @@ private fun TrendingChip(
         color = bgColor,
         modifier =
             Modifier
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = CircleShape,
                     backgroundColor = bgColor,
                     borderColor = if (isSelected) Color.Transparent else colors.glassBorder,
                 )
-                .yumaClickable(pressedScale = 0.94f, onClick = onClick),
+                .ozoneClickable(pressedScale = 0.94f, onClick = onClick),
     ) {
         Text(
             text = text,

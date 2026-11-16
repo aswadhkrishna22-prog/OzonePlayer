@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -53,7 +53,7 @@ import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.LocalAnimationsDisabled
 import moe.rukamori.archivetune.designsystem.R
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
 import moe.rukamori.archivetune.ui.theme.TestThemeWrapper
 import moe.rukamori.archivetune.ui.theme.ThemePreviews
 import kotlin.math.PI
@@ -154,10 +154,10 @@ fun SpoilerVeil(
     }
 
     val density = LocalDensity.current
-    val yumaColors = LocalYumaColors.current
+    val ozoneColors = LocalOzoneColors.current
     val colorScheme = MaterialTheme.colorScheme
 
-    val glassBorder = yumaColors.glassBorder
+    val glassBorder = ozoneColors.glassBorder
     val onSurfaceColor = colorScheme.onSurface
 
     val cornerRadiusPx = remember(density) {

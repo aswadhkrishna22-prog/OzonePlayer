@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  * Do not remove or alter this notice. - Per GPL-3.0 Section 4 & Section 5
@@ -30,7 +30,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.component.ActionPromptDialog
-import moe.rukamori.archivetune.ui.screens.settings.YumaSettingsScaffold
+import moe.rukamori.archivetune.ui.screens.settings.OzoneSettingsScaffold
 import moe.rukamori.archivetune.ui.theme.TestThemeWrapper
 import moe.rukamori.archivetune.ui.theme.ThemePreviews
 import moe.rukamori.archivetune.ui.utils.backToMain
@@ -89,7 +89,7 @@ internal fun CanvasSettingsScreen(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        YumaSettingsScaffold(
+        OzoneSettingsScaffold(
             title = { Text(stringResource(R.string.archivetune_canvas)) },
             onBackClick = onBackClick,
             onBackLongClick = onBackLongClick,

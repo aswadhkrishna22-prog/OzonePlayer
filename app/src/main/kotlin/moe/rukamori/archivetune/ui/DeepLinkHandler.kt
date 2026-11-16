@@ -30,7 +30,7 @@ class DeepLinkHandler(
             is ParsedIntentAction.TogetherJoin -> {
                 coroutineScope.launch {
                     val connection = playerConnectionProvider() ?: return@launch
-                    val displayName = Build.MODEL ?: "Yuma Player"
+                    val displayName = Build.MODEL ?: "Ozone Player"
                     connection.service.joinTogether(action.uri.toString(), displayName)
                 }
             }

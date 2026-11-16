@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -106,11 +106,11 @@ import moe.rukamori.archivetune.designsystem.R
 import moe.rukamori.archivetune.constants.HISTORY_DURATION_DEFAULT
 import moe.rukamori.archivetune.constants.HISTORY_DURATION_RANGE
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.YumaSegmentPosition
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
-import moe.rukamori.archivetune.ui.theme.yumaSegmentPosition
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.OzoneSegmentPosition
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneSegmentPosition
 import kotlin.math.roundToInt
 
 val LocalPreferenceInGroup = compositionLocalOf { false }
@@ -205,14 +205,14 @@ fun PreferenceEntry(
         label = "prefScale",
     )
 
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val isInGroup = LocalPreferenceInGroup.current
     val groupPosition = LocalPreferenceGroupPosition.current
     val segmentPosition = when (if (isInGroup) groupPosition else PreferenceGroupPosition.Single) {
-        null, PreferenceGroupPosition.Single -> YumaSegmentPosition.Single
-        PreferenceGroupPosition.First -> YumaSegmentPosition.First
-        PreferenceGroupPosition.Middle -> YumaSegmentPosition.Middle
-        PreferenceGroupPosition.Last -> YumaSegmentPosition.Last
+        null, PreferenceGroupPosition.Single -> OzoneSegmentPosition.Single
+        PreferenceGroupPosition.First -> OzoneSegmentPosition.First
+        PreferenceGroupPosition.Middle -> OzoneSegmentPosition.Middle
+        PreferenceGroupPosition.Last -> OzoneSegmentPosition.Last
     }
 
     val resolvedShape = shape ?: preferenceItemShapeForPosition(if (isInGroup) groupPosition else PreferenceGroupPosition.Single)
@@ -223,7 +223,7 @@ fun PreferenceEntry(
             scaleX = scale
             scaleY = scale
         }
-        .yumaGlassCard(
+        .ozoneGlassCard(
             shape = resolvedShape,
             backgroundColor = colors.glassBackground,
             borderColor = colors.glassBorder,
@@ -571,7 +571,7 @@ private fun <T> PreferenceSelectionBottomSheet(
                         contentType = { _, _ -> "preference_option" },
                     ) { index, value ->
                         val shape = segmentedPreferenceItemShape(index, values.size)
-                        val position = yumaSegmentPosition(index, values.size)
+                        val position = ozoneSegmentPosition(index, values.size)
                         val isLast = index == values.lastIndex
                         PreferenceSelectionOption(
                             text = valueText(value),
@@ -595,11 +595,11 @@ fun PreferenceSelectionOption(
     description: String? = null,
     selected: Boolean,
     shape: Shape,
-    position: YumaSegmentPosition = YumaSegmentPosition.Single,
+    position: OzoneSegmentPosition = OzoneSegmentPosition.Single,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val contentColor =
         if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
     val descriptionColor =
@@ -614,8 +614,8 @@ fun PreferenceSelectionOption(
         modifier =
             modifier
                 .fillMaxWidth()
-                .yumaClickable(pressedScale = 0.96f, onClick = onClick)
-                .yumaGlassCard(
+                .ozoneClickable(pressedScale = 0.96f, onClick = onClick)
+                .ozoneGlassCard(
                     shape = shape,
                     backgroundColor = backgroundColor,
                     borderColor = borderColor,

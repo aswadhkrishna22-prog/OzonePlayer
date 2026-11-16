@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -39,7 +39,7 @@ import androidx.navigation.compose.rememberNavController
 
 // Оставляем только базовые сочные акценты для фолбэка приложения
 val TargetAccentColors = listOf(
-    Color(0xFFED5564), // Дефолтный красный Yuma
+    Color(0xFFED5564), // Дефолтный красный Ozone
     Color(0xFF4A90D9), // Синий
     Color(0xFF1DB954), // Зелёный
     Color(0xFF9B59B6), // Пурпурный

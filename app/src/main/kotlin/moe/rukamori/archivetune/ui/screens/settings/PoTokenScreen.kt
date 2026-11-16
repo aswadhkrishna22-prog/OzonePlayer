@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -104,8 +104,8 @@ import moe.rukamori.archivetune.utils.rememberPreference
 import moe.rukamori.archivetune.viewmodels.PoTokenState
 import moe.rukamori.archivetune.viewmodels.PoTokenViewModel
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 private const val DEFAULT_EXTRACT_URL = "https://youtube.com/account"
 
@@ -536,12 +536,12 @@ private fun SelectableTokenCard(
     onCopy: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .yumaGlassCard(
+            .ozoneGlassCard(
                 shape = MaterialTheme.shapes.medium,
                 backgroundColor = colors.glassBackground,
                 borderColor = colors.glassBorder,

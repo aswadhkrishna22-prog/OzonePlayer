@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -38,8 +38,8 @@ import moe.rukamori.archivetune.ui.component.PreferenceEntry
 import moe.rukamori.archivetune.ui.component.PreferenceGroup
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
 import moe.rukamori.archivetune.utils.GitCommit
 
 @Composable
@@ -60,7 +60,7 @@ internal fun UpdateChannelPanel(
         },
         content = {
             Spacer(Modifier.height(10.dp))
-            val colors = LocalYumaColors.current
+            val colors = LocalOzoneColors.current
             val barShape = RoundedCornerShape(16.dp)
             Box(
                 modifier = Modifier
@@ -116,7 +116,7 @@ internal fun ChannelSelectChip(
 
     Box(
         modifier = modifier
-            .yumaClickable(enabled = enabled, pressedScale = SettingsAnimations.PressScale, onClick = onClick)
+            .ozoneClickable(enabled = enabled, pressedScale = SettingsAnimations.PressScale, onClick = onClick)
             .clip(RoundedCornerShape(12.dp))
             .background(containerColor)
             .padding(horizontal = 12.dp, vertical = 8.dp),

@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -79,6 +79,7 @@ val SeekExtraSeconds = booleanPreferencesKey("seekExtraSeconds")
 val DisableBlurKey = booleanPreferencesKey("disableBlur")
 val BlurRadiusKey = floatPreferencesKey("blurRadius")
 val BlurNavBarKey = booleanPreferencesKey("blurNavBar")
+val GraphicsPresetAppliedKey = booleanPreferencesKey("graphicsPresetApplied")
 val GlassAlphaKey = floatPreferencesKey("glassAlpha")
 
 // Backdrop blur for detail pages
@@ -616,6 +617,29 @@ enum class MiniPlayerBackgroundStyle {
     THEME,
     GRADIENT,
     GLOW,
+}
+
+val PlayerSkinKey = stringPreferencesKey("playerSkinPreference")
+
+enum class PlayerSkinPreference {
+    DEFAULT,
+    CASSETTE,
+    HALO,
+    POLAROID;
+
+    fun next(): PlayerSkinPreference = when (this) {
+        DEFAULT -> CASSETTE
+        CASSETTE -> HALO
+        HALO -> POLAROID
+        POLAROID -> DEFAULT
+    }
+
+    val label: String get() = when (this) {
+        DEFAULT -> "Classic"
+        CASSETTE -> "Cassette"
+        HALO -> "Halo"
+        POLAROID -> "Polaroid"
+    }
 }
 
 enum class HomeBackgroundStyle {

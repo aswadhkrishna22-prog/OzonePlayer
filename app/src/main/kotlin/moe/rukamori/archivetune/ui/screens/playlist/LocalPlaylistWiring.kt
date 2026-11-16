@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -89,7 +89,7 @@ import moe.rukamori.archivetune.ui.component.EditPlaylistDialog
 import moe.rukamori.archivetune.ui.component.IconButton
 import moe.rukamori.archivetune.playback.DownloadUtil
 import moe.rukamori.archivetune.ui.component.MenuState
-import moe.rukamori.archivetune.ui.haptics.YumaHaptics
+import moe.rukamori.archivetune.ui.haptics.OzoneHaptics
 import moe.rukamori.archivetune.ui.menu.SelectionSongMenu
 import moe.rukamori.archivetune.ui.menu.removeSongFromRemotePlaylist
 import moe.rukamori.archivetune.ui.theme.PlayerColorExtractor
@@ -549,7 +549,7 @@ fun LazyListScope.localPlaylistSongs(
     snackbarHostState: SnackbarHostState,
     context: Context,
     playerConnection: PlayerConnection,
-    haptics: YumaHaptics,
+    haptics: OzoneHaptics,
 ) {
     localPlaylistSongs(
         songs = if (searchState.selection || searchState.isSearching) searchState.filteredSongs else downloadUiState.mutableSongs,

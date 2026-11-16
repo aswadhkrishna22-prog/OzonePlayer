@@ -1,11 +1,11 @@
 name: Bug Report
-description: Report a reproducible bug or crash in YumaPlayer
+description: Report a reproducible bug or crash in OzonePlayer
 labels: [BUG]
 body:
   - type: markdown
     attributes:
       value: |
-        Thank you for helping improve YumaPlayer!
+        Thank you for helping improve OzonePlayer!
 
         Before submitting, verify the bug on the latest Canary build whenever possible. Stable/Beta releases may already contain bugs fixed in newer Canary builds, so stable-only reports need a clear reason and may be closed if they cannot be reproduced on Canary.
 
@@ -40,7 +40,7 @@ body:
   - type: input
     id: app-version
     attributes:
-      label: YumaPlayer version & build
+      label: OzonePlayer version & build
       description: Found in Settings -> About, or commit hash / APK name.
       placeholder: "Example: 1.1.0-Canary|Beta|Stable, commit c09ded0, or v1.0.5"
     validations:
@@ -85,7 +85,7 @@ body:
       label: Steps to reproduce
       description: Provide exact step-by-step instructions.
       placeholder: |
-        1. Open YumaPlayer.
+        1. Open OzonePlayer.
         2. Go to ...
         3. Tap ...
         4. Observe ...

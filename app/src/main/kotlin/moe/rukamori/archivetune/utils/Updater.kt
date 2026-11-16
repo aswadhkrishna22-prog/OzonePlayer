@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -407,7 +407,7 @@ object Updater {
             client.get("https://api.github.com/repos/$repo/releases?per_page=$perPage") {
                 headers {
                     append("Accept", "application/vnd.github+json")
-                    append("User-Agent", "YumaPlayerApp")
+                    append("User-Agent", "OzonePlayerApp")
                     if (!cachedEtag.isNullOrBlank()) {
                         append("If-None-Match", cachedEtag)
                     }
@@ -616,7 +616,7 @@ object Updater {
             }
             val response = client.get(url) {
                 headers {
-                    append("User-Agent", "YumaPlayerApp")
+                    append("User-Agent", "OzonePlayerApp")
                     append("Accept", "application/vnd.github+json")
                 }
             }.bodyAsText()

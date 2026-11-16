@@ -5,7 +5,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
-import moe.rukamori.archivetune.ui.haptics.NoOpYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.NoOpOzoneHaptics
 import moe.rukamori.archivetune.ui.screens.Screens
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -28,7 +28,7 @@ class NavigationTabSelectorStateTest {
             items = items,
             isSelectedProvider = { { it == currentSelected } },
             onItemClickProvider = { { screen, isSelected -> invocations.add(screen to isSelected) } },
-            hapticsProvider = { NoOpYumaHaptics },
+            hapticsProvider = { NoOpOzoneHaptics },
             animationsDisabledProvider = { true },
             coroutineScope = this,
         )
@@ -65,7 +65,7 @@ class NavigationTabSelectorStateTest {
             items = items,
             isSelectedProvider = { { it == currentSelected } },
             onItemClickProvider = { { screen, isSelected -> invocations.add(screen to isSelected) } },
-            hapticsProvider = { NoOpYumaHaptics },
+            hapticsProvider = { NoOpOzoneHaptics },
             animationsDisabledProvider = { true },
             coroutineScope = this,
         )
@@ -98,7 +98,7 @@ class NavigationTabSelectorStateTest {
             items = items,
             isSelectedProvider = { { it == currentSelected } },
             onItemClickProvider = { { screen, isSelected -> invocations.add(screen to isSelected) } },
-            hapticsProvider = { NoOpYumaHaptics },
+            hapticsProvider = { NoOpOzoneHaptics },
             animationsDisabledProvider = { true },
             coroutineScope = this,
         )
@@ -119,7 +119,7 @@ class NavigationTabSelectorStateTest {
             items = items,
             isSelectedProvider = { { it == currentSelected } },
             onItemClickProvider = { { screen, isSelected -> invocations.add(screen to isSelected) } },
-            hapticsProvider = { NoOpYumaHaptics },
+            hapticsProvider = { NoOpOzoneHaptics },
             animationsDisabledProvider = { true },
             coroutineScope = this,
         )
@@ -151,7 +151,7 @@ class NavigationTabSelectorStateTest {
                 items = items,
                 isSelectedProvider = { { it == currentSelected } },
                 onItemClickProvider = { { screen, isSelected -> invocations.add(screen to isSelected) } },
-                hapticsProvider = { NoOpYumaHaptics },
+                hapticsProvider = { NoOpOzoneHaptics },
                 animationsDisabledProvider = { true },
                 coroutineScope = this,
             )

@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -36,9 +36,9 @@ import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @Composable
 internal fun SpotifyPlaylistControls(
@@ -64,13 +64,13 @@ internal fun SpotifyPlaylistControls(
             modifier =
                 Modifier
                     .size(48.dp)
-                    .yumaClickable(
+                    .ozoneClickable(
                         pressedScale = SettingsAnimations.PressScale,
                         onClick = onReload,
                     )
-                    .yumaGlassCard(
+                    .ozoneGlassCard(
                         shape = CircleShape,
-                        backgroundColor = LocalYumaColors.current.glassBackground,
+                        backgroundColor = LocalOzoneColors.current.glassBackground,
                     )
                     .clip(CircleShape)
                     .semantics(mergeDescendants = true) {
@@ -92,7 +92,7 @@ internal fun SpotifyPlaylistControls(
                 Modifier
                     .weight(1f)
                     .height(48.dp)
-                    .yumaClickable(
+                    .ozoneClickable(
                         pressedScale = SettingsAnimations.PressScale,
                         enabled = hasTracks,
                         onClick = onPlay,
@@ -134,14 +134,14 @@ internal fun SpotifyPlaylistControls(
             modifier =
                 Modifier
                     .size(48.dp)
-                    .yumaClickable(
+                    .ozoneClickable(
                         pressedScale = SettingsAnimations.PressScale,
                         enabled = hasTracks,
                         onClick = onShuffle,
                     )
-                    .yumaGlassCard(
+                    .ozoneGlassCard(
                         shape = CircleShape,
-                        backgroundColor = LocalYumaColors.current.glassBackground,
+                        backgroundColor = LocalOzoneColors.current.glassBackground,
                     )
                     .clip(CircleShape)
                     .semantics(mergeDescendants = true) {

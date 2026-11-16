@@ -31,9 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import moe.rukamori.archivetune.constants.LibraryFilter
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @Immutable
 data class LibraryFilterChip(
@@ -116,16 +116,16 @@ private fun LibraryFilterChipItem(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    val yumaColors = LocalYumaColors.current
+    val ozoneColors = LocalOzoneColors.current
     val backgroundColor = if (selected) {
         MaterialTheme.colorScheme.primaryContainer
     } else {
-        yumaColors.glassBackground
+        ozoneColors.glassBackground
     }
     val borderColor = if (selected) {
         Color.Transparent
     } else {
-        yumaColors.glassBorder
+        ozoneColors.glassBorder
     }
     val contentColor = if (selected) {
         MaterialTheme.colorScheme.onPrimaryContainer
@@ -136,8 +136,8 @@ private fun LibraryFilterChipItem(
     Row(
         modifier = Modifier
             .height(SettingsDimensions.LibraryTabHeight)
-            .yumaClickable(onClick = onClick)
-            .yumaGlassCard(
+            .ozoneClickable(onClick = onClick)
+            .ozoneGlassCard(
                 shape = CircleShape,
                 backgroundColor = backgroundColor,
                 borderColor = borderColor,

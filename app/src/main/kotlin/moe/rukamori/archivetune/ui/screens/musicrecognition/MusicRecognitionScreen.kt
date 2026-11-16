@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -28,7 +28,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.ui.screens.search.onlineSearchResultRoute
 import moe.rukamori.archivetune.viewmodels.MusicRecognitionEvent
 import moe.rukamori.archivetune.viewmodels.MusicRecognitionViewModel
@@ -40,7 +40,7 @@ fun MusicRecognitionScreen(
     viewModel: MusicRecognitionViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
     val screenState by viewModel.screenState.collectAsStateWithLifecycle()
     val historySheetState by viewModel.historySheetState.collectAsStateWithLifecycle()
     val modalSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)

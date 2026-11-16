@@ -1,6 +1,6 @@
 /*
- * YumaPlayer (2026) | Original work by MuwMix
- * https://github.com/MuwMx/YumaPlayer
+ * Ozone Player (2026)
+ * https://github.com/aswadhkrishna22-prog/OzonePlayer
  * GPL-3.0 License | Contributors: see git history
  */
 
@@ -52,7 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.extensions.metadata
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.ui.state.PlayerUiState
 import moe.rukamori.archivetune.ui.state.QueueUiState
 import moe.rukamori.archivetune.ui.theme.SoftTextShadow
@@ -71,7 +71,7 @@ internal fun QueueSheetHeader(
     modifier: Modifier = Modifier,
     isAutoMixVisible: Boolean = true,
 ) {
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
 
     val closeInteractionSource = remember { MutableInteractionSource() }
     val closePressed by closeInteractionSource.collectIsPressedAsState()

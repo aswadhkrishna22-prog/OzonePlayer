@@ -1,6 +1,6 @@
 /*
- * YumaPlayer (2026) | Original work by MuwMix
- * https://github.com/MuwMx/YumaPlayer
+ * Ozone Player (2026)
+ * https://github.com/aswadhkrishna22-prog/OzonePlayer
  * GPL-3.0 License | Contributors: see git history
  */
 
@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -63,6 +64,8 @@ internal fun FullPlayerCoverSlot(
     val playPauseScaleState = rememberCoverPlayPauseScale(state.isPlaying)
     val trackSwitchScale = remember { Animatable(1f) }
     val coroutineScope = rememberCoroutineScope()
+    val currentPosition by playbackProgress.collectAsState()
+    val progressFraction = if (state.durationMs > 0) (currentPosition.toFloat() / state.durationMs.toFloat()).coerceIn(0f, 1f) else 0f
 
     val isCoverGlowEnabled by remember(
         state.isAlbumCoverGlowEnabled,
@@ -163,6 +166,7 @@ internal fun FullPlayerCoverSlot(
                             songTitle = state.title,
                             artistName = state.artist,
                             isPlaying = motionState.canPlayCanvas,
+                            progress = progressFraction,
                             canvasState = canvasState,
                             onCoverLoaded = {
                                 coroutineScope.launch {

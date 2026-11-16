@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -31,9 +31,9 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.UpdateChannel
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -59,14 +59,14 @@ internal fun UpdateSummaryCard(
     val statusContainerColor = if (isUpdateAvailable) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
     val statusContentColor = if (isUpdateAvailable) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
 
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val cardShape = RoundedCornerShape(28.dp)
     val imageShape = RoundedCornerShape(16.dp)
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .yumaGlassCard(
+            .ozoneGlassCard(
                 shape = cardShape,
                 backgroundColor = colors.glassBackground,
                 borderColor = colors.glassBorder,
@@ -162,14 +162,14 @@ internal fun InteractiveChip(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val shape = RoundedCornerShape(16.dp)
     val contentAlpha = if (enabled) 1f else 0.38f
 
     Box(
         modifier = modifier
-            .yumaClickable(enabled = enabled, pressedScale = SettingsAnimations.PressScale, onClick = onClick)
-            .yumaGlassCard(
+            .ozoneClickable(enabled = enabled, pressedScale = SettingsAnimations.PressScale, onClick = onClick)
+            .ozoneGlassCard(
                 shape = shape,
                 backgroundColor = if (enabled) colors.glassBackground else colors.glassBackground.copy(alpha = colors.glassBackground.alpha * 0.4f),
                 borderColor = if (enabled) colors.glassBorder else colors.glassBorder.copy(alpha = colors.glassBorder.alpha * 0.4f),

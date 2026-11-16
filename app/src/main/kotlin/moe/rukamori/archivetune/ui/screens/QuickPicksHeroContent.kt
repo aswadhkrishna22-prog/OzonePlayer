@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -43,7 +43,7 @@ import moe.rukamori.archivetune.ui.component.carousel.HeroItem
 import moe.rukamori.archivetune.ui.component.carousel.HeroRollEffects
 import moe.rukamori.archivetune.ui.component.carousel.HeroRollPhase
 import moe.rukamori.archivetune.ui.component.carousel.rememberHeroRollController
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.ui.menu.SongMenu
 import moe.rukamori.archivetune.ui.screens.home.HomeLayoutConfig
 import moe.rukamori.archivetune.ui.utils.LocalPlayerIsExpanded
@@ -58,7 +58,7 @@ internal fun QuickPicksHeroContent(
     menuState: MenuState,
     modifier: Modifier = Modifier,
 ) {
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
     val animationsDisabled = LocalAnimationsDisabled.current
     val isPlayerExpanded = LocalPlayerIsExpanded.current
 

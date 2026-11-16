@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -47,9 +47,9 @@ import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.innertube.pages.HomePage
 import moe.rukamori.archivetune.ui.component.horizontalFadingEdge
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -59,7 +59,7 @@ fun HomeCategoryChips(
     onChipSelected: (HomePage.Chip) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val scrollState = rememberScrollState()
     var containerWidth by remember { mutableIntStateOf(0) }
     val chipBoundsMap = remember { mutableStateMapOf<HomePage.Chip, Pair<Int, Int>>() }
@@ -80,7 +80,7 @@ fun HomeCategoryChips(
             modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 6.dp)
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = RoundedCornerShape(24.dp),
                     backgroundColor = colors.glassBackground,
                     borderColor = colors.glassBorder,
@@ -131,8 +131,8 @@ fun HomeCategoryChips(
                                 .onGloballyPositioned { coordinates ->
                                     chipBoundsMap[chip] = Pair(coordinates.positionInParent().x.toInt(), coordinates.size.width)
                                 }
-                                .yumaClickable(pressedScale = 0.94f) { onChipSelected(chip) }
-                                .yumaGlassCard(
+                                .ozoneClickable(pressedScale = 0.94f) { onChipSelected(chip) }
+                                .ozoneGlassCard(
                                     shape = CircleShape,
                                     backgroundColor = chipBgColor,
                                     borderColor = Color.Transparent,

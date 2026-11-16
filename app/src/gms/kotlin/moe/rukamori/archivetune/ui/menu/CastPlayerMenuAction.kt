@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -89,7 +89,7 @@ fun rememberCastPlayerMenuAction(): NewAction? {
             Icon(
                 painter = painterResource(androidx.media3.cast.R.drawable.media_route_button_disconnected),
                 contentDescription = null,
-                tint = Color.White.copy(alpha = SettingsDimensions.YumaRowIconAlpha),
+                tint = Color.White.copy(alpha = SettingsDimensions.OzoneRowIconAlpha),
                 modifier = Modifier.size(SettingsDimensions.RowIconInnerSize),
             )
         },

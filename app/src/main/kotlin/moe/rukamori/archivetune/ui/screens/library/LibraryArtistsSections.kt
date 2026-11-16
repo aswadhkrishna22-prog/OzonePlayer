@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -55,11 +55,11 @@ import moe.rukamori.archivetune.constants.ArtistSortType
 import moe.rukamori.archivetune.db.entities.Artist
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.YumaSegmentPosition
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaCombinedClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.OzoneSegmentPosition
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneCombinedClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @Composable
 fun SpotlightSection(
@@ -71,7 +71,7 @@ fun SpotlightSection(
     onFilterToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val yumaColors = LocalYumaColors.current
+    val ozoneColors = LocalOzoneColors.current
 
     Row(
         modifier =
@@ -87,15 +87,15 @@ fun SpotlightSection(
                 Modifier
                     .weight(1.3f)
                     .fillMaxHeight()
-                    .yumaClickable(
+                    .ozoneClickable(
                         pressedScale = SettingsAnimations.PressScale,
                         onClick = onOpenTopArtist,
                     )
-                    .yumaGlassCard(
+                    .ozoneGlassCard(
                         shape = RoundedCornerShape(SettingsDimensions.LibrarySheetRadius),
-                        backgroundColor = yumaColors.glassBackground,
-                        borderColor = yumaColors.glassBorder,
-                        position = YumaSegmentPosition.Single,
+                        backgroundColor = ozoneColors.glassBackground,
+                        borderColor = ozoneColors.glassBorder,
+                        position = OzoneSegmentPosition.Single,
                     )
                     .clip(RoundedCornerShape(SettingsDimensions.LibrarySheetRadius))
                     .padding(16.dp),
@@ -187,15 +187,15 @@ fun SpotlightSection(
                 Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .yumaClickable(
+                    .ozoneClickable(
                         pressedScale = SettingsAnimations.PressScale,
                         onClick = onFilterToggle,
                     )
-                    .yumaGlassCard(
+                    .ozoneGlassCard(
                         shape = RoundedCornerShape(SettingsDimensions.LibrarySheetRadius),
-                        backgroundColor = yumaColors.glassBackground,
-                        borderColor = yumaColors.glassBorder,
-                        position = YumaSegmentPosition.Single,
+                        backgroundColor = ozoneColors.glassBackground,
+                        borderColor = ozoneColors.glassBorder,
+                        position = OzoneSegmentPosition.Single,
                     )
                     .clip(RoundedCornerShape(SettingsDimensions.LibrarySheetRadius))
                     .padding(16.dp),
@@ -252,7 +252,7 @@ fun SortFilterBar(
     onSortDescendingChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val yumaColors = LocalYumaColors.current
+    val ozoneColors = LocalOzoneColors.current
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -300,11 +300,11 @@ fun SortFilterBar(
                     modifier =
                         Modifier
                             .height(SettingsDimensions.LibraryChipHeight)
-                            .yumaClickable { showSortMenu = true }
-                            .yumaGlassCard(
+                            .ozoneClickable { showSortMenu = true }
+                            .ozoneGlassCard(
                                 shape = CircleShape,
-                                backgroundColor = yumaColors.glassBackground,
-                                borderColor = yumaColors.glassBorder,
+                                backgroundColor = ozoneColors.glassBackground,
+                                borderColor = ozoneColors.glassBorder,
                                 strokeWidth = SettingsDimensions.GlassBorderThickness,
                             )
                             .clip(CircleShape)
@@ -355,11 +355,11 @@ fun SortFilterBar(
                 modifier =
                     Modifier
                         .size(SettingsDimensions.LibraryChipHeight)
-                        .yumaClickable { onSortDescendingChange(!sortDescending) }
-                        .yumaGlassCard(
+                        .ozoneClickable { onSortDescendingChange(!sortDescending) }
+                        .ozoneGlassCard(
                             shape = CircleShape,
-                            backgroundColor = yumaColors.glassBackground,
-                            borderColor = yumaColors.glassBorder,
+                            backgroundColor = ozoneColors.glassBackground,
+                            borderColor = ozoneColors.glassBorder,
                             strokeWidth = SettingsDimensions.GlassBorderThickness,
                         )
                         .clip(CircleShape),
@@ -386,10 +386,10 @@ fun SortFilterBar(
             modifier =
                 Modifier
                     .height(SettingsDimensions.LibraryChipHeight)
-                    .yumaGlassCard(
+                    .ozoneGlassCard(
                         shape = CircleShape,
-                        backgroundColor = yumaColors.glassBackground,
-                        borderColor = yumaColors.glassBorder,
+                        backgroundColor = ozoneColors.glassBackground,
+                        borderColor = ozoneColors.glassBorder,
                         strokeWidth = SettingsDimensions.GlassBorderThickness,
                     )
                     .clip(CircleShape)
@@ -419,23 +419,23 @@ fun ArtistGridCard(
     onPlayClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val yumaColors = LocalYumaColors.current
+    val ozoneColors = LocalOzoneColors.current
     val artist = artistWrapper.artist
 
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
-                .yumaCombinedClickable(
+                .ozoneCombinedClickable(
                     pressedScale = SettingsAnimations.PressScale,
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = RoundedCornerShape(SettingsDimensions.LibraryCardRadius),
-                    backgroundColor = yumaColors.glassBackground,
-                    borderColor = yumaColors.glassBorder,
-                    position = YumaSegmentPosition.Single,
+                    backgroundColor = ozoneColors.glassBackground,
+                    borderColor = ozoneColors.glassBorder,
+                    position = OzoneSegmentPosition.Single,
                 )
                 .clip(RoundedCornerShape(SettingsDimensions.LibraryCardRadius))
                 .padding(10.dp),
@@ -505,7 +505,7 @@ fun RecentArtistsRow(
                 modifier =
                     Modifier
                         .width(72.dp)
-                        .yumaClickable(
+                        .ozoneClickable(
                             pressedScale = SettingsAnimations.PressScale,
                             onClick = { onArtistClick(artistWrapper) },
                         ),

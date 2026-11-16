@@ -32,7 +32,7 @@ class SettingsRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context
 ) : SettingsRepository {
     private val prefs = context.getSharedPreferences("_settings", Context.MODE_PRIVATE)
-    private val sharedPrefs = context.getSharedPreferences("yuma_prefs", Context.MODE_PRIVATE)
+    private val sharedPrefs = context.getSharedPreferences("ozone_prefs", Context.MODE_PRIVATE)
 
     private val _settingsFlow = MutableStateFlow(loadSettings())
     override val userSettings: Flow<UserSettings> = _settingsFlow.asStateFlow()

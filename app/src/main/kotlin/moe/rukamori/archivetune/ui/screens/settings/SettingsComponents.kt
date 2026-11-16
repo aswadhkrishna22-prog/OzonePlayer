@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -86,10 +86,10 @@ import coil3.compose.AsyncImage
 import moe.rukamori.archivetune.ui.component.MarqueeText
 import moe.rukamori.archivetune.ui.component.LocalPreferenceItemIndex
 import moe.rukamori.archivetune.ui.component.rememberPreferenceIconShape
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.yumaClickable
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
-import moe.rukamori.archivetune.ui.theme.yumaSegmentPosition
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.ozoneClickable
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
+import moe.rukamori.archivetune.ui.theme.ozoneSegmentPosition
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 
@@ -187,19 +187,19 @@ fun SettingsUpdateBanner(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     val shape = RoundedCornerShape(SettingsDimensions.BannerCardCornerRadius)
 
     Box(
         modifier =
             modifier
                 .fillMaxWidth()
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = shape,
                     backgroundColor = colors.glassBackground,
                     borderColor = colors.glassBorder,
                 )
-                .yumaClickable(onClick = onClick),
+                .ozoneClickable(onClick = onClick),
     ) {
         Row(
             modifier =
@@ -443,7 +443,7 @@ fun SettingsSegmentedItem(
             MaterialTheme.colorScheme.surface
         }
     val shape = remember(index, count) { segmentedSettingsItemShape(index, count) }
-    val position = remember(index, count) { yumaSegmentPosition(index, count) }
+    val position = remember(index, count) { ozoneSegmentPosition(index, count) }
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
@@ -452,7 +452,7 @@ fun SettingsSegmentedItem(
         label = "settingsSegmentScale",
     )
 
-    val colors = LocalYumaColors.current
+    val colors = LocalOzoneColors.current
     Box(
         modifier =
             modifier
@@ -461,7 +461,7 @@ fun SettingsSegmentedItem(
                     scaleX = scale
                     scaleY = scale
                 }
-                .yumaGlassCard(
+                .ozoneGlassCard(
                     shape = shape,
                     backgroundColor = colors.glassBackground,
                     borderColor = colors.glassBorder,
@@ -640,7 +640,7 @@ fun playerAwareBottomInset(): Dp =
     LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding()
 
 @Composable
-fun YumaSettingsScaffold(
+fun OzoneSettingsScaffold(
     title: @Composable () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,

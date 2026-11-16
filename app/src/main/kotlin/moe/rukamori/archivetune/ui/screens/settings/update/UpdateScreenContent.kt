@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -53,7 +53,7 @@ internal fun UpdateScreenContent(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        YumaSettingsScaffold(
+        OzoneSettingsScaffold(
             title = {
                 Column {
                     Text(text = stringResource(R.string.updates), fontWeight = FontWeight.Bold)

@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -37,7 +37,7 @@ import moe.rukamori.archivetune.ui.component.ArtistGridItem
 import moe.rukamori.archivetune.ui.component.MenuState
 import moe.rukamori.archivetune.ui.component.SongGridItem
 import moe.rukamori.archivetune.ui.component.YouTubeGridItem
-import moe.rukamori.archivetune.ui.haptics.rememberYumaHaptics
+import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.ui.menu.AlbumMenu
 import moe.rukamori.archivetune.ui.menu.ArtistMenu
 import moe.rukamori.archivetune.ui.menu.SongMenu
@@ -63,7 +63,7 @@ internal fun YouTubeGridItemWrapper(
     cardWidth: Dp = GridThumbnailHeight,
     artistSize: Dp = GridThumbnailHeight,
 ) {
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
     val thumbnailHeight =
         when (item) {
             is ArtistItem -> artistSize
@@ -160,7 +160,7 @@ internal fun LocalGridItem(
     cardWidth: Dp = GridThumbnailHeight,
     artistSize: Dp = GridThumbnailHeight,
 ) {
-    val haptics = rememberYumaHaptics()
+    val haptics = rememberOzoneHaptics()
     when (item) {
         is Song -> {
             SongGridItem(

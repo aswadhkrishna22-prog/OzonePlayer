@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name" translatable="false">Yuma</string>
+    <string name="app_name" translatable="false">Ozone</string>
     <string name="home">Home</string>
     <string name="songs">Songs</string>
     <string name="artists">Artists</string>
@@ -33,7 +33,7 @@
     <string name="support_development_message">If %1$s is your go-to music player, consider supporting its development. You can star the project on GitHub or make a donation to help fuel new features and updates. Thanks for your support!</string>
     <string name="later">Later</string>
     <string name="support_development_star">Star on GitHub</string>
-    <string name="music_together">YumaPlayer Music Together</string>
+    <string name="music_together">OzonePlayer Music Together</string>
     <string name="weeks">Weeks</string>
     <string name="months">Months</string>
     <string name="years">Years</string>

@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -175,7 +175,7 @@ constructor(
 
     private companion object {
         const val ContributorsLimit = 20
-        const val GitHubOwner = "MuwMx"
-        const val GitHubRepo = "YumaPlayer"
+        const val GitHubOwner = "aswadhkrishna22-prog"
+        const val GitHubRepo = "OzonePlayer"
     }
 }

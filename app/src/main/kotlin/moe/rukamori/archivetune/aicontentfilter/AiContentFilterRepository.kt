@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -300,7 +300,7 @@ class AiContentFilterRepository
                 "https://raw.githubusercontent.com/Override92/AiSList/main/AiSList/aislist_blocklist.txt"
             private const val WARNLIST_URL =
                 "https://raw.githubusercontent.com/Override92/AiSList/main/AiSList/aislist_warnlist.txt"
-            private const val USER_AGENT = "YumaPlayer-AiContentFilter"
+            private const val USER_AGENT = "OzonePlayer-AiContentFilter"
             private const val MAX_RESPONSE_BYTES = 5 * 1024 * 1024
             private const val BUFFER_SIZE_BYTES = 8 * 1024
             private const val REFRESH_INTERVAL_MILLIS = 4 * 60 * 60 * 1000L

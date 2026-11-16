@@ -55,8 +55,8 @@ import moe.rukamori.archivetune.ui.player.player_0.PlayerSeekBar
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.state.PlayerUiState
-import moe.rukamori.archivetune.ui.theme.LocalYumaColors
-import moe.rukamori.archivetune.ui.theme.darkYumaColorScheme
+import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.theme.darkOzoneColorScheme
 import moe.rukamori.archivetune.ui.theme.glassBorder
 import moe.rukamori.archivetune.ui.theme.transparentIconShadow
 import moe.rukamori.archivetune.ui.utils.bounceClick
@@ -142,7 +142,7 @@ fun LyricsContentCard(
                 MaterialTheme(colorScheme = darkScheme) {
                     CompositionLocalProvider(
                         LocalContentColor provides Color.White,
-                        LocalYumaColors provides darkYumaColorScheme(darkScheme),
+                        LocalOzoneColors provides darkOzoneColorScheme(darkScheme),
                     ) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),

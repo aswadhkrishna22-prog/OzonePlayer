@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -104,6 +104,9 @@ fun NavGraphBuilder.navigationBuilder(
     }
     composable(Screens.MoodAndGenres.route) {
         MoodAndGenresScreen(navController)
+    }
+    composable("internet_radio") {
+        moe.rukamori.archivetune.ui.screens.radio.RadioScreen(navController)
     }
     composable("account") {
         AccountScreen(navController, scrollBehavior)

@@ -24,8 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.YumaSegmentPosition
-import moe.rukamori.archivetune.ui.theme.yumaGlassCard
+import moe.rukamori.archivetune.ui.theme.OzoneSegmentPosition
+import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @Composable
 fun LibraryEmptyState(
@@ -53,9 +53,9 @@ fun LibraryEmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .fillMaxWidth()
-            .yumaGlassCard(
+            .ozoneGlassCard(
                 shape = RoundedCornerShape(SettingsDimensions.LibrarySheetRadius),
-                position = YumaSegmentPosition.Single,
+                position = OzoneSegmentPosition.Single,
             )
             .clip(RoundedCornerShape(SettingsDimensions.LibrarySheetRadius))
             .padding(horizontal = 20.dp, vertical = 32.dp),

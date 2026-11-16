@@ -90,7 +90,7 @@ fun CustomizationMenuContent(
 
         Text(
             text = stringResource(R.string.more_visual_effects_coming_soon),
-            color = Color.White.copy(alpha = SettingsDimensions.YumaRowSubtitleAlpha),
+            color = Color.White.copy(alpha = SettingsDimensions.OzoneRowSubtitleAlpha),
             fontSize = 11.sp,
             lineHeight = 14.sp,
             modifier = Modifier.padding(start = 8.dp, top = 8.dp)

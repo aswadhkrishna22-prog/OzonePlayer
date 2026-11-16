@@ -1,5 +1,5 @@
 /*
- * YumaPlayer (2026) | Modified work by MuwMix
+ * Ozone Player (2026)
  * ArchiveTune (2026) | Original work by © Rukamori
  * GPL-3.0 License | Contributors: see git history
  */
@@ -123,7 +123,7 @@ class SponsorBlockRepository
                         parameter("categories", json.encodeToString(categoryValues))
                         parameter("actionTypes", SKIP_ACTION_TYPES_JSON)
                         parameter("service", YOUTUBE_SERVICE)
-                        header(HttpHeaders.UserAgent, "YumaPlayer/${BuildConfig.VERSION_NAME}")
+                        header(HttpHeaders.UserAgent, "OzonePlayer/${BuildConfig.VERSION_NAME}")
                     }
 
                 val segments =
