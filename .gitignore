@@ -127,3 +127,11 @@ deploy*.py
 opencode.json
 /.omo/
 graphify-out/
+
+# Patch and secret files
+*.patch
+*.diff
+*.key
+*.pem
+secrets/
+
