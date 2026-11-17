@@ -314,25 +314,11 @@ fun SpeedDialSection(
             }
         }
     val motionScheme = MaterialTheme.motionScheme
-    val sectionShape = remember { RoundedCornerShape(20.dp) }
-    val sectionBorder = remember {
-        BorderStroke(
-            1.dp,
-            Brush.verticalGradient(
-                listOf(
-                    Color.White.copy(alpha = 0.14f),
-                    Color.White.copy(alpha = 0.03f),
-                    Color.Transparent,
-                )
-            )
-        )
-    }
 
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = sectionShape,
-        tonalElevation = 2.dp,
-        border = sectionBorder,
+        shape = MaterialTheme.shapes.large,
+        tonalElevation = 1.dp,
         modifier =
             modifier
                 .padding(horizontal = 12.dp)

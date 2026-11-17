@@ -2,12 +2,10 @@ package moe.rukamori.archivetune.ui.player.player_0
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
@@ -30,7 +28,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
@@ -183,46 +180,20 @@ fun PlayerCoverCard(
         }
     }
 
-    val playPauseScale by animateFloatAsState(
-        targetValue = if (isPlaying) 1.0f else 0.94f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "PlayerCoverPlayPauseScale"
-    )
-
     val shape24 = remember { RoundedCornerShape(24.dp) }
 
     Box(
         modifier = modifier
             .aspectRatio(1f, matchHeightConstraintsFirst = true)
             .graphicsLayer {
-                scaleX = playPauseScale
-                scaleY = playPauseScale
                 translationX = offsetX.value
                 val isDraggingCover = abs(offsetX.value) > 1f
-                shadowElevation = if (isDraggingCover) 6.dp.toPx() else (if (isPlaying) 18.dp.toPx() else 8.dp.toPx())
+                shadowElevation = if (isDraggingCover) 6.dp.toPx() else 14.dp.toPx()
                 shape = shape24
                 clip = false
                 ambientShadowColor = shadowColor.copy(alpha = 0.5f)
-                spotShadowColor = if (activeVibrantColor != Color.Transparent) {
-                    activeVibrantColor.copy(alpha = if (isPlaying) 0.55f else 0.22f)
-                } else {
-                    shadowColor.copy(alpha = 0.4f)
-                }
+                spotShadowColor = shadowColor.copy(alpha = 0.4f)
             }
-            .border(
-                width = 1.dp,
-                brush = Brush.verticalGradient(
-                    listOf(
-                        Color.White.copy(alpha = 0.22f),
-                        Color.White.copy(alpha = 0.04f),
-                        Color.Transparent
-                    )
-                ),
-                shape = shape24
-            )
             .then(
                 if (gestureEnabled) {
                     Modifier.pointerInput(key1 = onNext, key2 = onPrevious) {

@@ -137,8 +137,7 @@ internal fun RowScope.NavigationTabItem(
                 text = stringResource(screen.titleId),
                 color = contentColor,
                 fontSize = NavigationTabLabelSize,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                letterSpacing = if (selected) (-0.1).sp else 0.sp,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                 maxLines = 1,
                 modifier = Modifier.padding(top = NavigationTabLabelTopPadding),
             )
