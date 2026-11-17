@@ -48,10 +48,10 @@ internal object NavBarColors {
     fun container(pureBlack: Boolean) = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer
 
     @Composable
-    fun iconActive(pureBlack: Boolean) = if (pureBlack) Color.White else MaterialTheme.colorScheme.primary
+    fun iconActive(pureBlack: Boolean) = Color(0xFF00F2FE)
 
     @Composable
-    fun iconInactive(pureBlack: Boolean) = if (pureBlack) Color.White.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurfaceVariant
+    fun iconInactive(pureBlack: Boolean) = if (pureBlack) Color.White.copy(alpha = 0.55f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f)
 }
 
 @Composable
