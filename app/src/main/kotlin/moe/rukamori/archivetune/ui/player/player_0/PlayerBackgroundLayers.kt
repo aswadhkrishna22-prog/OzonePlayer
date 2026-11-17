@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -137,7 +138,7 @@ fun PlayerBackgroundLayers(
                 val stop70 = lerp(midTone, currentBg.copy(alpha = 0.70f), currentGlow)
                 val stop100 = lerp(deepTone, charcoalTone, currentGlow)
 
-                val brush = Brush.verticalGradient(
+                val baseLinearBrush = Brush.verticalGradient(
                     0.0f to stop0,
                     0.35f to stop35,
                     0.70f to stop70,
@@ -146,8 +147,34 @@ fun PlayerBackgroundLayers(
                     endY = size.height
                 )
 
+                // Aurora ambient mesh: upper radiant bloom behind artwork
+                val upperAlphaStart = (0.32f + 0.23f * currentGlow).coerceIn(0f, 1f)
+                val upperAlphaMid = (0.12f + 0.13f * currentGlow).coerceIn(0f, 1f)
+                val upperAuroraBrush = Brush.radialGradient(
+                    colors = listOf(
+                        currentBg.copy(alpha = upperAlphaStart),
+                        currentBg.copy(alpha = upperAlphaMid),
+                        Color.Transparent
+                    ),
+                    center = Offset(size.width * 0.45f, size.height * 0.28f),
+                    radius = size.width * 0.90f
+                )
+
+                // Aurora secondary ambient glow: mid-right harmonic resonance
+                val secondaryAlpha = (0.18f + 0.17f * currentGlow).coerceIn(0f, 1f)
+                val secondaryAuroraBrush = Brush.radialGradient(
+                    colors = listOf(
+                        currentBg.copy(alpha = secondaryAlpha),
+                        Color.Transparent
+                    ),
+                    center = Offset(size.width * 0.80f, size.height * 0.55f),
+                    radius = size.width * 0.70f
+                )
+
                 onDrawBehind {
-                    drawRect(brush = brush)
+                    drawRect(brush = baseLinearBrush)
+                    drawRect(brush = upperAuroraBrush)
+                    drawRect(brush = secondaryAuroraBrush)
                 }
             }
     ) {
