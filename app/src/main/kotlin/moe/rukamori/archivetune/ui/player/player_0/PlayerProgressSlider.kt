@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -17,12 +18,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import kotlin.math.abs
+import moe.rukamori.archivetune.ui.haptics.LocalOzoneHaptics
 
 @Composable
 internal fun PlayerProgressSlider(
@@ -39,6 +43,8 @@ internal fun PlayerProgressSlider(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
+    val haptics = LocalOzoneHaptics.current
+    var lastHapticFraction by remember { mutableFloatStateOf(0f) }
     var isPressed by remember { mutableStateOf(false) }
     var isDragged by remember { mutableStateOf(false) }
     val isInteracting = isPressed || isDragged
@@ -83,6 +89,7 @@ internal fun PlayerProgressSlider(
                                 },
                                 onTap = { offset ->
                                     currentOnValueChangeStarted()
+                                    haptics.click()
                                     val range = currentValueRange
                                     val span = range.endInclusive - range.start
                                     val fraction = if (size.width > 0) (offset.x / size.width.toFloat()).coerceIn(0f, 1f) else 0f
@@ -97,10 +104,12 @@ internal fun PlayerProgressSlider(
                                 onDragStart = { offset ->
                                     isPressed = false
                                     isDragged = true
+                                    haptics.gestureStart()
                                     currentOnValueChangeStarted()
                                     val range = currentValueRange
                                     val span = range.endInclusive - range.start
                                     val fraction = if (size.width > 0) (offset.x / size.width.toFloat()).coerceIn(0f, 1f) else 0f
+                                    lastHapticFraction = fraction
                                     val newValue = if (span > 0f) (range.start + fraction * span).coerceIn(range) else range.start
                                     currentOnValueChange(newValue)
                                 },
@@ -109,15 +118,21 @@ internal fun PlayerProgressSlider(
                                     val range = currentValueRange
                                     val span = range.endInclusive - range.start
                                     val fraction = if (size.width > 0) (change.position.x / size.width.toFloat()).coerceIn(0f, 1f) else 0f
+                                    if (abs(fraction - lastHapticFraction) >= 0.04f) {
+                                        haptics.segmentTick()
+                                        lastHapticFraction = fraction
+                                    }
                                     val newValue = if (span > 0f) (range.start + fraction * span).coerceIn(range) else range.start
                                     currentOnValueChange(newValue)
                                 },
                                 onDragEnd = {
                                     isDragged = false
+                                    haptics.gestureEnd()
                                     currentOnValueChangeFinished()
                                 },
                                 onDragCancel = {
                                     isDragged = false
+                                    haptics.gestureEnd()
                                     currentOnValueChangeFinished()
                                 },
                             )
@@ -151,10 +166,37 @@ internal fun PlayerProgressSlider(
         val fraction = progressFractionProvider()
         val fillWidth = size.width * fraction
         drawRoundRect(
-            color = if (isInteracting) accentColor else Color.White,
+            brush = Brush.horizontalGradient(
+                colors = listOf(
+                    if (isInteracting) accentColor.copy(alpha = 0.85f) else Color.White.copy(alpha = 0.90f),
+                    if (isInteracting) accentColor else Color.White,
+                ),
+                startX = 0f,
+                endX = fillWidth.coerceAtLeast(1f)
+            ),
             topLeft = Offset(0f, top),
             size = Size(fillWidth, trackHeightPx),
             cornerRadius = CornerRadius(trackHeightPx / 2f, trackHeightPx / 2f),
         )
+
+        if (isInteracting && fillWidth > 0f) {
+            val thumbRadius = 6.dp.toPx()
+            val thumbCenter = Offset(fillWidth.coerceIn(0f, size.width), size.height / 2f)
+            drawCircle(
+                color = accentColor.copy(alpha = 0.35f),
+                radius = thumbRadius * 2.2f,
+                center = thumbCenter
+            )
+            drawCircle(
+                color = Color.White,
+                radius = thumbRadius,
+                center = thumbCenter
+            )
+            drawCircle(
+                color = accentColor,
+                radius = thumbRadius * 0.45f,
+                center = thumbCenter
+            )
+        }
     }
 }

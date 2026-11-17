@@ -186,6 +186,10 @@ fun PlayerTransportControls(
                         .size(CenterButtonSize)
                         .clip(CircleShape)
                         .drawBehind {
+                            drawCircle(
+                                color = animatedAccentColor.copy(alpha = 0.32f),
+                                radius = size.minDimension / 2f + 4.dp.toPx()
+                            )
                             drawCircle(animatedAccentColor)
                         },
                     contentAlignment = Alignment.Center,
