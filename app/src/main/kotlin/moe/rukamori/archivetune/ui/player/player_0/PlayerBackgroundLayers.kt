@@ -148,10 +148,12 @@ fun PlayerBackgroundLayers(
                 )
 
                 // Aurora ambient mesh: upper radiant bloom behind artwork
+                val upperAlphaStart = (0.32f + 0.23f * currentGlow).coerceIn(0f, 1f)
+                val upperAlphaMid = (0.12f + 0.13f * currentGlow).coerceIn(0f, 1f)
                 val upperAuroraBrush = Brush.radialGradient(
                     colors = listOf(
-                        currentBg.copy(alpha = lerp(0.32f, 0.55f, currentGlow)),
-                        currentBg.copy(alpha = lerp(0.12f, 0.25f, currentGlow)),
+                        currentBg.copy(alpha = upperAlphaStart),
+                        currentBg.copy(alpha = upperAlphaMid),
                         Color.Transparent
                     ),
                     center = Offset(size.width * 0.45f, size.height * 0.28f),
@@ -159,9 +161,10 @@ fun PlayerBackgroundLayers(
                 )
 
                 // Aurora secondary ambient glow: mid-right harmonic resonance
+                val secondaryAlpha = (0.18f + 0.17f * currentGlow).coerceIn(0f, 1f)
                 val secondaryAuroraBrush = Brush.radialGradient(
                     colors = listOf(
-                        currentBg.copy(alpha = lerp(0.18f, 0.35f, currentGlow)),
+                        currentBg.copy(alpha = secondaryAlpha),
                         Color.Transparent
                     ),
                     center = Offset(size.width * 0.80f, size.height * 0.55f),
