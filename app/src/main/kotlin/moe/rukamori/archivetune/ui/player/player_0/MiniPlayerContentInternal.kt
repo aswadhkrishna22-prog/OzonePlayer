@@ -250,7 +250,7 @@ internal fun MiniPlayerContentInternal(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, bottom = 2.dp)
+                .padding(start = 16.dp, end = 16.dp, bottom = 2.dp)
                 .height(2.5.dp)
         ) {
             Box(
