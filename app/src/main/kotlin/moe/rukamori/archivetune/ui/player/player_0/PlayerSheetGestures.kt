@@ -48,6 +48,8 @@ internal fun rememberPlayerSheetGestures(
         hapticFeedbackEnabled = hapticFeedbackEnabled,
         offsetAnimatable = motionScope.offsetAnimatable,
         screenWidthPx = motionScope.screenWidthPx,
+        onNext = { currentOnAction(PlayerAction.Next) },
+        onPrevious = { currentOnAction(PlayerAction.Previous) },
         onDismissPlaylistAndShowUndo = { currentOnAction(PlayerAction.Dismiss) }
     )
 
