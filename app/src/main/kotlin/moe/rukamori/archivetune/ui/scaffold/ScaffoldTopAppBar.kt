@@ -46,6 +46,7 @@ import androidx.navigation.NavHostController
 import kotlinx.coroutines.delay
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.AppBarHeight
+import moe.rukamori.archivetune.ui.component.OzoneHeaderLogo
 import moe.rukamori.archivetune.ui.screens.Screens
 import dev.chrisbanes.haze.HazeState
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
@@ -131,9 +132,8 @@ fun ScaffoldTopAppBar(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.about_appbar),
-                        contentDescription = null,
+                    OzoneHeaderLogo(
+                        isHomeScreen = currentRoute == Screens.Home.route,
                         modifier = Modifier
                             .size(35.dp)
                             .padding(end = 6.dp),
