@@ -17,22 +17,22 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
         with:
           distribution: "temurin"
           java-version: "21"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b # v4.3.0
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Run Unit Tests
-        run: ./gradlew :flaccore:test testGmsMobileUniversalDebugUnitTest --tests "moe.rukamori.archivetune.kemo.KemoStateTest" --tests "moe.rukamori.archivetune.beastmode.BeastModeTest" --tests "moe.rukamori.archivetune.playback.queue.SongVibeMatcherTest" --tests "moe.rukamori.archivetune.spotify.SpotifyPlaybackResolverTest" --tests "moe.rukamori.archivetune.spotify.SpotifyLazyTrackMatcherTest" --tests "moe.rukamori.archivetune.ui.screens.search.SearchSlideAnimationTest" --tests "moe.rukamori.archivetune.playback.resolvers.JioSaavnPlaybackResolutionTest" --tests "moe.rukamori.archivetune.ui.screens.playlist.PlaylistDownloadSheetTest" --tests "moe.rukamori.archivetune.ui.player.player_0.MiniPlayerRollingArtworkTest" --stacktrace
+        run: ./gradlew :flaccore:test testGmsMobileUniversalDebugUnitTest --tests "moe.rukamori.archivetune.utils.SecureDataStoreTest" --tests "moe.rukamori.archivetune.kemo.KemoStateTest" --tests "moe.rukamori.archivetune.beastmode.BeastModeTest" --tests "moe.rukamori.archivetune.playback.queue.SongVibeMatcherTest" --tests "moe.rukamori.archivetune.spotify.SpotifyPlaybackResolverTest" --tests "moe.rukamori.archivetune.spotify.SpotifyLazyTrackMatcherTest" --tests "moe.rukamori.archivetune.ui.screens.search.SearchSlideAnimationTest" --tests "moe.rukamori.archivetune.playback.resolvers.JioSaavnPlaybackResolutionTest" --tests "moe.rukamori.archivetune.ui.screens.playlist.PlaylistDownloadSheetTest" --tests "moe.rukamori.archivetune.ui.player.player_0.MiniPlayerRollingArtworkTest" --stacktrace
 
       - name: Build Normal Debug APK
         run: ./gradlew assembleGmsMobileUniversalDebug -Pdualplay=true --stacktrace
@@ -95,13 +95,13 @@ jobs:
           ' | tee -a $GITHUB_STEP_SUMMARY
 
       - name: Upload Debug APK Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: OzonePlayer-dualplay-debug
           path: app/build/outputs/apk/gmsMobileUniversal/debug/*.apk
 
       - name: Upload R8 Test Release APK Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: OzonePlayer-rtest-release
           path: app/build/outputs/apk/gmsMobileUniversal/release/*.apk

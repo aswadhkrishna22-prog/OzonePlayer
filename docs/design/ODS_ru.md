@@ -1,4 +1,4 @@
-# Ozone Design System (YDS)
+# Ozone Design System (ODS)
 
 **Version:** 2.1
 

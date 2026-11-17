@@ -23,12 +23,12 @@ In case of conflict between this file and code, this file takes precedence. In c
 | Category | Technology | Notes |
 | :--- | :--- | :--- |
 | UI | Jetpack Compose + Material 3 Expressive | XML layouts are forbidden for new screens (ADR-005) |
-| Design tokens | YDS 2.1 (`docs/design/YDS.md`) | Colors, radii, spacing, and shapes only from tokens |
+| Design tokens | ODS 2.1 (`docs/design/ODS.md`) | Colors, radii, spacing, and shapes only from tokens |
 | Playback | AndroidX Media3 / ExoPlayer (`MediaSessionService`, `MediaController`, `ExoPlayer`) | Sole playback engine (ADR-004) |
 | Local storage | Room (schema v36) | DTOs and Entities must never leave the data layer |
 | Network | Ktor / OkHttp | Single project-wide HTTP client, singleton via DI |
 | Images | Coil | Load only with resize to display size |
-| Cryptography | Google Tink (AES-256-GCM) | Tokens and cookies only in encrypted DataStore |
+| Local persistence | Android Jetpack DataStore | Tokens and preferences strictly in private sandbox storage |
 | Concurrency | Kotlinx Coroutines + Flow (`StateFlow`, `SharedFlow` / `Channel`) | `Dispatchers.IO` for I/O, `Dispatchers.Default` for CPU-bound work |
 | Serialization | Kotlinx Serialization | DTOs must carry `@Serializable` / `@Keep` for R8 |
 | DI | Hilt (composition root in `:app`) | No Service Locator, no manual singletons |
