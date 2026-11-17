@@ -29,6 +29,8 @@ internal class MiniPlayerDismissGestureHandler(
     private val hapticFeedbackEnabled: Boolean,
     private val offsetAnimatable: Animatable<Float, AnimationVector1D>,
     private val screenWidthPx: Float,
+    private val onNext: () -> Unit = {},
+    private val onPrevious: () -> Unit = {},
     private val onDismissPlaylistAndShowUndo: () -> Unit,
     private val onDismissStarted: () -> Unit = {}
 ) {
@@ -112,7 +114,9 @@ internal class MiniPlayerDismissGestureHandler(
         haptics.cancel()
         offsetJob?.cancel()
 
-        val dismissThreshold = screenWidthPx * 0.4f
+        val dismissThreshold = screenWidthPx * 0.55f
+        val skipThreshold = 56f * density.density
+
         if (abs(accumulatedDragX) > dismissThreshold) {
             onDismissStarted()
             haptics.performHaptic(HapticFeedbackConstantsCompat.GESTURE_END)
@@ -128,6 +132,34 @@ internal class MiniPlayerDismissGestureHandler(
                 onDismissPlaylistAndShowUndo()
                 delay(300)
                 offsetAnimatable.snapTo(0f)
+            }
+        } else if (accumulatedDragX < -skipThreshold) {
+            // Swipe Left -> Skip to Next Track
+            haptics.performHaptic(HapticFeedbackConstantsCompat.GESTURE_END)
+            onNext()
+            offsetJob = scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                offsetAnimatable.snapTo(screenWidthPx * 0.22f)
+                offsetAnimatable.animateTo(
+                    targetValue = 0f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                )
+            }
+        } else if (accumulatedDragX > skipThreshold) {
+            // Swipe Right -> Skip to Previous Track
+            haptics.performHaptic(HapticFeedbackConstantsCompat.GESTURE_END)
+            onPrevious()
+            offsetJob = scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                offsetAnimatable.snapTo(-screenWidthPx * 0.22f)
+                offsetAnimatable.animateTo(
+                    targetValue = 0f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                )
             }
         } else {
             offsetJob = scope.launch(start = CoroutineStart.UNDISPATCHED) {

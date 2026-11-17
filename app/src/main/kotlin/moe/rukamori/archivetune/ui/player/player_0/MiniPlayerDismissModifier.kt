@@ -25,9 +25,13 @@ internal fun rememberMiniPlayerDismissGestureHandler(
     hapticFeedbackEnabled: Boolean,
     offsetAnimatable: Animatable<Float, AnimationVector1D>,
     screenWidthPx: Float,
+    onNext: () -> Unit = {},
+    onPrevious: () -> Unit = {},
     onDismissPlaylistAndShowUndo: () -> Unit,
     onDismissStarted: () -> Unit = {}
 ): MiniPlayerDismissGestureHandler {
+    val onNextState = rememberUpdatedState(onNext)
+    val onPreviousState = rememberUpdatedState(onPrevious)
     val onDismissPlaylistAndShowUndoState = rememberUpdatedState(onDismissPlaylistAndShowUndo)
     val onDismissStartedState = rememberUpdatedState(onDismissStarted)
     return remember(scope, density, context, hapticView, hapticFeedbackEnabled, offsetAnimatable, screenWidthPx) {
@@ -39,6 +43,8 @@ internal fun rememberMiniPlayerDismissGestureHandler(
             hapticFeedbackEnabled = hapticFeedbackEnabled,
             offsetAnimatable = offsetAnimatable,
             screenWidthPx = screenWidthPx,
+            onNext = { onNextState.value() },
+            onPrevious = { onPreviousState.value() },
             onDismissPlaylistAndShowUndo = { onDismissPlaylistAndShowUndoState.value() },
             onDismissStarted = { onDismissStartedState.value() }
         )

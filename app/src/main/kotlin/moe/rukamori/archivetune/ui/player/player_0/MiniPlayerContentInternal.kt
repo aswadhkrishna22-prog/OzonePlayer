@@ -3,17 +3,21 @@ package moe.rukamori.archivetune.ui.player.player_0
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -131,81 +136,145 @@ internal fun MiniPlayerContentInternal(
         previousQueueIndex = currentMediaItemIndex
     }
 
-    Row(
+    val accentColor = remember(state.vibrantColor) {
+        if (state.vibrantColor != 0) Color(state.vibrantColor) else Color(0xFF00F2FE)
+    }
+
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .height(MiniPlayerHeight)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onMediaAreaClick
-            )
-            .padding(start = 12.dp, end = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier.size(48.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularWavyProgressIndicator(
-                progress = {
-                    val duration = state.durationMs
-                    if (duration > 0L) {
-                        (progressMs.toFloat() / duration).coerceIn(0f, 1f)
-                    } else {
-                        0f
-                    }
-                },
-                modifier = Modifier.fillMaxSize(),
-                trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
-                waveSpeed = if (isAudible && isVisible) WavyProgressIndicatorDefaults.CircularWavelength else 0.dp,
-            )
-
-            RollingArtwork(
-                mediaId = currentMediaId,
-                model = state.coverUrl,
-                placeholderResId = state.placeholderResId,
-                size = 40.dp,
-                slotPaddingExtra = 10.dp,
-                isForward = isForward,
-                isRollingAllowed = allowAnimation,
-                spinRotationProvider = { rotation.value }
-            )
-        }
-
-        Column(
+        Row(
             modifier = Modifier
-                .weight(1f)
-                .padding(start = 16.dp, end = 12.dp),
-            verticalArrangement = Arrangement.Center
+                .fillMaxSize()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onMediaAreaClick
+                )
+                .padding(start = 12.dp, end = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            MarqueeText(
-                text = state.title,
-                style = TextStyle(
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    shadow = SoftTextShadow
-                ),
-                maxLines = 1,
-                isVisible = isVisible
-            )
+            Box(
+                modifier = Modifier.size(48.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularWavyProgressIndicator(
+                    progress = {
+                        val duration = state.durationMs
+                        if (duration > 0L) {
+                            (progressMs.toFloat() / duration).coerceIn(0f, 1f)
+                        } else {
+                            0f
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                    trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                    waveSpeed = if (isAudible && isVisible) WavyProgressIndicatorDefaults.CircularWavelength else 0.dp,
+                )
 
-            MarqueeText(
-                text = state.artist,
-                style = TextStyle(
-                    color = Color(0xE6FFFFFF),
-                    fontSize = 12.sp,
-                    shadow = SoftTextShadow
-                ),
-                maxLines = 1,
-                isVisible = isVisible
+                RollingArtwork(
+                    mediaId = currentMediaId,
+                    model = state.coverUrl,
+                    placeholderResId = state.placeholderResId,
+                    size = 40.dp,
+                    slotPaddingExtra = 10.dp,
+                    isForward = isForward,
+                    isRollingAllowed = allowAnimation,
+                    spinRotationProvider = { rotation.value }
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 14.dp, end = 10.dp),
+                verticalArrangement = Arrangement.Center
+            ) {
+                MarqueeText(
+                    text = state.title,
+                    style = TextStyle(
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = (-0.2).sp,
+                        shadow = SoftTextShadow
+                    ),
+                    maxLines = 1,
+                    isVisible = isVisible
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    modifier = Modifier.padding(top = 2.dp)
+                ) {
+                    if (isAudible) {
+                        Box(
+                            modifier = Modifier
+                                .size(5.dp)
+                                .background(accentColor, CircleShape)
+                        )
+                    }
+                    MarqueeText(
+                        text = state.artist,
+                        style = TextStyle(
+                            color = Color.White.copy(alpha = 0.72f),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            shadow = SoftTextShadow
+                        ),
+                        maxLines = 1,
+                        isVisible = isVisible
+                    )
+                }
+            }
+
+            MiniPlayerButtons(
+                state = state,
+                onAction = onAction
             )
         }
 
-        MiniPlayerButtons(
-            state = state,
-            onAction = onAction
-        )
+        // Perimeter Laser Progress Line at the bottom of the capsule
+        val progressFraction = remember(progressMs, state.durationMs) {
+            if (state.durationMs > 0L) {
+                (progressMs.toFloat() / state.durationMs).coerceIn(0f, 1f)
+            } else {
+                0f
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, bottom = 2.dp)
+                .height(2.5.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White.copy(alpha = 0.08f), RoundedCornerShape(1.5.dp))
+            )
+            if (progressFraction > 0f) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(fraction = progressFraction)
+                        .fillMaxHeight()
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                listOf(
+                                    accentColor,
+                                    Color(0xFF00F2FE),
+                                    Color(0xFF4FACFE)
+                                )
+                            ),
+                            shape = RoundedCornerShape(1.5.dp)
+                        )
+                )
+            }
+        }
     }
 }
