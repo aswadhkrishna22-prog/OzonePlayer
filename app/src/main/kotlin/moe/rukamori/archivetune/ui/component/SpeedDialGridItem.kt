@@ -11,6 +11,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
@@ -78,7 +79,26 @@ fun SpeedDialGridItem(
         animationSpec = motionScheme.fastSpatialSpec(),
         label = "speedDialPlayingScale",
     )
-    val shape = if (isActive) MaterialTheme.shapes.extraLarge else MaterialTheme.shapes.large
+    val shape = RoundedCornerShape(16.dp)
+    val activeBorderBrush = remember {
+        Brush.verticalGradient(listOf(Color(0xFF00F2FE), Color(0xFF4FACFE)))
+    }
+    val defaultBorderBrush = remember {
+        Brush.verticalGradient(
+            listOf(
+                Color.White.copy(alpha = 0.22f),
+                Color.White.copy(alpha = 0.05f),
+                Color.Transparent,
+            )
+        )
+    }
+    val tileBorder = remember(isActive) {
+        if (isActive) {
+            BorderStroke(2.dp, activeBorderBrush)
+        } else {
+            BorderStroke(1.dp, defaultBorderBrush)
+        }
+    }
     val foregroundColor = Color.White
     val pinnedIconColor = Color.Black.copy(alpha = 0.86f)
     val labelGradient =
@@ -96,7 +116,7 @@ fun SpeedDialGridItem(
         contentColor = foregroundColor,
         shape = shape,
         tonalElevation = if (isActive) 8.dp else 2.dp,
-        border = BorderStroke(borderWidth, MaterialTheme.colorScheme.inverseOnSurface),
+        border = tileBorder,
         modifier =
             modifier
                 .fillMaxWidth()
@@ -147,6 +167,15 @@ fun SpeedDialGridItem(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
+
+                if (isActive && isPlaying) {
+                    Icon(
+                        painter = painterResource(R.drawable.graphic_eq),
+                        contentDescription = null,
+                        tint = Color(0xFF00F2FE),
+                        modifier = Modifier.size(18.dp).padding(end = 4.dp),
+                    )
+                }
 
                 if (item !is SongItem) {
                     Icon(
