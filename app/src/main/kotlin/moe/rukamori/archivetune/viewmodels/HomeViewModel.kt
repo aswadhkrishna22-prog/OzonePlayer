@@ -41,6 +41,7 @@ import moe.rukamori.archivetune.auth.SwitchSavedYouTubeAccountUseCase
 import moe.rukamori.archivetune.db.MusicDatabase
 import moe.rukamori.archivetune.db.entities.Album
 import moe.rukamori.archivetune.db.entities.LocalItem
+import moe.rukamori.archivetune.db.entities.SearchHistory
 import moe.rukamori.archivetune.db.entities.Song
 import moe.rukamori.archivetune.home.FilterCommunityPreviewsUseCase
 import moe.rukamori.archivetune.home.HomeAction
@@ -85,6 +86,7 @@ class HomeViewModel
 @Inject
 constructor(
     @ApplicationContext private val context: Context,
+    private val database: MusicDatabase,
     private val syncUtils: SyncUtils,
     observeHomePresentationPreferences: ObserveHomePresentationPreferencesUseCase,
     private val prepareCommunityHomePage: PrepareCommunityHomePageUseCase,
@@ -109,6 +111,7 @@ constructor(
         filterCommunityPreviews: FilterCommunityPreviewsUseCase,
     ) : this(
         context = context,
+        database = database,
         syncUtils = syncUtils,
         observeHomePresentationPreferences = observeHomePresentationPreferences,
         prepareCommunityHomePage = prepareCommunityHomePage,
@@ -484,9 +487,9 @@ constructor(
                 val appleTracks = appleDeferred.await()
 
                 // Personalize trending songs based on user's recent songs and search history
-                val recentSongs = runCatching { database.recentSongs(50).first() }.getOrDefault(emptyList())
-                val searchHistory = runCatching { database.searchHistory("").first() }.getOrDefault(emptyList())
-                val searchQueries = searchHistory.map { it.query }
+                val recentSongs: List<Song> = runCatching { database.recentSongs(50).first() }.getOrDefault(emptyList())
+                val searchHistory: List<SearchHistory> = runCatching { database.searchHistory("").first() }.getOrDefault(emptyList())
+                val searchQueries: List<String> = searchHistory.map { it.query }
 
                 val ytTracks = trendingRepository.personalizeTracks(ytRaw, recentSongs, searchQueries)
                 val jioSaavnTracks = trendingRepository.personalizeTracks(jioSaavnRaw, recentSongs, searchQueries)

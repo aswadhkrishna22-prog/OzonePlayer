@@ -146,12 +146,15 @@ internal fun TrendingHeroContent(
                             playerConnection.playQueue(YouTubeQueue.radio(res.songItem.toMediaMetadata()))
                         }
                         TrendingResolutionResult.NotFound -> {
-                            val dummyMetadata = MediaMetadata(
+                            val fallbackSongItem = moe.rukamori.archivetune.innertube.models.SongItem(
                                 id = track.id,
                                 title = track.title,
                                 artists = listOf(Artist(name = track.artist, id = null)),
+                                thumbnail = track.artworkUrl ?: "",
+                                duration = track.durationSeconds ?: 0,
+                                endpoint = moe.rukamori.archivetune.innertube.models.WatchEndpoint(videoId = track.id),
                             )
-                            playerConnection.playQueue(YouTubeQueue.radio(dummyMetadata))
+                            playerConnection.playQueue(YouTubeQueue.radio(fallbackSongItem.toMediaMetadata()))
                         }
                     }
                 }
