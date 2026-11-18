@@ -198,7 +198,7 @@ fun FloatingNavigationToolbar(
                             else -> "center"
                         }
                         onAlignmentChange(newAlignment)
-                        haptics.dragSnap()
+                        haptics.confirm()
                         val targetPx = when (newAlignment) {
                             "left" -> -maxSnapOffsetPx
                             "right" -> maxSnapOffsetPx
