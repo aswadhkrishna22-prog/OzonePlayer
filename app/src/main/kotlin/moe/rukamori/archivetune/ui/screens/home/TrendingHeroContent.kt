@@ -31,7 +31,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.LocalAnimationsDisabled
-import moe.rukamori.archivetune.db.entities.Song
 import moe.rukamori.archivetune.extensions.togglePlayPause
 import moe.rukamori.archivetune.home.trending.TrendingRepository
 import moe.rukamori.archivetune.home.trending.TrendingResolutionResult
@@ -49,7 +48,7 @@ import moe.rukamori.archivetune.ui.component.carousel.HeroRollEffects
 import moe.rukamori.archivetune.ui.component.carousel.HeroRollPhase
 import moe.rukamori.archivetune.ui.component.carousel.rememberHeroRollController
 import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
-import moe.rukamori.archivetune.ui.menu.SongMenu
+import moe.rukamori.archivetune.ui.menu.YouTubeSongMenu
 import moe.rukamori.archivetune.ui.utils.LocalPlayerIsExpanded
 
 @Composable
@@ -170,15 +169,9 @@ internal fun TrendingHeroContent(
         haptics.longPress()
         val ytItem = track.youtubeSongItem
         if (ytItem != null) {
-            val song = Song(
-                id = ytItem.id,
-                title = ytItem.title,
-                duration = ytItem.duration ?: 0,
-                thumbnailUrl = ytItem.thumbnail,
-            )
             menuState.show {
-                SongMenu(
-                    originalSong = song,
+                YouTubeSongMenu(
+                    song = ytItem,
                     navController = navController,
                     onDismiss = menuState::dismiss,
                 )
