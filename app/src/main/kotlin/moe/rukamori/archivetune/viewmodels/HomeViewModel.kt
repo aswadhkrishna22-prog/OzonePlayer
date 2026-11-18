@@ -17,6 +17,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import timber.log.Timber
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.update
@@ -40,6 +41,7 @@ import moe.rukamori.archivetune.auth.SwitchSavedYouTubeAccountUseCase
 import moe.rukamori.archivetune.db.MusicDatabase
 import moe.rukamori.archivetune.db.entities.Album
 import moe.rukamori.archivetune.db.entities.LocalItem
+import moe.rukamori.archivetune.db.entities.SearchHistory
 import moe.rukamori.archivetune.db.entities.Song
 import moe.rukamori.archivetune.home.FilterCommunityPreviewsUseCase
 import moe.rukamori.archivetune.home.HomeAction
@@ -84,6 +86,7 @@ class HomeViewModel
 @Inject
 constructor(
     @ApplicationContext private val context: Context,
+    private val database: MusicDatabase,
     private val syncUtils: SyncUtils,
     observeHomePresentationPreferences: ObserveHomePresentationPreferencesUseCase,
     private val prepareCommunityHomePage: PrepareCommunityHomePageUseCase,
@@ -108,6 +111,7 @@ constructor(
         filterCommunityPreviews: FilterCommunityPreviewsUseCase,
     ) : this(
         context = context,
+        database = database,
         syncUtils = syncUtils,
         observeHomePresentationPreferences = observeHomePresentationPreferences,
         prepareCommunityHomePage = prepareCommunityHomePage,
@@ -475,16 +479,28 @@ constructor(
                     )
 
                 val ytDeferred = async { trendingRepository.getYouTubeTrending(regionCode, forceRefresh) }
+                val jioSaavnDeferred = async { trendingRepository.getJioSaavnTrending(regionCode, forceRefresh) }
                 val appleDeferred = async { trendingRepository.getAppleTrending(regionCode, forceRefresh) }
 
-                val ytTracks = ytDeferred.await()
+                val ytRaw = ytDeferred.await()
+                val jioSaavnRaw = jioSaavnDeferred.await()
                 val appleTracks = appleDeferred.await()
+
+                // Personalize trending songs based on user's recent songs and search history
+                val recentSongs: List<Song> = runCatching { database.recentSongs(50).first() }.getOrDefault(emptyList())
+                val searchHistory: List<SearchHistory> = runCatching { database.searchHistory("").first() }.getOrDefault(emptyList())
+                val searchQueries: List<String> = searchHistory.map { it.query }
+
+                val ytTracks = trendingRepository.personalizeTracks(ytRaw, recentSongs, searchQueries)
+                val jioSaavnTracks = trendingRepository.personalizeTracks(jioSaavnRaw, recentSongs, searchQueries)
 
                 _trendingUiState.value =
                     TrendingUiState(
                         selectedSource = _trendingUiState.value?.selectedSource ?: TrendingSource.YOUTUBE,
                         youtubeTracks = ytTracks,
+                        jioSaavnTracks = jioSaavnTracks,
                         appleTracks = appleTracks,
+                        isJioSaavnAvailable = jioSaavnTracks.isNotEmpty(),
                         isAppleAvailable = appleTracks.isNotEmpty(),
                         regionCode = regionCode,
                         regionDisplayName = regionDisplayName,

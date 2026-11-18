@@ -41,7 +41,6 @@ import moe.rukamori.archivetune.playback.PlayerConnection
 import moe.rukamori.archivetune.ui.component.ExpressivePullToRefreshBox
 import moe.rukamori.archivetune.ui.component.MenuState
 import moe.rukamori.archivetune.ui.screens.HomeSectionHeader
-import moe.rukamori.archivetune.ui.screens.QuickPicksSection
 import moe.rukamori.archivetune.ui.screens.SpeedDialSection
 import moe.rukamori.archivetune.ui.utils.SnapLayoutInfoProvider
 
@@ -99,13 +98,13 @@ internal fun HomeContent(
                 val isFilterActive = uiState.selectedChip != null
 
                 val insetsPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
-                val isHeroMode = uiState.quickPicksDisplayMode == moe.rukamori.archivetune.constants.QuickPicksDisplayMode.HERO
+                val hasHero = !isFilterActive && (uiState.trendingState?.currentTracks?.isNotEmpty() == true || uiState.quickPicks.isNotEmpty())
 
                 LazyColumn(
                     state = lazyListState,
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(
                         start = insetsPadding.calculateLeftPadding(androidx.compose.ui.platform.LocalLayoutDirection.current),
-                        top = if (isHeroMode) 0.dp else insetsPadding.calculateTopPadding(),
+                        top = if (hasHero) 0.dp else insetsPadding.calculateTopPadding(),
                         end = insetsPadding.calculateRightPadding(androidx.compose.ui.platform.LocalLayoutDirection.current),
                         bottom = insetsPadding.calculateBottomPadding(),
                     ),
@@ -115,23 +114,34 @@ internal fun HomeContent(
                             .fillMaxWidth()
                             .align(Alignment.TopCenter),
                 ) {
-                    if (uiState.quickPicksDisplayMode != moe.rukamori.archivetune.constants.QuickPicksDisplayMode.HERO) {
-                        homeCategoryChipsSection(
-                            uiState = uiState,
-                            onAction = onAction,
-                        )
+                    if (!isFilterActive) {
+                        item(
+                            key = "home_trending_hero",
+                            contentType = "trending_hero",
+                        ) {
+                            TrendingHeroContent(
+                                trendingState = uiState.trendingState,
+                                fallbackQuickPicks = uiState.quickPicks,
+                                mediaMetadata = mediaMetadata,
+                                isPlaying = isPlaying,
+                                navController = navController,
+                                playerConnection = playerConnection,
+                                menuState = menuState,
+                                trendingRepository = trendingRepository,
+                                modifier = Modifier.animateItem(),
+                            )
+                        }
                     }
 
                     if (!isFilterActive && uiState.quickPicks.isNotEmpty()) {
                         item(
-                            key = "home_quick_picks",
-                            contentType = "quick_picks",
+                            key = "home_quick_picks_row",
+                            contentType = "quick_picks_row",
                         ) {
-                            QuickPicksSection(
+                            QuickPicksRowSection(
                                 quickPicks = uiState.quickPicks,
                                 mediaMetadata = mediaMetadata,
                                 isPlaying = isPlaying,
-                                displayMode = uiState.quickPicksDisplayMode,
                                 navController = navController,
                                 playerConnection = playerConnection,
                                 menuState = menuState,

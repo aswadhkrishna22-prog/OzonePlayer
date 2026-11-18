@@ -557,6 +557,9 @@
     <string name="trending_region_auto">Auto (Content country)</string>
     <string name="youtube_music">YouTube Music</string>
     <string name="trending_in">Trending in %1$s</string>
+    <string name="trending_now">Trending now</string>
+    <string name="jiosaavn">JioSaavn</string>
+    <string name="source_jiosaavn">Source: JioSaavn</string>
     <string name="source_apple_music">Source: Apple Music</string>
     <string name="apple_music_top_songs">Apple Music Top Songs</string>
     <string name="could_not_find_song_try_searching">Couldn\'t find this song, try searching</string>

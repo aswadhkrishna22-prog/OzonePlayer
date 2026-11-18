@@ -19,6 +19,7 @@ import androidx.navigation.NavHostController
 import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.CoroutineScope
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.constants.NavigationBarAlignmentKey
 import moe.rukamori.archivetune.db.MusicDatabase
 import moe.rukamori.archivetune.launchHomeShuffle
 import moe.rukamori.archivetune.musicrecognition.MusicRecognitionRoute
@@ -27,6 +28,7 @@ import moe.rukamori.archivetune.ui.component.FloatingNavigationToolbar
 import moe.rukamori.archivetune.ui.screens.Screens
 import moe.rukamori.archivetune.ui.screens.findTabForRoute
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
+import moe.rukamori.archivetune.utils.rememberPreference
 import moe.rukamori.archivetune.viewmodels.HomeViewModel
 
 @Composable
@@ -53,6 +55,8 @@ internal fun BoxScope.NavigationToolbarBridge(
     onSearchItemDoubleClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val (navBarAlignment, onNavBarAlignmentChange) = rememberPreference(NavigationBarAlignmentKey, defaultValue = "center")
+
     FloatingNavigationToolbar(
         items = navigationItems,
         pureBlack = pureBlack,
@@ -63,6 +67,8 @@ internal fun BoxScope.NavigationToolbarBridge(
         blurEnabled = bottomNavigationBarHeight != 0.dp &&
             playerExpansionAnimatable.value < bottomNavigationBarHeight.coerceAtMost(navVisibleHeight) / navVisibleHeight,
         visibilityFactor = scrollVisibilityFactor * (1f - playerExpansionAnimatable.value.coerceIn(0f, 1f)),
+        savedAlignment = navBarAlignment,
+        onAlignmentChange = onNavBarAlignmentChange,
         modifier =
             modifier
                 .fillMaxWidth()

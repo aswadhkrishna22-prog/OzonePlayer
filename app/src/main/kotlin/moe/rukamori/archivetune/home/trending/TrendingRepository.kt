@@ -13,6 +13,11 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import moe.rukamori.archivetune.constants.CountryCodeToName
 import moe.rukamori.archivetune.innertube.YouTube
 import moe.rukamori.archivetune.innertube.models.PlaylistItem
@@ -39,7 +44,9 @@ private data class CachedTrack(
     val artworkUrl: String?,
     val durationSeconds: Int? = null,
     val isApple: Boolean = false,
+    val isJioSaavn: Boolean = false,
     val explicit: Boolean = false,
+    val encryptedMediaUrl: String? = null,
 )
 
 @Serializable
@@ -153,6 +160,117 @@ class TrendingRepository(
             cached?.tracks?.map { it.toTrendingTrack() } ?: emptyList()
         }
 
+    suspend fun getJioSaavnTrending(
+        regionCode: String,
+        forceRefresh: Boolean = false,
+    ): List<TrendingTrack> =
+        withContext(Dispatchers.IO) {
+            val cacheFile = File(cacheDir, "jiosaavn_chart_${regionCode}.json")
+            val isLowData = LowDataManager.isLowDataModeActive.value
+            val now = System.currentTimeMillis()
+
+            val cached = readDiskCache(cacheFile)
+            val isCacheValid = cached != null && (now - cached.timestamp <= CHART_CACHE_TTL_MS)
+
+            if (!forceRefresh && cached != null && (isLowData || isCacheValid)) {
+                return@withContext cached.tracks.map { it.toTrendingTrack() }
+            }
+
+            val freshTracks = fetchJioSaavnTrendingFromNetwork()
+            if (freshTracks.isNotEmpty()) {
+                writeDiskCache(cacheFile, freshTracks)
+                return@withContext freshTracks
+            }
+
+            cached?.tracks?.map { it.toTrendingTrack() } ?: emptyList()
+        }
+
+    fun normalizeToSquareHighResArtwork(url: String?): String? {
+        if (url.isNullOrBlank()) return null
+        if (url.contains("i.ytimg.com") || url.contains("img.youtube.com")) {
+            return url
+        }
+        if (url.contains("googleusercontent.com") || url.contains("ggpht.com")) {
+            return if (url.contains("=")) {
+                url.substringBeforeLast("=") + "=w1000-h1000-l90-rj"
+            } else {
+                "$url=w1000-h1000-l90-rj"
+            }
+        }
+        if (url.contains("saavncdn.com") || url.contains("jiosaavn.com")) {
+            return url.replace("150x150", "500x500")
+                .replace("50x50", "500x500")
+                .replace("250x250", "500x500")
+        }
+        if (url.contains("mzstatic.com")) {
+            return url.replace(Regex("/\\d+x\\d+bb"), "/1000x1000bb")
+        }
+        return url
+    }
+
+    fun personalizeTracks(
+        tracks: List<TrendingTrack>,
+        recentSongs: List<moe.rukamori.archivetune.db.entities.Song>,
+        searchQueries: List<String>,
+    ): List<TrendingTrack> {
+        if (tracks.isEmpty()) return emptyList()
+        if (recentSongs.isEmpty() && searchQueries.isEmpty()) return tracks
+
+        val recentArtists = recentSongs
+            .flatMap { it.artists }
+            .map { it.name.trim().lowercase(Locale.ROOT) }
+            .filter { it.isNotBlank() }
+            .toSet()
+
+        val recentTitleTokens = recentSongs
+            .map { it.song.title.trim().lowercase(Locale.ROOT) }
+            .filter { it.isNotBlank() }
+            .toSet()
+
+        val cleanQueries = searchQueries
+            .map { it.trim().lowercase(Locale.ROOT) }
+            .filter { it.length >= 2 }
+            .toSet()
+
+        val scoredTracks = tracks.mapIndexed { index, track ->
+            val trackArtist = track.artist.trim().lowercase(Locale.ROOT)
+            val trackTitle = track.title.trim().lowercase(Locale.ROOT)
+
+            // Base ranking preservation: higher trending songs start with slight edge
+            val baseScore = 1.0 - (index.toDouble() / tracks.size.coerceAtLeast(1)) * 0.25
+
+            var affinityBoost = 0.0
+
+            // 1. Artist match from recent listening history
+            if (recentArtists.any { recent -> trackArtist.contains(recent) || recent.contains(trackArtist) }) {
+                affinityBoost += 0.50
+            }
+
+            // 2. Artist match from recent search history
+            if (cleanQueries.any { query -> trackArtist.contains(query) || query.contains(trackArtist) }) {
+                affinityBoost += 0.40
+            }
+
+            // 3. Title match from search history or recent songs
+            if (cleanQueries.any { query -> trackTitle.contains(query) } || recentTitleTokens.contains(trackTitle)) {
+                affinityBoost += 0.30
+            }
+
+            // 4. Regional language / genre keyword matches
+            val languageTokens = listOf("malayalam", "hindi", "tamil", "punjabi", "telugu", "kannada", "english", "rock", "pop", "hip hop", "rap", "edm", "lofi")
+            val userInterestedLanguages = languageTokens.filter { lang ->
+                cleanQueries.any { it.contains(lang) }
+            }
+            if (userInterestedLanguages.any { lang -> trackTitle.contains(lang) || trackArtist.contains(lang) }) {
+                affinityBoost += 0.25
+            }
+
+            track to (baseScore + affinityBoost)
+        }
+
+        return scoredTracks.sortedByDescending { it.second }.map { it.first }
+    }
+
     private suspend fun fetchYouTubeTrendingFromNetwork(regionCode: String): List<TrendingTrack> =
         withContext(Dispatchers.IO) {
             runCatching {
@@ -205,9 +323,10 @@ class TrendingRepository(
                         id = song.id,
                         title = song.title,
                         artist = song.artists.joinToString(", ") { it.name },
-                        artworkUrl = song.thumbnail,
+                        artworkUrl = normalizeToSquareHighResArtwork(song.thumbnail),
                         durationSeconds = song.duration,
                         isApple = false,
+                        isJioSaavn = false,
                         explicit = song.explicit,
                         youtubeSongItem = song,
                     )
@@ -258,6 +377,99 @@ class TrendingRepository(
             } ?: emptyList()
         }
 
+    private suspend fun fetchJioSaavnTrendingFromNetwork(): List<TrendingTrack> =
+        withContext(Dispatchers.IO) {
+            withTimeoutOrNull(6000L) {
+                runCatching {
+                    val chartSongs = fetchJioSaavnChartPlaylist()
+                    if (chartSongs.isNotEmpty()) {
+                        return@runCatching chartSongs
+                    }
+                    fetchJioSaavnTrendingSearch()
+                }.getOrDefault(emptyList())
+            } ?: emptyList()
+        }
+
+    private fun fetchJioSaavnChartPlaylist(): List<TrendingTrack> {
+        return try {
+            val chartUrl = "https://www.jiosaavn.com/api.php?__call=content.getCharts&_format=json&_marker=0&api_version=4&ctx=web6dot0"
+            val req = Request.Builder().url(chartUrl).header("User-Agent", "Mozilla/5.0").header("Accept", "application/json").build()
+            val res = httpClient.newCall(req).execute()
+            if (!res.isSuccessful) return emptyList()
+            val body = res.body?.string().orEmpty()
+            val root = json.parseToJsonElement(body) as? JsonArray ?: return emptyList()
+            val firstChartId = (root.firstOrNull() as? JsonObject)?.get("id")?.toString()?.replace("\"", "").orEmpty()
+            if (firstChartId.isBlank()) return emptyList()
+
+            val detailsUrl = "https://www.jiosaavn.com/api.php?__call=playlist.getDetails&_format=json&_marker=0&api_version=4&ctx=web6dot0&listid=$firstChartId"
+            val detailsReq = Request.Builder().url(detailsUrl).header("User-Agent", "Mozilla/5.0").header("Accept", "application/json").build()
+            val detailsRes = httpClient.newCall(detailsReq).execute()
+            if (!detailsRes.isSuccessful) return emptyList()
+            val detailsBody = detailsRes.body?.string().orEmpty()
+            val detailsRoot = json.parseToJsonElement(detailsBody) as? JsonObject ?: return emptyList()
+            val songsArray = detailsRoot["songs"] as? JsonArray ?: return emptyList()
+
+            parseJioSaavnSongsJsonArray(songsArray)
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun fetchJioSaavnTrendingSearch(): List<TrendingTrack> {
+        return try {
+            val searchUrl = "https://www.jiosaavn.com/api.php?__call=search.getResults&_format=json&_marker=0&api_version=4&ctx=web6dot0&n=20&p=1&q=trending%20songs"
+            val req = Request.Builder().url(searchUrl).header("User-Agent", "Mozilla/5.0").header("Accept", "application/json").build()
+            val res = httpClient.newCall(req).execute()
+            if (!res.isSuccessful) return emptyList()
+            val body = res.body?.string().orEmpty()
+            val root = json.parseToJsonElement(body) as? JsonObject ?: return emptyList()
+            val resultsArray = root["results"] as? JsonArray ?: return emptyList()
+
+            parseJioSaavnSongsJsonArray(resultsArray)
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun parseJioSaavnSongsJsonArray(array: JsonArray): List<TrendingTrack> {
+        return array.mapNotNull { elem ->
+            val obj = elem as? JsonObject ?: return@mapNotNull null
+            val id = obj["id"]?.toString()?.replace("\"", "").orEmpty()
+            val rawTitle = obj["title"]?.toString()?.replace("\"", "") ?: obj["song"]?.toString()?.replace("\"", "").orEmpty()
+            val title = unescapeHtml(rawTitle)
+            val moreInfo = obj["more_info"] as? JsonObject
+            val rawArtist = obj["subtitle"]?.toString()?.replace("\"", "") ?: moreInfo?.get("music")?.toString()?.replace("\"", "").orEmpty()
+            val artist = unescapeHtml(rawArtist).ifBlank { "Unknown Artist" }
+            val rawImage = obj["image"]?.toString()?.replace("\"", "")
+            val image = normalizeToSquareHighResArtwork(rawImage)
+            val duration = moreInfo?.get("duration")?.toString()?.replace("\"", "")?.toIntOrNull()
+            val encUrl = moreInfo?.get("encrypted_media_url")?.toString()?.replace("\"", "")
+
+            if (id.isNotBlank() && title.isNotBlank()) {
+                TrendingTrack(
+                    id = "jiosaavn_$id",
+                    title = title,
+                    artist = artist,
+                    artworkUrl = image,
+                    durationSeconds = duration,
+                    isApple = false,
+                    isJioSaavn = true,
+                    explicit = false,
+                    encryptedMediaUrl = encUrl,
+                )
+            } else null
+        }.take(TOP_TRACKS_LIMIT)
+    }
+
+    private fun unescapeHtml(text: String): String {
+        return text.replace("&quot;", "\"")
+            .replace("&amp;", "&")
+            .replace("&#039;", "'")
+            .replace("&apos;", "'")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+    }
+
     private fun readDiskCache(cacheFile: File): DiskChartCache? =
         runCatching {
             if (!cacheFile.exists()) return null
@@ -279,7 +491,9 @@ class TrendingRepository(
                                 artworkUrl = it.artworkUrl,
                                 durationSeconds = it.durationSeconds,
                                 isApple = it.isApple,
+                                isJioSaavn = it.isJioSaavn,
                                 explicit = it.explicit,
+                                encryptedMediaUrl = it.encryptedMediaUrl,
                             )
                         },
                 )
@@ -295,9 +509,11 @@ class TrendingRepository(
             artworkUrl = artworkUrl,
             durationSeconds = durationSeconds,
             isApple = isApple,
+            isJioSaavn = isJioSaavn,
             explicit = explicit,
+            encryptedMediaUrl = encryptedMediaUrl,
             youtubeSongItem =
-                if (!isApple) {
+                if (!isApple && !isJioSaavn) {
                     SongItem(
                         id = id,
                         title = title,
