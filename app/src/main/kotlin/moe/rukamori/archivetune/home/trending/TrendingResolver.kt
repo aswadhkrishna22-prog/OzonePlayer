@@ -28,6 +28,23 @@ class TrendingResolver(
         const val MIN_MATCH_SCORE = 0.75
     }
 
+    suspend fun resolveTrack(track: TrendingTrack): TrendingResolutionResult =
+        withContext(Dispatchers.IO) {
+            if (!track.isApple && !track.isJioSaavn) {
+                val songItem = track.youtubeSongItem ?: SongItem(
+                    id = track.id,
+                    title = track.title,
+                    artists = listOf(moe.rukamori.archivetune.innertube.models.Artist(name = track.artist, id = null)),
+                    thumbnail = track.artworkUrl ?: "",
+                    explicit = track.explicit,
+                    duration = track.durationSeconds,
+                    endpoint = moe.rukamori.archivetune.innertube.models.WatchEndpoint(videoId = track.id),
+                )
+                return@withContext TrendingResolutionResult.Success(songItem)
+            }
+            resolveAppleTrack(track)
+        }
+
     suspend fun resolveAppleTrack(track: TrendingTrack): TrendingResolutionResult =
         withContext(Dispatchers.IO) {
             val cached = matchCache.get(track.artist, track.title)

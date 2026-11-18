@@ -13,6 +13,7 @@ import moe.rukamori.archivetune.innertube.models.SongItem
 
 enum class TrendingSource {
     YOUTUBE,
+    JIOSAAVN,
     APPLE,
 }
 
@@ -25,7 +26,9 @@ data class TrendingTrack(
     val artworkUrl: String?,
     val durationSeconds: Int? = null,
     val isApple: Boolean = false,
+    val isJioSaavn: Boolean = false,
     val explicit: Boolean = false,
+    val encryptedMediaUrl: String? = null,
     @Transient
     val youtubeSongItem: SongItem? = null,
 )
@@ -34,7 +37,9 @@ data class TrendingTrack(
 data class TrendingUiState(
     val selectedSource: TrendingSource = TrendingSource.YOUTUBE,
     val youtubeTracks: List<TrendingTrack> = emptyList(),
+    val jioSaavnTracks: List<TrendingTrack> = emptyList(),
     val appleTracks: List<TrendingTrack> = emptyList(),
+    val isJioSaavnAvailable: Boolean = false,
     val isAppleAvailable: Boolean = false,
     val regionCode: String = "",
     val regionDisplayName: String = "",
@@ -45,9 +50,12 @@ data class TrendingUiState(
         get() =
             when (selectedSource) {
                 TrendingSource.YOUTUBE -> youtubeTracks
+                TrendingSource.JIOSAAVN -> jioSaavnTracks
                 TrendingSource.APPLE -> appleTracks
             }
 
     val isVisible: Boolean
-        get() = currentTracks.isNotEmpty() || (selectedSource == TrendingSource.APPLE && isAppleAvailable && appleTracks.isNotEmpty())
+        get() = currentTracks.isNotEmpty() ||
+            (selectedSource == TrendingSource.JIOSAAVN && isJioSaavnAvailable && jioSaavnTracks.isNotEmpty()) ||
+            (selectedSource == TrendingSource.APPLE && isAppleAvailable && appleTracks.isNotEmpty())
 }

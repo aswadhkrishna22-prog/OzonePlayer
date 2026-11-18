@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -87,41 +89,79 @@ internal fun HeroMediaCard(
                 .fillMaxSize()
                 .heroPageMediaDrift(pageOffset)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .then(
-                        if (edgeBlur) {
-                            Modifier.drawWithContent {
-                                mediaLayer.record { this@drawWithContent.drawContent() }
-                                drawLayer(mediaLayer)
-                            }
-                        } else {
-                            Modifier
-                        }
-                    )
-            ) {
-                AsyncImage(
-                    model = imageRequest,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
+            val isLowResOrVideoThumb = remember(item.thumbnailUrl) {
+                val url = item.thumbnailUrl.orEmpty()
+                url.contains("i.ytimg.com") || url.contains("img.youtube.com") || url.contains("hqdefault") || url.contains("mqdefault")
             }
 
-            if (edgeBlur) {
-                HeroBlurBand(
-                    mediaLayer = mediaLayer,
-                    atTop = true,
-                    heightFraction = HeroCarouselTokens.TopBlurHeightFraction,
-                    radius = HeroCarouselTokens.TopBlurRadius,
-                )
-                HeroBlurBand(
-                    mediaLayer = mediaLayer,
-                    atTop = false,
-                    heightFraction = HeroCarouselTokens.BottomBlurHeightFraction,
-                    radius = HeroCarouselTokens.BottomBlurRadius,
-                )
+            if (isLowResOrVideoThumb) {
+                // If only a low-res image exists, show a clean gradient background with the art centered instead of upscaling a blurry image
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    MaterialTheme.colorScheme.surfaceContainerLow,
+                                    MaterialTheme.colorScheme.surface,
+                                )
+                            )
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .padding(bottom = 60.dp)
+                            .size(190.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                    ) {
+                        AsyncImage(
+                            model = imageRequest,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .then(
+                            if (edgeBlur) {
+                                Modifier.drawWithContent {
+                                    mediaLayer.record { this@drawWithContent.drawContent() }
+                                    drawLayer(mediaLayer)
+                                }
+                            } else {
+                                Modifier
+                            }
+                        )
+                ) {
+                    AsyncImage(
+                        model = imageRequest,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+
+                if (edgeBlur) {
+                    HeroBlurBand(
+                        mediaLayer = mediaLayer,
+                        atTop = true,
+                        heightFraction = HeroCarouselTokens.TopBlurHeightFraction,
+                        radius = HeroCarouselTokens.TopBlurRadius,
+                    )
+                    HeroBlurBand(
+                        mediaLayer = mediaLayer,
+                        atTop = false,
+                        heightFraction = HeroCarouselTokens.BottomBlurHeightFraction,
+                        radius = HeroCarouselTokens.BottomBlurRadius,
+                    )
+                }
             }
 
             HeroScrims()
@@ -138,16 +178,29 @@ internal fun HeroMediaCard(
                     .fillMaxWidth()
                     .padding(start = 20.dp, end = 20.dp, bottom = 20.dp)
             ) {
-                Text(
-                    text = if (isThisPlaying) {
-                        stringResource(R.string.now_playing)
-                    } else {
-                        stringResource(R.string.quick_picks)
-                    },
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = HeroCarouselTokens.ArtOverlayTextSecondary,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    if (!isThisPlaying) {
+                        Icon(
+                            painter = painterResource(R.drawable.fire),
+                            contentDescription = null,
+                            tint = Color(0xFFFF5722),
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
+                    Text(
+                        text = if (isThisPlaying) {
+                            stringResource(R.string.now_playing)
+                        } else {
+                            stringResource(R.string.trending_now)
+                        },
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = HeroCarouselTokens.ArtOverlayTextSecondary,
+                    )
+                }
 
                 Text(
                     text = item.title,

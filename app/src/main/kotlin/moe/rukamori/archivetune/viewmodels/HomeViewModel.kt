@@ -17,6 +17,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import timber.log.Timber
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.update
@@ -475,16 +476,28 @@ constructor(
                     )
 
                 val ytDeferred = async { trendingRepository.getYouTubeTrending(regionCode, forceRefresh) }
+                val jioSaavnDeferred = async { trendingRepository.getJioSaavnTrending(regionCode, forceRefresh) }
                 val appleDeferred = async { trendingRepository.getAppleTrending(regionCode, forceRefresh) }
 
-                val ytTracks = ytDeferred.await()
+                val ytRaw = ytDeferred.await()
+                val jioSaavnRaw = jioSaavnDeferred.await()
                 val appleTracks = appleDeferred.await()
+
+                // Personalize trending songs based on user's recent songs and search history
+                val recentSongs = runCatching { database.recentSongs(50).first() }.getOrDefault(emptyList())
+                val searchHistory = runCatching { database.searchHistory("").first() }.getOrDefault(emptyList())
+                val searchQueries = searchHistory.map { it.query }
+
+                val ytTracks = trendingRepository.personalizeTracks(ytRaw, recentSongs, searchQueries)
+                val jioSaavnTracks = trendingRepository.personalizeTracks(jioSaavnRaw, recentSongs, searchQueries)
 
                 _trendingUiState.value =
                     TrendingUiState(
                         selectedSource = _trendingUiState.value?.selectedSource ?: TrendingSource.YOUTUBE,
                         youtubeTracks = ytTracks,
+                        jioSaavnTracks = jioSaavnTracks,
                         appleTracks = appleTracks,
+                        isJioSaavnAvailable = jioSaavnTracks.isNotEmpty(),
                         isAppleAvailable = appleTracks.isNotEmpty(),
                         regionCode = regionCode,
                         regionDisplayName = regionDisplayName,
