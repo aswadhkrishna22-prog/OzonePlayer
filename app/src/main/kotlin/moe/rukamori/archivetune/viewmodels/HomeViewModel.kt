@@ -471,25 +471,28 @@ constructor(
             trendingJob?.cancel()
             trendingJob = viewModelScope.launch(Dispatchers.IO) {
                 val current = _trendingUiState.value ?: TrendingUiState()
+                val cachedHeroTracks = trendingRepository.getCachedHeroTrending(regionCode)
                 _trendingUiState.value =
                     current.copy(
                         regionCode = regionCode,
                         regionDisplayName = regionDisplayName,
-                        isLoading = current.currentTracks.isEmpty(),
+                        heroTracks = if (current.heroTracks.isEmpty()) cachedHeroTracks else current.heroTracks,
+                        isLoading = current.currentTracks.isEmpty() && cachedHeroTracks.isEmpty(),
                     )
 
+                val recentSongs: List<Song> = runCatching { database.recentSongs(50).first() }.getOrDefault(emptyList())
+                val searchHistory: List<SearchHistory> = runCatching { database.searchHistory("").first() }.getOrDefault(emptyList())
+                val searchQueries: List<String> = searchHistory.map { it.query }
+
+                val heroDeferred = async { trendingRepository.getHeroTrending(regionCode, recentSongs, searchQueries, forceRefresh) }
                 val ytDeferred = async { trendingRepository.getYouTubeTrending(regionCode, forceRefresh) }
                 val jioSaavnDeferred = async { trendingRepository.getJioSaavnTrending(regionCode, forceRefresh) }
                 val appleDeferred = async { trendingRepository.getAppleTrending(regionCode, forceRefresh) }
 
+                val heroTracks = heroDeferred.await()
                 val ytRaw = ytDeferred.await()
                 val jioSaavnRaw = jioSaavnDeferred.await()
                 val appleTracks = appleDeferred.await()
-
-                // Personalize trending songs based on user's recent songs and search history
-                val recentSongs: List<Song> = runCatching { database.recentSongs(50).first() }.getOrDefault(emptyList())
-                val searchHistory: List<SearchHistory> = runCatching { database.searchHistory("").first() }.getOrDefault(emptyList())
-                val searchQueries: List<String> = searchHistory.map { it.query }
 
                 val ytTracks = trendingRepository.personalizeTracks(ytRaw, recentSongs, searchQueries)
                 val jioSaavnTracks = trendingRepository.personalizeTracks(jioSaavnRaw, recentSongs, searchQueries)
@@ -500,6 +503,7 @@ constructor(
                         youtubeTracks = ytTracks,
                         jioSaavnTracks = jioSaavnTracks,
                         appleTracks = appleTracks,
+                        heroTracks = heroTracks,
                         isJioSaavnAvailable = jioSaavnTracks.isNotEmpty(),
                         isAppleAvailable = appleTracks.isNotEmpty(),
                         regionCode = regionCode,

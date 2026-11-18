@@ -98,7 +98,7 @@ internal fun HomeContent(
                 val isFilterActive = uiState.selectedChip != null
 
                 val insetsPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
-                val hasHero = !isFilterActive && (uiState.trendingState?.currentTracks?.isNotEmpty() == true || uiState.quickPicks.isNotEmpty())
+                val hasHero = !isFilterActive && (uiState.trendingState?.heroTracks?.isNotEmpty() == true || uiState.trendingState?.currentTracks?.isNotEmpty() == true)
 
                 LazyColumn(
                     state = lazyListState,
@@ -121,7 +121,6 @@ internal fun HomeContent(
                         ) {
                             TrendingHeroContent(
                                 trendingState = uiState.trendingState,
-                                fallbackQuickPicks = uiState.quickPicks,
                                 mediaMetadata = mediaMetadata,
                                 isPlaying = isPlaying,
                                 navController = navController,

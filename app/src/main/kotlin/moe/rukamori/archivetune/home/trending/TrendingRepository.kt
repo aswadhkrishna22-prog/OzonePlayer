@@ -8,6 +8,8 @@ package moe.rukamori.archivetune.home.trending
 
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
@@ -106,6 +108,67 @@ class TrendingRepository(
 
         return regionCode to displayName
     }
+
+    fun getCachedHeroTrending(regionCode: String): List<TrendingTrack> {
+        val cacheFile = File(cacheDir, "hero_trending_${regionCode}.json")
+        val fallbackCacheFile = File(cacheDir, "hero_trending_latest.json")
+        val cached = readDiskCache(cacheFile) ?: readDiskCache(fallbackCacheFile)
+        return cached?.tracks?.map { it.toTrendingTrack() }.orEmpty()
+    }
+
+    suspend fun getHeroTrending(
+        regionCode: String,
+        recentSongs: List<moe.rukamori.archivetune.db.entities.Song>,
+        searchQueries: List<String>,
+        forceRefresh: Boolean = false,
+    ): List<TrendingTrack> =
+        withContext(Dispatchers.IO) {
+            val cacheFile = File(cacheDir, "hero_trending_${regionCode}.json")
+            val fallbackCacheFile = File(cacheDir, "hero_trending_latest.json")
+            val isLowData = LowDataManager.isLowDataModeActive.value
+            val now = System.currentTimeMillis()
+
+            val cached = readDiskCache(cacheFile) ?: readDiskCache(fallbackCacheFile)
+            val isCacheValid = cached != null && (now - cached.timestamp <= CHART_CACHE_TTL_MS)
+
+            if (!forceRefresh && cached != null && (isLowData || isCacheValid)) {
+                return@withContext cached.tracks.map { it.toTrendingTrack() }
+            }
+
+            // Separate trending source from YouTube Music charts and JioSaavn
+            val ytDeferred = async { runCatching { getYouTubeTrending(regionCode, forceRefresh) }.getOrDefault(emptyList()) }
+            val jioSaavnDeferred = async { runCatching { getJioSaavnTrending(regionCode, forceRefresh) }.getOrDefault(emptyList()) }
+
+            val ytTracks = ytDeferred.await()
+            val jioSaavnTracks = jioSaavnDeferred.await()
+
+            // Merge both trending sources into a combined pool
+            val combinedTracks = mutableListOf<TrendingTrack>()
+            val seenKeys = mutableSetOf<String>()
+            val maxLen = maxOf(ytTracks.size, jioSaavnTracks.size)
+            for (i in 0 until maxLen) {
+                if (i < ytTracks.size) {
+                    val t = ytTracks[i]
+                    val key = "${t.title.trim().lowercase(Locale.ROOT)}_${t.artist.trim().lowercase(Locale.ROOT)}"
+                    if (seenKeys.add(key)) combinedTracks.add(t)
+                }
+                if (i < jioSaavnTracks.size) {
+                    val t = jioSaavnTracks[i]
+                    val key = "${t.title.trim().lowercase(Locale.ROOT)}_${t.artist.trim().lowercase(Locale.ROOT)}"
+                    if (seenKeys.add(key)) combinedTracks.add(t)
+                }
+            }
+
+            if (combinedTracks.isNotEmpty()) {
+                val personalized = personalizeTracks(combinedTracks, recentSongs, searchQueries)
+                writeDiskCache(cacheFile, personalized)
+                writeDiskCache(fallbackCacheFile, personalized)
+                return@withContext personalized
+            }
+
+            // Fallback to cached if available
+            cached?.tracks?.map { it.toTrendingTrack() } ?: emptyList()
+        }
 
     suspend fun getYouTubeTrending(
         regionCode: String,

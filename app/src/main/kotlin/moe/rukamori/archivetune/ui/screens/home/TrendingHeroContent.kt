@@ -32,7 +32,6 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.LocalAnimationsDisabled
 import moe.rukamori.archivetune.db.entities.Song
-import moe.rukamori.archivetune.extensions.toMediaItem
 import moe.rukamori.archivetune.extensions.togglePlayPause
 import moe.rukamori.archivetune.home.trending.TrendingRepository
 import moe.rukamori.archivetune.home.trending.TrendingResolutionResult
@@ -42,7 +41,6 @@ import moe.rukamori.archivetune.innertube.models.Artist
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.models.toMediaMetadata
 import moe.rukamori.archivetune.playback.PlayerConnection
-import moe.rukamori.archivetune.playback.queues.ListQueue
 import moe.rukamori.archivetune.playback.queues.YouTubeQueue
 import moe.rukamori.archivetune.ui.component.MenuState
 import moe.rukamori.archivetune.ui.component.carousel.HeroCarousel
@@ -57,7 +55,6 @@ import moe.rukamori.archivetune.ui.utils.LocalPlayerIsExpanded
 @Composable
 internal fun TrendingHeroContent(
     trendingState: TrendingUiState?,
-    fallbackQuickPicks: List<Song>,
     mediaMetadata: MediaMetadata?,
     isPlaying: Boolean,
     navController: NavController,
@@ -90,31 +87,21 @@ internal fun TrendingHeroContent(
 
     val isCarouselActive = isLifecycleResumed && !isPlayerExpanded && isSectionInViewport
 
-    val tracks = trendingState?.currentTracks.orEmpty()
-    val heroItems = remember(tracks, fallbackQuickPicks) {
-        if (tracks.isNotEmpty()) {
-            tracks.map { track ->
-                HeroItem(
-                    id = track.id,
-                    title = track.title,
-                    artist = track.artist,
-                    thumbnailUrl = track.artworkUrl,
-                )
-            }
-        } else {
-            fallbackQuickPicks.map { song ->
-                HeroItem(
-                    id = song.id,
-                    title = song.song.title,
-                    artist = song.artists.joinToString(", ") { it.name },
-                    thumbnailUrl = song.song.thumbnailUrl,
-                )
-            }
+    // Separate trending source: uses dedicated heroTracks (YouTube Music charts + JioSaavn personalized),
+    // falling back to current trending tracks. Never reads from Quick picks.
+    val tracks = trendingState?.heroTracks?.takeIf { it.isNotEmpty() } ?: trendingState?.currentTracks.orEmpty()
+    val heroItems = remember(tracks) {
+        tracks.map { track ->
+            HeroItem(
+                id = track.id,
+                title = track.title,
+                artist = track.artist,
+                thumbnailUrl = track.artworkUrl,
+            )
         }
     }
 
     val trackMap = remember(tracks) { tracks.associateBy { it.id } }
-    val fallbackMap = remember(fallbackQuickPicks) { fallbackQuickPicks.associateBy { it.id } }
 
     val rollController = rememberHeroRollController()
 
@@ -159,17 +146,7 @@ internal fun TrendingHeroContent(
                     }
                 }
             }
-            return
         }
-
-        val song = fallbackMap[id] ?: return
-        playerConnection.playQueue(
-            if (song.song.isLocal) {
-                ListQueue(items = listOf(song.toMediaItem()))
-            } else {
-                YouTubeQueue.radio(song.toMediaMetadata())
-            },
-        )
     }
 
     val currentPlayTrack by rememberUpdatedState(::playTrack)
@@ -189,9 +166,16 @@ internal fun TrendingHeroContent(
     }
 
     fun showTrackMenu(id: String) {
-        val song = fallbackMap[id]
-        if (song != null) {
-            haptics.longPress()
+        val track = trackMap[id] ?: return
+        haptics.longPress()
+        val ytItem = track.youtubeSongItem
+        if (ytItem != null) {
+            val song = Song(
+                id = ytItem.id,
+                title = ytItem.title,
+                duration = ytItem.duration ?: 0,
+                thumbnailUrl = ytItem.thumbnail,
+            )
             menuState.show {
                 SongMenu(
                     originalSong = song,
