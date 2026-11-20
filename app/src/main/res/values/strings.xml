@@ -1432,6 +1432,5 @@
     <string name="playlist_added">Playlist added</string>
     <string name="playlist_already_in_library">Playlist already in library</string>
     <string name="duplicate_playlist_prompt">\"%1$s\" is already in your library. Would you like to add it anyway?</string>
-    <string name="add_anyway">Add anyway</string>
     <string name="unsupported_link">Unsupported link</string>
 </resources>
