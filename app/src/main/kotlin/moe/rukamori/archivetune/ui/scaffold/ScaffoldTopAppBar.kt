@@ -210,6 +210,17 @@ fun ScaffoldTopAppBar(
                 navigationIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             ),
         )
+
+        if (showAddPlaylistSheet) {
+            val context = LocalContext.current
+            AddPlaylistBottomSheet(
+                onDismissRequest = { showAddPlaylistSheet = false },
+                onPlaylistAdded = { _ ->
+                    val message = context.getString(R.string.playlist_added)
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                },
+            )
+        }
     }
 }
 

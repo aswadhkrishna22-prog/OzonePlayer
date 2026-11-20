@@ -10,8 +10,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import moe.rukamori.archivetune.db.MusicDatabase
-import moe.rukamori.archivetune.db.entities.Album
-import moe.rukamori.archivetune.db.entities.Artist
 import moe.rukamori.archivetune.db.entities.Playlist
 import moe.rukamori.archivetune.db.entities.PlaylistEntity
 import moe.rukamori.archivetune.db.entities.PlaylistSongMap
@@ -76,11 +74,11 @@ class PlaylistImportRepository @Inject constructor(
                             val mediaMetadata = MediaMetadata(
                                 id = songId,
                                 title = track.title,
-                                artists = listOf(Artist(id = null, name = track.artist)),
+                                artists = listOf(MediaMetadata.Artist(id = null, name = track.artist)),
                                 duration = track.durationSeconds ?: 0,
                                 thumbnailUrl = track.thumbnailUrl,
-                                album = track.album?.takeIf { it.isNotBlank() }?.let {
-                                    Album(id = null, title = it)
+                                album = track.album?.takeIf { it.isNotBlank() }?.let { albumName ->
+                                    MediaMetadata.Album(id = albumName, title = albumName)
                                 },
                                 spotifyTrackId = if (isSpotify) track.originalId else null,
                             )
