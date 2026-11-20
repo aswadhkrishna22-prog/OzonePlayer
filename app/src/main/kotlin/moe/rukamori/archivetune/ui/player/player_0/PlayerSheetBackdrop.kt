@@ -149,6 +149,3 @@ internal fun rememberPlayerSheetPillShape(
         }
     }
 }
-        }
-    }
-}
