@@ -1426,7 +1426,6 @@
     <string name="paste_public_playlist_link">Paste a public playlist link</string>
     <string name="playlist_link_placeholder">https://…</string>
     <string name="paste">Paste</string>
-    <string name="cancel">Cancel</string>
     <string name="fetching_playlist_preview">Fetching playlist details…</string>
     <string name="importing_playlist">Adding playlist…</string>
     <string name="playlist_added">Playlist added</string>
