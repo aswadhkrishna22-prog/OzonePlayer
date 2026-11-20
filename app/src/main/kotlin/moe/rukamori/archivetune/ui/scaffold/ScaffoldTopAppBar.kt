@@ -42,6 +42,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
+import android.widget.Toast
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.platform.LocalContext
+import moe.rukamori.archivetune.ui.component.playlist.AddPlaylistBottomSheet
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.delay
 import moe.rukamori.archivetune.R
@@ -84,6 +88,7 @@ fun ScaffoldTopAppBar(
     }
     val surfaceColor = MaterialTheme.colorScheme.surface
     val currentScrollBehavior = scrollController.currentScrollBehavior(currentRoute)
+    var showAddPlaylistSheet by rememberSaveable { mutableStateOf(false) }
 
     var headerHeightPx by remember { mutableStateOf(0) }
     LaunchedEffect(currentScrollBehavior, headerHeightPx) {
@@ -174,6 +179,11 @@ fun ScaffoldTopAppBar(
             },
             actions = {
                 val hasUpdate = splashDone && (updateState is UpdateState.SoftUpdate || updateState is UpdateState.CriticalUpdate)
+                if (isLibraryRoute) {
+                    TopBarAddPlaylistButton(
+                        onClick = { showAddPlaylistSheet = true },
+                    )
+                }
                 HomeTopBarAccountMenu(
                     avatarUrl = avatarUrl,
                     accountName = accountName,
