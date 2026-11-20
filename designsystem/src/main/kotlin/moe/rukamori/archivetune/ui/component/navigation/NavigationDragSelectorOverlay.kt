@@ -9,8 +9,11 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
-import moe.rukamori.archivetune.constants.NavigationTabSelectorAlpha
+import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.constants.NavigationTabSlotPaddingVertical
 
 @Composable
@@ -18,9 +21,9 @@ internal fun NavigationDragSelectorOverlay(
     selectorState: NavigationTabSelectorState,
     modifier: Modifier = Modifier,
 ) {
-    val selectorColor = MaterialTheme.colorScheme.primary.copy(alpha = NavigationTabSelectorAlpha)
     val density = LocalDensity.current
     val verticalPaddingPx = with(density) { NavigationTabSlotPaddingVertical.toPx() }
+    val strokeWidthPx = with(density) { 1.dp.toPx() }
 
     Box(
         modifier = modifier
@@ -34,11 +37,55 @@ internal fun NavigationDragSelectorOverlay(
                     val left = currentX - currentWidth / 2f
                     val cornerRadius = CornerRadius(height / 2f, height / 2f)
 
+                    // 1. Translucent glass fill, brighter than the bar
                     drawRoundRect(
-                        color = selectorColor,
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.20f),
+                                Color.White.copy(alpha = 0.10f),
+                            ),
+                            startY = top,
+                            endY = top + height,
+                        ),
                         topLeft = Offset(left, top),
                         size = Size(currentWidth, height),
                         cornerRadius = cornerRadius,
+                    )
+
+                    // 2. Subtle top inner highlight
+                    drawRoundRect(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.16f),
+                                Color.Transparent,
+                            ),
+                            startY = top,
+                            endY = top + (height * 0.5f),
+                        ),
+                        topLeft = Offset(left, top),
+                        size = Size(currentWidth, height),
+                        cornerRadius = cornerRadius,
+                    )
+
+                    // 3. Thin bright glass edge highlight
+                    val halfStroke = strokeWidthPx / 2f
+                    drawRoundRect(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.44f),
+                                Color.White.copy(alpha = 0.22f),
+                                Color.White.copy(alpha = 0.08f),
+                            ),
+                            start = Offset(left, top),
+                            end = Offset(left + currentWidth, top + height),
+                        ),
+                        topLeft = Offset(left + halfStroke, top + halfStroke),
+                        size = Size(currentWidth - strokeWidthPx, height - strokeWidthPx),
+                        cornerRadius = CornerRadius(
+                            (height / 2f - halfStroke).coerceAtLeast(0f),
+                            (height / 2f - halfStroke).coerceAtLeast(0f),
+                        ),
+                        style = Stroke(width = strokeWidthPx),
                     )
                 }
             },

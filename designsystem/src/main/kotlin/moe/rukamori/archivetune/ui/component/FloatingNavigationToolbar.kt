@@ -92,19 +92,6 @@ fun FloatingNavigationToolbar(
     val hasOverflow = false
     val containerColor = NavBarColors.container(pureBlack)
 
-    val fixedTintAlpha = if (pureBlack) SettingsDimensions.HazePureBlackTintAlpha else SettingsDimensions.HazeDefaultTintAlpha
-    val hazeStyle = remember(containerColor, blurRadius, pureBlack, blurEnabled) {
-        val tintEffect = HazeColorEffect.tint(containerColor.copy(alpha = fixedTintAlpha))
-        HazeBlurStyle {
-            blurEnabled(blurEnabled)
-            backgroundColor(containerColor)
-            colorEffects(listOf(tintEffect))
-            fallbackColorEffect(tintEffect)
-            blurRadius(blurRadius.dp)
-            noiseFactor(SettingsDimensions.HazeNoiseFactor)
-        }
-    }
-
     val shadowPaint = rememberNavigationShadowPaint()
 
     val animatedVisibilityFactor by animateFloatAsState(
@@ -230,31 +217,13 @@ fun FloatingNavigationToolbar(
             .fillMaxWidth()
             .height(NavigationBarHeight)
             .navigationShapeShadow(capsuleShape, shadowPaint)
-            .clip(capsuleShape)
-            .then(
-                if (hazeState != null) {
-                    Modifier.hazeBlur(
-                        input = HazeInput.Sources(hazeState),
-                        style = hazeStyle,
-                        performanceMode = HazePerformanceMode.Fixed(SettingsDimensions.HazeQualityFraction),
-                    )
-                } else {
-                    Modifier.background(containerColor)
-                },
-            )
-            .then(
-                if (showBorder) {
-                    Modifier.glassStroke(
-                        shape = capsuleShape,
-                        strokeWidth = SettingsDimensions.GlassBorderThickness,
-                        topAlpha = SettingsDimensions.GlassBorderTopAlpha,
-                        bottomAlpha = SettingsDimensions.GlassBorderBottomAlpha,
-                        topColor = Color.White,
-                        bottomColor = Color.Black,
-                    )
-                } else {
-                    Modifier
-                },
+            .liquidGlass(
+                shape = capsuleShape,
+                hazeState = hazeState,
+                pureBlack = pureBlack,
+                blurRadius = blurRadius.dp,
+                showBorder = showBorder,
+                cornerRadiusDp = NavigationBarCornerRadius,
             ),
         contentAlignment = Alignment.Center,
     ) {

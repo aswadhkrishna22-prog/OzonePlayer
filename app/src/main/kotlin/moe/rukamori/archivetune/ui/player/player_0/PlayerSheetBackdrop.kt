@@ -29,7 +29,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.composed
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.SolidColor
+import moe.rukamori.archivetune.ui.component.liquidGlass
 import dev.chrisbanes.haze.ExperimentalHazeApi
 import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazePerformanceMode
@@ -86,75 +89,38 @@ internal fun Modifier.playerSheetBackdrop(
     backgroundBrush: Brush,
     pureBlack: Boolean = false,
     expansionFractionProvider: () -> Float = { 0f },
-): Modifier = this.then(
-    if (pureBlack) {
-        Modifier.background(Color.Black)
-    } else {
-        Modifier.background(backgroundBrush)
-    }
-).then(
-    if (hazeState != null && !pureBlack) {
-        Modifier.composed {
-            val currentProvider by rememberUpdatedState(expansionFractionProvider)
-            val isBlurEnabled by remember {
-                derivedStateOf { currentProvider() < 0.99f }
-            }
-            val dynamicStyle = remember(hazeStyle, isBlurEnabled) {
-                hazeStyle.then {
-                    blurEnabled(isBlurEnabled)
-                }
-            }
-            Modifier.hazeBlur(
-                input = HazeInput.Sources(hazeState),
-                style = dynamicStyle,
-                performanceMode = HazePerformanceMode.Fixed(SettingsDimensions.HazeQualityFraction),
+    pillShape: Shape = RoundedCornerShape(32.dp),
+): Modifier = this
+    .liquidGlass(
+        shape = pillShape,
+        hazeState = hazeState,
+        pureBlack = pureBlack,
+        blurRadius = 26.dp,
+        showBorder = true,
+        cornerRadiusDp = 32.dp,
+    )
+    .drawWithContent {
+        drawContent()
+        val fraction = expansionFractionProvider()
+        if (fraction > 0f) {
+            drawRect(
+                brush = if (pureBlack) SolidColor(Color.Black) else backgroundBrush,
+                alpha = fraction.coerceIn(0f, 1f)
             )
         }
-    } else {
-        Modifier
     }
-)
 
 internal fun Modifier.playerSheetGlassBorder(
     expansionFractionProvider: () -> Float,
     density: Density,
-): Modifier = this.drawWithCache {
-    val strokeWidthPx = SettingsDimensions.GlassBorderThickness.toPx()
-    val halfStroke = strokeWidthPx / 2f
-    val borderBrush = Brush.verticalGradient(
-        0.0f to Color.White.copy(alpha = SettingsDimensions.GlassBorderTopAlpha),
-        1.0f to Color.Black.copy(alpha = SettingsDimensions.GlassBorderBottomAlpha)
-    )
-
-    onDrawWithContent {
-        val fraction = expansionFractionProvider()
-        drawContent()
-
-        if (fraction < SettingsDimensions.FullyExpandedThreshold) {
-            val borderFade = (1f - (fraction / SettingsDimensions.ExpansionThresholdFraction)).coerceIn(0f, 1f)
-            if (borderFade > 0f) {
-                val radiusPx = with(density) {
-                    androidx.compose.ui.unit.lerp(32.dp, 0.dp, fraction.coerceIn(0f, 1f)).toPx()
-                }
-                drawRoundRect(
-                    brush = borderBrush,
-                    alpha = borderFade,
-                    topLeft = Offset(halfStroke, halfStroke),
-                    size = Size(size.width - strokeWidthPx, size.height - strokeWidthPx),
-                    cornerRadius = CornerRadius(radiusPx, radiusPx),
-                    style = Stroke(width = strokeWidthPx)
-                )
-            }
-        }
-    }
-}
+): Modifier = this
 
 @Composable
 internal fun rememberPlayerSheetPillShape(
     density: Density,
     expansionFraction: Animatable<Float, *>,
     isDocked: Boolean = true,
-): Shape = remember(density, isDocked) {
+): Shape = remember(density) {
     object : Shape {
         override fun createOutline(
             size: Size,
@@ -164,27 +130,25 @@ internal fun rememberPlayerSheetPillShape(
             if (size.width <= 0f || size.height <= 0f) return Outline.Rectangle(Rect.Zero)
             val fraction = expansionFraction.value
             if (fraction >= 0.99f) return Outline.Rectangle(Rect(0f, 0f, size.width, size.height))
-            val topRadiusPx = with(density) {
+            val radiusPx = with(density) {
                 androidx.compose.ui.unit.lerp(32.dp, 0.dp, fraction.coerceIn(0f, 1f)).toPx()
             }
-            val bottomCornerDp = if (isDocked) 10.dp else 28.dp
-            val bottomRadiusPx = with(density) {
-                androidx.compose.ui.unit.lerp(bottomCornerDp, 0.dp, fraction.coerceIn(0f, 1f)).toPx()
-            }
-            val topCorner = CornerRadius(topRadiusPx, topRadiusPx)
-            val bottomCorner = CornerRadius(bottomRadiusPx, bottomRadiusPx)
+            val corner = CornerRadius(radiusPx, radiusPx)
             return Outline.Rounded(
                 RoundRect(
                     left = 0f,
                     top = 0f,
                     right = size.width,
                     bottom = size.height,
-                    topLeftCornerRadius = topCorner,
-                    topRightCornerRadius = topCorner,
-                    bottomRightCornerRadius = bottomCorner,
-                    bottomLeftCornerRadius = bottomCorner
+                    topLeftCornerRadius = corner,
+                    topRightCornerRadius = corner,
+                    bottomRightCornerRadius = corner,
+                    bottomLeftCornerRadius = corner
                 )
             )
+        }
+    }
+}
         }
     }
 }
