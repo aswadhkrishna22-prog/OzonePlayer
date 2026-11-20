@@ -153,29 +153,40 @@ fun ScaffoldShell(
                         containerColor = Color.Transparent,
                         modifier = Modifier.fillMaxSize(),
                     ) { _ ->
-                        NavigationHost(
-                            navController = navController, topAppBarScrollBehavior = appState.scrollController.topAppBarScrollBehavior,
-                            hazeState = scaffoldHazeState.effectiveHazeState, updateState = appState.updateState,
+                        Box(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .then(
-                                    if (scaffoldHazeState.effectiveSearchHazeState != null) Modifier.hazeSource(scaffoldHazeState.effectiveSearchHazeState) else Modifier,
+                                    if (scaffoldHazeState.effectiveHazeState != null) {
+                                        Modifier.hazeSource(scaffoldHazeState.effectiveHazeState)
+                                    } else Modifier
                                 )
-                                .graphicsLayer {
-                                    val p = if (disableAnimations) 0f else playerExpansionFraction().coerceIn(0f, 1f)
-                                    val scale = 1f - 0.06f * p
-                                    scaleX = scale
-                                    scaleY = scale
-                                    alpha = if (p > 0.9f) ((1f - p) / 0.1f).coerceIn(0f, 1f) else 1f
-                                },
-                            homeScrollConnection = appState.scrollController.homeScrollBehavior.nestedScrollConnection,
-                            searchScrollConnection = appState.scrollController.searchScrollBehavior.nestedScrollConnection,
-                            onClearUpdateBadge = { appState.updateViewModel.dismissUpdate() }, disableAnimations = disableAnimations,
-                            isTvDevice = appState.isTvDevice, contentAreaFocusRequester = appState.searchState.contentAreaFocusRequester,
-                            launchMusicRecognitionFromShortcut = appState.launchMusicRecognitionFromShortcut,
-                            tabOpenedFromShortcut = appState.tabOpenedFromShortcut, defaultOpenTab = appState.defaultOpenTab,
-                            navigationItems = appState.navigationItems, updateChannel = updateChannel,
-                        )
+                        ) {
+                            ScreenBackground(isVisible = LocalGlobalVisibility.current, modifier = Modifier.fillMaxSize())
+                            NavigationHost(
+                                navController = navController, topAppBarScrollBehavior = appState.scrollController.topAppBarScrollBehavior,
+                                hazeState = null, updateState = appState.updateState,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .then(
+                                        if (scaffoldHazeState.effectiveSearchHazeState != null) Modifier.hazeSource(scaffoldHazeState.effectiveSearchHazeState) else Modifier,
+                                    )
+                                    .graphicsLayer {
+                                        val p = if (disableAnimations) 0f else playerExpansionFraction().coerceIn(0f, 1f)
+                                        val scale = 1f - 0.06f * p
+                                        scaleX = scale
+                                        scaleY = scale
+                                        alpha = if (p > 0.9f) ((1f - p) / 0.1f).coerceIn(0f, 1f) else 1f
+                                    },
+                                homeScrollConnection = appState.scrollController.homeScrollBehavior.nestedScrollConnection,
+                                searchScrollConnection = appState.scrollController.searchScrollBehavior.nestedScrollConnection,
+                                onClearUpdateBadge = { appState.updateViewModel.dismissUpdate() }, disableAnimations = disableAnimations,
+                                isTvDevice = appState.isTvDevice, contentAreaFocusRequester = appState.searchState.contentAreaFocusRequester,
+                                launchMusicRecognitionFromShortcut = appState.launchMusicRecognitionFromShortcut,
+                                tabOpenedFromShortcut = appState.tabOpenedFromShortcut, defaultOpenTab = appState.defaultOpenTab,
+                                navigationItems = appState.navigationItems, updateChannel = updateChannel,
+                            )
+                        }
                     }
 
                     moe.rukamori.archivetune.kemo.KemoOverlay(

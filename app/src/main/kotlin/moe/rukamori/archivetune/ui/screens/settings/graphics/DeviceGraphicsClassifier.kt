@@ -30,8 +30,8 @@ enum class GraphicsPreset(
     val forceHighRefreshRate: Boolean,
 ) {
     LOW(
-        blurNavBar = false,
-        blurRadius = 0f,
+        blurNavBar = true,
+        blurRadius = 16f,
         homeBackgroundStyle = HomeBackgroundStyle.TONAL,
         parallaxEnabled = false,
         forceHighRefreshRate = false,

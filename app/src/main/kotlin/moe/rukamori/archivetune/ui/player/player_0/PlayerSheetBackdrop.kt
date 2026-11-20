@@ -95,7 +95,7 @@ internal fun Modifier.playerSheetBackdrop(
         shape = pillShape,
         hazeState = hazeState,
         pureBlack = pureBlack,
-        blurRadius = 26.dp,
+        blurRadius = 24.dp,
         showBorder = true,
         cornerRadiusDp = 32.dp,
     )

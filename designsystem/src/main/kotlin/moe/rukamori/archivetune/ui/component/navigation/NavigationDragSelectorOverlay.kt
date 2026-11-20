@@ -35,14 +35,23 @@ internal fun NavigationDragSelectorOverlay(
                     val height = size.height - (verticalPaddingPx * 2)
                     val top = verticalPaddingPx
                     val left = currentX - currentWidth / 2f
-                    val cornerRadius = CornerRadius(height / 2f, height / 2f)
+                    val radius = height / 2f
+                    val cornerRadius = CornerRadius(radius, radius)
 
-                    // 1. Translucent glass fill, brighter than the bar
+                    // 1. Soft drop shadow under the selected lens
+                    drawRoundRect(
+                        color = Color.Black.copy(alpha = 0.16f),
+                        topLeft = Offset(left, top + 1.5.dp.toPx()),
+                        size = Size(currentWidth, height),
+                        cornerRadius = cornerRadius,
+                    )
+
+                    // 2. Translucent glass fill, brighter than the bar (LastWave lens formula)
                     drawRoundRect(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.20f),
-                                Color.White.copy(alpha = 0.10f),
+                                Color.White.copy(alpha = 0.18f),
+                                Color.White.copy(alpha = 0.08f),
                             ),
                             startY = top,
                             endY = top + height,
@@ -52,29 +61,30 @@ internal fun NavigationDragSelectorOverlay(
                         cornerRadius = cornerRadius,
                     )
 
-                    // 2. Subtle top inner highlight
+                    // 3. Subtle convex top sheen
                     drawRoundRect(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.16f),
+                                Color.White.copy(alpha = 0.22f),
                                 Color.Transparent,
                             ),
                             startY = top,
-                            endY = top + (height * 0.5f),
+                            endY = top + (height * 0.55f),
                         ),
                         topLeft = Offset(left, top),
                         size = Size(currentWidth, height),
                         cornerRadius = cornerRadius,
                     )
 
-                    // 3. Thin bright glass edge highlight
+                    // 4. Specular lens rim highlight
                     val halfStroke = strokeWidthPx / 2f
                     drawRoundRect(
                         brush = Brush.linearGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.44f),
-                                Color.White.copy(alpha = 0.22f),
-                                Color.White.copy(alpha = 0.08f),
+                                Color.White.copy(alpha = 0.65f),
+                                Color.White.copy(alpha = 0.35f),
+                                Color.White.copy(alpha = 0.10f),
+                                Color.White.copy(alpha = 0.25f),
                             ),
                             start = Offset(left, top),
                             end = Offset(left + currentWidth, top + height),
@@ -82,8 +92,8 @@ internal fun NavigationDragSelectorOverlay(
                         topLeft = Offset(left + halfStroke, top + halfStroke),
                         size = Size(currentWidth - strokeWidthPx, height - strokeWidthPx),
                         cornerRadius = CornerRadius(
-                            (height / 2f - halfStroke).coerceAtLeast(0f),
-                            (height / 2f - halfStroke).coerceAtLeast(0f),
+                            (radius - halfStroke).coerceAtLeast(0f),
+                            (radius - halfStroke).coerceAtLeast(0f),
                         ),
                         style = Stroke(width = strokeWidthPx),
                     )

@@ -92,8 +92,6 @@ fun FloatingNavigationToolbar(
     val hasOverflow = false
     val containerColor = NavBarColors.container(pureBlack)
 
-    val shadowPaint = rememberNavigationShadowPaint()
-
     val animatedVisibilityFactor by animateFloatAsState(
         targetValue = visibilityFactor.coerceIn(0f, 1f),
         animationSpec = tween(
@@ -216,7 +214,6 @@ fun FloatingNavigationToolbar(
             }
             .fillMaxWidth()
             .height(NavigationBarHeight)
-            .navigationShapeShadow(capsuleShape, shadowPaint)
             .liquidGlass(
                 shape = capsuleShape,
                 hazeState = hazeState,
