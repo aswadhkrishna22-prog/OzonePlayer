@@ -29,8 +29,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import moe.rukamori.archivetune.ui.component.liquidBubbleHighlight
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -85,7 +87,18 @@ internal fun SearchEntryField(
             if (expanded) onClick()
         },
         windowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
-        modifier = modifier.fillMaxWidth(),
+        colors = SearchBarDefaults.colors(
+            containerColor = Color.White.copy(alpha = 0.08f),
+        ),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .liquidBubbleHighlight(
+                cornerRadiusDp = 28.dp,
+                isDark = true,
+                hasTopSheen = true,
+                sheenAlpha = 0.06f,
+            ),
     ) {}
 }
 @OptIn(ExperimentalMaterial3Api::class)

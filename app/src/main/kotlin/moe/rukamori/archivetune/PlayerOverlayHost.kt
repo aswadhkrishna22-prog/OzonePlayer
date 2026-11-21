@@ -29,6 +29,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
+import com.kyant.backdrop.Backdrop
+import io.github.fletchmckee.liquid.LiquidState
 import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -58,6 +60,9 @@ fun PlayerOverlayHost(
     modifier: Modifier = Modifier,
     useRail: Boolean = false,
     hazeState: HazeState? = null,
+    glassBackdrop: Backdrop? = null,
+    navLiquidState: LiquidState? = null,
+    blurNavBar: Boolean = true,
     blurRadius: Float = SettingsDimensions.BlurRadiusDefault,
     pureBlack: Boolean = false,
     playerViewModel: PlayerViewModel = hiltViewModel(),
@@ -139,8 +144,11 @@ fun PlayerOverlayHost(
         isYearInMusic = isYearInMusic,
     )
 
+    val isLiquidActive = navLiquidState != null
+    val effectiveNavHeight = if (isLiquidActive) 64.dp else navVisibleHeight
+
     val bottomNavigationBarHeight by animateDpAsState(
-        targetValue = if (shouldShowNav && !useRail) navVisibleHeight else 0.dp,
+        targetValue = if (shouldShowNav && !useRail) effectiveNavHeight else 0.dp,
         animationSpec = if (disableAnimations) snap() else NavigationBarAnimationSpec,
         label = "",
     )
@@ -153,7 +161,7 @@ fun PlayerOverlayHost(
 
     val navSlideDistance = PlayerDockGeometry.navigationBarBottomOffset(
         floatingToolbarBottomPadding = floatingToolbarBottomPadding,
-        navigationBarHeight = navVisibleHeight,
+        navigationBarHeight = effectiveNavHeight,
     )
     val dropState = rememberMiniPlayerDropState(
         navSlideDistance = navSlideDistance,
@@ -164,7 +172,7 @@ fun PlayerOverlayHost(
     val navigationSlideOffset = rememberNavigationSlideOffset(
         navSlideDistance = navSlideDistance,
         bottomNavigationBarHeight = bottomNavigationBarHeight,
-        navVisibleHeight = navVisibleHeight,
+        navVisibleHeight = effectiveNavHeight,
         playerExpansionAnimatable = playerExpansionAnimatable,
     )
 
@@ -181,6 +189,8 @@ fun PlayerOverlayHost(
                 bottomNavigationBarHeight = bottomNavigationBarHeight,
                 dropState = dropState,
                 hazeState = hazeState,
+                glassBackdrop = glassBackdrop,
+                blurNavBar = blurNavBar,
                 pureBlack = pureBlack,
                 blurRadius = blurRadius,
                 useRail = useRail,
@@ -216,11 +226,14 @@ fun PlayerOverlayHost(
                         navigationItems = navigationItems,
                         pureBlack = pureBlack,
                         hazeState = hazeState,
+                        glassBackdrop = glassBackdrop,
+                        navLiquidState = navLiquidState,
+                        blurNavBar = blurNavBar,
                         blurRadius = blurRadius,
                         isMiniPlayerActive = isMiniPlayerActive,
                         playerExpansionAnimatable = playerExpansionAnimatable,
                         bottomNavigationBarHeight = bottomNavigationBarHeight,
-                        navVisibleHeight = navVisibleHeight,
+                        navVisibleHeight = effectiveNavHeight,
                         scrollVisibilityFactor = scrollVisibilityFactor,
                         floatingToolbarBottomPadding = floatingToolbarBottomPadding,
                         shouldShowHomeShuffleButton = shouldShowHomeShuffleButton,

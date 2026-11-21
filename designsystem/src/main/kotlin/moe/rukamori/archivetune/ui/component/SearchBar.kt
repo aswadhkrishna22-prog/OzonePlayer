@@ -172,18 +172,6 @@ fun TopSearch(
     }
 
     val containerColor = if (pureBlack) Color.Black else colors.containerColor
-    val fixedTintAlpha = if (pureBlack) SettingsDimensions.HazePureBlackTintAlpha else SettingsDimensions.HazeDefaultTintAlpha
-    val hazeStyle =
-        remember(containerColor, blurRadius, pureBlack) {
-            val tintEffect = HazeColorEffect.tint(containerColor.copy(alpha = fixedTintAlpha))
-            HazeBlurStyle {
-                backgroundColor(containerColor)
-                colorEffects(listOf(tintEffect))
-                fallbackColorEffect(tintEffect)
-                blurRadius(blurRadius.dp)
-                noiseFactor(SettingsDimensions.HazeNoiseFactor)
-            }
-        }
 
     BoxWithConstraints(
         modifier = modifier.offset { IntOffset(x = 0, y = 0) },
@@ -233,31 +221,15 @@ fun TopSearch(
                         end = endPadding,
                     )
                     .size(width = width, height = height)
-                    .clip(animatedShape)
-                    .then(
-                        if (hazeState != null) {
-                            Modifier.hazeBlur(
-                                input = HazeInput.Sources(hazeState),
-                                style = hazeStyle,
-                                performanceMode = HazePerformanceMode.Fixed(SettingsDimensions.HazeQualityFraction),
-                            )
-                        } else {
-                            Modifier.background(containerColor)
-                        },
-                    )
-                    .then(
-                        if (showBorder && hazeState != null && borderFade > 0f) {
-                            Modifier.glassStroke(
-                                shape = animatedShape,
-                                strokeWidth = SettingsDimensions.GlassBorderThickness,
-                                topAlpha = SettingsDimensions.GlassBorderTopAlpha * borderFade,
-                                bottomAlpha = SettingsDimensions.GlassBorderBottomAlpha * borderFade,
-                                topColor = Color.White,
-                                bottomColor = Color.Black,
-                            )
-                        } else {
-                            Modifier
-                        },
+                    .liquidGlass(
+                        shape = animatedShape,
+                        hazeState = hazeState,
+                        pureBlack = pureBlack,
+                        preset = if (animationProgress > 0.5f) LiquidGlassPreset.Header else LiquidGlassPreset.Pill,
+                        blurRadius = androidx.compose.ui.unit.lerp(8.dp, 22.dp, animationProgress),
+                        tintAlpha = if (pureBlack) 0.50f else androidx.compose.ui.util.lerp(0.10f, 0.32f, animationProgress),
+                        showBorder = showBorder && borderFade > 0f,
+                        cornerRadiusDp = androidx.compose.ui.unit.lerp(SearchBarCornerRadius, 0.dp, animationProgress),
                     ),
         ) {
             Column {

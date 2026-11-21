@@ -30,6 +30,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.valentinilk.shimmer.LocalShimmerTheme
 import dev.chrisbanes.haze.hazeSource
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.backdrops.layerBackdrop
+import io.github.fletchmckee.liquid.rememberLiquidState
+import io.github.fletchmckee.liquid.liquefiable
+import io.github.fletchmckee.liquid.LiquidState
+import moe.rukamori.archivetune.ui.component.isBackdropGlassCapable
 import moe.rukamori.archivetune.constants.HomeBackgroundStyle
 import moe.rukamori.archivetune.constants.SearchSource
 import moe.rukamori.archivetune.constants.UpdateChannel
@@ -97,7 +103,6 @@ fun ScaffoldShell(
             LocalGlobalVisibility provides isHomeScreenVisible,
             LocalPlayerIsExpanded provides appState.playerBottomSheetState.isExpanded,
         ) {
-            ScreenBackground(isVisible = LocalGlobalVisibility.current, modifier = Modifier.fillMaxSize())
             Row(
                 modifier = Modifier.fillMaxSize(),
             ) {
@@ -122,6 +127,17 @@ fun ScaffoldShell(
                     val accountName by appState.homeViewModel.accountName.collectAsStateWithLifecycle()
                     val accountImageUrl by appState.homeViewModel.accountImageUrl.collectAsStateWithLifecycle()
                     val accountAccentColor by appState.homeViewModel.accountAccentColor.collectAsStateWithLifecycle()
+                    val appBackgroundColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
+                    val glassCapable = isBackdropGlassCapable()
+                    val glassBackdrop = if (glassCapable) {
+                        rememberLayerBackdrop {
+                            drawRect(appBackgroundColor)
+                            drawContent()
+                        }
+                    } else null
+                    val useLiquidNav = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU && appState.blurNavBar
+                    val navLiquidState = if (useLiquidNav) rememberLiquidState() else null
+
                     @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
                     Scaffold(
                         topBar = {
@@ -153,29 +169,56 @@ fun ScaffoldShell(
                         containerColor = Color.Transparent,
                         modifier = Modifier.fillMaxSize(),
                     ) { _ ->
-                        NavigationHost(
-                            navController = navController, topAppBarScrollBehavior = appState.scrollController.topAppBarScrollBehavior,
-                            hazeState = scaffoldHazeState.effectiveHazeState, updateState = appState.updateState,
+                        Box(
                             modifier = Modifier
                                 .fillMaxSize()
+                                .background(appBackgroundColor)
                                 .then(
-                                    if (scaffoldHazeState.effectiveSearchHazeState != null) Modifier.hazeSource(scaffoldHazeState.effectiveSearchHazeState) else Modifier,
+                                    if (scaffoldHazeState.effectiveHazeState != null) {
+                                        Modifier.hazeSource(scaffoldHazeState.effectiveHazeState)
+                                    } else Modifier
                                 )
-                                .graphicsLayer {
-                                    val p = if (disableAnimations) 0f else playerExpansionFraction().coerceIn(0f, 1f)
-                                    val scale = 1f - 0.06f * p
-                                    scaleX = scale
-                                    scaleY = scale
-                                    alpha = if (p > 0.9f) ((1f - p) / 0.1f).coerceIn(0f, 1f) else 1f
-                                },
-                            homeScrollConnection = appState.scrollController.homeScrollBehavior.nestedScrollConnection,
-                            searchScrollConnection = appState.scrollController.searchScrollBehavior.nestedScrollConnection,
-                            onClearUpdateBadge = { appState.updateViewModel.dismissUpdate() }, disableAnimations = disableAnimations,
-                            isTvDevice = appState.isTvDevice, contentAreaFocusRequester = appState.searchState.contentAreaFocusRequester,
-                            launchMusicRecognitionFromShortcut = appState.launchMusicRecognitionFromShortcut,
-                            tabOpenedFromShortcut = appState.tabOpenedFromShortcut, defaultOpenTab = appState.defaultOpenTab,
-                            navigationItems = appState.navigationItems, updateChannel = updateChannel,
-                        )
+                                .then(
+                                    if (glassBackdrop != null) {
+                                        Modifier.layerBackdrop(glassBackdrop)
+                                    } else Modifier
+                                ),
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .then(
+                                        if (navLiquidState != null) {
+                                            Modifier.liquefiable(navLiquidState)
+                                        } else Modifier
+                                    ),
+                            ) {
+                                ScreenBackground(isVisible = LocalGlobalVisibility.current, modifier = Modifier.fillMaxSize())
+                                NavigationHost(
+                                    navController = navController, topAppBarScrollBehavior = appState.scrollController.topAppBarScrollBehavior,
+                                    hazeState = null, updateState = appState.updateState,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .then(
+                                            if (scaffoldHazeState.effectiveSearchHazeState != null) Modifier.hazeSource(scaffoldHazeState.effectiveSearchHazeState) else Modifier,
+                                        )
+                                        .graphicsLayer {
+                                            val p = if (disableAnimations) 0f else playerExpansionFraction().coerceIn(0f, 1f)
+                                            val scale = 1f - 0.06f * p
+                                            scaleX = scale
+                                            scaleY = scale
+                                            alpha = if (p > 0.9f) ((1f - p) / 0.1f).coerceIn(0f, 1f) else 1f
+                                        },
+                                    homeScrollConnection = appState.scrollController.homeScrollBehavior.nestedScrollConnection,
+                                    searchScrollConnection = appState.scrollController.searchScrollBehavior.nestedScrollConnection,
+                                    onClearUpdateBadge = { appState.updateViewModel.dismissUpdate() }, disableAnimations = disableAnimations,
+                                    isTvDevice = appState.isTvDevice, contentAreaFocusRequester = appState.searchState.contentAreaFocusRequester,
+                                    launchMusicRecognitionFromShortcut = appState.launchMusicRecognitionFromShortcut,
+                                    tabOpenedFromShortcut = appState.tabOpenedFromShortcut, defaultOpenTab = appState.defaultOpenTab,
+                                    navigationItems = appState.navigationItems, updateChannel = updateChannel,
+                                )
+                            }
+                        }
                     }
 
                     moe.rukamori.archivetune.kemo.KemoOverlay(
@@ -194,6 +237,9 @@ fun ScaffoldShell(
                         maxHeight = this@BoxWithConstraints.maxHeight, bottomInset = appState.bottomInset,
                         shouldShowNav = appState.shouldShowNavigationBar, isYearInMusic = appState.isYearInMusicScreen,
                         useRail = appState.useRail, hazeState = scaffoldHazeState.effectiveHazeState,
+                        glassBackdrop = glassBackdrop,
+                        navLiquidState = navLiquidState,
+                        blurNavBar = appState.blurNavBar,
                         blurRadius = appState.blurRadius, pureBlack = pureBlack, playerViewModel = playerViewModel,
                         homeViewModel = appState.homeViewModel, playerConnection = playerConnection, database = database,
                         systemBarController = systemBarController, window = activity.window, sheetState = appState.playerBottomSheetState,

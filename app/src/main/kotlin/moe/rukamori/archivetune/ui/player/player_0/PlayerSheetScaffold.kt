@@ -79,7 +79,7 @@ internal fun PlayerSheetScaffold(
                 }
                 .graphicsLayer {
                     shape = pillShape
-                    clip = expansionFraction.value < 0.99f
+                    clip = expansionFraction.value in 0.01f..0.99f
                 }
                 .layout { measurable, constraints ->
                     val targetContentHeightPx = screenHeightPx.roundToInt()
