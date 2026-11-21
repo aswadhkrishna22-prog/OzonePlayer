@@ -390,6 +390,8 @@ implementation(libs.androidx.foundation.layout)
     implementation(libs.haze)
     implementation(libs.haze.blur)
     implementation(libs.graphics.shapes)
+    implementation(libs.kyant.backdrop)
+    implementation(libs.kyant.shapes)
 
     implementation(libs.google.material)
 
