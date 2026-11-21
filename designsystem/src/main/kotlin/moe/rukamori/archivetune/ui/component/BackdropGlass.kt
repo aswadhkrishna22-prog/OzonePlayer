@@ -171,68 +171,70 @@ fun Modifier.drawInteractiveGlass(
             shape = { lensSafeGlassShape(shape) },
             highlight = { highlight },
             effects = {
-                if (size.minDimension < 1f) return@effects
-                val l = if (isDark) -0.5f else (luminanceAnimation * 2f - 1f).let { sign(it) * it * it }
-                val press = interaction?.pressProgress ?: 0f
-                colorControls(
-                    brightness = BackdropGlassRecipe.BRIGHTNESS,
-                    contrast = BackdropGlassRecipe.CONTRAST,
-                    saturation = BackdropGlassRecipe.SATURATION,
-                )
-                blur(
-                    (
-                        if (l > 0f) {
-                            lerp(
-                                BackdropGlassRecipe.BLUR_BASE_DP.dp.toPx(),
-                                BackdropGlassRecipe.BLUR_BRIGHT_DP.dp.toPx(),
-                                l,
-                            )
-                        } else {
-                            lerp(
-                                BackdropGlassRecipe.BLUR_BASE_DP.dp.toPx(),
-                                BackdropGlassRecipe.BLUR_DARK_DP.dp.toPx(),
-                                -l,
-                            )
-                        }
-                    ) * blurScale + BackdropGlassRecipe.PRESS_BLUR_DP.dp.toPx() * press,
-                )
-                if (hasLens) {
-                    val baseLens = (size.minDimension / lensDivisor +
-                        BackdropGlassRecipe.PRESS_BLUR_DP.dp.toPx() * press).coerceAtLeast(0.1f)
-                    val maxRadius = (size.minDimension / lensMaxRadiusDivisor).coerceAtLeast(baseLens + 0.1f)
-                    lens(
-                        baseLens,
-                        maxRadius,
-                        false,
+                if (size.minDimension >= 1f) {
+                    val l = if (isDark) -0.5f else (luminanceAnimation * 2f - 1f).let { sign(it) * it * it }
+                    val press = interaction?.pressProgress ?: 0f
+                    colorControls(
+                        brightness = BackdropGlassRecipe.BRIGHTNESS,
+                        contrast = BackdropGlassRecipe.CONTRAST,
+                        saturation = BackdropGlassRecipe.SATURATION,
                     )
+                    blur(
+                        (
+                            if (l > 0f) {
+                                lerp(
+                                    BackdropGlassRecipe.BLUR_BASE_DP.dp.toPx(),
+                                    BackdropGlassRecipe.BLUR_BRIGHT_DP.dp.toPx(),
+                                    l,
+                                )
+                            } else {
+                                lerp(
+                                    BackdropGlassRecipe.BLUR_BASE_DP.dp.toPx(),
+                                    BackdropGlassRecipe.BLUR_DARK_DP.dp.toPx(),
+                                    -l,
+                                )
+                            }
+                        ) * blurScale + BackdropGlassRecipe.PRESS_BLUR_DP.dp.toPx() * press,
+                    )
+                    if (hasLens) {
+                        val baseLens = (size.minDimension / lensDivisor +
+                            BackdropGlassRecipe.PRESS_BLUR_DP.dp.toPx() * press).coerceAtLeast(0.1f)
+                        val maxRadius = (size.minDimension / lensMaxRadiusDivisor).coerceAtLeast(baseLens + 0.1f)
+                        lens(
+                            baseLens,
+                            maxRadius,
+                            false,
+                        )
+                    }
                 }
             },
             onDrawBackdrop = { drawBackdrop ->
                 drawBackdrop()
             },
             onDrawSurface = {
-                if (size.minDimension < 1f) return@onDrawSurface
-                val darken = if (scrimAlpha != null) {
-                    scrimAlpha
-                } else if (isDark) {
-                    0.22f
-                } else {
-                    lerp(minScrim, maxScrim, ((luminanceAnimation - 0.3f) / 0.5f).coerceIn(0f, 1f))
-                }
-                drawRect((if (isDark) Color.Black else Color.White).copy(alpha = darken))
-                val press = interaction?.pressProgress ?: 0f
-                if (press > 0f) {
-                    drawRect(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.18f * press),
-                                Color.Transparent,
+                if (size.minDimension >= 1f) {
+                    val darken = if (scrimAlpha != null) {
+                        scrimAlpha
+                    } else if (isDark) {
+                        0.22f
+                    } else {
+                        lerp(minScrim, maxScrim, ((luminanceAnimation - 0.3f) / 0.5f).coerceIn(0f, 1f))
+                    }
+                    drawRect((if (isDark) Color.Black else Color.White).copy(alpha = darken))
+                    val press = interaction?.pressProgress ?: 0f
+                    if (press > 0f) {
+                        drawRect(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = 0.18f * press),
+                                    Color.Transparent,
+                                ),
+                                center = interaction?.touchPosition ?: Offset(size.width / 2f, size.height / 2f),
+                                radius = (size.minDimension * 1.2f).coerceAtLeast(1f),
                             ),
-                            center = interaction?.touchPosition ?: Offset(size.width / 2f, size.height / 2f),
-                            radius = (size.minDimension * 1.2f).coerceAtLeast(1f),
-                        ),
-                        blendMode = BlendMode.Plus,
-                    )
+                            blendMode = BlendMode.Plus,
+                        )
+                    }
                 }
             },
             layerBlock =
