@@ -97,7 +97,6 @@ fun ScaffoldShell(
             LocalGlobalVisibility provides isHomeScreenVisible,
             LocalPlayerIsExpanded provides appState.playerBottomSheetState.isExpanded,
         ) {
-            ScreenBackground(isVisible = LocalGlobalVisibility.current, modifier = Modifier.fillMaxSize())
             Row(
                 modifier = Modifier.fillMaxSize(),
             ) {
@@ -156,6 +155,7 @@ fun ScaffoldShell(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
+                                .background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.background)
                                 .then(
                                     if (scaffoldHazeState.effectiveHazeState != null) {
                                         Modifier.hazeSource(scaffoldHazeState.effectiveHazeState)

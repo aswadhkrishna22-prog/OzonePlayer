@@ -90,7 +90,6 @@ fun FloatingNavigationToolbar(
     onSearchItemDoubleClick: (() -> Unit)? = null,
 ) {
     val hasOverflow = false
-    val containerColor = NavBarColors.container(pureBlack)
 
     val animatedVisibilityFactor by animateFloatAsState(
         targetValue = visibilityFactor.coerceIn(0f, 1f),
@@ -216,11 +215,14 @@ fun FloatingNavigationToolbar(
             .height(NavigationBarHeight)
             .liquidGlass(
                 shape = capsuleShape,
-                hazeState = hazeState,
+                hazeState = if (blurEnabled) hazeState else null,
                 pureBlack = pureBlack,
-                blurRadius = blurRadius.dp,
+                blurRadius = 4.dp,
+                tintAlpha = 0.08f,
                 showBorder = showBorder,
                 cornerRadiusDp = NavigationBarCornerRadius,
+                lensDistortion = 28.dp,
+                lensHeight = 18.dp,
             ),
         contentAlignment = Alignment.Center,
     ) {

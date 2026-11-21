@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.composed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.SolidColor
@@ -89,26 +90,38 @@ internal fun Modifier.playerSheetBackdrop(
     backgroundBrush: Brush,
     pureBlack: Boolean = false,
     expansionFractionProvider: () -> Float = { 0f },
-    pillShape: Shape = RoundedCornerShape(32.dp),
-): Modifier = this
-    .liquidGlass(
+    pillShape: Shape = RoundedCornerShape(28.dp),
+): Modifier = composed {
+    val currentProvider by rememberUpdatedState(expansionFractionProvider)
+
+    // Base liquid glass modifier matching bottom navigation bar exactly
+    val glassModifier = Modifier.liquidGlass(
         shape = pillShape,
         hazeState = hazeState,
         pureBlack = pureBlack,
-        blurRadius = 24.dp,
+        blurRadius = 4.dp,
+        tintAlpha = 0.08f,
         showBorder = true,
-        cornerRadiusDp = 32.dp,
+        cornerRadiusDp = 28.dp,
+        lensDistortion = 28.dp,
+        lensHeight = 18.dp,
     )
-    .drawWithContent {
-        drawContent()
-        val fraction = expansionFractionProvider()
-        if (fraction > 0f) {
-            drawRect(
-                brush = if (pureBlack) SolidColor(Color.Black) else backgroundBrush,
-                alpha = fraction.coerceIn(0f, 1f)
-            )
+
+    this
+        .then(glassModifier)
+        .drawWithContent {
+            drawContent()
+            val fraction = currentProvider()
+            if (fraction > 0f) {
+                // Smooth crossfade to full player background as sheet expands
+                val fullAlpha = (fraction / 0.35f).coerceIn(0f, 1f)
+                drawRect(
+                    brush = if (pureBlack) SolidColor(Color.Black) else backgroundBrush,
+                    alpha = fullAlpha,
+                )
+            }
         }
-    }
+}
 
 internal fun Modifier.playerSheetGlassBorder(
     expansionFractionProvider: () -> Float,
