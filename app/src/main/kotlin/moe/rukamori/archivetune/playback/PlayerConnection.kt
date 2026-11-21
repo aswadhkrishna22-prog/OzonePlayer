@@ -55,6 +55,7 @@ class PlayerConnection(
     val database: MusicDatabase,
     val scope: CoroutineScope,
 ) : Player.Listener {
+    private val appContext = context.applicationContext
     val service = binder.service
     val player = service.player
     val localPlayer = service.localPlayer
