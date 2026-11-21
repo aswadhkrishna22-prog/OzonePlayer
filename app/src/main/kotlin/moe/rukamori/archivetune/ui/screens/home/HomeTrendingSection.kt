@@ -394,115 +394,6 @@ private fun TrendingShelfContent(
                                                 loadingTrackId = null
                                             }
                                         }
-                                    } else if (track.isJioSaavn) {
-                                        // JioSaavn track resolution & playback
-                                        if (isResolvingThis || trendingRepository == null) return@combinedClickable
-                                        loadingTrackId = track.id
-                                        scope.launch {
-                                            try {
-                                                val db = mediaContext.playerConnection.database
-                                                val mediaItems = withContext(Dispatchers.IO) {
-                                                    tracks.filter { it.isJioSaavn }.mapNotNull { item ->
-                                                        val enc = item.encryptedMediaUrl
-                                                        val rawUrl = if (!enc.isNullOrBlank()) {
-                                                            JioSaavnDecryptor.decryptMediaUrl(enc)
-                                                        } else null
-
-                                                        val itemMediaId = if (item.id.startsWith("jiosaavn_")) item.id else "jiosaavn_${item.id}"
-
-                                                        if (!rawUrl.isNullOrBlank()) {
-                                                            JioSaavnQualityCache.storeRawUrl(itemMediaId, rawUrl)
-                                                            val workingTier = JioSaavnQualityCache.getWorkingTier(itemMediaId)
-                                                            val streamUrl = JioSaavnDecryptor.getUrlForTier(rawUrl, workingTier)
-                                                            val nominalBitrate = if (workingTier.nominalBitrateKbps > 0) workingTier.nominalBitrateKbps * 1000 else 160000
-
-                                                            val itemMetadata = MediaMetadata(
-                                                                id = itemMediaId,
-                                                                title = item.title,
-                                                                artists = listOf(MediaMetadata.Artist(id = null, name = item.artist)),
-                                                                duration = item.durationSeconds ?: -1,
-                                                                thumbnailUrl = item.artworkUrl,
-                                                                explicit = item.explicit,
-                                                            )
-
-                                                            db.insert(itemMetadata)
-                                                            val formatEntity = FormatEntity(
-                                                                id = formatIdForSource(itemMediaId, PlaybackSource.FLAC),
-                                                                itag = 0,
-                                                                mimeType = "audio/mp4",
-                                                                codecs = "mp4a.40.2",
-                                                                bitrate = nominalBitrate,
-                                                                sampleRate = 44100,
-                                                                contentLength = (nominalBitrate.toLong() / 8L) * (item.durationSeconds ?: 200),
-                                                                loudnessDb = null,
-                                                                playbackUrl = streamUrl,
-                                                                bitsPerSample = 16,
-                                                            )
-                                                            db.upsert(formatEntity)
-                                                            db.upsert(formatEntity.copy(id = itemMediaId))
-
-                                                            MediaItem.Builder()
-                                                                .setMediaId(itemMediaId)
-                                                                .setUri(streamUrl.toUri())
-                                                                .setCustomCacheKey(itemMediaId)
-                                                                .setTag(itemMetadata)
-                                                                .setMediaMetadata(
-                                                                    androidx.media3.common.MediaMetadata.Builder()
-                                                                        .setTitle(item.title)
-                                                                        .setSubtitle(item.artist)
-                                                                        .setArtist(item.artist)
-                                                                        .setArtworkUri(item.artworkUrl?.toUri())
-                                                                        .setIsPlayable(true)
-                                                                        .setMediaType(androidx.media3.common.MediaMetadata.MEDIA_TYPE_MUSIC)
-                                                                        .build(),
-                                                                )
-                                                                .build()
-                                                        } else {
-                                                            null
-                                                        }
-                                                    }
-                                                }
-
-                                                val targetMediaId = if (track.id.startsWith("jiosaavn_")) track.id else "jiosaavn_${track.id}"
-                                                val startIndex = mediaItems.indexOfFirst { it.mediaId == targetMediaId }
-
-                                                if (mediaItems.isNotEmpty() && startIndex >= 0) {
-                                                    mediaContext.playerConnection.playQueue(
-                                                        JioSaavnQueue(
-                                                            title = sectionTitle,
-                                                            items = mediaItems,
-                                                            startIndex = startIndex,
-                                                        ),
-                                                    )
-                                                } else {
-                                                    // Fallback to YouTube matching if JioSaavn stream could not be decrypted
-                                                    when (val res = trendingRepository.resolver.resolveTrack(track)) {
-                                                        is TrendingResolutionResult.Success -> {
-                                                            val song = res.songItem
-                                                            mediaContext.playerConnection.playQueue(
-                                                                YouTubeQueue(
-                                                                    endpoint = song.endpoint ?: WatchEndpoint(videoId = song.id),
-                                                                    preloadItem = song.toMediaMetadata().copy(spotifyTrackId = track.id),
-                                                                ),
-                                                            )
-                                                        }
-                                                        is TrendingResolutionResult.NotFound -> {
-                                                            withContext(Dispatchers.Main) {
-                                                                Toast.makeText(
-                                                                    context,
-                                                                    context.getString(R.string.could_not_find_song_try_searching),
-                                                                    Toast.LENGTH_SHORT,
-                                                                ).show()
-                                                                val query = "${track.title} ${track.artist}".trim()
-                                                                mediaContext.navController.navigate(onlineSearchResultRoute(query))
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            } finally {
-                                                loadingTrackId = null
-                                            }
-                                        }
                                     } else {
                                         // YouTube track: play chart as queue
                                         val mediaItems =
@@ -526,49 +417,13 @@ private fun TrendingShelfContent(
     }
 }
 
-private fun TrendingTrack.toMediaItem(): MediaItem {
-    if (youtubeSongItem != null) return youtubeSongItem.toMediaItem()
-
-    if (isJioSaavn && !encryptedMediaUrl.isNullOrBlank()) {
-        val rawUrl = JioSaavnDecryptor.decryptMediaUrl(encryptedMediaUrl)
-        val itemMediaId = if (id.startsWith("jiosaavn_")) id else "jiosaavn_$id"
-        if (!rawUrl.isNullOrBlank()) {
-            JioSaavnQualityCache.storeRawUrl(itemMediaId, rawUrl)
-            val workingTier = JioSaavnQualityCache.getWorkingTier(itemMediaId)
-            val streamUrl = JioSaavnDecryptor.getUrlForTier(rawUrl, workingTier)
-            val itemMetadata = MediaMetadata(
-                id = itemMediaId,
-                title = title,
-                artists = listOf(MediaMetadata.Artist(id = null, name = artist)),
-                duration = durationSeconds ?: -1,
-                thumbnailUrl = artworkUrl,
-                explicit = explicit,
-            )
-            return MediaItem.Builder()
-                .setMediaId(itemMediaId)
-                .setUri(streamUrl.toUri())
-                .setCustomCacheKey(itemMediaId)
-                .setTag(itemMetadata)
-                .setMediaMetadata(
-                    androidx.media3.common.MediaMetadata.Builder()
-                        .setTitle(title)
-                        .setSubtitle(artist)
-                        .setArtist(artist)
-                        .setArtworkUri(artworkUrl?.toUri())
-                        .setIsPlayable(true)
-                        .setMediaType(androidx.media3.common.MediaMetadata.MEDIA_TYPE_MUSIC)
-                        .build(),
-                )
-                .build()
-        }
-    }
-
-    return MediaMetadata(
-        id = id,
-        title = title,
-        artists = listOf(MediaMetadata.Artist(id = null, name = artist)),
-        duration = durationSeconds ?: -1,
-        thumbnailUrl = artworkUrl,
-        explicit = explicit,
-    ).toMediaItem()
-}
+private fun TrendingTrack.toMediaItem(): MediaItem =
+    youtubeSongItem?.toMediaItem()
+        ?: MediaMetadata(
+            id = id,
+            title = title,
+            artists = listOf(MediaMetadata.Artist(id = null, name = artist)),
+            duration = durationSeconds ?: -1,
+            thumbnailUrl = artworkUrl,
+            explicit = explicit,
+        ).toMediaItem()
