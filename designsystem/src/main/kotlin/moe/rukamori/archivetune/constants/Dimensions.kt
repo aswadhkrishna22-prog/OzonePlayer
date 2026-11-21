@@ -62,7 +62,7 @@ val NavigationBarOverflowPaddingHorizontal = 4.dp
 
 
 val MiniPlayerHeight = 64.dp
-val MiniPlayerBottomSpacing = 8.dp // Space between MiniPlayer and NavigationBar (clear 8dp gap)
+val MiniPlayerBottomSpacing = 4.dp // Space between MiniPlayer and NavigationBar
 val QueuePeekHeight = 64.dp
 val AppBarHeight = 64.dp
 

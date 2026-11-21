@@ -180,8 +180,6 @@ animation-core = { group = "androidx.compose.animation", name = "animation-core"
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 haze-blur = { module = "dev.chrisbanes.haze:haze-blur", version.ref = "haze" }
 graphics-shapes = { module = "androidx.graphics:graphics-shapes", version.ref = "graphicsShapes" }
-kyant-backdrop = { module = "io.github.kyant0:backdrop", version = "2.0.1" }
-kyant-shapes = { module = "io.github.kyant0:shapes", version = "1.2.1" }
 androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayoutVersion" }
 kopus = { module = "eu.buney.kopus:kopus", version.ref = "kopus" }
 

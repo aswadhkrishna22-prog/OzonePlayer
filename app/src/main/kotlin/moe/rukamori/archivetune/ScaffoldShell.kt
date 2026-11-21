@@ -42,11 +42,8 @@ import moe.rukamori.archivetune.playback.PlayerConnection
 import moe.rukamori.archivetune.ui.PlayerViewModel
 import moe.rukamori.archivetune.ui.component.BottomSheetPageState
 import moe.rukamori.archivetune.ui.component.LocalBottomSheetPageState
-import moe.rukamori.archivetune.ui.component.LocalLiquidGlassBackdrop
 import moe.rukamori.archivetune.ui.component.LocalMenuState
 import moe.rukamori.archivetune.ui.component.MenuState
-import moe.rukamori.archivetune.ui.component.liquidGlassSource
-import moe.rukamori.archivetune.ui.component.rememberLayerBackdrop
 import moe.rukamori.archivetune.ui.component.shimmer.ShimmerTheme
 import moe.rukamori.archivetune.ui.component.splash.OzoneLaunchAnimation
 import moe.rukamori.archivetune.ui.component.splash.SplashConfig
@@ -82,14 +79,7 @@ fun ScaffoldShell(
             onClearPendingIntent = onClearPendingIntent, onHandleIntent = onHandleIntent,
         )
 
-        val shellBackdropColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
-        val shellBackdrop = rememberLayerBackdrop {
-            drawRect(shellBackdropColor)
-            drawContent()
-        }
-
         CompositionLocalProvider(
-            LocalLiquidGlassBackdrop provides shellBackdrop,
             LocalOzoneHaptics provides appState.ozoneHaptics,
             LocalHapticFeedback provides appState.customHaptic,
             LocalAnimationsDisabled provides disableAnimations,
@@ -166,7 +156,6 @@ fun ScaffoldShell(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.background)
-                                .liquidGlassSource(shellBackdrop)
                                 .then(
                                     if (scaffoldHazeState.effectiveHazeState != null) {
                                         Modifier.hazeSource(scaffoldHazeState.effectiveHazeState)
