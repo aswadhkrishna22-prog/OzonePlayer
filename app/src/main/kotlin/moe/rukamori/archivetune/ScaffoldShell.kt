@@ -135,7 +135,7 @@ fun ScaffoldShell(
 
                     android.util.Log.d(
                         "GlassDbg",
-                        "ScaffoldShell: backdrop=$glassBackdrop capable=$glassCapable blurNavBar=${appState.blurNavBar}",
+                        "ScaffoldShell: backdrop=$glassBackdrop capable=$glassCapable blurNavBar=${appState.blurNavBar} sdk=${android.os.Build.VERSION.SDK_INT}",
                     )
 
                     @Suppress("UnusedMaterial3ScaffoldPaddingParameter")

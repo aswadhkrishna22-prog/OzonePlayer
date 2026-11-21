@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import com.kyant.backdrop.Backdrop
 import dev.chrisbanes.haze.HazeState
+import moe.rukamori.archivetune.ui.component.debugGlassPill
 import moe.rukamori.archivetune.ui.component.isBackdropGlassCapable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
@@ -252,30 +253,18 @@ internal fun UnifiedPlayerSheetLayers(
                         ) {
                             android.util.Log.d(
                                 "GlassDbg",
-                                "MiniPlayer: backdrop=$glassBackdrop capable=${isBackdropGlassCapable()} blurNavBar=$blurNavBar",
+                                "MiniPlayer: backdrop=$glassBackdrop capable=${isBackdropGlassCapable()} blurNavBar=$blurNavBar sdk=${android.os.Build.VERSION.SDK_INT}",
                             )
-                            // Layer 1: Glass background pill (Kyant Backdrop liquid glass when available, or clearLiquidGlassPill fallback)
+                            // Layer 1: Glass background pill (DEBUG mode: GREEN for Kyant, RED for Haze fallback)
                             Box(
                                 modifier = Modifier
                                     .matchParentSize()
-                                    .then(
-                                        if (glassBackdrop != null) {
-                                            Modifier.backdropLiquidGlass(
-                                                backdrop = glassBackdrop,
-                                                shape = RoundedCornerShape(28.dp),
-                                                isDark = pureBlack,
-                                                interactive = true,
-                                                pressedScale = 1.04f,
-                                            )
-                                        } else {
-                                            Modifier.clearLiquidGlassPill(
-                                                shape = RoundedCornerShape(28.dp),
-                                                hazeState = hazeState,
-                                                pureBlack = pureBlack,
-                                                showBorder = true,
-                                                cornerRadiusDp = 28.dp,
-                                            )
-                                        }
+                                    .debugGlassPill(
+                                        backdrop = glassBackdrop,
+                                        shape = RoundedCornerShape(28.dp),
+                                        hazeState = hazeState,
+                                        pureBlack = pureBlack,
+                                        cornerRadiusDp = 28.dp,
                                     )
                             )
 

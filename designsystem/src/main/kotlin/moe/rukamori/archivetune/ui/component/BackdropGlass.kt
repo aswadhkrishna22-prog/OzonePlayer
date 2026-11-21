@@ -10,6 +10,7 @@ import android.content.Context
 import android.os.Build
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.shape.CornerBasedShape
@@ -37,6 +38,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFirstOrNull
 import androidx.compose.ui.util.lerp
@@ -46,6 +48,7 @@ import com.kyant.backdrop.effects.blur
 import com.kyant.backdrop.effects.colorControls
 import com.kyant.backdrop.effects.lens
 import com.kyant.backdrop.highlight.Highlight
+import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.sign
@@ -256,6 +259,50 @@ fun Modifier.backdropLiquidGlass(
         pressedScale = pressedScale,
         highlight = highlight,
     )
+}
+
+/**
+ * Temporary DEBUG mode for verifying whether Kyant drawBackdrop path or Haze fallback is active:
+ * - If glassBackdrop != null (Kyant path): effects = { blur(0.dp.toPx()); lens(24.dp.toPx(), 48.dp.toPx(), true) } with NO scrim, 2dp GREEN border.
+ * - Else (Haze fallback): 2dp RED border.
+ */
+@Composable
+fun Modifier.debugGlassPill(
+    backdrop: Backdrop?,
+    shape: Shape,
+    hazeState: HazeState? = null,
+    pureBlack: Boolean = false,
+    cornerRadiusDp: Dp = 28.dp,
+): Modifier {
+    return if (backdrop != null) {
+        this
+            .drawBackdrop(
+                backdrop = backdrop,
+                shape = { lensSafeGlassShape(shape) },
+                highlight = { Highlight.Default },
+                effects = {
+                    blur(0.dp.toPx())
+                    lens(24.dp.toPx(), 48.dp.toPx(), true)
+                },
+                onDrawBackdrop = { drawBackdrop ->
+                    drawBackdrop()
+                },
+                onDrawSurface = {
+                    // NO scrim
+                },
+            )
+            .border(2.dp, Color.Green, shape)
+    } else {
+        this
+            .clearLiquidGlassPill(
+                shape = shape,
+                hazeState = hazeState,
+                pureBlack = pureBlack,
+                showBorder = false,
+                cornerRadiusDp = cornerRadiusDp,
+            )
+            .border(2.dp, Color.Red, shape)
+    }
 }
 
 /**

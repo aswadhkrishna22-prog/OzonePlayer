@@ -96,7 +96,7 @@ fun FloatingNavigationToolbar(
 
     android.util.Log.d(
         "GlassDbg",
-        "FloatingNavToolbar: backdrop=$glassBackdrop capable=${isBackdropGlassCapable()} blurNavBar=$blurNavBar",
+        "FloatingNavToolbar: backdrop=$glassBackdrop capable=${isBackdropGlassCapable()} blurNavBar=$blurNavBar sdk=${android.os.Build.VERSION.SDK_INT}",
     )
 
     val animatedVisibilityFactor by animateFloatAsState(
@@ -223,27 +223,16 @@ fun FloatingNavigationToolbar(
             .height(NavigationBarHeight),
         contentAlignment = Alignment.Center,
     ) {
-        // Layer 1: Glass background pill (Kyant Backdrop liquid glass when available, or clearLiquidGlassPill fallback)
+        // Layer 1: Glass background pill (DEBUG mode: GREEN for Kyant, RED for Haze fallback)
         Box(
             modifier = Modifier
                 .matchParentSize()
-                .then(
-                    if (glassBackdrop != null) {
-                        Modifier.backdropLiquidGlass(
-                            backdrop = glassBackdrop,
-                            shape = capsuleShape,
-                            isDark = pureBlack,
-                            interactive = false,
-                        )
-                    } else {
-                        Modifier.clearLiquidGlassPill(
-                            shape = capsuleShape,
-                            hazeState = hazeState,
-                            pureBlack = pureBlack,
-                            showBorder = showBorder,
-                            cornerRadiusDp = NavigationBarCornerRadius,
-                        )
-                    }
+                .debugGlassPill(
+                    backdrop = glassBackdrop,
+                    shape = capsuleShape,
+                    hazeState = hazeState,
+                    pureBlack = pureBlack,
+                    cornerRadiusDp = NavigationBarCornerRadius,
                 )
         )
 
