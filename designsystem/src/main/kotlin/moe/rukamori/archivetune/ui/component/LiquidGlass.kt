@@ -724,10 +724,17 @@ fun Modifier.clearLiquidGlass(
 }
 
 /**
- * Lens-safe shape guard: Kyant's lens effect shader requires CornerBasedShape.
+ * Lens-safe shape guard: Kyant's lens effect shader strictly requires CornerBasedShape
+ * or RoundedRectangularShape. Any other shape (e.g. plain RectangleShape, GenericShape,
+ * or non-CornerBasedShape) throws "Only RoundedRectangularShape or CornerBasedShape is supported in lens effects".
+ * This guard ensures any non-matching shape safely resolves to a 0dp RoundedCornerShape.
  */
 fun lensSafeGlassShape(shape: Shape): Shape =
-    if (shape == RectangleShape) RoundedCornerShape(0.dp) else shape
+    if (shape is CornerBasedShape || shape.javaClass.simpleName.contains("RoundedRectangularShape")) {
+        shape
+    } else {
+        RoundedCornerShape(0.dp)
+    }
 
 /** Interactive liquidGlass: static surfaces use fixed mid-luminance. */
 @Composable
