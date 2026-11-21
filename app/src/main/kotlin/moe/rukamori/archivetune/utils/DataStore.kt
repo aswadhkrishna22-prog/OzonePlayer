@@ -20,13 +20,17 @@ import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -37,7 +41,7 @@ import moe.rukamori.archivetune.constants.HistoryDuration
 import moe.rukamori.archivetune.extensions.toEnum
 import kotlin.properties.ReadOnlyProperty
 
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
+private val Context.normalDataStore: DataStore<Preferences> by preferencesDataStore(
     name = "settings",
     produceMigrations = { _ ->
         listOf(
@@ -64,6 +68,13 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
     },
 )
 
+private val Context.secureDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "secure_settings",
+)
+
+val Context.dataStore: DataStore<Preferences>
+    get() = SecureDataStoreRegistry.get(this, this.normalDataStore, this.secureDataStore)
+
 object PreferenceStore {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _prefs = MutableStateFlow<Preferences?>(null)
@@ -76,8 +87,17 @@ object PreferenceStore {
             if (started) return
             started = true
             scope.launch {
-                context.dataStore.data.collect { preferences ->
-                    _prefs.value = preferences
+                while (currentCoroutineContext().isActive) {
+                    try {
+                        context.dataStore.data.collect { preferences ->
+                            _prefs.value = preferences
+                        }
+                        break
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Exception) {
+                        delay(500)
+                    }
                 }
             }
         }
