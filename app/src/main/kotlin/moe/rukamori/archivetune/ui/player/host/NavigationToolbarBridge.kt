@@ -84,7 +84,7 @@ internal fun BoxScope.NavigationToolbarBridge(
                 .align(Alignment.BottomCenter)
                 .padding(
                     bottom = floatingToolbarBottomPadding,
-                ).then(if (navLiquidState != null) Modifier.wrapContentHeight() else Modifier.height(navVisibleHeight)),
+                ).height(navVisibleHeight),
         onShuffleClick =
             if (shouldShowHomeShuffleButton) {
                 {

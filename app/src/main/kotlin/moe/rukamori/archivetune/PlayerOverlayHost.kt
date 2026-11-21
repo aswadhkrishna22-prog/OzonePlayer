@@ -144,8 +144,11 @@ fun PlayerOverlayHost(
         isYearInMusic = isYearInMusic,
     )
 
+    val isLiquidActive = navLiquidState != null
+    val effectiveNavHeight = if (isLiquidActive) 64.dp else navVisibleHeight
+
     val bottomNavigationBarHeight by animateDpAsState(
-        targetValue = if (shouldShowNav && !useRail) navVisibleHeight else 0.dp,
+        targetValue = if (shouldShowNav && !useRail) effectiveNavHeight else 0.dp,
         animationSpec = if (disableAnimations) snap() else NavigationBarAnimationSpec,
         label = "",
     )
@@ -158,7 +161,7 @@ fun PlayerOverlayHost(
 
     val navSlideDistance = PlayerDockGeometry.navigationBarBottomOffset(
         floatingToolbarBottomPadding = floatingToolbarBottomPadding,
-        navigationBarHeight = navVisibleHeight,
+        navigationBarHeight = effectiveNavHeight,
     )
     val dropState = rememberMiniPlayerDropState(
         navSlideDistance = navSlideDistance,
@@ -169,7 +172,7 @@ fun PlayerOverlayHost(
     val navigationSlideOffset = rememberNavigationSlideOffset(
         navSlideDistance = navSlideDistance,
         bottomNavigationBarHeight = bottomNavigationBarHeight,
-        navVisibleHeight = navVisibleHeight,
+        navVisibleHeight = effectiveNavHeight,
         playerExpansionAnimatable = playerExpansionAnimatable,
     )
 
@@ -230,7 +233,7 @@ fun PlayerOverlayHost(
                         isMiniPlayerActive = isMiniPlayerActive,
                         playerExpansionAnimatable = playerExpansionAnimatable,
                         bottomNavigationBarHeight = bottomNavigationBarHeight,
-                        navVisibleHeight = navVisibleHeight,
+                        navVisibleHeight = effectiveNavHeight,
                         scrollVisibilityFactor = scrollVisibilityFactor,
                         floatingToolbarBottomPadding = floatingToolbarBottomPadding,
                         shouldShowHomeShuffleButton = shouldShowHomeShuffleButton,

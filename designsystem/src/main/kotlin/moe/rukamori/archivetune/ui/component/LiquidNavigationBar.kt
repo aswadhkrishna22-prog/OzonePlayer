@@ -194,22 +194,14 @@ private fun LiquidNavigationBarContent(
         maxOf(280.dp, captionSlotWidth * count + 8.dp)
     } else 360.dp
 
-    val baseModifier = if (applyWindowInsets) {
-        modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))
-    } else {
+    BoxWithConstraints(
         modifier
-    }
-
-    Box(
-        baseModifier.padding(horizontal = 16.dp, vertical = if (compact) 12.dp else 8.dp),
-        contentAlignment = Alignment.Center,
+            .widthIn(max = railMaxWidth)
+            .fillMaxWidth()
+            .height(railHeight)
+            .testTag("liquid_navigation_bar")
+            .railShadow(),
     ) {
-        BoxWithConstraints(
-            Modifier.widthIn(max = railMaxWidth)
-                .fillMaxWidth().height(railHeight)
-                .testTag("liquid_navigation_bar")
-                .railShadow(),
-        ) {
             val tabWidth = (maxWidth - 8.dp) / count
             val lensWidth = tabWidth
             val tabPx = with(density) { tabWidth.toPx() }
@@ -354,7 +346,6 @@ private fun LiquidNavigationBarContent(
             }
         }
     }
-}
 
 /** The collapsed bar: the same glass rail as a circle holding only the active tab's icon. */
 @Composable

@@ -86,6 +86,8 @@
      - Haptic feedback on tab crossings (`segmentTick`) and on release (`confirm`).
      - Acyclic rendering: Content Box A (`liquefiable(pageState)`) -> Clear Navigation Plane B (`liquefiable(railState)`) -> Sibling Lens C (`liquid(railState)`), preventing ghosting.
      - Gated to Android 13+ (API 33+) with fallback to Kyant Backdrop (API 31+) and Haze (< API 31).
+     - **Layout & Mini Player Spacing Fix:** Insets/outer padding removed from `LiquidNavigationBar`; rail given exact 64dp height; `PlayerDockGeometry` and `ScaffoldAppState` updated to 64dp so mini player sits with exact 8dp gap above the rail without overlap or label clipping.
+     - **Backdrop Isolation & Scrim Fix:** `ScaffoldShell` isolates `layerBackdrop` on an outer Box and `liquefiable` on an inner Box without conflicting `.background` modifiers. Mini player scrim set to dark translucent (`0.22f` black in dark theme via `pureBlack || isSystemInDarkTheme()`), restoring clear dark glass aesthetic.
 
 ## 5. User Interaction & Language
 - The user speaks conversational Manglish (Malayalam written in English letters).

@@ -6,6 +6,7 @@
 
 package moe.rukamori.archivetune.ui.player.player_0
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -261,7 +262,7 @@ internal fun UnifiedPlayerSheetLayers(
                                             Modifier.backdropLiquidGlass(
                                                 backdrop = glassBackdrop,
                                                 shape = RoundedCornerShape(28.dp),
-                                                isDark = pureBlack,
+                                                isDark = pureBlack || isSystemInDarkTheme(),
                                                 interactive = true,
                                                 pressedScale = 1.04f,
                                             )

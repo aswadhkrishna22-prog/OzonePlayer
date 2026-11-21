@@ -161,7 +161,7 @@ fun Modifier.drawInteractiveGlass(
             shape = { lensSafeGlassShape(shape) },
             highlight = { highlight },
             effects = {
-                val l = (luminanceAnimation * 2f - 1f).let { sign(it) * it * it }
+                val l = if (isDark) -0.5f else (luminanceAnimation * 2f - 1f).let { sign(it) * it * it }
                 val press = interaction?.pressProgress ?: 0f
                 colorControls(
                     brightness = BackdropGlassRecipe.BRIGHTNESS,
@@ -197,7 +197,7 @@ fun Modifier.drawInteractiveGlass(
             },
             onDrawSurface = {
                 val darken = if (isDark) {
-                    0.10f
+                    0.22f
                 } else {
                     lerp(minScrim, maxScrim, ((luminanceAnimation - 0.3f) / 0.5f).coerceIn(0f, 1f))
                 }

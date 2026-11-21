@@ -181,7 +181,10 @@ fun FloatingNavigationToolbar(
                 }
             },
             isDark = pureBlack || isSystemInDarkTheme(),
-            modifier = modifier.graphicsLayer {
+            modifier = modifier
+                .fillMaxWidth()
+                .wrapContentHeight(align = Alignment.Bottom, unbounded = true)
+                .graphicsLayer {
                 val hideOffsetY = NavigationBarHideOffsetY.toPx() * (1f - animatedVisibilityFactor)
                 translationY = hideOffsetY
                 translationX = persistentOffsetAnimatable.value
@@ -274,7 +277,7 @@ fun FloatingNavigationToolbar(
                             Modifier.backdropLiquidGlass(
                                 backdrop = glassBackdrop,
                                 shape = capsuleShape,
-                                isDark = pureBlack,
+                                isDark = pureBlack || isSystemInDarkTheme(),
                                 interactive = false,
                             )
                         } else {
