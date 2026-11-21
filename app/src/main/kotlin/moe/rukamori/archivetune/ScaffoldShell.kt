@@ -124,6 +124,14 @@ fun ScaffoldShell(
                     val accountName by appState.homeViewModel.accountName.collectAsStateWithLifecycle()
                     val accountImageUrl by appState.homeViewModel.accountImageUrl.collectAsStateWithLifecycle()
                     val accountAccentColor by appState.homeViewModel.accountAccentColor.collectAsStateWithLifecycle()
+                    val appBackgroundColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
+                    val glassBackdrop = if (appState.blurNavBar && isBackdropGlassCapable()) {
+                        rememberLayerBackdrop {
+                            drawRect(appBackgroundColor)
+                            drawContent()
+                        }
+                    } else null
+
                     @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
                     Scaffold(
                         topBar = {
@@ -155,18 +163,10 @@ fun ScaffoldShell(
                         containerColor = Color.Transparent,
                         modifier = Modifier.fillMaxSize(),
                     ) { _ ->
-                        val backgroundColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
-                        val glassBackdrop = if (appState.blurNavBar && isBackdropGlassCapable()) {
-                            rememberLayerBackdrop {
-                                drawRect(backgroundColor)
-                                drawContent()
-                            }
-                        } else null
-
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(backgroundColor)
+                                .background(appBackgroundColor)
                                 .then(
                                     if (scaffoldHazeState.effectiveHazeState != null) {
                                         Modifier.hazeSource(scaffoldHazeState.effectiveHazeState)
