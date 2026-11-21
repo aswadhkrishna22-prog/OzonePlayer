@@ -125,12 +125,18 @@ fun ScaffoldShell(
                     val accountImageUrl by appState.homeViewModel.accountImageUrl.collectAsStateWithLifecycle()
                     val accountAccentColor by appState.homeViewModel.accountAccentColor.collectAsStateWithLifecycle()
                     val appBackgroundColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
-                    val glassBackdrop = if (appState.blurNavBar && isBackdropGlassCapable()) {
+                    val glassCapable = isBackdropGlassCapable()
+                    val glassBackdrop = if (glassCapable) {
                         rememberLayerBackdrop {
                             drawRect(appBackgroundColor)
                             drawContent()
                         }
                     } else null
+
+                    android.util.Log.d(
+                        "GlassDbg",
+                        "ScaffoldShell: backdrop=$glassBackdrop capable=$glassCapable blurNavBar=${appState.blurNavBar}",
+                    )
 
                     @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
                     Scaffold(
@@ -222,6 +228,7 @@ fun ScaffoldShell(
                         shouldShowNav = appState.shouldShowNavigationBar, isYearInMusic = appState.isYearInMusicScreen,
                         useRail = appState.useRail, hazeState = scaffoldHazeState.effectiveHazeState,
                         glassBackdrop = glassBackdrop,
+                        blurNavBar = appState.blurNavBar,
                         blurRadius = appState.blurRadius, pureBlack = pureBlack, playerViewModel = playerViewModel,
                         homeViewModel = appState.homeViewModel, playerConnection = playerConnection, database = database,
                         systemBarController = systemBarController, window = activity.window, sheetState = appState.playerBottomSheetState,

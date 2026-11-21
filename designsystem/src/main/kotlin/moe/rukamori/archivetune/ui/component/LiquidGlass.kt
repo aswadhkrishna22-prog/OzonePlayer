@@ -211,12 +211,12 @@ fun Modifier.liquidGlass(
     preset: LiquidGlassPreset = LiquidGlassPreset.Pill,
     blurRadius: Dp = when (preset) {
         LiquidGlassPreset.Pill -> 4.dp
-        LiquidGlassPreset.Header -> 22.dp
+        LiquidGlassPreset.Header -> 10.dp
         LiquidGlassPreset.Chip -> 3.dp
     },
     tintAlpha: Float = when (preset) {
         LiquidGlassPreset.Pill -> 0.08f
-        LiquidGlassPreset.Header -> if (pureBlack) 0.50f else 0.28f
+        LiquidGlassPreset.Header -> if (pureBlack) 0.08f else 0.05f
         LiquidGlassPreset.Chip -> 0.09f
     },
     showBorder: Boolean = true,
@@ -295,8 +295,13 @@ fun Modifier.liquidGlass(
                     performanceMode = HazePerformanceMode.Fixed(SettingsDimensions.HazeQualityFraction),
                 )
             } else {
+                val fallbackAlpha = if (preset == LiquidGlassPreset.Header) {
+                    if (pureBlack) 0.08f else 0.05f
+                } else {
+                    if (pureBlack) 0.65f else 0.12f
+                }
                 Modifier.background(
-                    if (pureBlack) Color.Black.copy(alpha = 0.65f) else Color.White.copy(alpha = 0.12f),
+                    if (pureBlack) Color.Black.copy(alpha = fallbackAlpha) else Color.White.copy(alpha = fallbackAlpha),
                     shape = shape,
                 )
             }
@@ -365,8 +370,8 @@ fun Modifier.headerLiquidGlass(
     pureBlack = pureBlack,
     preset = LiquidGlassPreset.Header,
     cornerRadiusDp = cornerRadiusDp,
-    showBorder = true,
-    hasTopSheen = true,
+    showBorder = false,
+    hasTopSheen = false,
 )
 
 /**

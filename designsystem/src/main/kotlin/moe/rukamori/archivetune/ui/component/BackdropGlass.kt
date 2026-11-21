@@ -60,12 +60,16 @@ fun isBackdropGlassCapable(): Boolean {
     val view = LocalView.current
     if (view.isInEditMode) return false
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return false
-    if (!view.isHardwareAccelerated) return false
+    if (view.isAttachedToWindow && !view.isHardwareAccelerated) return false
     val context = LocalContext.current
     val am = remember(context) {
         runCatching { context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager }.getOrNull()
     }
     if (am?.isLowRamDevice == true) return false
+    android.util.Log.d(
+        "GlassDbg",
+        "isBackdropGlassCapable=true sdk=${Build.VERSION.SDK_INT} attached=${view.isAttachedToWindow} hwAcc=${view.isHardwareAccelerated} lowRam=${am?.isLowRamDevice}",
+    )
     return true
 }
 

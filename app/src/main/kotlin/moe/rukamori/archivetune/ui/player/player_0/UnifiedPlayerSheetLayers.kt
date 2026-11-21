@@ -99,6 +99,7 @@ internal fun UnifiedPlayerSheetLayers(
     dualPlayEngine: DualPlayEngine? = null,
     hazeState: HazeState? = null,
     glassBackdrop: Backdrop? = null,
+    blurNavBar: Boolean = true,
     pureBlack: Boolean = false,
 ) {
     val density = LocalDensity.current.density
@@ -248,6 +249,10 @@ internal fun UnifiedPlayerSheetLayers(
                                 .fillMaxWidth()
                                 .height(MiniPlayerHeight)
                         ) {
+                            android.util.Log.d(
+                                "GlassDbg",
+                                "MiniPlayer: backdrop=$glassBackdrop capable=${isBackdropGlassCapable()} blurNavBar=$blurNavBar",
+                            )
                             // Layer 1: Glass background pill (Kyant Backdrop liquid glass when available, or clearLiquidGlassPill fallback)
                             Box(
                                 modifier = Modifier

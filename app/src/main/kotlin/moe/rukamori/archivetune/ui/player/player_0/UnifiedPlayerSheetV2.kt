@@ -67,6 +67,7 @@ fun UnifiedPlayerSheetV2(
     useRail: Boolean = false,
     hazeState: HazeState? = null,
     glassBackdrop: Backdrop? = null,
+    blurNavBar: Boolean = true,
     pureBlack: Boolean = false,
     blurRadius: Float = SettingsDimensions.BlurRadiusDefault,
     onExpansionFractionChanged: (Float) -> Unit = {},
@@ -261,6 +262,7 @@ fun UnifiedPlayerSheetV2(
                         dualPlayEngine = dualPlayEngine,
                         hazeState = hazeState,
                         glassBackdrop = glassBackdrop,
+                        blurNavBar = blurNavBar,
                         pureBlack = pureBlack,
                     )
                 }

@@ -72,7 +72,7 @@ object DeviceGraphicsClassifier {
         val totalMemInGb = memoryInfo.totalMem.toDouble() / (1024.0 * 1024.0 * 1024.0)
 
         return when {
-            totalMemInGb < 4.5 -> GraphicsPreset.LOW
+            totalMemInGb < 3.0 -> GraphicsPreset.LOW
             totalMemInGb >= 7.5 -> GraphicsPreset.HIGH
             else -> GraphicsPreset.MEDIUM
         }

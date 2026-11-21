@@ -75,6 +75,7 @@ fun FloatingNavigationToolbar(
     capsuleShape: Shape = RoundedCornerShape(NavigationBarCornerRadius),
     hazeState: HazeState? = null,
     glassBackdrop: Backdrop? = null,
+    blurNavBar: Boolean = true,
     blurRadius: Float = SettingsDimensions.BlurRadiusDefault,
     showBorder: Boolean = true,
     blurEnabled: Boolean = true,
@@ -92,6 +93,11 @@ fun FloatingNavigationToolbar(
     onSearchItemDoubleClick: (() -> Unit)? = null,
 ) {
     val hasOverflow = false
+
+    android.util.Log.d(
+        "GlassDbg",
+        "FloatingNavToolbar: backdrop=$glassBackdrop capable=${isBackdropGlassCapable()} blurNavBar=$blurNavBar",
+    )
 
     val animatedVisibilityFactor by animateFloatAsState(
         targetValue = visibilityFactor.coerceIn(0f, 1f),
