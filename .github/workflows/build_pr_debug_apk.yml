@@ -6,14 +6,30 @@ on:
   push:
     branches: [ "dev" ]
   workflow_dispatch:
+    inputs:
+      variant:
+        description: "Which APK to build"
+        type: choice
+        options: [debug, r8]
+        default: debug
+      run_tests:
+        description: "Run unit tests"
+        type: boolean
+        default: false
+
+concurrency:
+  group: build-pr-debug-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: Build & Upload Debug & R8 Test APKs
+    name: Build & Upload APK (${{ github.event.inputs.variant || 'debug' }})
     runs-on: ubuntu-latest
+    env:
+      VARIANT: ${{ github.event.inputs.variant || 'debug' }}
 
     steps:
       - name: Checkout code
@@ -32,76 +48,96 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Unit Tests
-        run: ./gradlew :flaccore:test testGmsMobileUniversalDebugUnitTest --tests "moe.rukamori.archivetune.kemo.KemoStateTest" --tests "moe.rukamori.archivetune.beastmode.BeastModeTest" --tests "moe.rukamori.archivetune.playback.queue.SongVibeMatcherTest" --tests "moe.rukamori.archivetune.spotify.SpotifyPlaybackResolverTest" --tests "moe.rukamori.archivetune.spotify.SpotifyLazyTrackMatcherTest" --tests "moe.rukamori.archivetune.ui.screens.search.SearchSlideAnimationTest" --tests "moe.rukamori.archivetune.playback.resolvers.JioSaavnPlaybackResolutionTest" --tests "moe.rukamori.archivetune.ui.screens.playlist.PlaylistDownloadSheetTest" --tests "moe.rukamori.archivetune.ui.player.player_0.MiniPlayerRollingArtworkTest" --stacktrace
+        if: github.event_name == 'pull_request' || github.event.inputs.run_tests == true
+        run: ./gradlew :flaccore:test testGmsMobileUniversalDebugUnitTest --tests "moe.rukamori.archivetune.kemo.KemoStateTest" --tests "moe.rukamori.archivetune.beastmode.BeastModeTest" --tests "moe.rukamori.archivetune.playback.queue.SongVibeMatcherTest" --tests "moe.rukamori.archivetune.spotify.SpotifyPlaybackResolverTest" --tests "moe.rukamori.archivetune.spotify.SpotifyLazyTrackMatcherTest" --tests "moe.rukamori.archivetune.ui.screens.search.SearchSlideAnimationTest" --tests "moe.rukamori.archivetune.playback.resolvers.JioSaavnPlaybackResolutionTest" --tests "moe.rukamori.archivetune.ui.screens.playlist.PlaylistDownloadSheetTest" --tests "moe.rukamori.archivetune.ui.player.player_0.MiniPlayerRollingArtworkTest" -Dorg.gradle.caching=true --build-cache --stacktrace
 
       - name: Build Normal Debug APK
-        run: ./gradlew assembleGmsMobileUniversalDebug -Pdualplay=true --stacktrace
+        if: env.VARIANT == 'debug'
+        run: ./gradlew assembleGmsMobileUniversalDebug -Pdualplay=true -Dorg.gradle.caching=true --build-cache --stacktrace
 
       - name: Build R8 Release Test APK
-        run: ./gradlew assembleGmsMobileUniversalRelease -Prtest=true -PnightlyVersionName="1.3.${{ github.run_number }}" --stacktrace
+        if: env.VARIANT == 'r8'
+        run: ./gradlew assembleGmsMobileUniversalRelease -Prtest=true -PnightlyVersionName="1.3.${{ github.run_number }}" -Pandroid.enableR8.fullMode=true -Dorg.gradle.caching=true --build-cache --stacktrace
 
       - name: Analyze APK Sizes & Summary
         run: |
-          DEBUG_APK=$(find app/build/outputs/apk/gmsMobileUniversal/debug -name "*.apk" | head -n 1)
-          R8_APK=$(find app/build/outputs/apk/gmsMobileUniversal/release -name "*.apk" | head -n 1)
+          APK_PATH=$(find app/build/outputs/apk/gmsMobileUniversal -name "*.apk" | head -n 1)
+          if [ -z "$APK_PATH" ] || [ ! -f "$APK_PATH" ]; then
+            echo "::error::No APK found in app/build/outputs/apk/gmsMobileUniversal"
+            exit 1
+          fi
 
-          DEBUG_SIZE=$(ls -lh "$DEBUG_APK" | awk '{print $5}')
-          R8_SIZE=$(ls -lh "$R8_APK" | awk '{print $5}')
-
-          {
-            echo "## 📊 APK Comparison: Debug vs R8 Release"
-            echo "| Build Variant | Compressed APK Size |"
-            echo "| :--- | :--- |"
-            echo "| **Normal Debug (Universal)** | $DEBUG_SIZE |"
-            echo "| **R8 Minified Release (Universal)** | $R8_SIZE |"
-            echo ""
-            echo "### 🔍 R8 Release Breakdown"
-            echo "| Component | Uncompressed Size |"
-            echo "| :--- | :--- |"
-          } | tee -a $GITHUB_STEP_SUMMARY
-
-          unzip -l "$R8_APK" | awk '
-            /classes.*\.dex/ { dex += $1 }
-            /res\// { res += $1 }
-            /lib\// { lib += $1 }
-            /assets\// { assets += $1 }
-            /resources\.arsc/ { arsc += $1 }
-            END {
-              printf("| **DEX (Code)** | %.2f MB |\n", dex / (1024*1024));
-              printf("| **Resources (res/)** | %.2f MB |\n", res / (1024*1024));
-              printf("| **Resources Table (arsc)** | %.2f MB |\n", arsc / (1024*1024));
-              printf("| **Native Libraries (lib/)** | %.2f MB |\n", lib / (1024*1024));
-              printf("| **Assets** | %.2f MB |\n", assets / (1024*1024));
-            }
-          ' | tee -a $GITHUB_STEP_SUMMARY
+          APK_NAME=$(basename "$APK_PATH")
+          APK_SIZE=$(ls -lh "$APK_PATH" | awk '{print $5}')
+          APK_SHA256=$(sha256sum "$APK_PATH" | awk '{print $1}')
 
           {
-            echo ""
-            echo "#### Native Libraries Breakdown"
-            echo "| ABI | Size |"
+            echo "## 📦 Build Artifact: $APK_NAME"
+            echo "| Property | Value |"
             echo "| :--- | :--- |"
+            echo "| **Variant** | \`$VARIANT\` |"
+            echo "| **Compressed Size** | **$APK_SIZE** |"
+            echo "| **SHA-256** | \`$APK_SHA256\` |"
+            echo ""
           } | tee -a $GITHUB_STEP_SUMMARY
 
-          unzip -l "$R8_APK" | grep "lib/" | awk '
+          echo "Built APK: $APK_NAME ($APK_SIZE)"
+          echo "SHA256: $APK_SHA256"
+
+          if [ "$VARIANT" = "r8" ]; then
             {
-              split($NF, a, "/");
-              if (a[2] != "") abi[a[2]] += $1;
-            }
-            END {
-              for (i in abi) {
-                printf("| %s | %.2f MB |\n", i, abi[i] / (1024*1024));
+              echo "### 🔍 R8 Release Breakdown"
+              echo "| Component | Uncompressed Size |"
+              echo "| :--- | :--- |"
+            } | tee -a $GITHUB_STEP_SUMMARY
+
+            unzip -l "$APK_PATH" | awk '
+              /classes.*\.dex/ { dex += $1 }
+              /res\// { res += $1 }
+              /lib\// { lib += $1 }
+              /assets\// { assets += $1 }
+              /resources\.arsc/ { arsc += $1 }
+              END {
+                printf("| **DEX (Code)** | %.2f MB |\n", dex / (1024*1024));
+                printf("| **Resources (res/)** | %.2f MB |\n", res / (1024*1024));
+                printf("| **Resources Table (arsc)** | %.2f MB |\n", arsc / (1024*1024));
+                printf("| **Native Libraries (lib/)** | %.2f MB |\n", lib / (1024*1024));
+                printf("| **Assets** | %.2f MB |\n", assets / (1024*1024));
               }
-            }
-          ' | tee -a $GITHUB_STEP_SUMMARY
+            ' | tee -a $GITHUB_STEP_SUMMARY
+
+            {
+              echo ""
+              echo "#### Native Libraries Breakdown"
+              echo "| ABI | Size |"
+              echo "| :--- | :--- |"
+            } | tee -a $GITHUB_STEP_SUMMARY
+
+            unzip -l "$APK_PATH" | grep "lib/" | awk '
+              {
+                split($NF, a, "/");
+                if (a[2] != "") abi[a[2]] += $1;
+              }
+              END {
+                for (i in abi) {
+                  printf("| %s | %.2f MB |\n", i, abi[i] / (1024*1024));
+                }
+              }
+            ' | tee -a $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Upload Debug APK Artifact
+        if: env.VARIANT == 'debug'
         uses: actions/upload-artifact@v4
         with:
           name: OzonePlayer-dualplay-debug
           path: app/build/outputs/apk/gmsMobileUniversal/debug/*.apk
+          if-no-files-found: error
 
       - name: Upload R8 Test Release APK Artifact
+        if: env.VARIANT == 'r8'
         uses: actions/upload-artifact@v4
         with:
           name: OzonePlayer-rtest-release
           path: app/build/outputs/apk/gmsMobileUniversal/release/*.apk
+          if-no-files-found: error

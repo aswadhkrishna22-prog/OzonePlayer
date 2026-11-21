@@ -8,6 +8,7 @@
 package moe.rukamori.archivetune.ui.screens.search
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -65,29 +66,15 @@ internal fun SearchEntryField(
 ) {
     val isDark = pureBlack || isSystemInDarkTheme()
     val shape = RoundedCornerShape(28.dp)
-    val glassModifier = if (glassBackdrop != null) {
-        Modifier.backdropLiquidGlass(
-            backdrop = glassBackdrop,
-            shape = shape,
-            isDark = isDark,
-            interactive = true,
-            pressedScale = 1.02f,
-            lensDivisor = 8f,
-            lensMaxRadiusDivisor = 3f,
-            scrimAlpha = if (isDark) 0.18f else 0.10f,
-        )
-    } else {
-        Modifier.background(
-            color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f),
-            shape = shape,
-        )
-    }
+    val containerColor = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f)
+    val borderColor = if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(56.dp)
-            .then(glassModifier)
+            .background(color = containerColor, shape = shape)
+            .border(width = 1.dp, color = borderColor, shape = shape)
             .clip(shape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.CenterStart,

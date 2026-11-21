@@ -84,7 +84,7 @@ fun rememberScaffoldSearchState(
 
     val openSearch: () -> Unit = {
         onActiveChange(true)
-        searchBarFocusRequester.requestFocus()
+        runCatching { searchBarFocusRequester.requestFocus() }
     }
 
     val onSearch: (String) -> Unit = { queryText ->
@@ -123,7 +123,9 @@ fun rememberScaffoldSearchState(
     }
 
     LaunchedEffect(active) {
-        if (active) searchBarFocusRequester.requestFocus()
+        if (active) {
+            runCatching { searchBarFocusRequester.requestFocus() }
+        }
     }
 
     LaunchedEffect(navBackStackEntry) {

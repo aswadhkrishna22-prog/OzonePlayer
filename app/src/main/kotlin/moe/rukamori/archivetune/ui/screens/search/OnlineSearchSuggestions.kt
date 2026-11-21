@@ -67,7 +67,7 @@ internal fun LazyListScope.onlineSearchSuggestions(
 
         itemsIndexed(
             items = history,
-            key = { _, historyItem -> "history_${historyItem.query}" },
+            key = { index, historyItem -> "history_${historyItem.id}_${historyItem.query}_$index" },
             contentType = { _, _ -> "history" },
         ) { _, historyItem ->
             SuggestionItem(
@@ -103,7 +103,7 @@ internal fun LazyListScope.onlineSearchSuggestions(
 
         itemsIndexed(
             items = suggestions,
-            key = { _, suggestion -> "suggestion_$suggestion" },
+            key = { index, suggestion -> "suggestion_${suggestion}_$index" },
             contentType = { _, _ -> "suggestion" },
         ) { _, suggestion ->
             SuggestionItem(
