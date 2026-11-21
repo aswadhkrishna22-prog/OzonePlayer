@@ -138,8 +138,8 @@ class TrendingRepository(
             }
 
             // Separate trending source from YouTube Music charts and JioSaavn
-            val ytDeferred = async { runCatching { getYouTubeTrending(regionCode, forceRefresh) }.getOrDefault(emptyList()) }
-            val jioSaavnDeferred = async { runCatching { getJioSaavnTrending(regionCode, forceRefresh) }.getOrDefault(emptyList()) }
+            val ytDeferred = async { runCatching { getYouTubeTrending(regionCode = regionCode, forceRefresh = forceRefresh) }.getOrDefault(emptyList()) }
+            val jioSaavnDeferred = async { runCatching { getJioSaavnTrending(regionCode = regionCode, forceRefresh = forceRefresh) }.getOrDefault(emptyList()) }
 
             val ytTracks = ytDeferred.await()
             val jioSaavnTracks = jioSaavnDeferred.await()
