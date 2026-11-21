@@ -1,8 +1,10 @@
 <div align="center">
 
-  <img src="assets/ozone_logo.png" width="240" height="240" alt="Ozone Player Icon" style="border-radius: 28px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);" />
+<p align="center">
+  <img src="docs/assets/ozone-icon.svg" width="128" alt="Ozone Player icon">
+</p>
 
-  <h1>Ozone Player</h1>
+<h1 align="center">Ozone Player</h1>
 
   <p align="center">
     <a href="README.md">

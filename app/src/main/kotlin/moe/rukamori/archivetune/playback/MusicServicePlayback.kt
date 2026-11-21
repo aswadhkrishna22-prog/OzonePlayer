@@ -24,8 +24,11 @@ import moe.rukamori.archivetune.constants.FlacQuality
 import moe.rukamori.archivetune.constants.PlaybackSource
 import moe.rukamori.archivetune.constants.PlayerStreamClient
 import moe.rukamori.archivetune.constants.Prefer320KbpsKey
+import moe.rukamori.archivetune.db.entities.FormatEntity
 import moe.rukamori.archivetune.extensions.directorySizeBytes
 import moe.rukamori.archivetune.extensions.findNextMediaItemById
+import moe.rukamori.archivetune.flaccore.streaming.JioSaavnDecryptor
+import moe.rukamori.archivetune.flaccore.streaming.JioSaavnQualityCache
 import moe.rukamori.archivetune.innertube.YouTube
 import moe.rukamori.archivetune.playback.crossfade.isTrackFullyCached
 import moe.rukamori.archivetune.playback.resolvers.StreamUrl
@@ -74,6 +77,43 @@ internal fun MusicService.resolvePlaybackDataSpec(
                 ),
             )
         }
+        val cachedRaw = JioSaavnQualityCache.getRawUrl(mediaId)
+        if (!cachedRaw.isNullOrBlank()) {
+            val workingTier = JioSaavnQualityCache.getWorkingTier(mediaId)
+            val streamUrl = JioSaavnDecryptor.getUrlForTier(cachedRaw, workingTier)
+            if (streamUrl.isNotBlank()) {
+                val nominalBitrate = if (workingTier.nominalBitrateKbps > 0) workingTier.nominalBitrateKbps * 1000 else 160000
+                scope.launch(Dispatchers.IO) {
+                    val format = FormatEntity(
+                        id = formatIdForSource(mediaId, PlaybackSource.FLAC),
+                        itag = 0,
+                        mimeType = "audio/mp4",
+                        codecs = "mp4a.40.2",
+                        bitrate = nominalBitrate,
+                        sampleRate = 44100,
+                        contentLength = (nominalBitrate.toLong() / 8L) * 200L,
+                        loudnessDb = null,
+                        playbackUrl = streamUrl,
+                        bitsPerSample = 16,
+                    )
+                    database.upsert(format)
+                    database.upsert(format.copy(id = mediaId))
+                }
+                return buildResolvedFlacDataSpec(
+                    dataSpec = dataSpec,
+                    mediaId = mediaId,
+                    streamUrl = StreamUrl(
+                        url = streamUrl,
+                        expiresAtMs = System.currentTimeMillis() + 86_400_000L,
+                        codec = "aac",
+                        bitsPerSample = 16,
+                        sampleRateHz = 44100,
+                        bitrateKbps = if (workingTier.nominalBitrateKbps > 0) workingTier.nominalBitrateKbps else 160,
+                        origin = "jiosaavn",
+                    ),
+                )
+            }
+        }
         val song = runBlocking(Dispatchers.IO) { database.song(mediaId).firstOrNull() }
         if (song != null) {
             val resolved = runBlocking(Dispatchers.IO) {
@@ -87,6 +127,40 @@ internal fun MusicService.resolvePlaybackDataSpec(
                 )
             }
         }
+
+        // Seamless fallback to YouTube Music
+        val songTitle = song?.title ?: player.currentMediaItem?.mediaMetadata?.title?.toString()
+        val songArtist = song?.artists?.joinToString(", ") { it.name }
+            ?: player.currentMediaItem?.mediaMetadata?.artist?.toString()
+
+        if (!songTitle.isNullOrBlank()) {
+            val query = "$songTitle ${songArtist.orEmpty()}".trim()
+            Timber.tag("PlaybackTiming").w("[$mediaId] JioSaavn stream missing, resolving fallback via YouTube for '$query'")
+            val ytCandidate = runBlocking(Dispatchers.IO) {
+                YouTube.search(query, YouTube.SearchFilter.FILTER_SONG).getOrNull()
+                    ?.items
+                    ?.filterIsInstance<moe.rukamori.archivetune.innertube.models.SongItem>()
+                    ?.firstOrNull()
+            }
+            if (ytCandidate != null) {
+                Timber.tag("PlaybackTiming").i("[$mediaId] Fallback found on YouTube: ${ytCandidate.id} (${ytCandidate.title})")
+                setActualPlaybackSource(mediaId, PlaybackSource.YT_MUSIC)
+                val playbackData = resolveYtPlaybackResponse(
+                    mediaId = ytCandidate.id,
+                    shouldBypassFlac = true,
+                    isMeteredConnection = connectivityManager.isActiveNetworkMetered,
+                )
+                val networkCacheKey = "${ytCandidate.id}_${PlaybackSource.YT_MUSIC.name}"
+                return persistPlaybackFormat(
+                    dataSpec = dataSpec,
+                    mediaId = ytCandidate.id,
+                    networkCacheKey = networkCacheKey,
+                    knownContentLength = null,
+                    playbackData = playbackData,
+                )
+            }
+        }
+
         throw PlaybackException(
             "JioSaavn audio stream unavailable",
             null,

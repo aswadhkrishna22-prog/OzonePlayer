@@ -41,6 +41,10 @@ import moe.rukamori.archivetune.extensions.getQueueWindows
 import moe.rukamori.archivetune.playback.MusicService.MusicBinder
 import moe.rukamori.archivetune.playback.requestTogetherControl
 import moe.rukamori.archivetune.playback.queues.Queue
+import moe.rukamori.archivetune.playback.queues.YouTubeQueue
+import moe.rukamori.archivetune.innertube.YouTube
+import moe.rukamori.archivetune.innertube.models.WatchEndpoint
+import moe.rukamori.archivetune.models.toMediaMetadata
 import moe.rukamori.archivetune.utils.reportException
 import jakarta.inject.Inject
 import kotlin.math.roundToInt
@@ -330,6 +334,31 @@ class PlayerConnection(
                 val handled = JioSaavnPlaybackFallback.tryFallback(player, database, scope)
                 if (handled) {
                     timber.log.Timber.tag("PlayerConnection").i("JioSaavn early source error automatically retrying next lower quality; suppressing error UI")
+                    return
+                }
+
+                // If JioSaavn CDN fallback exhausted, seamlessly resolve via YouTube without error dialog
+                val title = currentItem?.mediaMetadata?.title?.toString()
+                val artist = currentItem?.mediaMetadata?.artist?.toString().orEmpty()
+                if (!title.isNullOrBlank()) {
+                    timber.log.Timber.tag("PlayerConnection").i("JioSaavn CDN failed; falling back to YouTube for '$title $artist'")
+                    scope.launch(Dispatchers.IO) {
+                        val query = "$title $artist".trim()
+                        val match = YouTube.search(query, YouTube.SearchFilter.FILTER_SONG).getOrNull()
+                            ?.items
+                            ?.filterIsInstance<moe.rukamori.archivetune.innertube.models.SongItem>()
+                            ?.firstOrNull()
+                        if (match != null) {
+                            withContext(Dispatchers.Main) {
+                                playQueue(
+                                    YouTubeQueue(
+                                        endpoint = match.endpoint ?: WatchEndpoint(videoId = match.id),
+                                        preloadItem = match.toMediaMetadata(),
+                                    ),
+                                )
+                            }
+                        }
+                    }
                     return
                 }
             }

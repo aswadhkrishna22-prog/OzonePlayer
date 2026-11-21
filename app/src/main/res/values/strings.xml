@@ -1,6 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="playback_source">Source</string>
+    <string name="custom_app_icon">Custom app icon</string>
+    <string name="app_icon_delay_note">The launcher may take a few seconds to update the icon.</string>
     <string name="source_yt_music">YT Music</string>
     <string name="source_flac">FLAC</string>
 <string name="flac_quality_cd">CD (16-bit/44.1 kHz)</string>
