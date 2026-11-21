@@ -2,9 +2,9 @@ name: Build PR Debug APK
 
 on:
   pull_request:
-    branches: [ "main", "dev" ]
+    branches: [ "main", "dev", "early-**" ]
   push:
-    branches: [ "dev", "feat/**", "security-**" ]
+    branches: [ "dev", "feat/**", "security-**", "early-**" ]
   workflow_dispatch:
     inputs:
       variant:
@@ -67,9 +67,15 @@ jobs:
             exit 1
           fi
 
-          APK_NAME=$(basename "$APK_PATH")
-          APK_SIZE=$(ls -lh "$APK_PATH" | awk '{print $5}')
-          APK_SHA256=$(sha256sum "$APK_PATH" | awk '{print $1}')
+          APK_DIR=$(dirname "$APK_PATH")
+          TARGET_APK="$APK_DIR/Ozone-EarlyAccess-universal.apk"
+          if [ "$APK_PATH" != "$TARGET_APK" ]; then
+            mv "$APK_PATH" "$TARGET_APK"
+          fi
+
+          APK_NAME=$(basename "$TARGET_APK")
+          APK_SIZE=$(ls -lh "$TARGET_APK" | awk '{print $5}')
+          APK_SHA256=$(sha256sum "$TARGET_APK" | awk '{print $1}')
 
           {
             echo "## 📦 Build Artifact: $APK_NAME"
@@ -130,7 +136,7 @@ jobs:
         if: env.VARIANT == 'debug'
         uses: actions/upload-artifact@v4
         with:
-          name: OzonePlayer-dualplay-debug
+          name: Ozone-EarlyAccess-debug
           path: app/build/outputs/apk/gmsMobileUniversal/debug/*.apk
           if-no-files-found: error
 
@@ -138,6 +144,6 @@ jobs:
         if: env.VARIANT == 'r8'
         uses: actions/upload-artifact@v4
         with:
-          name: OzonePlayer-rtest-release
+          name: Ozone-EarlyAccess-release
           path: app/build/outputs/apk/gmsMobileUniversal/release/*.apk
           if-no-files-found: error

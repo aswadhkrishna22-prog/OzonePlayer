@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">Ozone Player</string>
+    <string name="app_name" translatable="false">Ozone Early Access</string>
     <string name="app_name_canary" translatable="false">Ozone Player Canary</string>
     <string name="ui_app_name" translatable="false">Ozone</string>
     <string name="widget_description">Shows currently playing track with playback controls</string>
