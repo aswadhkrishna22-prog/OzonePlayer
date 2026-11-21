@@ -212,17 +212,23 @@ fun FloatingNavigationToolbar(
                 )
             }
             .fillMaxWidth()
-            .height(NavigationBarHeight)
-            .liquidGlass(
-                shape = capsuleShape,
-                hazeState = hazeState,
-                pureBlack = pureBlack,
-                preset = LiquidGlassPreset.Pill,
-                showBorder = showBorder,
-                cornerRadiusDp = NavigationBarCornerRadius,
-            ),
+            .height(NavigationBarHeight),
         contentAlignment = Alignment.Center,
     ) {
+        // Layer 1: Glass background pill (low blur, light white tint, soft shadow, thin rim highlight - NO LENS)
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clearLiquidGlassPill(
+                    shape = capsuleShape,
+                    hazeState = hazeState,
+                    pureBlack = pureBlack,
+                    showBorder = showBorder,
+                    cornerRadiusDp = NavigationBarCornerRadius,
+                )
+        )
+
+        // Layer 2: Foreground content (icons, labels, drag selector) drawn on top of the glass
         Box(
             modifier = Modifier
                 .fillMaxSize()

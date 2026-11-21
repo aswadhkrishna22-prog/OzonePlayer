@@ -88,30 +88,18 @@ internal fun Modifier.playerSheetBackdrop(
 ): Modifier = composed {
     val currentProvider by rememberUpdatedState(expansionFractionProvider)
 
-    // Base liquid glass modifier matching bottom navigation bar exactly
-    val glassModifier = Modifier.liquidGlass(
-        shape = pillShape,
-        hazeState = hazeState,
-        pureBlack = pureBlack,
-        preset = LiquidGlassPreset.Pill,
-        showBorder = true,
-        cornerRadiusDp = 28.dp,
-    )
-
-    this
-        .then(glassModifier)
-        .drawWithContent {
-            drawContent()
-            val fraction = currentProvider()
-            if (fraction > 0f) {
-                // Smooth crossfade to full player background as sheet expands
-                val fullAlpha = (fraction / 0.35f).coerceIn(0f, 1f)
-                drawRect(
-                    brush = if (pureBlack) SolidColor(Color.Black) else backgroundBrush,
-                    alpha = fullAlpha,
-                )
-            }
+    this.drawWithContent {
+        val fraction = currentProvider()
+        if (fraction > 0f) {
+            // Smooth crossfade to full player background as sheet expands
+            val fullAlpha = (fraction / 0.35f).coerceIn(0f, 1f)
+            drawRect(
+                brush = if (pureBlack) SolidColor(Color.Black) else backgroundBrush,
+                alpha = fullAlpha,
+            )
         }
+        drawContent()
+    }
 }
 
 internal fun Modifier.playerSheetGlassBorder(
@@ -124,32 +112,8 @@ internal fun rememberPlayerSheetPillShape(
     density: Density,
     expansionFraction: Animatable<Float, *>,
     isDocked: Boolean = true,
-): Shape = remember(density) {
-    object : Shape {
-        override fun createOutline(
-            size: Size,
-            layoutDirection: LayoutDirection,
-            density: Density
-        ): Outline {
-            if (size.width <= 0f || size.height <= 0f) return Outline.Rectangle(Rect.Zero)
-            val fraction = expansionFraction.value
-            if (fraction >= 0.99f) return Outline.Rectangle(Rect(0f, 0f, size.width, size.height))
-            val radiusPx = with(density) {
-                androidx.compose.ui.unit.lerp(28.dp, 0.dp, fraction.coerceIn(0f, 1f)).toPx()
-            }
-            val corner = CornerRadius(radiusPx, radiusPx)
-            return Outline.Rounded(
-                RoundRect(
-                    left = 0f,
-                    top = 0f,
-                    right = size.width,
-                    bottom = size.height,
-                    topLeftCornerRadius = corner,
-                    topRightCornerRadius = corner,
-                    bottomRightCornerRadius = corner,
-                    bottomLeftCornerRadius = corner
-                )
-            )
-        }
-    }
+): RoundedCornerShape {
+    val fraction = expansionFraction.value
+    val cornerRadius = androidx.compose.ui.unit.lerp(28.dp, 0.dp, fraction.coerceIn(0f, 1f))
+    return RoundedCornerShape(cornerRadius)
 }

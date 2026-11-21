@@ -258,6 +258,7 @@ fun UnifiedPlayerSheetV2(
                         dualState = dualPlayState,
                         dualPlayEngine = dualPlayEngine,
                         hazeState = hazeState,
+                        pureBlack = pureBlack,
                     )
                 }
             }

@@ -47,6 +47,11 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.dp
+import moe.rukamori.archivetune.constants.MiniPlayerHeight
+import moe.rukamori.archivetune.ui.component.clearLiquidGlassPill
 import moe.rukamori.archivetune.ui.player.player_0.dualplay.DualMiniPlayer
 import moe.rukamori.archivetune.ui.player.player_0.MiniPlayerContentInternal
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
@@ -91,6 +96,7 @@ internal fun UnifiedPlayerSheetLayers(
     dualState: DualPlayState? = null,
     dualPlayEngine: DualPlayEngine? = null,
     hazeState: HazeState? = null,
+    pureBlack: Boolean = false,
 ) {
     val density = LocalDensity.current.density
     val canvasState = rememberPlayerCanvasState(state.trackUrl, state.title, state.artist)
@@ -234,14 +240,34 @@ internal fun UnifiedPlayerSheetLayers(
                             modifier = Modifier.fillMaxWidth(),
                         )
                     } else {
-                        MiniPlayerContentInternal(
-                            state = state,
-                            expansionFractionProvider = expansionFractionProvider,
-                            playbackProgress = playbackProgress,
-                            onAction = onAction,
-                            onMediaAreaClick = onExpandClick,
-                            isVisible = isMiniPlayerVisible,
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(MiniPlayerHeight)
+                        ) {
+                            // Layer 1: Glass background pill (low blur, light white tint, soft shadow, thin rim highlight - NO LENS)
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .clearLiquidGlassPill(
+                                        shape = RoundedCornerShape(28.dp),
+                                        hazeState = hazeState,
+                                        pureBlack = pureBlack,
+                                        showBorder = true,
+                                        cornerRadiusDp = 28.dp,
+                                    )
+                            )
+
+                            // Layer 2: Foreground content (album art, progress ring, title, artist, buttons) drawn on top
+                            MiniPlayerContentInternal(
+                                state = state,
+                                expansionFractionProvider = expansionFractionProvider,
+                                playbackProgress = playbackProgress,
+                                onAction = onAction,
+                                onMediaAreaClick = onExpandClick,
+                                isVisible = isMiniPlayerVisible,
+                            )
+                        }
                     }
                 }
             }

@@ -15,6 +15,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -488,3 +489,85 @@ fun Modifier.chipLiquidGlass(
     showBorder = true,
     interaction = interaction,
 )
+
+/**
+ * Stage 1 Clear Liquid Glass Pill:
+ * Engineered specifically for floating navigation bars and mini players.
+ *
+ * Requirements satisfied:
+ * - NO LENS AT ALL (no runtimeShader, no lens displacement)
+ * - Low blur (4.dp, sweet spot between 2-6dp)
+ * - No black scrim: light translucent white tint (0.09f, or 0.12f in pureBlack)
+ * - Soft drop shadow (8.dp elevation, low opacity ambient + spot)
+ * - Bright thin rim highlight (1.dp specular meniscus highlight)
+ */
+fun Modifier.clearLiquidGlassPill(
+    shape: Shape = RoundedCornerShape(28.dp),
+    hazeState: HazeState? = null,
+    pureBlack: Boolean = false,
+    blurRadius: Dp = 4.dp,
+    tintAlpha: Float = if (pureBlack) 0.12f else 0.09f,
+    showBorder: Boolean = true,
+    cornerRadiusDp: Dp = 28.dp,
+    shadowElevation: Dp = 8.dp,
+): Modifier = composed {
+    val glassTint = Color.White.copy(alpha = tintAlpha)
+
+    val hazeStyle = remember(glassTint, blurRadius) {
+        val tintEffect = HazeColorEffect.tint(glassTint)
+        HazeBlurStyle {
+            blurEnabled(true)
+            backgroundColor(Color.Transparent)
+            colorEffects(listOf(tintEffect))
+            fallbackColorEffect(tintEffect)
+            blurRadius(blurRadius)
+            noiseFactor(0.01f)
+        }
+    }
+
+    this
+        // 1. Soft elevation drop shadow under floating pill
+        .then(
+            if (shadowElevation > 0.dp) {
+                Modifier.shadow(
+                    elevation = shadowElevation,
+                    shape = shape,
+                    clip = false,
+                    ambientColor = Color.Black.copy(alpha = 0.10f),
+                    spotColor = Color.Black.copy(alpha = 0.14f),
+                )
+            } else {
+                Modifier
+            }
+        )
+        // 2. Shape silhouette clipping
+        .clip(shape)
+        // 3. Live backdrop blur with light translucent white tint (NO black scrim)
+        .then(
+            if (hazeState != null) {
+                Modifier.hazeBlur(
+                    input = HazeInput.Sources(hazeState),
+                    style = hazeStyle,
+                    performanceMode = HazePerformanceMode.Fixed(SettingsDimensions.HazeQualityFraction),
+                )
+            } else {
+                Modifier.background(
+                    Color.White.copy(alpha = tintAlpha),
+                    shape = shape,
+                )
+            }
+        )
+        // 4. Bright thin specular meniscus rim highlight (NO lens in Stage 1)
+        .then(
+            if (showBorder) {
+                Modifier.liquidBubbleHighlight(
+                    cornerRadiusDp = cornerRadiusDp,
+                    isDark = true,
+                    hasTopSheen = false,
+                )
+            } else {
+                Modifier
+            }
+        )
+}
+
