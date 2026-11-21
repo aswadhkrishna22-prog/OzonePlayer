@@ -10,8 +10,8 @@ on:
       variant:
         description: "Which APK to build"
         type: choice
-        options: [debug, r8]
-        default: debug
+        options: [r8, debug]
+        default: r8
       run_tests:
         description: "Run unit tests"
         type: boolean
@@ -26,10 +26,10 @@ permissions:
 
 jobs:
   build:
-    name: Build & Upload APK (${{ github.event.inputs.variant || 'debug' }})
+    name: Build & Upload APK (${{ github.event.inputs.variant || 'r8' }})
     runs-on: ubuntu-latest
     env:
-      VARIANT: ${{ github.event.inputs.variant || 'debug' }}
+      VARIANT: ${{ github.event.inputs.variant || 'r8' }}
 
     steps:
       - name: Checkout code
