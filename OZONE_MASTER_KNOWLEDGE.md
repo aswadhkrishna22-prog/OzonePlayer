@@ -66,6 +66,18 @@
      - `SpotifyPlaylistProvider`: Public playlist URLs / URIs, guest TOTP token fallback (`SpotifyAuth.fetchGuestAccessToken()`) so users don't need to log in to import public Spotify playlists.
      - `YouTubePlaylistProvider`: Parses `music.youtube.com`, `youtube.com`, `youtu.be`, and `list=` IDs via `YouTube.playlist`.
      - `PlaylistImportRepository`: Persists `PlaylistEntity` with `browseId`/`spotifyId`, stores `MediaMetadata` and mappings in `PlaylistSongMap`, displays with source badge ("Spotify" / "YouTube synced"), and shows snackbar on success.
+6. **Ultimate Liquid Glass Engineering (`feature/advanced-liquid-glass`):**
+   - **Core Engine (`designsystem/.../ui/component/LiquidGlass.kt`):**
+     - Unified optical liquid glass pipeline: Snell's Law lens refraction via AGSL `RuntimeShader` on API 33+, domed depth curvature, and boosted saturation/vibrancy (1.35x - 1.55x).
+     - Specular meniscus illumination (`liquidBubbleHighlight`): 1.0dp directional rim highlight (75-85% alpha white from top-left, 28-35% alpha white from bottom-right), shaded meniscus bevel, and surface sheen.
+     - Zero dark scrim/slab: uses translucent light glass tint (white ~0.08f) so underlying artwork and content glow through.
+     - Multi-platform fallbacks: API 31-32 uses Compose `Haze` blur + tint + rim highlight; < API 31 uses clean translucent solid + rim highlight. Chromatic aberration disabled for phone thermal/GPU protection.
+   - **Four Major UI Target Areas:**
+     1. **Home Screen:** Floating `ScaffoldTopAppBar` uses `headerLiquidGlass` with deep frost (22dp) and top sheen, refracting live feed content scrolling underneath without competing with album artwork.
+     2. **Search Screen:** `TopSearch` and `SearchEntryField` use `liquidGlass` with high-contrast text legibility, 1dp meniscus rim highlight, and smooth animation to full-screen search.
+     3. **Library Screen:** `LibraryCollapsingHeader` uses `headerLiquidGlass`, while `LibraryFilterChipBar` chips use `liquidBubbleHighlight` with active/inactive states; playlist/album covers remain untouched.
+     4. **Song Pill / Mini Player & Dock:** `PlayerSheetBackdrop.kt` and `FloatingNavigationToolbar.kt` share the exact same `LiquidGlassPreset.Pill` (4dp low blur, 18dp lens height, 28dp distortion, 8dp drop shadow, 1.35x saturation), with smooth crossfade to full player on sheet expansion.
+   - **Backdrop Capture Sibling Rule:** `ScaffoldShell.kt` wraps content in a solid canvas background before `hazeSource`, ensuring glass elements remain siblings of the captured source node, preventing cyclic render crashes and eliminating sharp text bleed.
 
 ## 5. User Interaction & Language
 - The user speaks conversational Manglish (Malayalam written in English letters).

@@ -43,6 +43,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import android.widget.Toast
+import moe.rukamori.archivetune.ui.component.headerLiquidGlass
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import moe.rukamori.archivetune.ui.component.playlist.AddPlaylistBottomSheet
@@ -120,10 +121,9 @@ fun ScaffoldTopAppBar(
                     }
                     .fillMaxWidth()
                     .height(AppBarHeight + statusBarTop)
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(surfaceColor.copy(alpha = 0.95f), surfaceColor.copy(alpha = 0.85f), surfaceColor.copy(alpha = 0.6f), Color.Transparent),
-                        ),
+                    .headerLiquidGlass(
+                        hazeState = hazeState,
+                        pureBlack = pureBlack,
                     ),
             )
         }
