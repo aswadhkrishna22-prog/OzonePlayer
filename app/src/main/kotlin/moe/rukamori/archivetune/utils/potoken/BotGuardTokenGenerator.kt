@@ -604,7 +604,7 @@ object BotGuardTokenGenerator {
                 return withContext(Dispatchers.Main) {
                     suspendCancellableCoroutine { cont ->
                         lateinit var engine: BotGuardEngine
-                        val wv = try {
+                        val wv =
                             WebView(context).apply {
                                 settings.javaScriptEnabled = true
                                 settings.userAgentString = WV_USER_AGENT
@@ -631,12 +631,6 @@ object BotGuardTokenGenerator {
                                         }
                                     }
                             }
-                        } catch (t: Throwable) {
-                            Timber.tag(TAG).e(t, "Failed to instantiate WebView for BotGuard")
-                            permanentlyBroken = true
-                            cont.resumeWith(Result.failure(t))
-                            return@suspendCancellableCoroutine
-                        }
                         engine = BotGuardEngine(wv, cont)
                         cont.invokeOnCancellation {
                             wv.post(engine::close)

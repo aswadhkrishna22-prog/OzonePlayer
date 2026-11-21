@@ -95,10 +95,6 @@ class App :
 
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
-        try {
-            SingletonImageLoader.get(this).memoryCache?.trimToSize(0)
-        } catch (_: Throwable) {
-        }
     }
 
     private fun initializeCriticalSync() {
