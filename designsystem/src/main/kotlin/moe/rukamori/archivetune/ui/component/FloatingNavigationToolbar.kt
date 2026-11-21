@@ -159,7 +159,6 @@ fun FloatingNavigationToolbar(
             )
         }
         val baseScale = lerp(NavigationBarHideMinScale, 1.0f, animatedVisibilityFactor)
-        val hideOffsetY = NavigationBarHideOffsetY.toPx() * (1f - animatedVisibilityFactor)
 
         LiquidNavigationBar(
             liquidState = navLiquidState,
@@ -183,6 +182,7 @@ fun FloatingNavigationToolbar(
             },
             isDark = pureBlack || isSystemInDarkTheme(),
             modifier = modifier.graphicsLayer {
+                val hideOffsetY = NavigationBarHideOffsetY.toPx() * (1f - animatedVisibilityFactor)
                 translationY = hideOffsetY
                 translationX = persistentOffsetAnimatable.value
                 scaleX = baseScale
@@ -342,4 +342,5 @@ fun FloatingNavigationToolbar(
             }
         }
     }
+}
 }
