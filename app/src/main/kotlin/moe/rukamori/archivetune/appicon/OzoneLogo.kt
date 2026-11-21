@@ -9,12 +9,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.GenericShape
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import moe.rukamori.archivetune.R
 import kotlin.math.PI
 import kotlin.math.abs
@@ -24,20 +29,29 @@ import kotlin.math.sign
 import kotlin.math.sin
 
 /** Same rounded-square (superellipse) the icon PNGs/SVGs use. */
-val SquircleShape = GenericShape { size, _ ->
-    val n = 5.0
-    val a = size.width / 2f
-    val b = size.height / 2f
-    val steps = 160
-    for (i in 0 until steps) {
-        val t = 2.0 * PI * i / steps
-        val c = cos(t)
-        val s = sin(t)
-        val x = a + a * sign(c) * abs(c).pow(2.0 / n)
-        val y = b + b * sign(s) * abs(s).pow(2.0 / n)
-        if (i == 0) moveTo(x.toFloat(), y.toFloat()) else lineTo(x.toFloat(), y.toFloat())
+val SquircleShape: Shape = object : Shape {
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Outline {
+        val path = Path().apply {
+            val n = 5.0
+            val a = size.width / 2f
+            val b = size.height / 2f
+            val steps = 160
+            for (i in 0 until steps) {
+                val t = 2.0 * PI * i / steps
+                val c = cos(t)
+                val s = sin(t)
+                val x = a + a * sign(c) * abs(c).pow(2.0 / n)
+                val y = b + b * sign(s) * abs(s).pow(2.0 / n)
+                if (i == 0) moveTo(x.toFloat(), y.toFloat()) else lineTo(x.toFloat(), y.toFloat())
+            }
+            close()
+        }
+        return Outline.Generic(path)
     }
-    close()
 }
 
 /** The icon the user currently picked (read once per composition). Use this in the intro animation. */
