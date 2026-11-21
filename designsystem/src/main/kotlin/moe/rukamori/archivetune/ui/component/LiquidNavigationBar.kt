@@ -398,6 +398,6 @@ private fun Modifier.navigationRail(state: LiquidState, color: Color, blurRadius
     curve = 0.12f
     edge = 0.012f
     saturation = 1.1f
-    dispersion = 0.01f
+    dispersion = 0f
     tint = color
 }

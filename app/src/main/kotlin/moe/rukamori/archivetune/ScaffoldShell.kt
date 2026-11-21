@@ -36,6 +36,7 @@ import io.github.fletchmckee.liquid.rememberLiquidState
 import io.github.fletchmckee.liquid.liquefiable
 import io.github.fletchmckee.liquid.LiquidState
 import moe.rukamori.archivetune.ui.component.isBackdropGlassCapable
+import moe.rukamori.archivetune.ui.component.LocalGlassBackdrop
 import moe.rukamori.archivetune.constants.HomeBackgroundStyle
 import moe.rukamori.archivetune.constants.SearchSource
 import moe.rukamori.archivetune.constants.UpdateChannel
@@ -138,85 +139,93 @@ fun ScaffoldShell(
                     val useLiquidNav = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU && appState.blurNavBar
                     val navLiquidState = if (useLiquidNav) rememberLiquidState() else null
 
-                    @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
-                    Scaffold(
-                        topBar = {
-                            ScaffoldTopAppBar(
-                                visible = appState.shouldShowTopBar,
-                                navController = navController,
-                                navBackStackEntry = appState.navBackStackEntry,
-                                scrollController = appState.scrollController,
-                                useRail = appState.useRail,
-                                pureBlack = pureBlack,
-                                splashDone = splashDone,
-                                updateState = appState.updateState,
-                                avatarUrl = accountImageUrl,
-                                accountName = accountName,
-                                accentColor = accountAccentColor,
-                                hazeState = scaffoldHazeState.effectiveHazeState,
-                                blurRadius = appState.blurRadius,
-                                blurNavBar = appState.blurNavBar,
-                            )
-                            ScaffoldSearchBarHost(
-                                searchState = appState.searchState, navController = navController,
-                                navBackStackEntry = appState.navBackStackEntry, navigationItems = appState.navigationItems,
-                                searchHazeState = scaffoldHazeState.effectiveSearchHazeState,
-                                isMiniPlayerVisible = appState.isMiniPlayerVisible, disableAnimations = disableAnimations,
-                                pureBlack = pureBlack, blurRadius = appState.blurRadius, modifier = Modifier.align(Alignment.TopCenter),
-                            )
-                        },
-                        bottomBar = {},
-                        containerColor = Color.Transparent,
-                        modifier = Modifier.fillMaxSize(),
-                    ) { _ ->
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(appBackgroundColor)
-                                .then(
-                                    if (scaffoldHazeState.effectiveHazeState != null) {
-                                        Modifier.hazeSource(scaffoldHazeState.effectiveHazeState)
-                                    } else Modifier
+                    CompositionLocalProvider(
+                        LocalGlassBackdrop provides glassBackdrop,
+                    ) {
+                        @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
+                        Scaffold(
+                            topBar = {
+                                ScaffoldTopAppBar(
+                                    visible = appState.shouldShowTopBar,
+                                    navController = navController,
+                                    navBackStackEntry = appState.navBackStackEntry,
+                                    scrollController = appState.scrollController,
+                                    useRail = appState.useRail,
+                                    pureBlack = pureBlack,
+                                    splashDone = splashDone,
+                                    updateState = appState.updateState,
+                                    avatarUrl = accountImageUrl,
+                                    accountName = accountName,
+                                    accentColor = accountAccentColor,
+                                    hazeState = scaffoldHazeState.effectiveHazeState,
+                                    blurRadius = appState.blurRadius,
+                                    blurNavBar = appState.blurNavBar,
                                 )
-                                .then(
-                                    if (glassBackdrop != null) {
-                                        Modifier.layerBackdrop(glassBackdrop)
-                                    } else Modifier
-                                ),
-                        ) {
+                                ScaffoldSearchBarHost(
+                                    searchState = appState.searchState, navController = navController,
+                                    navBackStackEntry = appState.navBackStackEntry, navigationItems = appState.navigationItems,
+                                    searchHazeState = scaffoldHazeState.effectiveSearchHazeState,
+                                    isMiniPlayerVisible = appState.isMiniPlayerVisible, disableAnimations = disableAnimations,
+                                    pureBlack = pureBlack, blurRadius = appState.blurRadius, modifier = Modifier.align(Alignment.TopCenter),
+                                    glassBackdrop = glassBackdrop,
+                                )
+                            },
+                            bottomBar = {},
+                            containerColor = Color.Transparent,
+                            modifier = Modifier.fillMaxSize(),
+                        ) { _ ->
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
+                                    .background(appBackgroundColor)
                                     .then(
-                                        if (navLiquidState != null) {
-                                            Modifier.liquefiable(navLiquidState)
+                                        if (scaffoldHazeState.effectiveHazeState != null) {
+                                            Modifier.hazeSource(scaffoldHazeState.effectiveHazeState)
+                                        } else Modifier
+                                    )
+                                    .then(
+                                        if (glassBackdrop != null) {
+                                            Modifier.layerBackdrop(glassBackdrop)
                                         } else Modifier
                                     ),
                             ) {
-                                ScreenBackground(isVisible = LocalGlobalVisibility.current, modifier = Modifier.fillMaxSize())
-                                NavigationHost(
-                                    navController = navController, topAppBarScrollBehavior = appState.scrollController.topAppBarScrollBehavior,
-                                    hazeState = null, updateState = appState.updateState,
+                                Box(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .then(
-                                            if (scaffoldHazeState.effectiveSearchHazeState != null) Modifier.hazeSource(scaffoldHazeState.effectiveSearchHazeState) else Modifier,
-                                        )
-                                        .graphicsLayer {
-                                            val p = if (disableAnimations) 0f else playerExpansionFraction().coerceIn(0f, 1f)
-                                            val scale = 1f - 0.06f * p
-                                            scaleX = scale
-                                            scaleY = scale
-                                            alpha = if (p > 0.9f) ((1f - p) / 0.1f).coerceIn(0f, 1f) else 1f
-                                        },
-                                    homeScrollConnection = appState.scrollController.homeScrollBehavior.nestedScrollConnection,
-                                    searchScrollConnection = appState.scrollController.searchScrollBehavior.nestedScrollConnection,
-                                    onClearUpdateBadge = { appState.updateViewModel.dismissUpdate() }, disableAnimations = disableAnimations,
-                                    isTvDevice = appState.isTvDevice, contentAreaFocusRequester = appState.searchState.contentAreaFocusRequester,
-                                    launchMusicRecognitionFromShortcut = appState.launchMusicRecognitionFromShortcut,
-                                    tabOpenedFromShortcut = appState.tabOpenedFromShortcut, defaultOpenTab = appState.defaultOpenTab,
-                                    navigationItems = appState.navigationItems, updateChannel = updateChannel,
-                                )
+                                            if (navLiquidState != null) {
+                                                Modifier.liquefiable(navLiquidState)
+                                            } else Modifier
+                                        ),
+                                ) {
+                                    ScreenBackground(isVisible = LocalGlobalVisibility.current, modifier = Modifier.fillMaxSize())
+                                    NavigationHost(
+                                        navController = navController, topAppBarScrollBehavior = appState.scrollController.topAppBarScrollBehavior,
+                                        hazeState = null, updateState = appState.updateState,
+                                        searchActive = appState.searchState.active,
+                                        glassBackdrop = glassBackdrop,
+                                        pureBlack = pureBlack,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .then(
+                                                if (scaffoldHazeState.effectiveSearchHazeState != null) Modifier.hazeSource(scaffoldHazeState.effectiveSearchHazeState) else Modifier,
+                                            )
+                                            .graphicsLayer {
+                                                val p = if (disableAnimations) 0f else playerExpansionFraction().coerceIn(0f, 1f)
+                                                val scale = 1f - 0.06f * p
+                                                scaleX = scale
+                                                scaleY = scale
+                                                alpha = if (p > 0.9f) ((1f - p) / 0.1f).coerceIn(0f, 1f) else 1f
+                                            },
+                                        homeScrollConnection = appState.scrollController.homeScrollBehavior.nestedScrollConnection,
+                                        searchScrollConnection = appState.scrollController.searchScrollBehavior.nestedScrollConnection,
+                                        onClearUpdateBadge = { appState.updateViewModel.dismissUpdate() }, disableAnimations = disableAnimations,
+                                        isTvDevice = appState.isTvDevice, contentAreaFocusRequester = appState.searchState.contentAreaFocusRequester,
+                                        launchMusicRecognitionFromShortcut = appState.launchMusicRecognitionFromShortcut,
+                                        tabOpenedFromShortcut = appState.tabOpenedFromShortcut, defaultOpenTab = appState.defaultOpenTab,
+                                        navigationItems = appState.navigationItems, updateChannel = updateChannel,
+                                    )
+                                }
                             }
                         }
                     }

@@ -22,16 +22,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.kyant.backdrop.Backdrop
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.ui.component.LocalGlassBackdrop
 import moe.rukamori.archivetune.ui.component.NavigationTitle
 import moe.rukamori.archivetune.viewmodels.SearchDiscoveryScreenState
 import moe.rukamori.archivetune.viewmodels.SearchDiscoveryTab
@@ -43,6 +47,9 @@ fun SearchScreen(
     navController: NavController,
     onSearchClick: () -> Unit,
     headerScrollConnection: NestedScrollConnection? = null,
+    searchActive: Boolean = false,
+    glassBackdrop: Backdrop? = LocalGlassBackdrop.current,
+    pureBlack: Boolean = false,
     viewModel: SearchDiscoveryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -87,10 +94,19 @@ fun SearchScreen(
             ) {
                 SearchEntryField(
                     onClick = onSearchClick,
+                    glassBackdrop = glassBackdrop,
+                    pureBlack = pureBlack,
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .then(
+                                if (searchActive) {
+                                    Modifier.alpha(0f).clearAndSetSemantics {}
+                                } else {
+                                    Modifier
+                                }
+                            )
                             .animateItem(),
                 )
             }

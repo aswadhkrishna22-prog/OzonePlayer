@@ -88,6 +88,12 @@
      - Gated to Android 13+ (API 33+) with fallback to Kyant Backdrop (API 31+) and Haze (< API 31).
      - **Layout & Mini Player Spacing Fix:** Insets/outer padding removed from `LiquidNavigationBar`; rail given exact 64dp height; `PlayerDockGeometry` and `ScaffoldAppState` updated to 64dp so mini player sits with exact 8dp gap above the rail without overlap or label clipping.
      - **Backdrop Isolation & Scrim Fix:** `ScaffoldShell` isolates `layerBackdrop` on an outer Box and `liquefiable` on an inner Box without conflicting `.background` modifiers. Mini player scrim set to dark translucent (`0.22f` black in dark theme via `pureBlack || isSystemInDarkTheme()`), restoring clear dark glass aesthetic.
+8. **Search UI & Top Header Liquid Glass Alignment (Master Prompt 3):**
+   - **Explore Search Capsule:** 56dp height, `RoundedCornerShape(28.dp)`, uses `backdropLiquidGlass` (blur 12dp, saturation 1.1, brightness +0.05, soft lens `lensDivisor = 8f, lensMaxRadiusDivisor = 3f`, dark scrim `0.18f`, press scale 1.02). Leading search icon `@ 0.9`, placeholder `@ 0.62`, globe `@ 0.85`. No thick borders or M3 container fills.
+   - **Top App Bar / Header:** Flat grey slab and hard bottom divider removed. Replaced with seamless vertical gradient scrim `Brush.verticalGradient(bg @ 0.85f -> bg @ 0.0f)` over status bar + title row height; `TopAppBar` container colors set transparent.
+   - **Search Overlay & Ghost Duplicate Elimination:** In `SearchScreen`, `SearchEntryField` is hidden with `alpha = 0f` and `clearAndSetSemantics {}` while `searchState.active` is true. `TopSearch` expanded overlay uses `background(background.copy(alpha = 0.96f))` over blurred backdrop; input row rendered as glass capsule with 16dp horizontal margin; content container uses `imePadding()` with 12dp spacing below the input row.
+   - **Rainbow Edge Elimination:** Removed `liquidGlass` wrapping full-screen search content and removed rest dispersion (`dispersion = 0f` in `navigationRail`); rainbow dispersion strictly isolated to active nav lens drags.
+   - **Calm Translucent History Rows:** 56dp height, `RoundedCornerShape(20.dp)`, 16dp horizontal margin, 8dp vertical gap, fill `White @ 0.06` (dark) / `Black @ 0.05` (light), solid 1dp hairline border `White @ 0.10`, 36dp circular leading icon container, 40dp trailing touch targets, and `Modifier.animateItem()`.
 
 ## 5. User Interaction & Language
 - The user speaks conversational Manglish (Malayalam written in English letters).

@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
@@ -140,6 +141,11 @@ fun rememberBackdropGlassInteraction(): BackdropGlassInteraction {
 }
 
 /**
+ * CompositionLocal providing the root Kyant [Backdrop] instance across the app.
+ */
+val LocalGlassBackdrop = staticCompositionLocalOf<Backdrop?> { null }
+
+/**
  * Interactive liquid glass drawing modifier using Kyant Backdrop.
  * Element MUST be a sibling of the backdrop source, never inside it.
  */
@@ -154,6 +160,10 @@ fun Modifier.drawInteractiveGlass(
     blurScale: Float = 1f,
     minScrim: Float = BackdropGlassRecipe.MIN_SCRIM,
     maxScrim: Float = BackdropGlassRecipe.MAX_SCRIM,
+    lensDivisor: Float = BackdropGlassRecipe.LENS_DIVISOR,
+    lensMaxRadiusDivisor: Float = 2f,
+    hasLens: Boolean = true,
+    scrimAlpha: Float? = null,
 ): Modifier =
     this
         .drawBackdrop(
@@ -185,18 +195,22 @@ fun Modifier.drawInteractiveGlass(
                         }
                     ) * blurScale + BackdropGlassRecipe.PRESS_BLUR_DP.dp.toPx() * press,
                 )
-                lens(
-                    size.minDimension / BackdropGlassRecipe.LENS_DIVISOR +
-                        BackdropGlassRecipe.PRESS_BLUR_DP.dp.toPx() * press,
-                    size.minDimension / 2f,
-                    false,
-                )
+                if (hasLens) {
+                    lens(
+                        size.minDimension / lensDivisor +
+                            BackdropGlassRecipe.PRESS_BLUR_DP.dp.toPx() * press,
+                        size.minDimension / lensMaxRadiusDivisor,
+                        false,
+                    )
+                }
             },
             onDrawBackdrop = { drawBackdrop ->
                 drawBackdrop()
             },
             onDrawSurface = {
-                val darken = if (isDark) {
+                val darken = if (scrimAlpha != null) {
+                    scrimAlpha
+                } else if (isDark) {
                     0.22f
                 } else {
                     lerp(minScrim, maxScrim, ((luminanceAnimation - 0.3f) / 0.5f).coerceIn(0f, 1f))
@@ -247,6 +261,10 @@ fun Modifier.backdropLiquidGlass(
     pressedScale: Float = 1.12f,
     luminance: Float = 0.5f,
     highlight: Highlight = Highlight.Default,
+    lensDivisor: Float = BackdropGlassRecipe.LENS_DIVISOR,
+    lensMaxRadiusDivisor: Float = 2f,
+    hasLens: Boolean = true,
+    scrimAlpha: Float? = null,
 ): Modifier {
     val interaction = rememberBackdropGlassInteraction()
     return this.drawInteractiveGlass(
@@ -257,6 +275,10 @@ fun Modifier.backdropLiquidGlass(
         interaction = if (interactive) interaction else null,
         pressedScale = pressedScale,
         highlight = highlight,
+        lensDivisor = lensDivisor,
+        lensMaxRadiusDivisor = lensMaxRadiusDivisor,
+        hasLens = hasLens,
+        scrimAlpha = scrimAlpha,
     )
 }
 

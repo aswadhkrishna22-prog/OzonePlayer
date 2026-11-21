@@ -108,25 +108,31 @@ fun ScaffoldTopAppBar(
             .onSizeChanged { if (it.height > 0) headerHeightPx = it.height }
             .offset { IntOffset(0, if (isLibraryRoute) 0 else currentScrollBehavior.state.heightOffset.roundToInt()) },
     ) {
-        if (shouldUseFloatingTopBar) {
-            val appBarHeightPx = with(LocalDensity.current) { AppBarHeight.toPx() }
-            val statusBarTop = with(LocalDensity.current) { WindowInsets.systemBars.getTop(this).toDp() }
-            Box(
-                modifier = Modifier
-                    .offset {
-                        if (isLibraryRoute) IntOffset(0, 0) else {
-                            val raw = currentScrollBehavior.state.heightOffset
-                            IntOffset(0, (raw.coerceAtLeast(-appBarHeightPx) - raw).roundToInt())
-                        }
-                    }
-                    .fillMaxWidth()
-                    .height(AppBarHeight + statusBarTop)
-                    .headerLiquidGlass(
-                        hazeState = hazeState,
-                        pureBlack = pureBlack,
-                    ),
+        val appBarHeightPx = with(LocalDensity.current) { AppBarHeight.toPx() }
+        val statusBarTop = with(LocalDensity.current) { WindowInsets.systemBars.getTop(this).toDp() }
+        val totalHeaderHeight = AppBarHeight + statusBarTop
+        val bg = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
+        val gradientBrush = remember(bg) {
+            Brush.verticalGradient(
+                colors = listOf(
+                    bg.copy(alpha = 0.85f),
+                    bg.copy(alpha = 0.0f),
+                ),
             )
         }
+
+        Box(
+            modifier = Modifier
+                .offset {
+                    if (isLibraryRoute) IntOffset(0, 0) else {
+                        val raw = currentScrollBehavior.state.heightOffset
+                        IntOffset(0, (raw.coerceAtLeast(-appBarHeightPx) - raw).roundToInt())
+                    }
+                }
+                .fillMaxWidth()
+                .height(totalHeaderHeight)
+                .background(gradientBrush),
+        )
 
         TopAppBar(
             windowInsets = WindowInsets.safeDrawing.only(
@@ -203,8 +209,8 @@ fun ScaffoldTopAppBar(
             },
             scrollBehavior = if (isLibraryRoute || shouldUseFloatingTopBar) null else scrollController.topAppBarScrollBehavior,
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = if (shouldUseFloatingTopBar) Color.Transparent else if (pureBlack) Color.Black else surfaceColor,
-                scrolledContainerColor = if (shouldUseFloatingTopBar) Color.Transparent else if (pureBlack) Color.Black else surfaceColor,
+                containerColor = Color.Transparent,
+                scrolledContainerColor = Color.Transparent,
                 titleContentColor = MaterialTheme.colorScheme.onSurface,
                 actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 navigationIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
