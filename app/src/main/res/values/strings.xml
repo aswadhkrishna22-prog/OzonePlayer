@@ -1420,4 +1420,16 @@
     <string name="settings_graphics_hud_load_value">Render load: %1$d%%</string>
     <string name="settings_graphics_blur_group">Blur effects</string>
     <string name="settings_graphics_performance_group">Performance &amp; animations</string>
+
+    <!-- Add Playlist (Import from link) -->
+    <string name="add_playlist">Add Playlist</string>
+    <string name="paste_public_playlist_link">Paste a public playlist link</string>
+    <string name="playlist_link_placeholder">https://…</string>
+    <string name="paste">Paste</string>
+    <string name="fetching_playlist_preview">Fetching playlist details…</string>
+    <string name="importing_playlist">Adding playlist…</string>
+    <string name="playlist_added">Playlist added</string>
+    <string name="playlist_already_in_library">Playlist already in library</string>
+    <string name="duplicate_playlist_prompt">\"%1$s\" is already in your library. Would you like to add it anyway?</string>
+    <string name="unsupported_link">Unsupported link</string>
 </resources>

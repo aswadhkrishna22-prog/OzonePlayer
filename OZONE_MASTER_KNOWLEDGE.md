@@ -52,6 +52,20 @@
    - Media3 BaseAudioProcessor with biquad shelving/peaking filters, crossfeed, and delay.
 4. **CI / CD Pipelines:**
    - `.github/workflows/build_pr_debug_apk.yml`: Automatically builds normal debug APK and R8 release test APK on PRs and dispatches.
+5. **Add Playlist (Import from Link):**
+   - **Top Bar Button (`TopBarAddPlaylistButton.kt`):** Round tonal button (34dp inner circle, 48dp touch target, `R.drawable.link` icon, tooltip "Add Playlist") immediately next to profile button in Library screen.
+   - **Bottom Sheet (`AddPlaylistBottomSheet.kt`):**
+     - Title: "Add Playlist", Subtitle: "Paste a public playlist link".
+     - Rounded URL text field with "Paste" button (reads from clipboard) and auto-fill if clipboard has a supported link.
+     - Live service detection chip: Spotify, YouTube Music, YouTube, Unsupported.
+     - Preview card: rounded cover art, title, track count, service badge.
+     - Peach-accent primary button with loading spinner, disabled state, and error retry.
+     - Duplicate detection & warning prompt if playlist is already in library.
+   - **Provider Architecture (`moe.rukamori.archivetune.playlistimport`):**
+     - `PlaylistProvider` interface with `SpotifyPlaylistProvider` and `YouTubePlaylistProvider`, easily extensible for other providers.
+     - `SpotifyPlaylistProvider`: Public playlist URLs / URIs, guest TOTP token fallback (`SpotifyAuth.fetchGuestAccessToken()`) so users don't need to log in to import public Spotify playlists.
+     - `YouTubePlaylistProvider`: Parses `music.youtube.com`, `youtube.com`, `youtu.be`, and `list=` IDs via `YouTube.playlist`.
+     - `PlaylistImportRepository`: Persists `PlaylistEntity` with `browseId`/`spotifyId`, stores `MediaMetadata` and mappings in `PlaylistSongMap`, displays with source badge ("Spotify" / "YouTube synced"), and shows snackbar on success.
 
 ## 5. User Interaction & Language
 - The user speaks conversational Manglish (Malayalam written in English letters).

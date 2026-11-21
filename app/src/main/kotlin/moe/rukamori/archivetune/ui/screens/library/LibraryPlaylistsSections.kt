@@ -431,6 +431,8 @@ fun openPlaylist(
 ) {
     if (!playlist.playlist.isEditable && playlist.playlist.browseId?.startsWith("VL") == true && (playlist.songCount == 0 || playlist.playlist.remoteSongCount == 0)) {
         navController.navigate("online_playlist/${playlist.playlist.browseId}")
+    } else if (playlist.playlist.spotifyId != null && playlist.songCount == 0) {
+        navController.navigate("spotify_playlist/${playlist.playlist.spotifyId}")
     } else {
         navController.navigate("local_playlist/${playlist.id}")
     }

@@ -68,4 +68,50 @@ object SpotifyAuth {
         } catch (e: Exception) {
             Result.failure(e)
         }
+
+    suspend fun fetchGuestAccessToken(): Result<SpotifyInternalToken> =
+        try {
+            val totpResult = SpotifyTotpGenerator.generateTotpToken()
+
+            val tokenUrl =
+                buildString {
+                    append(TOKEN_URL)
+                    append("?reason=transport")
+                    append("&productType=web-player")
+                    append("&totp=${totpResult.code}")
+                    append("&totpServer=${totpResult.code}")
+                    append("&totpVer=${totpResult.version}")
+                }
+
+            val body =
+                withContext(Dispatchers.IO) {
+                    SpotifyTotpGenerator.httpGet(tokenUrl, emptyMap())
+                }
+
+            val token = json.decodeFromString<SpotifyInternalToken>(body)
+
+            if (token.accessToken.isBlank()) {
+                throw Spotify.SpotifyException(
+                    401,
+                    "Received blank Spotify guest token",
+                )
+            }
+
+            Result.success(token)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+
+    suspend fun ensureToken(): Result<String> {
+        val existing = Spotify.accessToken
+        if (!existing.isNullOrBlank()) {
+            return Result.success(existing)
+        }
+        return fetchGuestAccessToken().map { token ->
+            Spotify.accessToken = token.accessToken
+            token.accessToken
+        }
+    }
 }
