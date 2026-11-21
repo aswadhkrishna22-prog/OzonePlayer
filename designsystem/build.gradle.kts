@@ -41,6 +41,7 @@ dependencies {
     implementation(libs.haze.blur)
     implementation(libs.kyant.backdrop)
     implementation(libs.kyant.shapes)
+    implementation(libs.fletchmckee.liquid)
 
     implementation(libs.palette)
     implementation(libs.google.material)

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,6 +18,7 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import com.kyant.backdrop.Backdrop
+import io.github.fletchmckee.liquid.LiquidState
 import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.CoroutineScope
 import moe.rukamori.archivetune.R
@@ -39,6 +41,7 @@ internal fun BoxScope.NavigationToolbarBridge(
     pureBlack: Boolean,
     hazeState: HazeState?,
     glassBackdrop: Backdrop? = null,
+    navLiquidState: LiquidState? = null,
     blurNavBar: Boolean = true,
     blurRadius: Float,
     isMiniPlayerActive: Boolean,
@@ -66,6 +69,7 @@ internal fun BoxScope.NavigationToolbarBridge(
         capsuleShape = barShape,
         hazeState = hazeState,
         glassBackdrop = glassBackdrop,
+        navLiquidState = navLiquidState,
         blurNavBar = blurNavBar,
         blurRadius = blurRadius,
         showBorder = !isMiniPlayerActive || playerExpansionAnimatable.value >= SettingsDimensions.FullyExpandedThreshold,
@@ -80,7 +84,7 @@ internal fun BoxScope.NavigationToolbarBridge(
                 .align(Alignment.BottomCenter)
                 .padding(
                     bottom = floatingToolbarBottomPadding,
-                ).height(navVisibleHeight),
+                ).then(if (navLiquidState != null) Modifier.wrapContentHeight() else Modifier.height(navVisibleHeight)),
         onShuffleClick =
             if (shouldShowHomeShuffleButton) {
                 {

@@ -8,6 +8,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -34,11 +35,13 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.ui.haptics.LocalOzoneHaptics
 import com.kyant.backdrop.Backdrop
+import io.github.fletchmckee.liquid.LiquidState
 import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazePerformanceMode
 import dev.chrisbanes.haze.HazeState
@@ -75,6 +78,7 @@ fun FloatingNavigationToolbar(
     capsuleShape: Shape = RoundedCornerShape(NavigationBarCornerRadius),
     hazeState: HazeState? = null,
     glassBackdrop: Backdrop? = null,
+    navLiquidState: LiquidState? = null,
     blurNavBar: Boolean = true,
     blurRadius: Float = SettingsDimensions.BlurRadiusDefault,
     showBorder: Boolean = true,
@@ -93,11 +97,6 @@ fun FloatingNavigationToolbar(
     onSearchItemDoubleClick: (() -> Unit)? = null,
 ) {
     val hasOverflow = false
-
-    android.util.Log.d(
-        "GlassDbg",
-        "FloatingNavToolbar: backdrop=$glassBackdrop capable=${isBackdropGlassCapable()} blurNavBar=$blurNavBar sdk=${android.os.Build.VERSION.SDK_INT}",
-    )
 
     val animatedVisibilityFactor by animateFloatAsState(
         targetValue = visibilityFactor.coerceIn(0f, 1f),
@@ -151,99 +150,153 @@ fun FloatingNavigationToolbar(
         }
     }
 
-    Box(
-        modifier = modifier
-            .graphicsLayer {
-                val hideOffsetY = NavigationBarHideOffsetY.toPx() * (1f - animatedVisibilityFactor)
-                translationY = hideOffsetY + gestureState.barTranslationYAnimatable.value
-                translationX = gestureState.barTranslationXAnimatable.value + persistentOffsetAnimatable.value
+    if (navLiquidState != null) {
+        val liquidItems = items.map { screen ->
+            LiquidNavigationItem(
+                label = stringResource(screen.titleId),
+                iconRes = screen.iconIdInactive,
+                iconActiveRes = screen.iconIdActive,
+            )
+        }
+        val baseScale = lerp(NavigationBarHideMinScale, 1.0f, animatedVisibilityFactor)
+        val hideOffsetY = NavigationBarHideOffsetY.toPx() * (1f - animatedVisibilityFactor)
 
-                val baseScale = lerp(NavigationBarHideMinScale, 1.0f, animatedVisibilityFactor)
-                val dragScale = if (isBarDragMode) 1.03f else 1.0f
-                val scale = baseScale * gestureState.barScaleAnimatable.value * dragScale
-                scaleX = scale
-                scaleY = scale
+        LiquidNavigationBar(
+            liquidState = navLiquidState,
+            items = liquidItems,
+            selectedIndex = selectedIndex.coerceAtLeast(0),
+            onSelect = { index ->
+                if (index in items.indices) {
+                    val screen = items[index]
+                    val wasSelected = isSelected(screen)
+                    if (wasSelected && screen == Screens.Search && onSearchItemDoubleClick != null) {
+                        onSearchItemDoubleClick()
+                    } else {
+                        onItemClick(screen, wasSelected)
+                    }
+                }
+            },
+            onScrubSelect = { index ->
+                if (index in items.indices) {
+                    onItemClick(items[index], false)
+                }
+            },
+            isDark = pureBlack || isSystemInDarkTheme(),
+            modifier = modifier.graphicsLayer {
+                translationY = hideOffsetY
+                translationX = persistentOffsetAnimatable.value
+                scaleX = baseScale
+                scaleY = baseScale
                 alpha = animatedVisibilityFactor
-            }
-            .pointerInput(savedAlignment) {
-                detectDragGesturesAfterLongPress(
-                    onDragStart = {
-                        isBarDragMode = true
-                        haptics.longPress()
-                        barDragAccumulator = persistentOffsetAnimatable.value
-                    },
-                    onDrag = { change, dragAmount ->
-                        change.consume()
-                        barDragAccumulator += dragAmount.x
-                        coroutineScope.launch {
-                            persistentOffsetAnimatable.snapTo(
-                                barDragAccumulator.coerceIn(-maxSnapOffsetPx * 1.5f, maxSnapOffsetPx * 1.5f),
-                            )
-                        }
-                    },
-                    onDragEnd = {
-                        isBarDragMode = false
-                        val threshold = maxSnapOffsetPx * 0.35f
-                        val newAlignment = when {
-                            barDragAccumulator < -threshold -> "left"
-                            barDragAccumulator > threshold -> "right"
-                            else -> "center"
-                        }
-                        onAlignmentChange(newAlignment)
-                        haptics.confirm()
-                        val targetPx = when (newAlignment) {
-                            "left" -> -maxSnapOffsetPx
-                            "right" -> maxSnapOffsetPx
-                            else -> 0f
-                        }
-                        coroutineScope.launch {
-                            persistentOffsetAnimatable.animateTo(
-                                targetValue = targetPx,
-                                animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f),
-                            )
-                        }
-                    },
-                    onDragCancel = {
-                        isBarDragMode = false
-                        val targetPx = when (savedAlignment) {
-                            "left" -> -maxSnapOffsetPx
-                            "right" -> maxSnapOffsetPx
-                            else -> 0f
-                        }
-                        coroutineScope.launch {
-                            persistentOffsetAnimatable.animateTo(
-                                targetValue = targetPx,
-                                animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f),
-                            )
-                        }
-                    },
-                )
-            }
-            .fillMaxWidth()
-            .height(NavigationBarHeight),
-        contentAlignment = Alignment.Center,
-    ) {
-        // Layer 1: Glass background pill (DEBUG mode: GREEN for Kyant, RED for Haze fallback)
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .debugGlassPill(
-                    backdrop = glassBackdrop,
-                    shape = capsuleShape,
-                    hazeState = hazeState,
-                    pureBlack = pureBlack,
-                    cornerRadiusDp = NavigationBarCornerRadius,
-                )
+            },
+            style = LiquidNavigationStyle.Tabs,
+            applyWindowInsets = false,
         )
-
-        // Layer 2: Foreground content (icons, labels, drag selector) drawn on top of the glass
+    } else {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = NavigationBarInnerPaddingHorizontal)
-                .navigationTabDragGestures(gestureState),
-            contentAlignment = Alignment.CenterStart,
+            modifier = modifier
+                .graphicsLayer {
+                    val hideOffsetY = NavigationBarHideOffsetY.toPx() * (1f - animatedVisibilityFactor)
+                    translationY = hideOffsetY + gestureState.barTranslationYAnimatable.value
+                    translationX = gestureState.barTranslationXAnimatable.value + persistentOffsetAnimatable.value
+
+                    val baseScale = lerp(NavigationBarHideMinScale, 1.0f, animatedVisibilityFactor)
+                    val dragScale = if (isBarDragMode) 1.03f else 1.0f
+                    val scale = baseScale * gestureState.barScaleAnimatable.value * dragScale
+                    scaleX = scale
+                    scaleY = scale
+                    alpha = animatedVisibilityFactor
+                }
+                .pointerInput(savedAlignment) {
+                    detectDragGesturesAfterLongPress(
+                        onDragStart = {
+                            isBarDragMode = true
+                            haptics.longPress()
+                            barDragAccumulator = persistentOffsetAnimatable.value
+                        },
+                        onDrag = { change, dragAmount ->
+                            change.consume()
+                            barDragAccumulator += dragAmount.x
+                            coroutineScope.launch {
+                                persistentOffsetAnimatable.snapTo(
+                                    barDragAccumulator.coerceIn(-maxSnapOffsetPx * 1.5f, maxSnapOffsetPx * 1.5f),
+                                )
+                            }
+                        },
+                        onDragEnd = {
+                            isBarDragMode = false
+                            val threshold = maxSnapOffsetPx * 0.35f
+                            val newAlignment = when {
+                                barDragAccumulator < -threshold -> "left"
+                                barDragAccumulator > threshold -> "right"
+                                else -> "center"
+                            }
+                            onAlignmentChange(newAlignment)
+                            haptics.confirm()
+                            val targetPx = when (newAlignment) {
+                                "left" -> -maxSnapOffsetPx
+                                "right" -> maxSnapOffsetPx
+                                else -> 0f
+                            }
+                            coroutineScope.launch {
+                                persistentOffsetAnimatable.animateTo(
+                                    targetValue = targetPx,
+                                    animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f),
+                                )
+                            }
+                        },
+                        onDragCancel = {
+                            isBarDragMode = false
+                            val targetPx = when (savedAlignment) {
+                                "left" -> -maxSnapOffsetPx
+                                "right" -> maxSnapOffsetPx
+                                else -> 0f
+                            }
+                            coroutineScope.launch {
+                                persistentOffsetAnimatable.animateTo(
+                                    targetValue = targetPx,
+                                    animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f),
+                                )
+                            }
+                        },
+                    )
+                }
+                .fillMaxWidth()
+                .height(NavigationBarHeight),
+            contentAlignment = Alignment.Center,
         ) {
+            // Layer 1: Glass background pill (Kyant Backdrop on API 31+, Haze fallback otherwise)
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .then(
+                        if (glassBackdrop != null) {
+                            Modifier.backdropLiquidGlass(
+                                backdrop = glassBackdrop,
+                                shape = capsuleShape,
+                                isDark = pureBlack,
+                                interactive = false,
+                            )
+                        } else {
+                            Modifier.clearLiquidGlassPill(
+                                shape = capsuleShape,
+                                hazeState = hazeState,
+                                pureBlack = pureBlack,
+                                showBorder = showBorder,
+                                cornerRadiusDp = NavigationBarCornerRadius,
+                            )
+                        }
+                    )
+            )
+
+            // Layer 2: Foreground content (icons, labels, drag selector) drawn on top of the glass
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = NavigationBarInnerPaddingHorizontal)
+                    .navigationTabDragGestures(gestureState),
+                contentAlignment = Alignment.CenterStart,
+            ) {
             NavigationDragSelectorOverlay(gestureState.selectorState)
 
             Row(

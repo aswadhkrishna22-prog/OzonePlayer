@@ -102,6 +102,7 @@
 # RenderEffect bridges are reached via Compose runtime — keep in release builds.
 -keep class com.kyant.backdrop.** { *; }
 -keep class com.kyant.shapes.** { *; }
+-keep class io.github.fletchmckee.liquid.** { *; }
 
 
 ## Queue Persistence Rules

@@ -78,6 +78,14 @@
      3. **Library Screen:** `LibraryCollapsingHeader` uses `headerLiquidGlass`, while `LibraryFilterChipBar` chips use `liquidBubbleHighlight` with active/inactive states; playlist/album covers remain untouched.
      4. **Song Pill / Mini Player & Dock:** `PlayerSheetBackdrop.kt` and `FloatingNavigationToolbar.kt` share the exact same `LiquidGlassPreset.Pill` (4dp low blur, 18dp lens height, 28dp distortion, 8dp drop shadow, 1.35x saturation), with smooth crossfade to full player on sheet expansion.
    - **Backdrop Capture Sibling Rule:** `ScaffoldShell.kt` wraps content in a solid canvas background before `hazeSource`, ensuring glass elements remain siblings of the captured source node, preventing cyclic render crashes and eliminating sharp text bleed.
+7. **Draggable "Liquid Lens" Navigation Bar & Kyant Backdrop Glass (`feature/advanced-liquid-glass`):**
+   - **Kyant Backdrop (API 31+):** Real background optical refraction engine (`io.github.kyant0:backdrop` 2.0.1) for bottom nav bar fallback and mini player (`drawBackdrop` + `lensSafeGlassShape` + `0.10f` dark scrim + meniscus rim highlight).
+   - **Fletchmckee Liquid Lens (API 33+):** `io.github.fletchmckee.liquid:liquid:1.1.1` draggable liquid lens navigation bar ported from LastWave:
+     - 3-tab glass capsule rail (Home, Search, Library) with clear rounded lens over selected tab.
+     - Interactive touch/drag: lens grows (+12%), trailing spring physics (`dampingRatio = 0.92f, stiffness = 540f`), rubber-banding at ends, dynamic chromatic dispersion (rainbow edge fringes only while pressed, 0 at rest).
+     - Haptic feedback on tab crossings (`segmentTick`) and on release (`confirm`).
+     - Acyclic rendering: Content Box A (`liquefiable(pageState)`) -> Clear Navigation Plane B (`liquefiable(railState)`) -> Sibling Lens C (`liquid(railState)`), preventing ghosting.
+     - Gated to Android 13+ (API 33+) with fallback to Kyant Backdrop (API 31+) and Haze (< API 31).
 
 ## 5. User Interaction & Language
 - The user speaks conversational Manglish (Malayalam written in English letters).

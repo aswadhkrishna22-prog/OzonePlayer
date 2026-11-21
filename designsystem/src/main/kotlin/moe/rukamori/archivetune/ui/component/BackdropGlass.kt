@@ -10,7 +10,6 @@ import android.content.Context
 import android.os.Build
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.shape.CornerBasedShape
@@ -69,10 +68,6 @@ fun isBackdropGlassCapable(): Boolean {
         runCatching { context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager }.getOrNull()
     }
     if (am?.isLowRamDevice == true) return false
-    android.util.Log.d(
-        "GlassDbg",
-        "isBackdropGlassCapable=true sdk=${Build.VERSION.SDK_INT} attached=${view.isAttachedToWindow} hwAcc=${view.isHardwareAccelerated} lowRam=${am?.isLowRamDevice}",
-    )
     return true
 }
 
@@ -201,7 +196,11 @@ fun Modifier.drawInteractiveGlass(
                 drawBackdrop()
             },
             onDrawSurface = {
-                val darken = lerp(minScrim, maxScrim, ((luminanceAnimation - 0.3f) / 0.5f).coerceIn(0f, 1f))
+                val darken = if (isDark) {
+                    0.10f
+                } else {
+                    lerp(minScrim, maxScrim, ((luminanceAnimation - 0.3f) / 0.5f).coerceIn(0f, 1f))
+                }
                 drawRect((if (isDark) Color.Black else Color.White).copy(alpha = darken))
                 val press = interaction?.pressProgress ?: 0f
                 if (press > 0f) {
@@ -259,50 +258,6 @@ fun Modifier.backdropLiquidGlass(
         pressedScale = pressedScale,
         highlight = highlight,
     )
-}
-
-/**
- * Temporary DEBUG mode for verifying whether Kyant drawBackdrop path or Haze fallback is active:
- * - If glassBackdrop != null (Kyant path): effects = { blur(0.dp.toPx()); lens(24.dp.toPx(), 48.dp.toPx(), true) } with NO scrim, 2dp GREEN border.
- * - Else (Haze fallback): 2dp RED border.
- */
-@Composable
-fun Modifier.debugGlassPill(
-    backdrop: Backdrop?,
-    shape: Shape,
-    hazeState: HazeState? = null,
-    pureBlack: Boolean = false,
-    cornerRadiusDp: Dp = 28.dp,
-): Modifier {
-    return if (backdrop != null) {
-        this
-            .drawBackdrop(
-                backdrop = backdrop,
-                shape = { lensSafeGlassShape(shape) },
-                highlight = { Highlight.Default },
-                effects = {
-                    blur(0.dp.toPx())
-                    lens(24.dp.toPx(), 48.dp.toPx(), true)
-                },
-                onDrawBackdrop = { drawBackdrop ->
-                    drawBackdrop()
-                },
-                onDrawSurface = {
-                    // NO scrim
-                },
-            )
-            .border(2.dp, Color.Green, shape)
-    } else {
-        this
-            .clearLiquidGlassPill(
-                shape = shape,
-                hazeState = hazeState,
-                pureBlack = pureBlack,
-                showBorder = false,
-                cornerRadiusDp = cornerRadiusDp,
-            )
-            .border(2.dp, Color.Red, shape)
-    }
 }
 
 /**

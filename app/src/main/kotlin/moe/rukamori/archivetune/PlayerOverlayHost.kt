@@ -30,6 +30,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import com.kyant.backdrop.Backdrop
+import io.github.fletchmckee.liquid.LiquidState
 import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -60,6 +61,7 @@ fun PlayerOverlayHost(
     useRail: Boolean = false,
     hazeState: HazeState? = null,
     glassBackdrop: Backdrop? = null,
+    navLiquidState: LiquidState? = null,
     blurNavBar: Boolean = true,
     blurRadius: Float = SettingsDimensions.BlurRadiusDefault,
     pureBlack: Boolean = false,
@@ -222,6 +224,7 @@ fun PlayerOverlayHost(
                         pureBlack = pureBlack,
                         hazeState = hazeState,
                         glassBackdrop = glassBackdrop,
+                        navLiquidState = navLiquidState,
                         blurNavBar = blurNavBar,
                         blurRadius = blurRadius,
                         isMiniPlayerActive = isMiniPlayerActive,

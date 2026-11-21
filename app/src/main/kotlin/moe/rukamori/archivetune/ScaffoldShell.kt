@@ -32,6 +32,9 @@ import com.valentinilk.shimmer.LocalShimmerTheme
 import dev.chrisbanes.haze.hazeSource
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
+import io.github.fletchmckee.liquid.rememberLiquidState
+import io.github.fletchmckee.liquid.liquefiable
+import io.github.fletchmckee.liquid.LiquidState
 import moe.rukamori.archivetune.ui.component.isBackdropGlassCapable
 import moe.rukamori.archivetune.constants.HomeBackgroundStyle
 import moe.rukamori.archivetune.constants.SearchSource
@@ -132,11 +135,8 @@ fun ScaffoldShell(
                             drawContent()
                         }
                     } else null
-
-                    android.util.Log.d(
-                        "GlassDbg",
-                        "ScaffoldShell: backdrop=$glassBackdrop capable=$glassCapable blurNavBar=${appState.blurNavBar} sdk=${android.os.Build.VERSION.SDK_INT}",
-                    )
+                    val useLiquidNav = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU && appState.blurNavBar
+                    val navLiquidState = if (useLiquidNav) rememberLiquidState() else null
 
                     @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
                     Scaffold(
@@ -181,6 +181,11 @@ fun ScaffoldShell(
                                 .then(
                                     if (glassBackdrop != null) {
                                         Modifier.layerBackdrop(glassBackdrop)
+                                    } else Modifier
+                                )
+                                .then(
+                                    if (navLiquidState != null) {
+                                        Modifier.liquefiable(navLiquidState).background(appBackgroundColor)
                                     } else Modifier
                                 )
                         ) {
@@ -228,6 +233,7 @@ fun ScaffoldShell(
                         shouldShowNav = appState.shouldShowNavigationBar, isYearInMusic = appState.isYearInMusicScreen,
                         useRail = appState.useRail, hazeState = scaffoldHazeState.effectiveHazeState,
                         glassBackdrop = glassBackdrop,
+                        navLiquidState = navLiquidState,
                         blurNavBar = appState.blurNavBar,
                         blurRadius = appState.blurRadius, pureBlack = pureBlack, playerViewModel = playerViewModel,
                         homeViewModel = appState.homeViewModel, playerConnection = playerConnection, database = database,
