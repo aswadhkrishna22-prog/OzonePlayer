@@ -497,12 +497,14 @@ constructor(
             trendingJob?.cancel()
             trendingJob = viewModelScope.launch(Dispatchers.IO) {
                 val current = _trendingUiState.value ?: TrendingUiState()
+                val cachedHeroTracks = trendingRepository.getCachedHeroTrending(regionCode)
                 _trendingUiState.value =
                     current.copy(
                         regionCode = regionCode,
                         regionDisplayName = regionDisplayName,
                         selectedCategory = category,
-                        isLoading = current.currentTracks.isEmpty(),
+                        heroTracks = if (current.heroTracks.isEmpty()) cachedHeroTracks else current.heroTracks,
+                        isLoading = current.currentTracks.isEmpty() && cachedHeroTracks.isEmpty(),
                     )
 
                 // Retrieve user listening history & library for taste detection & personalization
@@ -513,10 +515,12 @@ constructor(
 
                 val detectedLanguage = trendingRepository.detectUserTasteLanguage(recentSongs, allArtists, searchQueries)
 
+                val heroDeferred = async { trendingRepository.getHeroTrending(regionCode, recentSongs, searchQueries, forceRefresh) }
                 val ytDeferred = async { trendingRepository.getYouTubeTrending(regionCode, category, detectedLanguage, forceRefresh) }
                 val jioSaavnDeferred = async { trendingRepository.getJioSaavnTrending(regionCode, category, detectedLanguage, forceRefresh) }
                 val appleDeferred = async { trendingRepository.getAppleTrending(regionCode, category, forceRefresh) }
 
+                val heroTracks = heroDeferred.await()
                 val ytRaw = ytDeferred.await()
                 val jioSaavnRaw = jioSaavnDeferred.await()
                 val appleTracks = appleDeferred.await()
@@ -533,6 +537,7 @@ constructor(
                         youtubeTracks = ytTracks,
                         jioSaavnTracks = jioSaavnTracks,
                         appleTracks = appleTracks,
+                        heroTracks = heroTracks,
                         isJioSaavnAvailable = jioSaavnTracks.isNotEmpty(),
                         isAppleAvailable = appleTracks.isNotEmpty(),
                         regionCode = regionCode,

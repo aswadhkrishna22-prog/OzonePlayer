@@ -50,6 +50,7 @@ data class TrendingUiState(
     val youtubeTracks: List<TrendingTrack> = emptyList(),
     val jioSaavnTracks: List<TrendingTrack> = emptyList(),
     val appleTracks: List<TrendingTrack> = emptyList(),
+    val heroTracks: List<TrendingTrack> = emptyList(),
     val isJioSaavnAvailable: Boolean = false,
     val isAppleAvailable: Boolean = false,
     val regionCode: String = "",
@@ -65,8 +66,12 @@ data class TrendingUiState(
                 TrendingSource.APPLE -> appleTracks
             }
 
+    val topHeroTrack: TrendingTrack?
+        get() = heroTracks.firstOrNull() ?: currentTracks.firstOrNull()
+
     val isVisible: Boolean
         get() = currentTracks.isNotEmpty() ||
+            heroTracks.isNotEmpty() ||
             (selectedSource == TrendingSource.JIOSAAVN && isJioSaavnAvailable && jioSaavnTracks.isNotEmpty()) ||
             (selectedSource == TrendingSource.APPLE && isAppleAvailable && appleTracks.isNotEmpty())
 }

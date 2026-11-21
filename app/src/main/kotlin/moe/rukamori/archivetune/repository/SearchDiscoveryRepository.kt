@@ -48,22 +48,60 @@ class SearchDiscoveryRepository
                 val startTime = System.currentTimeMillis()
                 try {
                     coroutineScope {
-                        val explorePageDeferred = async { YouTube.explore().getOrThrow() }
-                        val chartsPageDeferred = async { YouTube.getChartsPage().getOrThrow() }
-                        val suggestedSongsDeferred = async { loadSuggestedSongs() }
+                        val explorePageDeferred = async {
+                            try {
+                                YouTube.explore().getOrThrow()
+                            } catch (e: Throwable) {
+                                if (e is CancellationException) throw e
+                                Timber.e(e, "SearchDiscoveryRepository: YouTube.explore() failed: ${e.message}")
+                                throw e
+                            }
+                        }
+                        val chartsPageDeferred = async {
+                            try {
+                                YouTube.getChartsPage().getOrNull() ?: ChartsPage(emptyList(), null)
+                            } catch (e: Throwable) {
+                                if (e is CancellationException) throw e
+                                Timber.w(e, "SearchDiscoveryRepository: YouTube.getChartsPage() failed, fallback to empty: ${e.message}")
+                                ChartsPage(emptyList(), null)
+                            }
+                        }
+                        val suggestedSongsDeferred = async {
+                            try {
+                                loadSuggestedSongs()
+                            } catch (e: Throwable) {
+                                if (e is CancellationException) throw e
+                                Timber.w(e, "SearchDiscoveryRepository: loadSuggestedSongs failed: ${e.message}")
+                                emptyList()
+                            }
+                        }
                         val searchedAlbumsDeferred =
                             async {
-                                searchItems<AlbumItem>(
-                                    query = TopAlbumsQuery,
-                                    filter = YouTube.SearchFilter.FILTER_ALBUM,
-                                )
+                                try {
+                                    searchItems<AlbumItem>(
+                                        query = TopAlbumsQuery,
+                                        filter = YouTube.SearchFilter.FILTER_ALBUM,
+                                    )
+                                } catch (e: Throwable) {
+                                    if (e is CancellationException) throw e
+                                    Timber.w(e, "SearchDiscoveryRepository: searchItems TopAlbums failed: ${e.message}")
+                                    emptyList()
+                                }
                             }
-                        val suggestedArtistsDeferred = async { loadSuggestedArtists() }
+                        val suggestedArtistsDeferred = async {
+                            try {
+                                loadSuggestedArtists()
+                            } catch (e: Throwable) {
+                                if (e is CancellationException) throw e
+                                Timber.w(e, "SearchDiscoveryRepository: loadSuggestedArtists failed: ${e.message}")
+                                emptyList()
+                            }
+                        }
 
                         val explorePage = explorePageDeferred.await()
                         val chartsPage = chartsPageDeferred.await()
                         val duration = System.currentTimeMillis() - startTime
-                        Timber.d("SearchDiscoveryRepository: loadDiscovery completed in ${duration}ms")
+                        Timber.d("SearchDiscoveryRepository: loadDiscovery completed in ${duration}ms, moods count: ${explorePage.moodAndGenres.size}")
 
                         Result.success(
                             SearchDiscoveryData(
@@ -78,6 +116,7 @@ class SearchDiscoveryRepository
                     }
                 } catch (throwable: Throwable) {
                     if (throwable is CancellationException) throw throwable
+                    Timber.e(throwable, "SearchDiscoveryRepository: loadDiscovery failed with fatal exception: ${throwable.message}")
                     Result.failure(throwable)
                 }
             }

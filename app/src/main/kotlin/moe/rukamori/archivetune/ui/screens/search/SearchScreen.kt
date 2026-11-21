@@ -152,8 +152,14 @@ fun SearchScreen(
                         key = "search_error",
                         contentType = "search_error",
                     ) {
+                        val baseMessage = stringResource(currentState.messageResId)
+                        val fullMessage = if (!currentState.details.isNullOrBlank()) {
+                            "$baseMessage: ${currentState.details}"
+                        } else {
+                            baseMessage
+                        }
                         SearchStateMessage(
-                            message = stringResource(currentState.messageResId),
+                            message = fullMessage,
                             action = {
                                 Button(onClick = viewModel::retry) {
                                     Text(stringResource(R.string.retry_button))

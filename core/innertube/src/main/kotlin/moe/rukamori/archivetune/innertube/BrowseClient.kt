@@ -790,30 +790,51 @@ object BrowseClient {
                         ?.mapNotNull { it.musicTwoRowItemRenderer }
                         ?.mapNotNull(NewReleaseAlbumPage::fromMusicTwoRowItemRenderer)
                         .orEmpty(),
-                moodAndGenres =
-                    response.contents
-                        ?.singleColumnBrowseResultsRenderer
-                        ?.tabs
-                        ?.firstOrNull()
-                        ?.tabRenderer
-                        ?.content
-                        ?.sectionListRenderer
-                        ?.contents
-                        ?.find {
-                            it.musicCarouselShelfRenderer
-                                ?.header
-                                ?.musicCarouselShelfBasicHeaderRenderer
-                                ?.moreContentButton
-                                ?.buttonRenderer
-                                ?.navigationEndpoint
-                                ?.browseEndpoint
-                                ?.browseId ==
-                                BROWSE_ID_MOODS_AND_GENRES
-                        }?.musicCarouselShelfRenderer
-                        ?.contents
-                        ?.mapNotNull { it.musicNavigationButtonRenderer }
-                        ?.mapNotNull(MoodAndGenres.Companion::fromMusicNavigationButtonRenderer)
-                        .orEmpty(),
+                moodAndGenres = run {
+                    val contents =
+                        response.contents
+                            ?.singleColumnBrowseResultsRenderer
+                            ?.tabs
+                            ?.firstOrNull()
+                            ?.tabRenderer
+                            ?.content
+                            ?.sectionListRenderer
+                            ?.contents
+                            .orEmpty()
+
+                    val carouselMoods =
+                        contents
+                            .find { section ->
+                                val shelf = section.musicCarouselShelfRenderer
+                                val browseId =
+                                    shelf
+                                        ?.header
+                                        ?.musicCarouselShelfBasicHeaderRenderer
+                                        ?.moreContentButton
+                                        ?.buttonRenderer
+                                        ?.navigationEndpoint
+                                        ?.browseEndpoint
+                                        ?.browseId
+                                browseId == BROWSE_ID_MOODS_AND_GENRES ||
+                                    shelf?.contents?.any { it.musicNavigationButtonRenderer != null } == true
+                            }?.musicCarouselShelfRenderer
+                            ?.contents
+                            ?.mapNotNull { it.musicNavigationButtonRenderer }
+                            ?.mapNotNull(MoodAndGenres.Companion::fromMusicNavigationButtonRenderer)
+                            .orEmpty()
+
+                    if (carouselMoods.isNotEmpty()) {
+                        carouselMoods
+                    } else {
+                        contents
+                            .mapNotNull { it.gridRenderer }
+                            .flatMap { grid ->
+                                grid.items
+                                    .mapNotNull { it.musicNavigationButtonRenderer }
+                                    .mapNotNull(MoodAndGenres.Companion::fromMusicNavigationButtonRenderer)
+                            }
+                    }
+                },
             )
         }
 
