@@ -184,7 +184,7 @@ fun Modifier.waterRippleEffect(
                 val shouldAnimate = !rippleState.animationsDisabled && rippleState.animatorScale > 0f
                 val hasActiveRipples = rippleState.activeRipples.isNotEmpty()
 
-                if (isShaderSupported && shouldAnimate && !rippleState.isPowerSaveMode && hasActiveRipples) {
+                if (isShaderSupported && shouldAnimate && hasActiveRipples) {
                     val shader = rippleState.getOrCreateShader()
                     val w = size.width
                     val h = size.height
@@ -339,7 +339,7 @@ fun DoubleTapSeekOverlay(
 
         val shouldAnimate = !animationsDisabled && animatorScale > 0f
         if (shouldAnimate) {
-            val maxRipples = if (isPowerSaveMode) MAX_ACTIVE_RIPPLES_BATTERY else MAX_ACTIVE_RIPPLES
+            val maxRipples = MAX_ACTIVE_RIPPLES
             val ripple = ActiveRipple(
                 id = ++rippleState.rippleIdCounter,
                 origin = offset,
@@ -353,7 +353,7 @@ fun DoubleTapSeekOverlay(
             }
             rippleState.activeRipples.add(ripple)
 
-            val duration = if (isPowerSaveMode) RIPPLE_DURATION_BATTERY_MS else RIPPLE_DURATION_MS
+            val duration = RIPPLE_DURATION_MS
             ripple.job = coroutineScope.launch {
                 ripple.progress.animateTo(
                     targetValue = 1f,
@@ -425,16 +425,16 @@ fun DoubleTapSeekOverlay(
                 val canvasHeight = size.height
                 if (canvasWidth <= 0f || canvasHeight <= 0f) return@Canvas
 
-                // Ring overlay is drawn ONLY as fallback when the shader cannot run (below API 33 or battery saver)
+                // Ring overlay is drawn ONLY as fallback when the shader cannot run (below API 33)
                 val isShaderSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                val isShaderActive = isShaderSupported && !isPowerSaveMode && !animationsDisabled && animatorScale > 0f
+                val isShaderActive = isShaderSupported && !animationsDisabled && animatorScale > 0f
                 val shouldDrawRings = !animationsDisabled && animatorScale > 0f && !isShaderActive
                 if (shouldDrawRings) {
                     val screenWidth = context.resources.displayMetrics.widthPixels.toFloat().coerceAtLeast(canvasWidth)
                     val maxRadius = screenWidth * RADIUS_SCREEN_WIDTH_FRACTION
                     val maxTravel = screenWidth * TRAVEL_SCREEN_WIDTH_FRACTION
-                    val ringCount = if (isPowerSaveMode) MAX_RINGS_BATTERY_SAVER else MAX_RINGS_NORMAL
-                    val duration = (if (isPowerSaveMode) RIPPLE_DURATION_BATTERY_MS else RIPPLE_DURATION_MS).toFloat()
+                    val ringCount = MAX_RINGS_NORMAL
+                    val duration = RIPPLE_DURATION_MS.toFloat()
                     val staggerFraction = RING_STAGGER_MS.toFloat() / duration
 
                     for (ripple in rippleState.activeRipples) {

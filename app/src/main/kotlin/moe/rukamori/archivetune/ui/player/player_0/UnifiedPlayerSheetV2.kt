@@ -196,6 +196,7 @@ fun UnifiedPlayerSheetV2(
                             backgroundBrush = backgroundGradient,
                             pureBlack = pureBlack,
                             expansionFractionProvider = { motionScope.expansionFraction.value },
+                            pillShape = pillShape,
                         )
                         .playerSheetGlassBorder(
                             expansionFractionProvider = { motionScope.expansionFraction.value },

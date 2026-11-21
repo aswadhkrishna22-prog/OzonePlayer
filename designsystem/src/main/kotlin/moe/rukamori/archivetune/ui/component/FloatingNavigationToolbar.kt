@@ -90,22 +90,6 @@ fun FloatingNavigationToolbar(
     onSearchItemDoubleClick: (() -> Unit)? = null,
 ) {
     val hasOverflow = false
-    val containerColor = NavBarColors.container(pureBlack)
-
-    val fixedTintAlpha = if (pureBlack) SettingsDimensions.HazePureBlackTintAlpha else SettingsDimensions.HazeDefaultTintAlpha
-    val hazeStyle = remember(containerColor, blurRadius, pureBlack, blurEnabled) {
-        val tintEffect = HazeColorEffect.tint(containerColor.copy(alpha = fixedTintAlpha))
-        HazeBlurStyle {
-            blurEnabled(blurEnabled)
-            backgroundColor(containerColor)
-            colorEffects(listOf(tintEffect))
-            fallbackColorEffect(tintEffect)
-            blurRadius(blurRadius.dp)
-            noiseFactor(SettingsDimensions.HazeNoiseFactor)
-        }
-    }
-
-    val shadowPaint = rememberNavigationShadowPaint()
 
     val animatedVisibilityFactor by animateFloatAsState(
         targetValue = visibilityFactor.coerceIn(0f, 1f),
@@ -229,32 +213,16 @@ fun FloatingNavigationToolbar(
             }
             .fillMaxWidth()
             .height(NavigationBarHeight)
-            .navigationShapeShadow(capsuleShape, shadowPaint)
-            .clip(capsuleShape)
-            .then(
-                if (hazeState != null) {
-                    Modifier.hazeBlur(
-                        input = HazeInput.Sources(hazeState),
-                        style = hazeStyle,
-                        performanceMode = HazePerformanceMode.Fixed(SettingsDimensions.HazeQualityFraction),
-                    )
-                } else {
-                    Modifier.background(containerColor)
-                },
-            )
-            .then(
-                if (showBorder) {
-                    Modifier.glassStroke(
-                        shape = capsuleShape,
-                        strokeWidth = SettingsDimensions.GlassBorderThickness,
-                        topAlpha = SettingsDimensions.GlassBorderTopAlpha,
-                        bottomAlpha = SettingsDimensions.GlassBorderBottomAlpha,
-                        topColor = Color.White,
-                        bottomColor = Color.Black,
-                    )
-                } else {
-                    Modifier
-                },
+            .liquidGlass(
+                shape = capsuleShape,
+                hazeState = if (blurEnabled) hazeState else null,
+                pureBlack = pureBlack,
+                blurRadius = 4.dp,
+                tintAlpha = 0.08f,
+                showBorder = showBorder,
+                cornerRadiusDp = NavigationBarCornerRadius,
+                lensDistortion = 28.dp,
+                lensHeight = 18.dp,
             ),
         contentAlignment = Alignment.Center,
     ) {

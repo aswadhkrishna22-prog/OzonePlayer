@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -119,27 +117,14 @@ internal fun RowScope.NavigationTabItem(
             )
         }
 
-        // Accessible highlight pill behind the selected icon (text labels removed for modern aesthetic)
-        Box(
-            modifier = Modifier
-                .size(width = 56.dp, height = 32.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(
-                    if (selectionFactor > 0.05f) {
-                        if (pureBlack) {
-                            Color.White.copy(alpha = 0.20f * selectionFactor)
-                        } else {
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = selectionFactor)
-                        }
-                    } else {
-                        Color.Transparent
-                    }
-                ),
-            contentAlignment = Alignment.Center,
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(vertical = NavigationTabContentPaddingVertical),
         ) {
             Icon(
                 painter = painterResource(if (selected) screen.iconIdActive else screen.iconIdInactive),
-                contentDescription = stringResource(screen.titleId),
+                contentDescription = null,
                 tint = contentColor,
                 modifier = Modifier
                     .size(NavigationTabIconSize)
@@ -147,6 +132,14 @@ internal fun RowScope.NavigationTabItem(
                         scaleX = iconScale
                         scaleY = iconScale
                     },
+            )
+            Text(
+                text = stringResource(screen.titleId),
+                color = contentColor,
+                fontSize = NavigationTabLabelSize,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                maxLines = 1,
+                modifier = Modifier.padding(top = NavigationTabLabelTopPadding),
             )
         }
     }
