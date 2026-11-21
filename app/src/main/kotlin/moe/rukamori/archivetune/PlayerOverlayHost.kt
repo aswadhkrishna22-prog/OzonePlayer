@@ -29,6 +29,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
+import com.kyant.backdrop.Backdrop
 import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -58,6 +59,7 @@ fun PlayerOverlayHost(
     modifier: Modifier = Modifier,
     useRail: Boolean = false,
     hazeState: HazeState? = null,
+    glassBackdrop: Backdrop? = null,
     blurRadius: Float = SettingsDimensions.BlurRadiusDefault,
     pureBlack: Boolean = false,
     playerViewModel: PlayerViewModel = hiltViewModel(),
@@ -181,6 +183,7 @@ fun PlayerOverlayHost(
                 bottomNavigationBarHeight = bottomNavigationBarHeight,
                 dropState = dropState,
                 hazeState = hazeState,
+                glassBackdrop = glassBackdrop,
                 pureBlack = pureBlack,
                 blurRadius = blurRadius,
                 useRail = useRail,
@@ -216,6 +219,7 @@ fun PlayerOverlayHost(
                         navigationItems = navigationItems,
                         pureBlack = pureBlack,
                         hazeState = hazeState,
+                        glassBackdrop = glassBackdrop,
                         blurRadius = blurRadius,
                         isMiniPlayerActive = isMiniPlayerActive,
                         playerExpansionAnimatable = playerExpansionAnimatable,

@@ -30,6 +30,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.valentinilk.shimmer.LocalShimmerTheme
 import dev.chrisbanes.haze.hazeSource
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.backdrops.layerBackdrop
+import moe.rukamori.archivetune.ui.component.isBackdropGlassCapable
 import moe.rukamori.archivetune.constants.HomeBackgroundStyle
 import moe.rukamori.archivetune.constants.SearchSource
 import moe.rukamori.archivetune.constants.UpdateChannel
@@ -152,13 +155,26 @@ fun ScaffoldShell(
                         containerColor = Color.Transparent,
                         modifier = Modifier.fillMaxSize(),
                     ) { _ ->
+                        val backgroundColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
+                        val glassBackdrop = if (appState.blurNavBar && isBackdropGlassCapable()) {
+                            rememberLayerBackdrop {
+                                drawRect(backgroundColor)
+                                drawContent()
+                            }
+                        } else null
+
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.background)
+                                .background(backgroundColor)
                                 .then(
                                     if (scaffoldHazeState.effectiveHazeState != null) {
                                         Modifier.hazeSource(scaffoldHazeState.effectiveHazeState)
+                                    } else Modifier
+                                )
+                                .then(
+                                    if (glassBackdrop != null) {
+                                        Modifier.layerBackdrop(glassBackdrop)
                                     } else Modifier
                                 )
                         ) {
@@ -205,6 +221,7 @@ fun ScaffoldShell(
                         maxHeight = this@BoxWithConstraints.maxHeight, bottomInset = appState.bottomInset,
                         shouldShowNav = appState.shouldShowNavigationBar, isYearInMusic = appState.isYearInMusicScreen,
                         useRail = appState.useRail, hazeState = scaffoldHazeState.effectiveHazeState,
+                        glassBackdrop = glassBackdrop,
                         blurRadius = appState.blurRadius, pureBlack = pureBlack, playerViewModel = playerViewModel,
                         homeViewModel = appState.homeViewModel, playerConnection = playerConnection, database = database,
                         systemBarController = systemBarController, window = activity.window, sheetState = appState.playerBottomSheetState,

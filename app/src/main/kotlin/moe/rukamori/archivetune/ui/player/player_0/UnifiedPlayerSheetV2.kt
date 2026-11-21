@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.kyant.backdrop.Backdrop
 import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -65,6 +66,7 @@ fun UnifiedPlayerSheetV2(
     bottomBarHeight: Dp = 0.dp,
     useRail: Boolean = false,
     hazeState: HazeState? = null,
+    glassBackdrop: Backdrop? = null,
     pureBlack: Boolean = false,
     blurRadius: Float = SettingsDimensions.BlurRadiusDefault,
     onExpansionFractionChanged: (Float) -> Unit = {},
@@ -258,6 +260,7 @@ fun UnifiedPlayerSheetV2(
                         dualState = dualPlayState,
                         dualPlayEngine = dualPlayEngine,
                         hazeState = hazeState,
+                        glassBackdrop = glassBackdrop,
                         pureBlack = pureBlack,
                     )
                 }

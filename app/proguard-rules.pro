@@ -98,6 +98,12 @@
 # Keep all classes within the kuromoji package
 -keep class com.atilika.kuromoji.** { *; }
 
+# Kyant Backdrop (AndroidLiquidGlass): AGSL RuntimeShader strings and
+# RenderEffect bridges are reached via Compose runtime — keep in release builds.
+-keep class com.kyant.backdrop.** { *; }
+-keep class com.kyant.shapes.** { *; }
+
+
 ## Queue Persistence Rules
 # Keep queue-related classes to prevent serialization issues in release builds
 -keep class moe.rukamori.archivetune.models.PersistQueue { *; }

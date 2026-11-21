@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import com.kyant.backdrop.Backdrop
 import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
@@ -52,6 +53,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.constants.MiniPlayerHeight
 import moe.rukamori.archivetune.ui.component.clearLiquidGlassPill
+import moe.rukamori.archivetune.ui.component.backdropLiquidGlass
 import moe.rukamori.archivetune.ui.player.player_0.dualplay.DualMiniPlayer
 import moe.rukamori.archivetune.ui.player.player_0.MiniPlayerContentInternal
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
@@ -96,6 +98,7 @@ internal fun UnifiedPlayerSheetLayers(
     dualState: DualPlayState? = null,
     dualPlayEngine: DualPlayEngine? = null,
     hazeState: HazeState? = null,
+    glassBackdrop: Backdrop? = null,
     pureBlack: Boolean = false,
 ) {
     val density = LocalDensity.current.density
@@ -245,16 +248,28 @@ internal fun UnifiedPlayerSheetLayers(
                                 .fillMaxWidth()
                                 .height(MiniPlayerHeight)
                         ) {
-                            // Layer 1: Glass background pill (low blur, light white tint, soft shadow, thin rim highlight - NO LENS)
+                            // Layer 1: Glass background pill (Kyant Backdrop liquid glass when available, or clearLiquidGlassPill fallback)
                             Box(
                                 modifier = Modifier
                                     .matchParentSize()
-                                    .clearLiquidGlassPill(
-                                        shape = RoundedCornerShape(28.dp),
-                                        hazeState = hazeState,
-                                        pureBlack = pureBlack,
-                                        showBorder = true,
-                                        cornerRadiusDp = 28.dp,
+                                    .then(
+                                        if (glassBackdrop != null) {
+                                            Modifier.backdropLiquidGlass(
+                                                backdrop = glassBackdrop,
+                                                shape = RoundedCornerShape(28.dp),
+                                                isDark = pureBlack,
+                                                interactive = true,
+                                                pressedScale = 1.04f,
+                                            )
+                                        } else {
+                                            Modifier.clearLiquidGlassPill(
+                                                shape = RoundedCornerShape(28.dp),
+                                                hazeState = hazeState,
+                                                pureBlack = pureBlack,
+                                                showBorder = true,
+                                                cornerRadiusDp = 28.dp,
+                                            )
+                                        }
                                     )
                             )
 

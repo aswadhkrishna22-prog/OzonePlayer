@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.ui.haptics.LocalOzoneHaptics
+import com.kyant.backdrop.Backdrop
 import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazePerformanceMode
 import dev.chrisbanes.haze.HazeState
@@ -73,6 +74,7 @@ fun FloatingNavigationToolbar(
     modifier: Modifier = Modifier,
     capsuleShape: Shape = RoundedCornerShape(NavigationBarCornerRadius),
     hazeState: HazeState? = null,
+    glassBackdrop: Backdrop? = null,
     blurRadius: Float = SettingsDimensions.BlurRadiusDefault,
     showBorder: Boolean = true,
     blurEnabled: Boolean = true,
@@ -215,16 +217,27 @@ fun FloatingNavigationToolbar(
             .height(NavigationBarHeight),
         contentAlignment = Alignment.Center,
     ) {
-        // Layer 1: Glass background pill (low blur, light white tint, soft shadow, thin rim highlight - NO LENS)
+        // Layer 1: Glass background pill (Kyant Backdrop liquid glass when available, or clearLiquidGlassPill fallback)
         Box(
             modifier = Modifier
                 .matchParentSize()
-                .clearLiquidGlassPill(
-                    shape = capsuleShape,
-                    hazeState = hazeState,
-                    pureBlack = pureBlack,
-                    showBorder = showBorder,
-                    cornerRadiusDp = NavigationBarCornerRadius,
+                .then(
+                    if (glassBackdrop != null) {
+                        Modifier.backdropLiquidGlass(
+                            backdrop = glassBackdrop,
+                            shape = capsuleShape,
+                            isDark = pureBlack,
+                            interactive = false,
+                        )
+                    } else {
+                        Modifier.clearLiquidGlassPill(
+                            shape = capsuleShape,
+                            hazeState = hazeState,
+                            pureBlack = pureBlack,
+                            showBorder = showBorder,
+                            cornerRadiusDp = NavigationBarCornerRadius,
+                        )
+                    }
                 )
         )
 

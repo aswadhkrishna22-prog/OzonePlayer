@@ -8,9 +8,6 @@
 
 package moe.rukamori.archivetune.ui.component
 
-import android.graphics.RenderEffect
-import android.graphics.RuntimeShader
-import android.os.Build
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
@@ -37,7 +34,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
@@ -56,63 +52,6 @@ import dev.chrisbanes.haze.blur.hazeBlur
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-
-// ── AGSL ADVANCED LIQUID GLASS LENS REFRACTION SHADER (API 33+) ─────────────
-// Physically bends the backdrop around curved glass boundaries using Snell's law,
-// domed depth curvature, and saturation/vibrancy boost without chromatic aberration.
-private const val LIQUID_GLASS_SHADER_SRC = """
-    uniform shader content;
-    uniform float2 size;
-    uniform float cornerRadius;
-    uniform float distortion;
-    uniform float edgeWidth;
-    uniform float saturation;
-
-    float sdRoundedBox(float2 p, float2 b, float r) {
-        float2 q = abs(p) - b + float2(r, r);
-        return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - r;
-    }
-
-    half4 main(float2 p) {
-        if (size.x <= 0.0 || size.y <= 0.0) {
-            return content.eval(p);
-        }
-        float2 halfSize = size * 0.5;
-        float2 centerOffset = p - halfSize;
-        float r = min(cornerRadius, min(halfSize.x, halfSize.y));
-        float d = sdRoundedBox(centerOffset, halfSize, r);
-
-        if (d <= 0.0) {
-            float distToCenter = length(centerOffset);
-            float2 normal = distToCenter > 0.001 ? (centerOffset / distToCenter) : float2(0.0, 0.0);
-
-            // Outer edge bevel refraction (height = edgeWidth, amount = distortion)
-            float edgeFactor = 0.0;
-            if (d > -edgeWidth && edgeWidth > 0.0) {
-                float t = 1.0 + (d / edgeWidth);
-                edgeFactor = sqrt(max(0.0, 1.0 - (1.0 - t) * (1.0 - t)));
-            }
-
-            // Domed depth effect across the glass capsule
-            float maxR = max(1.0, min(halfSize.x, halfSize.y));
-            float normDist = clamp(distToCenter / maxR, 0.0, 1.0);
-            float domeFactor = 0.10 * (1.0 - normDist * normDist);
-
-            float totalDisplacement = distortion * (edgeFactor + domeFactor);
-            float2 refractedCoord = p - normal * totalDisplacement;
-
-            half4 c = content.eval(refractedCoord);
-
-            // Boosted vibrancy and saturation so colors underneath glow through
-            float luma = dot(c.rgb, half3(0.2126, 0.7152, 0.0722));
-            c.rgb = mix(half3(luma), c.rgb, saturation);
-
-            return c;
-        }
-
-        return content.eval(p);
-    }
-"""
 
 /**
  * Optical presets tuned for specific UI surfaces.
@@ -310,19 +249,6 @@ fun Modifier.liquidGlass(
     interaction: GlassInteraction? = null,
 ): Modifier = composed {
     val density = LocalDensity.current
-    val isShaderSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-
-    val runtimeShader = remember(isShaderSupported) {
-        if (isShaderSupported) {
-            try {
-                RuntimeShader(LIQUID_GLASS_SHADER_SRC)
-            } catch (_: Throwable) {
-                null
-            }
-        } else {
-            null
-        }
-    }
 
     // Light translucent glass tint (NO black scrim, clear liquid glass appearance)
     val glassTint = if (pureBlack && preset == LiquidGlassPreset.Header) {
@@ -342,10 +268,6 @@ fun Modifier.liquidGlass(
             noiseFactor(0.01f)
         }
     }
-
-    val cornerRadiusPx = with(density) { cornerRadiusDp.toPx() }
-    val lensDistortionPx = with(density) { lensDistortion.toPx() }
-    val lensHeightPx = with(density) { lensHeight.toPx() }
 
     this
         // 1. Soft elevation drop shadow under floating glass
@@ -379,31 +301,7 @@ fun Modifier.liquidGlass(
                 )
             }
         )
-        // 4. AGSL lens refraction shader (API 33+) with domed depth effect & boosted vibrancy
-        .then(
-            if (runtimeShader != null) {
-                Modifier.graphicsLayer {
-                    val w = size.width
-                    val h = size.height
-                    if (w > 0f && h > 0f) {
-                        try {
-                            runtimeShader.setFloatUniform("size", w, h)
-                            runtimeShader.setFloatUniform("cornerRadius", cornerRadiusPx)
-                            runtimeShader.setFloatUniform("distortion", lensDistortionPx)
-                            runtimeShader.setFloatUniform("edgeWidth", lensHeightPx)
-                            runtimeShader.setFloatUniform("saturation", saturation)
-                            renderEffect = RenderEffect.createRuntimeShaderEffect(runtimeShader, "content")
-                                .asComposeRenderEffect()
-                        } catch (_: Throwable) {
-                            renderEffect = null
-                        }
-                    }
-                }
-            } else {
-                Modifier
-            }
-        )
-        // 5. Specular rim highlight & surface sheen
+        // 4. Specular rim highlight & surface sheen
         .then(
             if (showBorder) {
                 Modifier.liquidBubbleHighlight(
