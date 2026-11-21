@@ -6,18 +6,23 @@
 
 package moe.rukamori.archivetune.ui.screens.search
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -62,13 +67,9 @@ internal fun LazyListScope.onlineSearchSuggestions(
 
         itemsIndexed(
             items = history,
-            key = { _, historyItem -> "history_${historyItem.query}" },
+            key = { index, historyItem -> "history_${historyItem.id}_${historyItem.query}_$index" },
             contentType = { _, _ -> "history" },
-        ) { index, historyItem ->
-            val itemShape =
-                remember(index, history.size) {
-                    segmentedSearchItemShape(index, history.size)
-                }
+        ) { _, historyItem ->
             SuggestionItem(
                 query = historyItem.query,
                 online = false,
@@ -82,7 +83,6 @@ internal fun LazyListScope.onlineSearchSuggestions(
                 onFillTextField = {
                     onQueryChange(TextFieldValue(historyItem.query, TextRange(historyItem.query.length)))
                 },
-                shape = itemShape,
                 modifier = Modifier.animateItem(),
                 pureBlack = pureBlack,
             )
@@ -103,13 +103,9 @@ internal fun LazyListScope.onlineSearchSuggestions(
 
         itemsIndexed(
             items = suggestions,
-            key = { _, suggestion -> "suggestion_$suggestion" },
+            key = { index, suggestion -> "suggestion_${suggestion}_$index" },
             contentType = { _, _ -> "suggestion" },
-        ) { index, suggestion ->
-            val itemShape =
-                remember(index, suggestions.size) {
-                    segmentedSearchItemShape(index, suggestions.size)
-                }
+        ) { _, suggestion ->
             SuggestionItem(
                 query = suggestion,
                 online = true,
@@ -120,7 +116,6 @@ internal fun LazyListScope.onlineSearchSuggestions(
                 onFillTextField = {
                     onQueryChange(TextFieldValue(suggestion, TextRange(suggestion.length)))
                 },
-                shape = itemShape,
                 modifier = Modifier.animateItem(),
                 pureBlack = pureBlack,
             )
@@ -137,106 +132,85 @@ fun SuggestionItem(
     onDelete: () -> Unit = {},
     onFillTextField: () -> Unit,
     pureBlack: Boolean,
-    shape: Shape = MaterialTheme.shapes.large,
+    shape: Shape = RoundedCornerShape(20.dp),
 ) {
-    val containerColor =
-        if (pureBlack) {
-            Color.White.copy(alpha = 0.08f)
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerLow
-        }
-
-    val iconContainerColor =
-        if (pureBlack) {
-            Color.White.copy(alpha = 0.08f)
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerHighest
-        }
-
-    val iconTint =
-        if (pureBlack) {
-            Color.White.copy(alpha = 0.78f)
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        }
+    val isDark = pureBlack || isSystemInDarkTheme()
+    val containerColor = if (isDark) Color.White.copy(alpha = 0.06f) else Color.Black.copy(alpha = 0.05f)
+    val borderColor = if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.10f)
+    val iconContainerColor = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
+    val iconTint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.80f)
 
     Surface(
         onClick = onClick,
         shape = shape,
         color = containerColor,
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(horizontal = SearchHorizontalPadding),
+        border = BorderStroke(1.dp, borderColor),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = SearchRowMinHeight)
-                    .padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(start = 12.dp, end = 4.dp),
         ) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier =
-                    Modifier
-                        .size(40.dp)
-                        .background(
-                            color = iconContainerColor,
-                            shape = MaterialTheme.shapes.medium,
-                        ),
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(
+                        color = iconContainerColor,
+                        shape = CircleShape,
+                    ),
             ) {
                 Icon(
                     painterResource(if (online) R.drawable.ic_search else R.drawable.history),
                     contentDescription = null,
                     tint = iconTint,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(18.dp),
                 )
             }
 
-            Spacer(Modifier.width(14.dp))
+            Spacer(Modifier.width(12.dp))
 
             Text(
                 text = query,
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (pureBlack) Color.White.copy(alpha = 0.92f) else MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
 
             if (!online) {
-                IconButton(onClick = onDelete) {
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.size(40.dp),
+                ) {
                     Icon(
                         painter = painterResource(R.drawable.close),
                         contentDescription = stringResource(R.string.remove_from_history),
-                        tint =
-                            if (pureBlack) {
-                                Color.White.copy(alpha = 0.62f)
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.70f),
                         modifier = Modifier.size(18.dp),
                     )
                 }
             }
 
-            IconButton(onClick = onFillTextField) {
+            IconButton(
+                onClick = onFillTextField,
+                modifier = Modifier.size(40.dp),
+            ) {
                 Icon(
                     painter = painterResource(R.drawable.arrow_top_left),
                     contentDescription = stringResource(R.string.search),
-                    tint =
-                        if (pureBlack) {
-                            Color.White.copy(alpha = 0.62f)
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.70f),
                     modifier = Modifier.size(18.dp),
                 )
             }
         }
     }
 }
-
-private val SearchRowMinHeight = 64.dp

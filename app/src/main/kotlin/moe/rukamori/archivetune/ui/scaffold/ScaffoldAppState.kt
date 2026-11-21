@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAny
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -157,11 +158,18 @@ fun rememberScaffoldAppState(
     val allYtItems by homeViewModel.allYtItems.collectAsStateWithLifecycle()
     val shouldShowHomeShuffleButton = currentRoute == Screens.Home.route && (allLocalItems.isNotEmpty() || allYtItems.isNotEmpty())
 
+    val isLiquidActive = remember(blurNavBar) {
+        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU && blurNavBar
+    }
     val floatingToolbarBottomPadding = YdsInsets.floatingToolbarBottomPadding()
-    val navVisibleHeight = FloatingToolbarHeight
+    val navVisibleHeight = if (isLiquidActive) 64.dp else FloatingToolbarHeight
 
     val playerBottomSheetState = rememberPlayerBottomSheetState(
-        maxHeight = maxHeight, bottomInset = bottomInset, shouldShowNav = shouldShowNavigationBar, useRail = useRail,
+        maxHeight = maxHeight,
+        bottomInset = bottomInset,
+        shouldShowNav = shouldShowNavigationBar,
+        useRail = useRail,
+        navBarHeight = navVisibleHeight,
     )
 
     val isMiniPlayerVisible by remember(playerViewModel) {
@@ -169,8 +177,13 @@ fun rememberScaffoldAppState(
     }.collectAsStateWithLifecycle(initialValue = false)
 
     val playerAwareWindowInsets = rememberPlayerAwareWindowInsets(
-        useRail = useRail, bottomInset = bottomInset, shouldShowNavigationBar = shouldShowNavigationBar,
-        isMiniPlayerVisible = isMiniPlayerVisible, floatingToolbarBottomPadding = floatingToolbarBottomPadding, windowsInsets = windowsInsets,
+        useRail = useRail,
+        bottomInset = bottomInset,
+        shouldShowNavigationBar = shouldShowNavigationBar,
+        isMiniPlayerVisible = isMiniPlayerVisible,
+        floatingToolbarBottomPadding = floatingToolbarBottomPadding,
+        windowsInsets = windowsInsets,
+        navBarHeight = navVisibleHeight,
     )
 
     val scrollController = rememberScaffoldScrollController(

@@ -18,6 +18,7 @@ import androidx.navigation.navArgument
 import moe.rukamori.archivetune.constants.SpotifySpDcKey
 import moe.rukamori.archivetune.constants.UseSpotifyHomeKey
 import moe.rukamori.archivetune.musicrecognition.MusicRecognitionRoute
+import com.kyant.backdrop.Backdrop
 import moe.rukamori.archivetune.ui.screens.library.LibraryScreen
 import moe.rukamori.archivetune.ui.screens.library.LocalSongScreen
 import moe.rukamori.archivetune.ui.screens.musicrecognition.MusicRecognitionScreen
@@ -37,6 +38,9 @@ fun NavGraphBuilder.navigationBuilder(
     disableAnimations: Boolean = false,
     homeScrollConnection: NestedScrollConnection? = null,
     searchScrollConnection: NestedScrollConnection? = null,
+    searchActive: Boolean = false,
+    glassBackdrop: Backdrop? = null,
+    pureBlack: Boolean = false,
 ) {
     composable(Screens.Home.route) {
         val useSpotify by rememberPreference(UseSpotifyHomeKey, defaultValue = false)
@@ -60,6 +64,9 @@ fun NavGraphBuilder.navigationBuilder(
                     ?.set("openSearch", true)
             },
             headerScrollConnection = searchScrollConnection,
+            searchActive = searchActive,
+            glassBackdrop = glassBackdrop,
+            pureBlack = pureBlack,
         )
     }
     composable("local_songs") {
