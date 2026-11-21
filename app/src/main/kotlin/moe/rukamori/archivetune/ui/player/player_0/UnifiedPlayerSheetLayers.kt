@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import com.kyant.backdrop.Backdrop
 import dev.chrisbanes.haze.HazeState
+import moe.rukamori.archivetune.ui.component.isBackdropGlassCapable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
