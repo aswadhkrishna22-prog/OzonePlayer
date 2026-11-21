@@ -103,3 +103,9 @@
   - Hybrid architecture with `TrendingCategory` chips (`For You`, `Malayalam`, `Tamil`, `Hindi`, `English`, `Top Charts`) and source switcher (`YouTube Music`, `JioSaavn`, `Apple Music`).
   - Automatic taste detection (`detectUserTasteLanguage`) scans Unicode scripts (Malayalam, Tamil, Devanagari) and library artists to auto-serve regional hits matching the user's music taste.
   - `personalizeTracks` boosts user's top playtime artists (+0.80) to bring favorite artists to the front.
+9. **Security, Stability & Playback Add-ups (`security-add-up`):**
+  - **PlayerConnection Memory Leak Fix:** Disposed `PlayerConnection` in `onDestroy()`, passed `applicationContext` instead of activity context to prevent leaks across orientation and lifecycle events.
+  - **20s Crossfade & Automix Duration:** Raised ceiling to 20s with 0.5s fine-grained slider steps and 16s/20s automix transition presets.
+  - **Playlist & Library Direct Like Toggles:** Interactive heart button directly in local/online playlist song rows and Spotify library tracks.
+  - **Robust Metadata Resolution (Spotify ID & ISRC):** Room query matching across YouTube ID, clean Spotify track IDs, and ISRC codes to seamlessly link songs with library state.
+  - **Login Sheet IME & Scroll Gestures:** Prevented Compose bottom sheet from swallowing WebView touches during authentication; consumed scaffold insets to eliminate bottom whitespace above keyboard.
