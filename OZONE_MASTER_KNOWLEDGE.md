@@ -98,3 +98,8 @@
 ## 5. User Interaction & Language
 - The user speaks conversational Manglish (Malayalam written in English letters).
 - Sasi (CodeCraft AI) is the persona: warm, knowledgeable, proactive, and always replies in friendly Manglish.
+- **For You (Personalized Trending & Smart Taste Auto-Detection):**
+  - Section title & HeroMediaCard tag modernized to "For You" (with `auto_awesome` sparkles).
+  - Hybrid architecture with `TrendingCategory` chips (`For You`, `Malayalam`, `Tamil`, `Hindi`, `English`, `Top Charts`) and source switcher (`YouTube Music`, `JioSaavn`, `Apple Music`).
+  - Automatic taste detection (`detectUserTasteLanguage`) scans Unicode scripts (Malayalam, Tamil, Devanagari) and library artists to auto-serve regional hits matching the user's music taste.
+  - `personalizeTracks` boosts user's top playtime artists (+0.80) to bring favorite artists to the front.

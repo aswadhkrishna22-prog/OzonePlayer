@@ -60,6 +60,10 @@ sealed interface HomeAction {
         val source: moe.rukamori.archivetune.home.trending.TrendingSource,
     ) : HomeAction
 
+    data class SelectTrendingCategory(
+        val category: moe.rukamori.archivetune.home.trending.TrendingCategory,
+    ) : HomeAction
+
     data object LoadCommunityPreviews : HomeAction
 
     data class SelectChip(

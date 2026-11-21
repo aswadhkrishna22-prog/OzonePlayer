@@ -184,9 +184,9 @@ internal fun HeroMediaCard(
                 ) {
                     if (!isThisPlaying) {
                         Icon(
-                            painter = painterResource(R.drawable.fire),
+                            painter = painterResource(R.drawable.auto_awesome),
                             contentDescription = null,
-                            tint = Color(0xFFFF5722),
+                            tint = Color(0xFFFFB300),
                             modifier = Modifier.size(16.dp),
                         )
                     }
@@ -194,7 +194,7 @@ internal fun HeroMediaCard(
                         text = if (isThisPlaying) {
                             stringResource(R.string.now_playing)
                         } else {
-                            stringResource(R.string.trending_now)
+                            stringResource(R.string.for_you)
                         },
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
