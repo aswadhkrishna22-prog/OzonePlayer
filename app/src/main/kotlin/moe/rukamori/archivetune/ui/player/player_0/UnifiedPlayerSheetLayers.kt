@@ -6,6 +6,7 @@
 
 package moe.rukamori.archivetune.ui.player.player_0
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -19,7 +20,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import com.kyant.backdrop.Backdrop
 import dev.chrisbanes.haze.HazeState
+import moe.rukamori.archivetune.ui.component.backdropLiquidGlass
+import moe.rukamori.archivetune.ui.component.clearLiquidGlassPill
+import moe.rukamori.archivetune.ui.component.isBackdropGlassCapable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -47,6 +52,12 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.dp
+import moe.rukamori.archivetune.constants.MiniPlayerHeight
+import moe.rukamori.archivetune.ui.component.clearLiquidGlassPill
+import moe.rukamori.archivetune.ui.component.backdropLiquidGlass
 import moe.rukamori.archivetune.ui.player.player_0.dualplay.DualMiniPlayer
 import moe.rukamori.archivetune.ui.player.player_0.MiniPlayerContentInternal
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
@@ -91,6 +102,9 @@ internal fun UnifiedPlayerSheetLayers(
     dualState: DualPlayState? = null,
     dualPlayEngine: DualPlayEngine? = null,
     hazeState: HazeState? = null,
+    glassBackdrop: Backdrop? = null,
+    blurNavBar: Boolean = true,
+    pureBlack: Boolean = false,
 ) {
     val density = LocalDensity.current.density
     val canvasState = rememberPlayerCanvasState(state.trackUrl, state.title, state.artist)
@@ -234,14 +248,46 @@ internal fun UnifiedPlayerSheetLayers(
                             modifier = Modifier.fillMaxWidth(),
                         )
                     } else {
-                        MiniPlayerContentInternal(
-                            state = state,
-                            expansionFractionProvider = expansionFractionProvider,
-                            playbackProgress = playbackProgress,
-                            onAction = onAction,
-                            onMediaAreaClick = onExpandClick,
-                            isVisible = isMiniPlayerVisible,
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(MiniPlayerHeight)
+                        ) {
+                            // Layer 1: Glass background pill (Kyant Backdrop on API 31+, Haze fallback otherwise)
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .then(
+                                        if (glassBackdrop != null) {
+                                            Modifier.backdropLiquidGlass(
+                                                backdrop = glassBackdrop,
+                                                shape = RoundedCornerShape(28.dp),
+                                                isDark = pureBlack || isSystemInDarkTheme(),
+                                                interactive = true,
+                                                pressedScale = 1.04f,
+                                            )
+                                        } else {
+                                            Modifier.clearLiquidGlassPill(
+                                                shape = RoundedCornerShape(28.dp),
+                                                hazeState = hazeState,
+                                                pureBlack = pureBlack,
+                                                showBorder = true,
+                                                cornerRadiusDp = 28.dp,
+                                            )
+                                        }
+                                    )
+                            )
+
+                            // Layer 2: Foreground content (album art, progress ring, title, artist, buttons) drawn on top
+                            MiniPlayerContentInternal(
+                                state = state,
+                                expansionFractionProvider = expansionFractionProvider,
+                                playbackProgress = playbackProgress,
+                                onAction = onAction,
+                                onMediaAreaClick = onExpandClick,
+                                isVisible = isMiniPlayerVisible,
+                            )
+                        }
                     }
                 }
             }

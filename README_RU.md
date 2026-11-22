@@ -1,8 +1,10 @@
 <div align="center">
 
-  <img src="assets/ozone_logo.png" width="240" height="240" alt="Ozone Player Icon" style="border-radius: 28px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);" />
+<p align="center">
+  <img src="docs/assets/ozone-icon.svg" width="128" alt="Ozone Player icon">
+</p>
 
-  <h1>Ozone Player</h1>
+<h1 align="center">Ozone Player</h1>
 
   <p align="center">
     <a href="README.md">
@@ -46,7 +48,7 @@
 
 Проект создан на основе **ArchiveTune** (с наработками от **Metrolist** и **SimpMusic**), вдохновлен механикой очередей **PixelPlayer**, сетевым взаимодействием со Spotify из **Meld** и стримингом FLAC из **Stash**. На этом фундаменте создана модульная архитектура из 20 модулей, собственная дизайн-система **Ozone Design System** и плавная жестовая модель с аппаратным ускорением.
 
-Никаких платных подписок, встроенной рекламы, аналитики и закрытых трекеров. Учетные данные шифруются локально на устройстве (AES-256-GCM via Google Tink), а исходный код полностью открыт под лицензией GPL-3.0.
+Никаких платных подписок, встроенной рекламы, аналитики и закрытых трекеров. Учетные данные хранятся исключительно локально в изолированном хранилище Android (Jetpack DataStore), а исходный код полностью открыт под лицензией GPL-3.0.
 
 ---
 
@@ -142,7 +144,7 @@ Ozone Player — многомодульный Android-проект, постро
 
 * **UI и Дизайн:** Jetpack Compose, дизайн-токены Ozone Design System, аппаратно-ускоренные Haze-оверлеи.
 * **Аудиодвижок:** Media3 (ExoPlayer), `:core:audio-dsp` (Dual Play, Smart Automix, DJ filter cascade).
-* **Данные и Хранилище:** Room ORM, шифрованные защищенные настройки (AES-256-GCM via Google Tink).
+* **Данные и Хранилище:** Room ORM, изолированное хранилище настроек (Android private sandbox via Jetpack DataStore).
 * **Сеть и Прием данных:** Ktor/Retrofit, InnerTube (движок YouTube Music).
 
 📖 **Подробная документация для разработчиков:**

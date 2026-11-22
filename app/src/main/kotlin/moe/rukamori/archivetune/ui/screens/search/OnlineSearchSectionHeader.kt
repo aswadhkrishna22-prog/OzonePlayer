@@ -29,21 +29,16 @@ internal fun SearchSectionHeader(
 ) {
     Text(
         text = title,
-        style = MaterialTheme.typography.titleSmall,
-        color =
-            if (pureBlack) {
-                Color.White.copy(alpha = 0.72f)
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.70f),
         modifier =
             modifier
                 .fillMaxWidth()
                 .padding(
-                    start = SearchHorizontalPadding + 4.dp,
-                    top = 16.dp,
-                    end = SearchHorizontalPadding + 4.dp,
-                    bottom = 6.dp,
+                    start = 20.dp,
+                    top = 8.dp,
+                    end = 20.dp,
+                    bottom = 8.dp,
                 ),
     )
 }

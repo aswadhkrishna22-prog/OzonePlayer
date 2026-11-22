@@ -1,0 +1,14 @@
+Ozone Player is an open-source Android music player built around music discovery, playlists, and local playback.
+
+Features include:
+
+• Browse music discovery and recommendation sections.
+• Explore artist and playlist pages.
+• Play music with a full-screen player and queue controls.
+• View synchronized lyrics when available.
+• Manage and play local audio files.
+• Dual Play is an experimental beta feature and may change.
+
+Ozone Player is based on ArchiveTune and is licensed under the GNU General Public License version 3.0.
+
+Some online music sources and features may depend on third-party services, account access, network availability, and regional support.

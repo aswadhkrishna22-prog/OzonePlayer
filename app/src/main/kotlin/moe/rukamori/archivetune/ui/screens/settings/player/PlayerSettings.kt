@@ -60,6 +60,10 @@ import moe.rukamori.archivetune.constants.CrossfadeEnabledKey
 import moe.rukamori.archivetune.constants.CrossfadeGaplessKey
 import moe.rukamori.archivetune.constants.DoubleTapSeekStepKey
 import moe.rukamori.archivetune.constants.DoubleTapToSeekKey
+import moe.rukamori.archivetune.constants.EnhanceAudioAutoModeKey
+import moe.rukamori.archivetune.constants.EnhanceAudioEnabledKey
+import moe.rukamori.archivetune.constants.EnhanceAudioStrengthKey
+import moe.rukamori.archivetune.constants.EnhanceStrength
 import moe.rukamori.archivetune.constants.DownloadLocationUriKey
 import moe.rukamori.archivetune.constants.EnableLosslessKey
 import moe.rukamori.archivetune.constants.Prefer320KbpsKey
@@ -164,6 +168,19 @@ fun PlayerSettings(navController: NavController) {
         defaultValue = 10,
     )
 
+    val (enhanceEnabled, onEnhanceEnabledChange) = rememberPreference(
+        EnhanceAudioEnabledKey,
+        defaultValue = false,
+    )
+    val (enhanceAutoMode, onEnhanceAutoModeChange) = rememberPreference(
+        EnhanceAudioAutoModeKey,
+        defaultValue = false,
+    )
+    val (enhanceStrength, onEnhanceStrengthChange) = rememberEnumPreference(
+        EnhanceAudioStrengthKey,
+        defaultValue = EnhanceStrength.MEDIUM,
+    )
+
     val (crossfadeEnabled, onCrossfadeEnabledChange) = rememberPreference(
         CrossfadeEnabledKey,
         defaultValue = false,
@@ -263,6 +280,9 @@ fun PlayerSettings(navController: NavController) {
         prefer320Kbps = prefer320Kbps,
         doubleTapToSeek = doubleTapToSeek,
         doubleTapSeekStep = doubleTapSeekStep,
+        enhanceEnabled = enhanceEnabled,
+        enhanceAutoMode = enhanceAutoMode,
+        enhanceStrength = enhanceStrength,
     )
 
     val actions = remember(
@@ -308,6 +328,9 @@ fun PlayerSettings(navController: NavController) {
             onEqualizerClick = onEqualizerClick,
             onSpatialAudioClick = { navController.navigate("settings/spatial_audio") },
             onDualPlayClick = { navController.navigate("settings/dual_play_debug") },
+            onEnhanceEnabledChange = onEnhanceEnabledChange,
+            onEnhanceAutoModeChange = onEnhanceAutoModeChange,
+            onEnhanceStrengthChange = onEnhanceStrengthChange,
         )
     }
 

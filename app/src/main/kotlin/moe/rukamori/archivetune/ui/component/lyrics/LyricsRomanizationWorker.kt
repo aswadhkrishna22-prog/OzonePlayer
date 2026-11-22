@@ -69,7 +69,7 @@ internal fun LyricsRomanizationEffect(
                         async {
                             val romanized: List<String?> =
                                 try {
-                                    if (isTtmlFormat && entry.words != null) {
+                                    if (entry.words != null) {
                                         val mainWords = entry.words.filter { !it.isBackground }.let {
                                             if (it.size > MAX_SYLLABLES_PER_LINE) it.take(MAX_SYLLABLES_PER_LINE) else it
                                         }
@@ -88,7 +88,7 @@ internal fun LyricsRomanizationEffect(
                                     throw e
                                 } catch (e: Exception) {
                                     reportException(e)
-                                    if (isTtmlFormat && entry.words != null) {
+                                    if (entry.words != null) {
                                         val count = entry.words.count { !it.isBackground }.coerceAtMost(MAX_SYLLABLES_PER_LINE)
                                         List(count) { null }
                                     } else {
@@ -102,7 +102,7 @@ internal fun LyricsRomanizationEffect(
                 jobs.awaitAll().forEach { (index, romanized) ->
                     tempMap[index] = romanized
                 }
-                buildSyncedLyrics(boundedEntries, isTtmlFormat, tempMap)
+                buildSyncedLyrics(boundedEntries, isTtmlFormat || boundedEntries.any { it.words != null }, tempMap)
             } ?: return@LaunchedEffect
 
         appliedRomanizationKey = romanizationKey

@@ -33,6 +33,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -43,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.appicon.rememberCurrentAppIcon
 import moe.rukamori.archivetune.constants.AppFontPreference
 import moe.rukamori.archivetune.constants.HomeBackgroundStyle
 import moe.rukamori.archivetune.constants.LibraryFilter
@@ -192,6 +194,24 @@ fun AppearanceThemeSection(
                 darkMode = darkMode,
                 onDarkModeChange = onDarkModeChange,
             )
+        }
+
+        item {
+            var showIconPicker by remember { mutableStateOf(false) }
+            val currentIcon = rememberCurrentAppIcon()
+            PreferenceEntry(
+                title = { Text(stringResource(R.string.custom_app_icon)) },
+                description = currentIcon.label,
+                icon = { Icon(painterResource(R.drawable.app_icon_small), null, modifier = Modifier.size(24.dp)) },
+                onClick = { showIconPicker = true },
+                showChevron = true,
+            )
+
+            if (showIconPicker) {
+                AppIconPickerBottomSheet(
+                    onDismissRequest = { showIconPicker = false },
+                )
+            }
         }
 
         item(visible = useDarkTheme) {

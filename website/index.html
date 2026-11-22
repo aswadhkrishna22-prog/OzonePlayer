@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200, initial-scale=0.33">
+<script>
+(function () {
+  var DESIGN_WIDTH = 1200;
+  var w = Math.min(screen.width, window.innerWidth || screen.width);
+  var m = document.querySelector('meta[name="viewport"]');
+  if (!m) { m = document.createElement('meta'); m.name = 'viewport'; document.head.appendChild(m); }
+  if (w < 900) {
+    var s = (w / DESIGN_WIDTH).toFixed(4);
+    m.setAttribute('content',
+      'width=' + DESIGN_WIDTH + ', initial-scale=' + s + ', minimum-scale=' + s + ', maximum-scale=5, viewport-fit=cover');
+  } else {
+    m.setAttribute('content', 'width=device-width, initial-scale=1, viewport-fit=cover');
+  }
+})();
+</script>
+<title>Ozone Player — Audiophile Lossless Music Client for Android</title>
+
+<!-- Search Console Verification -->
+<meta name="google-site-verification" content="googlee1d027ff0d5cf2c8">
+<meta name="description" content="Ozone Player is an independent open-source audio client for Android. Bit-perfect Lossless FLAC, YouTube Music and Spotify catalogs, Dual Play split stereo DSP, and zero telemetry.">
+<meta name="keywords" content="Ozone Player, Ozone Player APK, Android music player, Lossless FLAC Android, Dual Play music, YouTube Music client, Spotify UI player, FOSS audio, no ads">
+<meta name="author" content="Aswadh Krishna">
+<link rel="canonical" href="https://aswadhkrishna22-prog.github.io/OzonePlayer/">
+
+<!-- Open Graph / Meta -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://aswadhkrishna22-prog.github.io/OzonePlayer/">
+<meta property="og:title" content="Ozone Player — Audiophile Lossless Music Client for Android">
+<meta property="og:description" content="Bit-perfect Lossless FLAC, YouTube Music catalog, Dual Play split audio, and synced lyrics. 100% Free & Open Source.">
+<meta property="og:image" content="assets/ozone_logo.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#07080a">
+
+<link rel="icon" type="image/png" href="assets/ozone_logo.png">
+<link rel="apple-touch-icon" href="assets/ozone_logo.png">
+
+<!-- Google Structured Data (JSON-LD) -->
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"SoftwareApplication",
+  "name":"Ozone Player",
+  "operatingSystem":"Android 8.0 and higher",
+  "applicationCategory":"MultimediaApplication",
+  "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+  "description":"Open-source Android music player featuring Lossless FLAC, YouTube Music catalog, Dual Play split audio, and zero ads.",
+  "downloadUrl":"https://github.com/aswadhkrishna22-prog/OzonePlayer/releases/latest",
+  "softwareVersion":"1.3.134",
+  "license":"https://www.gnu.org/licenses/gpl-3.0.html",
+  "author":{"@type":"Person","name":"Aswadh Krishna"}
+}
+</script>
+
+<!-- Typography: Space Grotesk + Plus Jakarta Sans (Precision Technical & Editorial Craft) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Custom Double-Ring Precision Cursor -->
+<div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
+<div class="cursor-ring" id="cursor-ring" aria-hidden="true"></div>
+
+<!-- Ambient Acoustic Canvas -->
+<canvas id="stage-canvas" aria-hidden="true"></canvas>
+
+<!-- Top Masthead -->
+<header class="masthead" id="masthead">
+  <div class="shell masthead-grid">
+    <a href="#" class="brand-signature">
+      <img src="assets/ozone_logo.png" alt="Ozone Icon" width="48" height="48">
+      <span class="brand-text">Ozone</span>
+      <span class="brand-pill">FLAC CORE</span>
+    </a>
+
+    <nav class="masthead-nav">
+      <a href="#dualplay">Dual Play</a>
+      <a href="#acoustics">Acoustic Specs</a>
+      <a href="#screens">Interface</a>
+      <a href="#source">Architecture</a>
+    </nav>
+
+    <div class="masthead-cta">
+      <a class="gh-link" href="https://github.com/aswadhkrishna22-prog/OzonePlayer" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+        </svg>
+        <span>GitHub</span>
+        <span class="star-badge" id="stars-val">
+          <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span id="star-count-text">Stars</span>
+        </span>
+      </a>
+      <a class="action-btn-small" href="https://github.com/aswadhkrishna22-prog/OzonePlayer/releases/latest">Download APK</a>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- HERO: THE MONUMENT OF SOUND -->
+<section class="hero-monument">
+  <div class="shell">
+    
+    <!-- Architectural Header Stack -->
+    <div class="monument-header">
+      <div class="hero-brand-badge">
+        <img src="assets/ozone_logo.png" alt="Ozone Player App Icon" width="76" height="76" class="hero-brand-icon">
+        <div class="technical-status-strip">
+          <span class="status-indicator"></span>
+          <span>STREAMING ENGINE // YT MUSIC + SPOTIFY CORE // 24-BIT 96kHz FLAC</span>
+        </div>
+      </div>
+      <h1 class="monument-title">OZONE</h1>
+      <p class="monument-subtitle">Zero compression. Zero advertising. Pure unchoked audio.</p>
+    </div>
+
+    <!-- Hero Content Stage -->
+    <div class="hero-stage-grid">
+      <div class="hero-narrative">
+        <p class="hero-body">
+          Most mobile music apps compress audio down to muffled 128 kbps streams, choke frequency response above 16 kHz, and track your listening habits. Ozone bypasses the walled gardens, connecting directly to uncompressed Lossless FLAC streams and YouTube Music's global catalog with independent dual-channel audio hardware routing.
+        </p>
+
+        <div class="hero-button-row">
+          <a class="action-btn-primary" href="https://github.com/aswadhkrishna22-prog/OzonePlayer/releases/latest">
+            <span class="btn-main-text">Download Latest Release</span>
+            <span class="btn-sub-text">APK v1.3.134 Stable • Arm64 &amp; Universal • GPL-3.0</span>
+          </a>
+          <a class="action-btn-outline" href="#dualplay">Test Split Audio Demo</a>
+        </div>
+
+        <div class="telemetry-bar">
+          <div class="telemetry-block">
+            <span class="telemetry-num">1411</span>
+            <span class="telemetry-unit">kbps</span>
+            <span class="telemetry-desc">Direct Studio FLAC</span>
+          </div>
+          <div class="telemetry-divider" aria-hidden="true"></div>
+          <div class="telemetry-block">
+            <span class="telemetry-num">0</span>
+            <span class="telemetry-unit">trackers</span>
+            <span class="telemetry-desc">Zero Play Services</span>
+          </div>
+          <div class="telemetry-divider" aria-hidden="true"></div>
+          <div class="telemetry-block">
+            <span class="telemetry-num">96</span>
+            <span class="telemetry-unit">kHz</span>
+            <span class="telemetry-desc">Acoustic DSP Core</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3D Gyro Multi-Layered Floating Phone Showcase -->
+      <div class="hero-viewport">
+        <div class="phone-stand-rig" id="phone-rig">
+          
+          <!-- Background Layer Left: Synced Lyrics Screen -->
+          <div class="hero-bg-phone hero-bg-phone-left" aria-hidden="true">
+            <div class="bg-phone-chassis">
+              <img src="assets/shots/lyrics_screen.webp" alt="Synced Lyrics Screen Background Preview" width="540" height="1200" class="bg-chassis-screen">
+              <div class="bg-phone-tint"></div>
+            </div>
+          </div>
+
+          <!-- Background Layer Right: Discovery Feed Screen -->
+          <div class="hero-bg-phone hero-bg-phone-right" aria-hidden="true">
+            <div class="bg-phone-chassis">
+              <img src="assets/shots/main_screen.webp" alt="Discovery Feed Screen Background Preview" width="540" height="1200" class="bg-chassis-screen">
+              <div class="bg-phone-tint"></div>
+            </div>
+          </div>
+
+          <!-- Foreground Layer: Main Floating Player Phone -->
+          <div class="hero-floating-phone">
+            <div class="floating-phone-chassis">
+              <div class="chassis-speaker-notch" aria-hidden="true"></div>
+              <div class="chassis-camera-punch" aria-hidden="true"></div>
+              <div class="chassis-lens-glare" aria-hidden="true"></div>
+              <img src="assets/shots/fullplayer.webp" alt="Ozone Player full screen now playing interface" width="540" height="1200" class="chassis-screen">
+              
+              <div class="device-telemetry-hud">
+                <span class="hud-dot"></span>
+                <span>AUDIO CORE: 1411 KBPS LOSSLESS // DUAL DSP ROUTER ACTIVE</span>
+              </div>
+            </div>
+            <div class="hero-phone-ground-shadow" aria-hidden="true"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- SECTION 2: INTERACTIVE DUAL PLAY SPLIT-MIXER CONSOLE -->
+<section class="section-container" id="dualplay">
+  <div class="shell">
+    <div class="section-title-wrap">
+      <h2 class="section-headline">Dual Play Independent Audio Engine</h2>
+      <p class="section-description">
+        Play two different tracks simultaneously with per-channel volume and hardware stereo routing. Send Track A to your left earbud and Track B to your right earbud, or drive two external speakers simultaneously.
+      </p>
+    </div>
+
+    <!-- Authentic Hardware Console UI -->
+    <div class="mixer-console">
+      <div class="console-hud-bar">
+        <div class="hud-status">
+          <span class="hud-led"></span>
+          <span>HARDWARE DSP STEREO CHANNEL ROUTER</span>
+        </div>
+        <div class="hud-readout" id="fader-label">DECK A: 100% | DECK B: 0%</div>
+      </div>
+
+      <div class="console-body-grid">
+        <!-- Deck A -->
+        <div class="console-deck-panel active" id="deck-panel-a">
+          <span class="panel-channel-tag">CHANNEL A · LEFT EARBUD</span>
+          <h3 class="panel-song-title">After Hours (Live Master)</h3>
+          <p class="panel-artist">The Weeknd • Hi-Res 96kHz 24-Bit FLAC</p>
+          <div class="vu-meter">
+            <div class="vu-fill" id="meter-fill-a" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Crossfader Hardware Slider -->
+        <div class="console-fader-unit">
+          <label for="master-fader" class="fader-title">STEREO BALANCE SLIDER</label>
+          <input type="range" id="master-fader" min="0" max="100" value="0" class="hardware-fader-input" aria-label="Stereo crossfader balance">
+          <div class="fader-notches">
+            <span>CH A ONLY</span>
+            <span>DUAL MIX</span>
+            <span>CH B ONLY</span>
+          </div>
+        </div>
+
+        <!-- Deck B -->
+        <div class="console-deck-panel" id="deck-panel-b">
+          <span class="panel-channel-tag">CHANNEL B · RIGHT EARBUD</span>
+          <h3 class="panel-song-title">Midnight City (Remix)</h3>
+          <p class="panel-artist">M83 • Direct Master Audio Stream</p>
+          <div class="vu-meter">
+            <div class="vu-fill" id="meter-fill-b" style="width: 10%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="console-spec-row">
+        <span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Zero Audio Stutter or Buffer Drift</span>
+        <span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Independent Equalizer &amp; Volume Control</span>
+        <span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Native C++ Audio Router Implementation</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 3: THE FREQUENCY ACOUSTIC LAB -->
+<section class="section-container" id="acoustics">
+  <div class="shell">
+    <div class="section-title-wrap">
+      <h2 class="section-headline">Acoustic Precision: Lossless FLAC vs. Compressed Audio</h2>
+      <p class="section-description">
+        Standard streaming platforms use aggressive compression algorithms that discard critical acoustic harmonics above 16 kHz. Ozone taps directly into bit-perfect Lossless FLAC streams for authentic studio sound.
+      </p>
+    </div>
+
+    <div class="acoustic-lab-card">
+      <div class="acoustic-switch-row">
+        <button class="acoustic-mode-tab" data-mode="128">
+          <strong>128 kbps MP3</strong>
+          <span>Standard streaming loss</span>
+        </button>
+        <button class="acoustic-mode-tab" data-mode="320">
+          <strong>320 kbps AAC</strong>
+          <span>High quality compression</span>
+        </button>
+        <button class="acoustic-mode-tab on" data-mode="1411">
+          <strong>1411 kbps FLAC</strong>
+          <span>Ozone Bit-Perfect Master</span>
+        </button>
+      </div>
+
+      <div class="acoustic-graph-display">
+        <canvas id="spectrogram-canvas" width="800" height="200" aria-label="Frequency response graph"></canvas>
+        <div class="spectrogram-readouts">
+          <div class="spec-metric">
+            <span class="spec-label">SAMPLING RATE</span>
+            <strong class="spec-value" id="spec-hz">96,000 Hz / 24-Bit</strong>
+          </div>
+          <div class="spec-metric">
+            <span class="spec-label">EFFECTIVE FREQUENCY BAND</span>
+            <strong class="spec-value" id="spec-band">20 Hz – 48,000 Hz (Full Uncapped)</strong>
+          </div>
+          <div class="spec-metric">
+            <span class="spec-label">DYNAMIC HEADROOM</span>
+            <strong class="spec-value" id="spec-dynamic">> 120 dB Studio Master</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 4: FLOATING PHONES INTERFACE ARENA -->
+<section class="section-container" id="screens">
+  <div class="shell">
+    <div class="section-title-wrap text-center-wrap">
+      <h2 class="section-headline">The Interface Architecture</h2>
+      <p class="section-description">
+        Engineered natively in Jetpack Compose for fluid one-handed navigation, dynamic album art illumination, scroll-linked hero morphing, and synced Romanized lyrics.
+      </p>
+    </div>
+
+    <!-- Category Filter Controls -->
+    <div class="phone-filter-bar">
+      <button class="phone-filter-btn active" data-filter="all">All 8 Views</button>
+      <button class="phone-filter-btn" data-filter="playback">Playback &amp; Lyrics</button>
+      <button class="phone-filter-btn" data-filter="discovery">Discovery &amp; Radio</button>
+      <button class="phone-filter-btn" data-filter="library">Queue &amp; Artist</button>
+    </div>
+
+    <!-- 3D Floating Phone Gallery Grid -->
+    <div class="floating-phones-arena" id="phones-arena">
+
+      <!-- Phone 1: Full Player -->
+      <article class="floating-phone-card" data-category="playback">
+        <div class="phone-levitation-wrap float-delay-1">
+          <div class="phone-hardware-chassis">
+            <div class="chassis-speaker-notch" aria-hidden="true"></div>
+            <div class="chassis-camera-punch" aria-hidden="true"></div>
+            <div class="chassis-lens-glare" aria-hidden="true"></div>
+            <img src="assets/shots/fullplayer.webp" alt="Ozone Player Now Playing Full Screen" width="540" height="1200" class="phone-display-img" loading="lazy">
+          </div>
+          <div class="phone-ground-shadow" aria-hidden="true"></div>
+        </div>
+        <div class="phone-card-meta">
+          <span class="meta-tag">NOW PLAYING</span>
+          <h3 class="meta-title">Hi-Res Lossless Player</h3>
+          <p class="meta-desc">Dynamic album art lighting, horizontal drag to skip, and native 24-bit audio playback controls.</p>
+        </div>
+      </article>
+
+      <!-- Phone 2: Synced Lyrics -->
+      <article class="floating-phone-card" data-category="playback">
+        <div class="phone-levitation-wrap float-delay-2">
+          <div class="phone-hardware-chassis">
+            <div class="chassis-speaker-notch" aria-hidden="true"></div>
+            <div class="chassis-camera-punch" aria-hidden="true"></div>
+            <div class="chassis-lens-glare" aria-hidden="true"></div>
+            <img src="assets/shots/lyrics_screen.webp" alt="Ozone Player Synced Romanized Lyrics Screen" width="540" height="1200" class="phone-display-img" loading="lazy">
+          </div>
+          <div class="phone-ground-shadow" aria-hidden="true"></div>
+        </div>
+        <div class="phone-card-meta">
+          <span class="meta-tag">LYRICS ENGINE</span>
+          <h3 class="meta-title">Synchronized Romanized Lyrics</h3>
+          <p class="meta-desc">Multi-provider line-by-line sync with instant automatic romanization for Asian and global tracks.</p>
+        </div>
+      </article>
+
+      <!-- Phone 3: Main Discovery -->
+      <article class="floating-phone-card" data-category="discovery">
+        <div class="phone-levitation-wrap float-delay-3">
+          <div class="phone-hardware-chassis">
+            <div class="chassis-speaker-notch" aria-hidden="true"></div>
+            <div class="chassis-camera-punch" aria-hidden="true"></div>
+            <div class="chassis-lens-glare" aria-hidden="true"></div>
+            <img src="assets/shots/main_screen.webp" alt="Ozone Player Main Discovery Feed" width="540" height="1200" class="phone-display-img" loading="lazy">
+          </div>
+          <div class="phone-ground-shadow" aria-hidden="true"></div>
+        </div>
+        <div class="phone-card-meta">
+          <span class="meta-tag">DISCOVERY</span>
+          <h3 class="meta-title">Smart Recommendations</h3>
+          <p class="meta-desc">Spotify discovery algorithms backed by YouTube Music’s limitless 100M+ global music catalog.</p>
+        </div>
+      </article>
+
+      <!-- Phone 4: Daily Mix -->
+      <article class="floating-phone-card" data-category="discovery">
+        <div class="phone-levitation-wrap float-delay-4">
+          <div class="phone-hardware-chassis">
+            <div class="chassis-speaker-notch" aria-hidden="true"></div>
+            <div class="chassis-camera-punch" aria-hidden="true"></div>
+            <div class="chassis-lens-glare" aria-hidden="true"></div>
+            <img src="assets/shots/spotify_dailymix.webp" alt="Ozone Player Daily Mix Hub" width="540" height="1200" class="phone-display-img" loading="lazy">
+          </div>
+          <div class="phone-ground-shadow" aria-hidden="true"></div>
+        </div>
+        <div class="phone-card-meta">
+          <span class="meta-tag">DAILY MIX</span>
+          <h3 class="meta-title">Personalized Station Hub</h3>
+          <p class="meta-desc">Automated genre clusters and personalized daily listening mixes refreshed continuously.</p>
+        </div>
+      </article>
+
+      <!-- Phone 5: Artist Screen -->
+      <article class="floating-phone-card" data-category="library">
+        <div class="phone-levitation-wrap float-delay-1">
+          <div class="phone-hardware-chassis">
+            <div class="chassis-speaker-notch" aria-hidden="true"></div>
+            <div class="chassis-camera-punch" aria-hidden="true"></div>
+            <div class="chassis-lens-glare" aria-hidden="true"></div>
+            <img src="assets/shots/artist_screen.webp" alt="Ozone Player Artist Discography View" width="540" height="1200" class="phone-display-img" loading="lazy">
+          </div>
+          <div class="phone-ground-shadow" aria-hidden="true"></div>
+        </div>
+        <div class="phone-card-meta">
+          <span class="meta-tag">ARTIST EXPLORER</span>
+          <h3 class="meta-title">Scroll-Linked Discography</h3>
+          <p class="meta-desc">Hero cover collapse animation with complete album discographies, top singles, and related artists.</p>
+        </div>
+      </article>
+
+      <!-- Phone 6: Dynamic Queue -->
+      <article class="floating-phone-card" data-category="library">
+        <div class="phone-levitation-wrap float-delay-2">
+          <div class="phone-hardware-chassis">
+            <div class="chassis-speaker-notch" aria-hidden="true"></div>
+            <div class="chassis-camera-punch" aria-hidden="true"></div>
+            <div class="chassis-lens-glare" aria-hidden="true"></div>
+            <img src="assets/shots/queue.webp" alt="Ozone Player Dynamic Queue Management" width="540" height="1200" class="phone-display-img" loading="lazy">
+          </div>
+          <div class="phone-ground-shadow" aria-hidden="true"></div>
+        </div>
+        <div class="phone-card-meta">
+          <span class="meta-tag">QUEUE CORE</span>
+          <h3 class="meta-title">Drag Reorder &amp; Automix</h3>
+          <p class="meta-desc">Instant reordering with intelligent music continuation that queues related tracks without interruption.</p>
+        </div>
+      </article>
+
+      <!-- Phone 7: Spotify Library -->
+      <article class="floating-phone-card" data-category="discovery">
+        <div class="phone-levitation-wrap float-delay-3">
+          <div class="phone-hardware-chassis">
+            <div class="chassis-speaker-notch" aria-hidden="true"></div>
+            <div class="chassis-camera-punch" aria-hidden="true"></div>
+            <div class="chassis-lens-glare" aria-hidden="true"></div>
+            <img src="assets/shots/spotify.webp" alt="Ozone Player Spotify Library Integration" width="540" height="1200" class="phone-display-img" loading="lazy">
+          </div>
+          <div class="phone-ground-shadow" aria-hidden="true"></div>
+        </div>
+        <div class="phone-card-meta">
+          <span class="meta-tag">INTEGRATION</span>
+          <h3 class="meta-title">Spotify Catalog Bridge</h3>
+          <p class="meta-desc">Import Spotify playlists, sync your favorite artists, and stream uncompressed audio directly.</p>
+        </div>
+      </article>
+
+      <!-- Phone 8: Spotify Radio -->
+      <article class="floating-phone-card" data-category="discovery">
+        <div class="phone-levitation-wrap float-delay-4">
+          <div class="phone-hardware-chassis">
+            <div class="chassis-speaker-notch" aria-hidden="true"></div>
+            <div class="chassis-camera-punch" aria-hidden="true"></div>
+            <div class="chassis-lens-glare" aria-hidden="true"></div>
+            <img src="assets/shots/spotify_radio.webp" alt="Ozone Player Infinite Radio Station" width="540" height="1200" class="phone-display-img" loading="lazy">
+          </div>
+          <div class="phone-ground-shadow" aria-hidden="true"></div>
+        </div>
+        <div class="phone-card-meta">
+          <span class="meta-tag">RADIO ENGINE</span>
+          <h3 class="meta-title">Continuous Artist Radio</h3>
+          <p class="meta-desc">Endless algorithmic radio stations derived from any track, mood, or artist with zero ad interruptions.</p>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 5: PRIVACY & ARCHITECTURE -->
+<section class="section-container" id="source">
+  <div class="shell">
+    <div class="section-title-wrap">
+      <h2 class="section-headline">Open Source Architecture &amp; Privacy Guarantees</h2>
+      <p class="section-description">
+        Ozone is engineered in Kotlin, Jetpack Compose, and modern C++ under the GNU General Public License v3.0. Complete transparency, zero proprietary surveillance.
+      </p>
+    </div>
+
+    <div class="architecture-grid">
+      <article class="arch-card">
+        <h3>Zero Google Play Services Dependency</h3>
+        <p>Runs natively on MicroG, GrapheneOS, CalyxOS, LineageOS, and standard de-Googled Android devices. Minimal battery drain, zero background service pinging.</p>
+      </article>
+
+      <article class="arch-card">
+        <h3>Zero Analytics &amp; Zero Tracking</h3>
+        <p>No Firebase Analytics, no Facebook SDK, no telemetry pings. Your playlists, search history, and listening logs remain strictly in your local device database.</p>
+      </article>
+
+      <article class="arch-card">
+        <h3>Offline FLAC Audio Downloader</h3>
+        <p>Save complete albums and tracks directly to your device storage in high quality with embedded metadata, ID3 tags, and high-resolution artwork.</p>
+      </article>
+
+      <article class="arch-card">
+        <h3>GNU General Public License v3.0</h3>
+        <p>Audit every line of source code, verify security and privacy claims yourself, or contribute new features. Free software that will forever remain free.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 6: CALL TO ACTION -->
+<section class="section-container cta-section" id="download">
+  <div class="shell cta-content-box">
+    <img src="assets/ozone_logo.png" alt="Ozone Logo" width="96" height="96" class="cta-brand-logo">
+    <h2 class="cta-headline">Get Ozone for Android</h2>
+    <p class="cta-sub">Free and open source · Arm64 and Universal APK packages · Android 8.0 through Android 15</p>
+    
+    <div class="cta-actions">
+      <a class="action-btn-primary" href="https://github.com/aswadhkrishna22-prog/OzonePlayer/releases/latest">
+        <span class="btn-main-text">Download Latest APK Release</span>
+        <span class="btn-sub-text">Version 1.3.134 Stable • Direct from GitHub Releases</span>
+      </a>
+      <a class="action-btn-outline" href="https://github.com/aswadhkrishna22-prog/OzonePlayer/releases" target="_blank" rel="noopener">
+        View Changelog &amp; All Releases
+      </a>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- FOOTER -->
+<footer class="footer-bar">
+  <div class="shell footer-grid">
+    <div class="footer-brand-info">
+      <div class="footer-logo-row">
+        <img src="assets/ozone_logo.png" alt="Ozone Icon" width="36" height="36">
+        <span>Ozone Player</span>
+      </div>
+      <p class="footer-description">
+        Independent hybrid music client for Android. Built with Kotlin, Jetpack Compose, and native C++ audio analysis core.
+      </p>
+    </div>
+
+    <nav class="footer-links-col">
+      <div class="footer-links-title">SOURCE &amp; CODE</div>
+      <a href="https://github.com/aswadhkrishna22-prog/OzonePlayer" target="_blank" rel="noopener">GitHub Repository</a>
+      <a href="https://github.com/aswadhkrishna22-prog/OzonePlayer/releases" target="_blank" rel="noopener">Releases &amp; Changelog</a>
+      <a href="https://github.com/aswadhkrishna22-prog/OzonePlayer/issues" target="_blank" rel="noopener">Report an Issue</a>
+    </nav>
+
+    <nav class="footer-links-col">
+      <div class="footer-links-title">LEGAL &amp; PRIVACY</div>
+      <a href="https://github.com/aswadhkrishna22-prog/OzonePlayer/blob/main/LICENSE" target="_blank" rel="noopener">GNU GPL-3.0 License</a>
+      <a href="https://github.com/aswadhkrishna22-prog/OzonePlayer/blob/main/PRIVACY.md" target="_blank" rel="noopener">Privacy Guarantee</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

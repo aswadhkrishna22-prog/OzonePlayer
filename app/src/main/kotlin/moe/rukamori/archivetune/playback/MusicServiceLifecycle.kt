@@ -44,6 +44,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import moe.rukamori.archivetune.audiodsp.CrossfadeConfig
+import moe.rukamori.archivetune.audiodsp.CrossfadeConstants
 import moe.rukamori.archivetune.audiodsp.shouldUseLegacyPath
 import moe.rukamori.archivetune.constants.AudioNormalizationKey
 import moe.rukamori.archivetune.constants.AudioOffload
@@ -79,6 +80,11 @@ import moe.rukamori.archivetune.constants.SpatialAudioEnabledKey
 import moe.rukamori.archivetune.constants.SpatialAudioMidDbKey
 import moe.rukamori.archivetune.constants.SpatialAudioTrebleDbKey
 import moe.rukamori.archivetune.playback.processor.SpatialProcessor
+import moe.rukamori.archivetune.constants.EnhanceAudioAutoModeKey
+import moe.rukamori.archivetune.constants.EnhanceAudioEnabledKey
+import moe.rukamori.archivetune.constants.EnhanceAudioStrengthKey
+import moe.rukamori.archivetune.constants.EnhanceStrength
+import moe.rukamori.archivetune.playback.processor.EnhanceAudioProcessor
 import moe.rukamori.archivetune.constants.SmartTrimmerKey
 import moe.rukamori.archivetune.constants.StopMusicOnTaskClearKey
 import moe.rukamori.archivetune.constants.WakelockKey
@@ -489,6 +495,30 @@ class MusicServiceLifecycle(
             .collectLatest(scope) { SpatialProcessor.instance.trebleDb = it }
 
         delegate.dataStore.data
+            .map { it[EnhanceAudioEnabledKey] ?: false }
+            .distinctUntilChanged()
+            .collectLatest(scope) { EnhanceAudioProcessor.instance.enabled = it }
+
+        delegate.dataStore.data
+            .map { it[EnhanceAudioAutoModeKey] ?: false }
+            .distinctUntilChanged()
+            .collectLatest(scope) { EnhanceAudioProcessor.instance.autoMode = it }
+
+        delegate.dataStore.data
+            .map { it[EnhanceAudioStrengthKey] ?: EnhanceStrength.MEDIUM.name }
+            .distinctUntilChanged()
+            .collectLatest(scope) {
+                EnhanceAudioProcessor.instance.strength = runCatching {
+                    EnhanceStrength.valueOf(it)
+                }.getOrDefault(EnhanceStrength.MEDIUM)
+            }
+
+        moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive
+            .collectLatest(scope) {
+                EnhanceAudioProcessor.isLowDataModeActive = it
+            }
+
+        delegate.dataStore.data
             .map { it[PauseOnDeviceMuteKey] ?: false }
             .distinctUntilChanged()
             .collectLatest(scope) { enabled ->
@@ -539,7 +569,8 @@ class MusicServiceLifecycle(
             val automix = prefs[AutomixEnabledKey] ?: false
             val automixTransitionPreset = prefs[AutomixTransitionDurationKey] ?: "auto"
             val effectiveEnabled = enabled && togetherState is TogetherSessionState.Idle
-            val durationMs = (durationSeconds.coerceIn(0f, 10f) * 1000f).roundToLong().coerceAtLeast(0L)
+            val durationMs = (durationSeconds * 1000f).roundToLong()
+                .coerceIn(0L, CrossfadeConstants.CLAMP_MAX_MS)
             CrossfadeConfig(
                 durationMs = durationMs,
                 automixEnabled = automix,

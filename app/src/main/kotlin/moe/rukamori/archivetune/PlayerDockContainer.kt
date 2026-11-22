@@ -30,9 +30,9 @@ import moe.rukamori.archivetune.ui.theme.ThemePreviews
 object PlayerDockDefaults {
     val MaxWidth: Dp = NavigationBarMaxWidth
     val HorizontalPadding: Dp = 16.dp
-    val SlotGap: Dp = 2.dp
+    val SlotGap: Dp = 8.dp
     val SoloCornerRadius: Dp = 28.dp
-    val DockedCornerRadius: Dp = 10.dp
+    val DockedCornerRadius: Dp = 28.dp
 }
 
 @Composable

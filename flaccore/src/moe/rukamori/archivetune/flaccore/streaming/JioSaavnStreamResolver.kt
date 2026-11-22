@@ -80,6 +80,61 @@ class JioSaavnStreamResolver(
         )
     }
 
+    suspend fun fetchSongDetails(songId: String): JioSaavnCandidate? = withContext(Dispatchers.IO) {
+        val cleanId = songId.removePrefix("jiosaavn_").trim()
+        if (cleanId.isBlank()) return@withContext null
+        try {
+            val url = BASE_URL.toHttpUrl().newBuilder()
+                .addQueryParameter("__call", "song.getDetails")
+                .addQueryParameter("pids", cleanId)
+                .addQueryParameter("_format", "json")
+                .addQueryParameter("_marker", "0")
+                .addQueryParameter("api_version", "4")
+                .addQueryParameter("ctx", "web6dot0")
+                .build()
+
+            val request = Request.Builder()
+                .url(url)
+                .header("User-Agent", USER_AGENT)
+                .header("Accept", "application/json")
+                .header("Referer", "https://www.jiosaavn.com/")
+                .build()
+
+            val response = client.newCall(request).execute()
+            if (!response.isSuccessful) return@withContext null
+
+            val body = response.body?.string().orEmpty()
+            if (body.isBlank()) return@withContext null
+
+            val root = json.parseToJsonElement(body) as? JsonObject ?: return@withContext null
+            val songs = root["songs"] as? JsonArray ?: return@withContext null
+            parseCandidateList(songs).firstOrNull()
+        } catch (e: Exception) {
+            logger.w("Failed to fetch JioSaavn song details for '$cleanId': ${e.message}")
+            null
+        }
+    }
+
+    suspend fun resolveById(songId: String): FlacStreamUrl? = withContext(Dispatchers.IO) {
+        val candidate = fetchSongDetails(songId) ?: return@withContext null
+        val rawUrl = JioSaavnDecryptor.decryptMediaUrl(candidate.encryptedMediaUrl) ?: return@withContext null
+        val songKey = if (candidate.id.startsWith("jiosaavn_")) candidate.id else "jiosaavn_${candidate.id}"
+        JioSaavnQualityCache.storeRawUrl(songKey, rawUrl)
+        val workingTier = JioSaavnQualityCache.getWorkingTier(songKey)
+        val streamUrl = JioSaavnDecryptor.getUrlForTier(rawUrl, workingTier)
+        val nominalBitrate = if (workingTier.nominalBitrateKbps > 0) workingTier.nominalBitrateKbps else 160
+        FlacStreamUrl(
+            url = streamUrl,
+            expiresAtMs = System.currentTimeMillis() + 86_400_000L,
+            codec = "aac",
+            bitsPerSample = 16,
+            sampleRateHz = 44100,
+            bitrateKbps = nominalBitrate,
+            coverArtUrl = candidate.imageUrl?.replace("150x150", "500x500"),
+            origin = ORIGIN,
+        )
+    }
+
     private fun findCandidates(query: TrackQuery): List<JioSaavnCandidate> {
         val searchTerms = buildSearchTerms(query)
         for (term in searchTerms) {
@@ -163,44 +218,50 @@ class JioSaavnStreamResolver(
         return try {
             val root = json.parseToJsonElement(jsonString) as? JsonObject ?: return emptyList()
             val results = root["results"] as? JsonArray ?: return emptyList()
-
-            results.mapNotNull { element ->
-                val obj = element as? JsonObject ?: return@mapNotNull null
-                val id = obj["id"]?.jsonPrimitive?.contentOrNull.orEmpty()
-                val title = unescapeHtml(obj["title"]?.jsonPrimitive?.contentOrNull.orEmpty())
-                val subtitle = unescapeHtml(obj["subtitle"]?.jsonPrimitive?.contentOrNull.orEmpty())
-                val image = obj["image"]?.jsonPrimitive?.contentOrNull
-                val moreInfo = obj["more_info"] as? JsonObject
-                val album = unescapeHtml(moreInfo?.get("album")?.jsonPrimitive?.contentOrNull.orEmpty())
-                val encUrl = moreInfo?.get("encrypted_media_url")?.jsonPrimitive?.contentOrNull.orEmpty()
-                val durationStr = moreInfo?.get("duration")?.jsonPrimitive?.contentOrNull.orEmpty()
-                val durationSec = durationStr.toLongOrNull() ?: 0L
-
-                val artistMap = moreInfo?.get("artistMap") as? JsonObject
-                val artists = mutableListOf<String>()
-                (artistMap?.get("primary_artists") as? JsonArray)?.forEach { a ->
-                    (a as? JsonObject)?.get("name")?.jsonPrimitive?.contentOrNull?.let { artists.add(unescapeHtml(it)) }
-                }
-                (artistMap?.get("artists") as? JsonArray)?.forEach { a ->
-                    (a as? JsonObject)?.get("name")?.jsonPrimitive?.contentOrNull?.let { artists.add(unescapeHtml(it)) }
-                }
-
-                if (id.isNotBlank() && title.isNotBlank() && encUrl.isNotBlank()) {
-                    JioSaavnCandidate(
-                        id = id,
-                        title = title,
-                        subtitle = subtitle,
-                        album = album,
-                        durationSec = durationSec,
-                        artists = artists.distinct(),
-                        encryptedMediaUrl = encUrl,
-                        imageUrl = image,
-                    )
-                } else null
-            }
+            parseCandidateList(results)
         } catch (e: Exception) {
             logger.w("Failed to parse JioSaavn search response: ${e.message}")
             emptyList()
+        }
+    }
+
+    private fun parseCandidateList(elements: JsonArray): List<JioSaavnCandidate> {
+        return elements.mapNotNull { element ->
+            val obj = element as? JsonObject ?: return@mapNotNull null
+            val id = obj["id"]?.jsonPrimitive?.contentOrNull.orEmpty()
+            val title = unescapeHtml(obj["title"]?.jsonPrimitive?.contentOrNull.orEmpty())
+            val subtitle = unescapeHtml(obj["subtitle"]?.jsonPrimitive?.contentOrNull.orEmpty())
+            val image = obj["image"]?.jsonPrimitive?.contentOrNull
+            val moreInfo = obj["more_info"] as? JsonObject
+            val album = unescapeHtml(moreInfo?.get("album")?.jsonPrimitive?.contentOrNull.orEmpty())
+            val encUrl = moreInfo?.get("encrypted_media_url")?.jsonPrimitive?.contentOrNull.orEmpty()
+            val durationStr = moreInfo?.get("duration")?.jsonPrimitive?.contentOrNull.orEmpty()
+            val durationSec = durationStr.toLongOrNull() ?: 0L
+
+            val artistMap = moreInfo?.get("artistMap") as? JsonObject
+            val artists = mutableListOf<String>()
+            (artistMap?.get("primary_artists") as? JsonArray)?.forEach { a ->
+                (a as? JsonObject)?.get("name")?.jsonPrimitive?.contentOrNull?.let { artists.add(unescapeHtml(it)) }
+            }
+            (artistMap?.get("artists") as? JsonArray)?.forEach { a ->
+                (a as? JsonObject)?.get("name")?.jsonPrimitive?.contentOrNull?.let { artists.add(unescapeHtml(it)) }
+            }
+            if (artists.isEmpty() && subtitle.isNotBlank()) {
+                artists.add(subtitle)
+            }
+
+            if (id.isNotBlank() && title.isNotBlank() && encUrl.isNotBlank()) {
+                JioSaavnCandidate(
+                    id = id,
+                    title = title,
+                    subtitle = subtitle,
+                    album = album,
+                    durationSec = durationSec,
+                    artists = artists.distinct(),
+                    encryptedMediaUrl = encUrl,
+                    imageUrl = image,
+                )
+            } else null
         }
     }
 

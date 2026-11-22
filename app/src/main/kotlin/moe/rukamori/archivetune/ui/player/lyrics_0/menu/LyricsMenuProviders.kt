@@ -188,7 +188,7 @@ internal fun LyricsMenuProviders(
                     } else if (providerState.syncKind != LyricsSyncKind.NONE) {
                         val badgeLabel = when (providerState.syncKind) {
                             LyricsSyncKind.WORD -> "SYNCED"
-                            LyricsSyncKind.LINE -> "LRC"
+                            LyricsSyncKind.LINE -> "Estimated"
                             else -> "PLAIN"
                         }
                         Box(

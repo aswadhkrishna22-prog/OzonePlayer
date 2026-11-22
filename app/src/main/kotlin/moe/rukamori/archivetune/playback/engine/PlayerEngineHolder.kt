@@ -25,6 +25,7 @@ import moe.rukamori.archivetune.audiodsp.DualForwardingPlayer
 import moe.rukamori.archivetune.audiodsp.DualPlayerRoleHolder
 import moe.rukamori.archivetune.playback.processor.SpatialProcessor
 import moe.rukamori.archivetune.playback.processor.AutoEqAudioProcessor
+import moe.rukamori.archivetune.playback.processor.EnhanceAudioProcessor
 import moe.rukamori.archivetune.playback.dualplay.ProcessorSide
 import moe.rukamori.archivetune.playback.dualplay.ChannelSplitProcessor
 import moe.rukamori.archivetune.extensions.setOffloadEnabled
@@ -239,8 +240,9 @@ class PlayerEngineHolder {
                 .setEnableFloatOutput(false)
                 .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
                 // AutoEqAudioProcessor linearizes headphone frequency response to Harman neutral curve first.
+                // EnhanceAudioProcessor cleans up hiss/fizz and dynamics for low-quality tracks.
                 // SpatialProcessor, DjFilter, and ChannelSplitProcessor follow in series.
-                .setAudioProcessors(arrayOf(AutoEqAudioProcessor.instance, SpatialProcessor(), djFilter, ChannelSplitProcessor(ProcessorSide.LEFT)))
+                .setAudioProcessors(arrayOf(AutoEqAudioProcessor.instance, EnhanceAudioProcessor(), SpatialProcessor(), djFilter, ChannelSplitProcessor(ProcessorSide.LEFT)))
                 .build()
         }
 

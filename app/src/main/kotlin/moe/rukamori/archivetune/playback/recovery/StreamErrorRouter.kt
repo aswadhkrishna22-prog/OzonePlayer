@@ -41,7 +41,7 @@ class StreamErrorRouter(
         val currentMediaItem = playerActions.currentMediaItem
         val currentMediaId = currentMediaItem?.mediaId ?: return RecoveryDecision.None
 
-        if (moe.rukamori.archivetune.playback.JioSaavnPlaybackFallback.isJioSaavnTrack(currentMediaItem) &&
+        if (moe.rukamori.archivetune.playback.JioSaavnPlaybackFallback.isJioSaavnTrack(currentMediaItem, error) &&
             moe.rukamori.archivetune.playback.JioSaavnPlaybackFallback.isPrePlaybackSourceError(error, playerActions.currentPosition)
         ) {
             if (moe.rukamori.archivetune.playback.JioSaavnPlaybackFallback.canFallback(currentMediaItem)) {

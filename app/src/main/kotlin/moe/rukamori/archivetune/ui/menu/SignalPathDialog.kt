@@ -113,6 +113,11 @@ fun SignalPathDialog(
                 if (snapshot.dsp.spatialEnabled) {
                     add("Spatial Audio: Active")
                 }
+                if (snapshot.dsp.enhanceActive) {
+                    add("Enhance: Active")
+                } else if (snapshot.dsp.enhanceEnabled) {
+                    add("Enhance: Standby (Auto)")
+                }
                 if (snapshot.dsp.dualPlayEnabled) {
                     add("Dual Play: ${snapshot.dsp.dualPlayEar ?: "Deck A"}")
                 }
