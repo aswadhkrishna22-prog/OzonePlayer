@@ -130,3 +130,7 @@
      - "Auto" mode option: automatically enables enhancement when current stream bitrate is below 160 kbps or Low Data mode is active, bypassing otherwise.
      - "Strength" slider with Light / Medium / Strong discrete presets.
      - Telemetry integration in `PipelineTelemetry.kt` and `SignalPathDialog.kt`.
+13. **Estimated Word-by-Word Synced Lyrics:**
+    - **Architecture:** Introduces estimated word-by-word lyric animation for providers returning line-timed (LRC) lyrics (LrcLib, SimpMusic, KuGou), leaving real word-timed providers (BetterLyrics, YouLyPlus) untouched.
+    - **Mathematical Syllable Estimator (`LrcParser.kt`):** Parses fractional timestamps, clamps singing duration to `min(nextStart - 80ms, start + maxSing)` (800..8000ms), and weights words by `(length + 2)` to distribute duration naturally.
+    - **Rendering & Badging:** Syllables feed into Accompanist `KaraokeLyricsView` via `buildSyncedLyrics`. Auto-prioritizes `WORD > LINE > PLAIN` and displays 'Estimated' badge on LINE results in `LyricsMenuProviders.kt`.
