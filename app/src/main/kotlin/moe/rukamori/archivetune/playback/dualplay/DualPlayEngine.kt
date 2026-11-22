@@ -38,6 +38,7 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import moe.rukamori.archivetune.playback.processor.AutoEqAudioProcessor
+import moe.rukamori.archivetune.playback.processor.EnhanceAudioProcessor
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -943,7 +944,7 @@ class DualPlayEngine(
             ) = DefaultAudioSink.Builder(context)
                 .setEnableFloatOutput(false)
                 .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
-                .setAudioProcessors(arrayOf(AutoEqAudioProcessor.instance, rightProcessor))
+                .setAudioProcessors(arrayOf(AutoEqAudioProcessor.instance, EnhanceAudioProcessor(), rightProcessor))
                 .build()
         }
 

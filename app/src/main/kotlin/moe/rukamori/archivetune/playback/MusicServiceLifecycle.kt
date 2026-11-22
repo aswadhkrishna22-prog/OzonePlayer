@@ -80,6 +80,11 @@ import moe.rukamori.archivetune.constants.SpatialAudioEnabledKey
 import moe.rukamori.archivetune.constants.SpatialAudioMidDbKey
 import moe.rukamori.archivetune.constants.SpatialAudioTrebleDbKey
 import moe.rukamori.archivetune.playback.processor.SpatialProcessor
+import moe.rukamori.archivetune.constants.EnhanceAudioAutoModeKey
+import moe.rukamori.archivetune.constants.EnhanceAudioEnabledKey
+import moe.rukamori.archivetune.constants.EnhanceAudioStrengthKey
+import moe.rukamori.archivetune.constants.EnhanceStrength
+import moe.rukamori.archivetune.playback.processor.EnhanceAudioProcessor
 import moe.rukamori.archivetune.constants.SmartTrimmerKey
 import moe.rukamori.archivetune.constants.StopMusicOnTaskClearKey
 import moe.rukamori.archivetune.constants.WakelockKey
@@ -488,6 +493,30 @@ class MusicServiceLifecycle(
             .map { it[SpatialAudioTrebleDbKey] ?: 0f }
             .distinctUntilChanged()
             .collectLatest(scope) { SpatialProcessor.instance.trebleDb = it }
+
+        delegate.dataStore.data
+            .map { it[EnhanceAudioEnabledKey] ?: false }
+            .distinctUntilChanged()
+            .collectLatest(scope) { EnhanceAudioProcessor.instance.enabled = it }
+
+        delegate.dataStore.data
+            .map { it[EnhanceAudioAutoModeKey] ?: false }
+            .distinctUntilChanged()
+            .collectLatest(scope) { EnhanceAudioProcessor.instance.autoMode = it }
+
+        delegate.dataStore.data
+            .map { it[EnhanceAudioStrengthKey] ?: EnhanceStrength.MEDIUM.name }
+            .distinctUntilChanged()
+            .collectLatest(scope) {
+                EnhanceAudioProcessor.instance.strength = runCatching {
+                    EnhanceStrength.valueOf(it)
+                }.getOrDefault(EnhanceStrength.MEDIUM)
+            }
+
+        moe.rukamori.archivetune.lowdata.LowDataManager.isLowDataModeActive
+            .collectLatest(scope) {
+                EnhanceAudioProcessor.isLowDataModeActive = it
+            }
 
         delegate.dataStore.data
             .map { it[PauseOnDeviceMuteKey] ?: false }

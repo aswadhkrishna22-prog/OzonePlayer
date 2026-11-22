@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import moe.rukamori.archivetune.playback.autoeq.AutoEqRepository
 import moe.rukamori.archivetune.playback.processor.AutoEqAudioProcessor
 import moe.rukamori.archivetune.playback.processor.SpatialProcessor
+import moe.rukamori.archivetune.playback.processor.EnhanceAudioProcessor
 
 data class AudioSourceTelemetry(
     val title: String = "",
@@ -36,6 +37,8 @@ data class AudioDspTelemetry(
     val spatialEnabled: Boolean = false,
     val dualPlayEnabled: Boolean = false,
     val dualPlayEar: String? = null,
+    val enhanceEnabled: Boolean = false,
+    val enhanceActive: Boolean = false,
 )
 
 data class AudioSinkTelemetry(
@@ -107,6 +110,7 @@ object PipelineTelemetry {
     ) {
         val autoEq = AutoEqAudioProcessor.instance
         val autoEqProfile = autoEq.profile
+        val enhance = EnhanceAudioProcessor.instance
 
         val current = _snapshot.value
         _snapshot.value = current.copy(
@@ -117,6 +121,8 @@ object PipelineTelemetry {
                 spatialEnabled = SpatialProcessor.globalEnabled,
                 dualPlayEnabled = dualPlayActive,
                 dualPlayEar = dualPlayEar,
+                enhanceEnabled = enhance.enabled,
+                enhanceActive = enhance.isEffectivelyActive,
             )
         )
     }

@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.stateIn
 import moe.rukamori.archivetune.db.MusicDatabase
 import moe.rukamori.archivetune.db.entities.codecLabel
 import moe.rukamori.archivetune.db.entities.formattedQuality
+import moe.rukamori.archivetune.db.entities.sourceBitrateKbps
 import moe.rukamori.archivetune.extensions.currentMetadata
 import moe.rukamori.archivetune.extensions.getCurrentQueueIndex
 import moe.rukamori.archivetune.extensions.getQueueWindows
@@ -295,6 +296,7 @@ class PlayerConnection(
         reason: Int,
     ) {
         measuredBitrateKbps.value = null
+        moe.rukamori.archivetune.playback.processor.EnhanceAudioProcessor.currentStreamBitrateKbps = 0
         audioFormat.value = null
         currentMediaItemIndex.value = player.currentMediaItemIndex
         currentWindowIndex.value = player.getCurrentQueueIndex()
@@ -432,6 +434,10 @@ class PlayerConnection(
         }
 
         if (foundMimeType != "UNKNOWN") {
+            if (foundBitrate > 0) {
+                val kbps = if (foundBitrate > 2000) (foundBitrate / 1000.0).roundToInt() else foundBitrate
+                moe.rukamori.archivetune.playback.processor.EnhanceAudioProcessor.currentStreamBitrateKbps = kbps
+            }
             updateFormatInfo(foundMimeType, foundBitrate, foundSampleRate)
         }
     }
@@ -458,6 +464,10 @@ class PlayerConnection(
         }
 
         if (foundMimeType != "UNKNOWN") {
+            if (foundBitrate > 0) {
+                val kbps = if (foundBitrate > 2000) (foundBitrate / 1000.0).roundToInt() else foundBitrate
+                moe.rukamori.archivetune.playback.processor.EnhanceAudioProcessor.currentStreamBitrateKbps = kbps
+            }
             updateFormatInfo(foundMimeType, foundBitrate, foundSampleRate)
         }
     }
@@ -516,6 +526,10 @@ class PlayerConnection(
                 }
 
                 measuredBitrateKbps.value = measuredKbps
+                val effKbps = measuredKbps ?: (foundBitrate.takeIf { it > 0 }?.let { if (it > 2000) (it / 1000.0).roundToInt() else it } ?: formatEntity?.sourceBitrateKbps() ?: 0)
+                if (effKbps > 0) {
+                    moe.rukamori.archivetune.playback.processor.EnhanceAudioProcessor.currentStreamBitrateKbps = effKbps
+                }
 
                 if (measuredKbps != null && measuredKbps > 0) {
                     audioFormat.value = "$foundMimeType | ~$measuredKbps kbps"
