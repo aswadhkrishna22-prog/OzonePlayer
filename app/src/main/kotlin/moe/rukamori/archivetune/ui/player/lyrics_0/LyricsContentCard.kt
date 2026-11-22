@@ -84,6 +84,12 @@ fun LyricsContentCard(
     val (showPlayerControls) = rememberPreference(ShowLyricsPlayerControlsKey, defaultValue = true)
 
     Box(modifier = modifier.fillMaxSize()) {
+        LyricsBackgroundLayers(
+            state = state,
+            isVisible = isVisible,
+            modifier = Modifier.fillMaxSize(),
+        )
+
         LyricsEnhanced(
             sliderPositionProvider = { null },
             lyricsSyncOffset = state.lyricsSyncOffset,

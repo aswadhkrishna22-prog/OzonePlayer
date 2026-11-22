@@ -218,6 +218,7 @@ object PlainPreferences {
         "lyricsAnimationStyle",
         "lyricsClick",
         "lyricsLineBlur",
+        "lyricsRainEffect",
         "lyricsLineSpacing",
         "lyricsProvider",
         "lyricsProviderOrder",

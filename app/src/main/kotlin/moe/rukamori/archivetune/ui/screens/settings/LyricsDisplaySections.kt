@@ -8,6 +8,7 @@
 
 package moe.rukamori.archivetune.ui.screens.settings
 
+import android.os.Build
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -183,6 +184,8 @@ internal fun LyricsDisplaySection(
     onLyricsScrollChange: (Boolean) -> Unit,
     lyricsLineBlur: Boolean,
     onLyricsLineBlurChange: (Boolean) -> Unit,
+    lyricsRainEffect: Boolean = true,
+    onLyricsRainEffectChange: (Boolean) -> Unit = {},
     lyricsTextSize: Float,
     lyricsLineSpacing: Float,
     onOpenTextSizeDialog: () -> Unit,
@@ -213,6 +216,22 @@ internal fun LyricsDisplaySection(
                 icon = { Icon(painterResource(R.drawable.lyrics), null) },
                 checked = lyricsLineBlur,
                 onCheckedChange = onLyricsLineBlurChange,
+            )
+        }
+
+        item {
+            val isSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+            SwitchPreference(
+                title = { Text(stringResource(R.string.lyrics_rain_effect)) },
+                description = if (!isSupported) {
+                    stringResource(R.string.lyrics_rain_effect_unsupported)
+                } else {
+                    stringResource(R.string.lyrics_rain_effect_desc)
+                },
+                icon = { Icon(painterResource(R.drawable.blur_on), null) },
+                checked = lyricsRainEffect && isSupported,
+                isEnabled = isSupported,
+                onCheckedChange = onLyricsRainEffectChange,
             )
         }
 

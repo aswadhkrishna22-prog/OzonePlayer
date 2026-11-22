@@ -511,6 +511,7 @@
     <string name="home_background_snow">Snow</string>
     <string name="home_background_space">Space</string>
     <string name="home_background_lava">Lava Lamp</string>
+    <string name="home_background_rain">Rain on Glass</string>
     <string name="home_background_parallax">Parallax</string>
     <string name="home_background_parallax_strength">Parallax strength</string>
     <string name="home_background_brightness">Brightness</string>
@@ -536,6 +537,9 @@
     <string name="haptics_desc">Enable haptic feedback on interactive elements</string>
     <string name="default_open_tab">Default open tab</string>
     <string name="lyrics_line_spacing">Lyrics line spacing</string>
+    <string name="lyrics_rain_effect">Rain on glass effect</string>
+    <string name="lyrics_rain_effect_desc">Animated rain droplets and mist on blurred album art</string>
+    <string name="lyrics_rain_effect_unsupported">Requires Android 13 or newer (falls back to static blur)</string>
     <string name="content">Content</string>
     <string name="action_logout">Log out</string>
     <string name="action_login">Log in</string>
