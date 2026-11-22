@@ -137,6 +137,9 @@ class MusicService :
     internal lateinit var losslessStreamResolver: moe.rukamori.archivetune.playback.resolvers.LosslessStreamResolver
 
     @Inject
+    internal lateinit var jioSaavnStreamResolver: moe.rukamori.archivetune.flaccore.streaming.JioSaavnStreamResolver
+
+    @Inject
     internal lateinit var loadWidgetInsightsUseCase: LoadWidgetInsightsUseCase
 
     @Inject

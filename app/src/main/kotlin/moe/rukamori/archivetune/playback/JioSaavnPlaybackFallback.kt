@@ -40,20 +40,37 @@ object JioSaavnPlaybackFallback {
     @Volatile private var lastFallbackMediaId: String? = null
     @Volatile private var lastFallbackTargetUrl: String? = null
 
-    fun isJioSaavnTrack(mediaItem: MediaItem?): Boolean {
-        if (mediaItem == null) return false
-        val id = mediaItem.mediaId
-        if (id.startsWith("jiosaavn_")) return true
-        val uriStr = mediaItem.localConfiguration?.uri?.toString().orEmpty()
-        return uriStr.contains("saavncdn.com")
+    fun isJioSaavnTrack(mediaItem: MediaItem?, error: PlaybackException? = null): Boolean {
+        if (mediaItem != null) {
+            val id = mediaItem.mediaId
+            if (id.startsWith("jiosaavn_")) return true
+            val uriStr = mediaItem.localConfiguration?.uri?.toString().orEmpty()
+            if (uriStr.contains("saavncdn.com")) return true
+        }
+        if (error != null) {
+            val msg = buildString {
+                append(error.message.orEmpty())
+                append(" ")
+                append(error.cause?.message.orEmpty())
+                append(" ")
+                append(error.cause?.cause?.message.orEmpty())
+            }
+            if (msg.contains("JioSaavn", ignoreCase = true) || msg.contains("saavn", ignoreCase = true)) {
+                return true
+            }
+        }
+        return false
     }
 
     fun isPrePlaybackSourceError(
         error: PlaybackException,
         currentPositionMs: Long,
     ): Boolean {
-        // Must be before the first audio is played
-        if (currentPositionMs > 1000L) return false
+        val msg = (error.message ?: "") + " " + (error.cause?.message ?: "") + " " + (error.cause?.cause?.message ?: "")
+        val isExplicitJioSaavnError = msg.contains("JioSaavn", ignoreCase = true) || msg.contains("saavn", ignoreCase = true)
+
+        // Must be before the first audio is played, unless it is an explicit JioSaavn stream failure
+        if (!isExplicitJioSaavnError && currentPositionMs > 1000L) return false
 
         val isBadHttpStatus = error.errorCode == PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS
         val isIoNetwork = error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
@@ -72,13 +89,12 @@ object JioSaavnPlaybackFallback {
             t = t.cause
         }
 
-        val msg = (error.message ?: "") + " " + (error.cause?.message ?: "")
         val isSourceError = msg.contains("Source error", ignoreCase = true) ||
             msg.contains("Video unavailable", ignoreCase = true) ||
             msg.contains("Response code: 404") ||
             msg.contains("Response code: 403")
 
-        return isBadHttpStatus || isHttpError || isSourceError || isUnspecifiedIo || isIoNetwork
+        return isBadHttpStatus || isHttpError || isSourceError || isUnspecifiedIo || isIoNetwork || isExplicitJioSaavnError
     }
 
     fun canFallback(mediaItem: MediaItem?): Boolean {

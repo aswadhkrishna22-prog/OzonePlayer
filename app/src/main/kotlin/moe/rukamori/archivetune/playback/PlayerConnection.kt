@@ -328,7 +328,8 @@ class PlayerConnection(
         if (playbackError != null) {
             val currentItem = player.currentMediaItem
             val currentPos = runCatching { player.currentPosition }.getOrDefault(0L)
-            if (JioSaavnPlaybackFallback.isJioSaavnTrack(currentItem) &&
+            val isJioSaavn = JioSaavnPlaybackFallback.isJioSaavnTrack(currentItem, playbackError)
+            if (isJioSaavn &&
                 JioSaavnPlaybackFallback.isPrePlaybackSourceError(playbackError, currentPos)
             ) {
                 val handled = JioSaavnPlaybackFallback.tryFallback(player, database, scope)
@@ -338,16 +339,26 @@ class PlayerConnection(
                 }
 
                 // If JioSaavn CDN fallback exhausted, seamlessly resolve via YouTube without error dialog
-                val title = currentItem?.mediaMetadata?.title?.toString()
-                val artist = currentItem?.mediaMetadata?.artist?.toString().orEmpty()
-                if (!title.isNullOrBlank()) {
-                    timber.log.Timber.tag("PlayerConnection").i("JioSaavn CDN failed; falling back to YouTube for '$title $artist'")
-                    scope.launch(Dispatchers.IO) {
+                var title = currentItem?.mediaMetadata?.title?.toString()
+                var artist = currentItem?.mediaMetadata?.artist?.toString().orEmpty()
+                val mediaId = currentItem?.mediaId.orEmpty()
+                timber.log.Timber.tag("PlayerConnection").i("JioSaavn CDN failed; falling back to YouTube for '$title $artist'")
+                scope.launch(Dispatchers.IO) {
+                    if (title.isNullOrBlank() && mediaId.isNotBlank()) {
+                        val dbSong = database.song(mediaId).firstOrNull()
+                        title = dbSong?.title
+                        artist = dbSong?.artists?.joinToString(", ") { it.name }.orEmpty()
+                    }
+                    if (!title.isNullOrBlank()) {
                         val query = "$title $artist".trim()
-                        val match = YouTube.search(query, YouTube.SearchFilter.FILTER_SONG).getOrNull()
-                            ?.items
-                            ?.filterIsInstance<moe.rukamori.archivetune.innertube.models.SongItem>()
-                            ?.firstOrNull()
+                        val match = runCatching {
+                            YouTube.search(query, YouTube.SearchFilter.FILTER_SONG).getOrNull()
+                                ?.items?.filterIsInstance<moe.rukamori.archivetune.innertube.models.SongItem>()?.firstOrNull()
+                                ?: YouTube.search(query, YouTube.SearchFilter.FILTER_VIDEO).getOrNull()
+                                    ?.items?.filterIsInstance<moe.rukamori.archivetune.innertube.models.SongItem>()?.firstOrNull()
+                                ?: YouTube.search(query, null).getOrNull()
+                                    ?.items?.filterIsInstance<moe.rukamori.archivetune.innertube.models.SongItem>()?.firstOrNull()
+                        }.getOrNull()
                         if (match != null) {
                             withContext(Dispatchers.Main) {
                                 playQueue(
@@ -357,10 +368,20 @@ class PlayerConnection(
                                     ),
                                 )
                             }
+                            return@launch
                         }
                     }
-                    return
+                    withContext(Dispatchers.Main) {
+                        if (player.hasNextMediaItem()) {
+                            player.seekToNextMediaItem()
+                            player.prepare()
+                            player.play()
+                        } else {
+                            dismissPlaybackError()
+                        }
+                    }
                 }
+                return
             }
 
             reportException(playbackError)

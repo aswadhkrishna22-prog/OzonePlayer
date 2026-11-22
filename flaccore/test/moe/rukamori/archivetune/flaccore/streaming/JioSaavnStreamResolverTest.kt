@@ -198,4 +198,12 @@ class JioSaavnStreamResolverTest {
         val blankResults = resolver.searchSongs("   ")
         assertTrue(blankResults.isEmpty())
     }
+
+    @Test
+    fun resolveById_emptyIdReturnsNull() = runTest {
+        assertNull(resolver.resolveById(""))
+        assertNull(resolver.resolveById("   "))
+        assertNull(resolver.fetchSongDetails(""))
+        assertNull(resolver.fetchSongDetails("   "))
+    }
 }

@@ -603,7 +603,7 @@ class TrendingRepository(
             if (!detailsRes.isSuccessful) return emptyList()
             val detailsBody = detailsRes.body?.string().orEmpty()
             val detailsRoot = json.parseToJsonElement(detailsBody) as? JsonObject ?: return emptyList()
-            val songsArray = detailsRoot["songs"] as? JsonArray ?: return emptyList()
+            val songsArray = (detailsRoot["list"] as? JsonArray) ?: (detailsRoot["songs"] as? JsonArray) ?: return emptyList()
 
             parseJioSaavnSongsJsonArray(songsArray)
         } catch (_: Exception) {
@@ -661,7 +661,8 @@ class TrendingRepository(
             val rawImage = obj["image"]?.toString()?.replace("\"", "")
             val image = normalizeToSquareHighResArtwork(rawImage)
             val duration = moreInfo?.get("duration")?.toString()?.replace("\"", "")?.toIntOrNull()
-            val encUrl = moreInfo?.get("encrypted_media_url")?.toString()?.replace("\"", "")
+            val encUrl = moreInfo?.get("encrypted_media_url")?.toString()?.replace("\"", "")?.takeIf { it.isNotBlank() && it != "null" }
+                ?: obj["encrypted_media_url"]?.toString()?.replace("\"", "")?.takeIf { it.isNotBlank() && it != "null" }
 
             if (id.isNotBlank() && title.isNotBlank()) {
                 TrendingTrack(
