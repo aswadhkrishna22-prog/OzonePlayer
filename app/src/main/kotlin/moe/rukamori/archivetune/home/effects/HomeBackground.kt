@@ -114,6 +114,14 @@ fun ScreenBackground(modifier: Modifier = Modifier, isVisible: Boolean = true) {
                     isVisible = true,
                 )
             }
+            HomeBackgroundStyle.RAIN -> {
+                RainBackground(
+                    parallaxEnabled = homeBackground.parallaxEnabled,
+                    parallaxSensitivity = homeBackground.parallaxSensitivity,
+                    brightness = homeBackground.brightness,
+                    isVisible = true,
+                )
+            }
         }
     }
 }

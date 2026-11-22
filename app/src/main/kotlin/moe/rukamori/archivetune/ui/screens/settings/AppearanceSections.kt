@@ -744,6 +744,7 @@ fun HomeBackgroundSelector(
                 HomeBackgroundStyle.SNOW -> stringResource(R.string.home_background_snow)
                 HomeBackgroundStyle.SPACE -> stringResource(R.string.home_background_space)
                 HomeBackgroundStyle.LAVA -> stringResource(R.string.home_background_lava)
+                HomeBackgroundStyle.RAIN -> stringResource(R.string.home_background_rain)
             }
         },
     )

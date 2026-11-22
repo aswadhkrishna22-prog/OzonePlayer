@@ -49,7 +49,10 @@ import kotlinx.coroutines.flow.StateFlow
 import moe.rukamori.archivetune.db.entities.LyricsEntity
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.constants.HomeBackgroundStyle
 import moe.rukamori.archivetune.constants.ShowLyricsPlayerControlsKey
+import moe.rukamori.archivetune.home.effects.LocalHomeBackgroundStyle
+import moe.rukamori.archivetune.home.effects.RainGlassLyricsOverlay
 import moe.rukamori.archivetune.ui.component.lyrics.LyricsEnhanced
 import moe.rukamori.archivetune.ui.player.player_0.PlayerSeekBar
 import moe.rukamori.archivetune.ui.player.player_0.buttons.PlayerAction
@@ -96,6 +99,15 @@ fun LyricsContentCard(
             lyricsOverride = lyricsOverride,
             modifier = Modifier.fillMaxSize(),
         )
+
+        val homeBackground = LocalHomeBackgroundStyle.current
+        if (homeBackground.style == HomeBackgroundStyle.RAIN && isVisible) {
+            RainGlassLyricsOverlay(
+                modifier = Modifier.fillMaxSize(),
+                brightness = homeBackground.brightness,
+                isVisible = isVisible,
+            )
+        }
 
         if (showPlayerControls) {
             val animatedAccentColor by animateColorAsState(

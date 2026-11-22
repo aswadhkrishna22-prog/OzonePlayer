@@ -656,6 +656,7 @@ enum class HomeBackgroundStyle {
     SNOW,
     SPACE,
     LAVA,
+    RAIN,
 }
 
 // Keys for customized background
