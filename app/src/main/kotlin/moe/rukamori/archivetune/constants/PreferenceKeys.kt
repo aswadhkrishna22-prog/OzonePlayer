@@ -899,3 +899,62 @@ val SpatialAudioDelayMsKey = floatPreferencesKey("spatial_audio_delay_ms")
 val SpatialAudioBassDbKey = floatPreferencesKey("spatial_audio_bass_db")
 val SpatialAudioMidDbKey = floatPreferencesKey("spatial_audio_mid_db")
 val SpatialAudioTrebleDbKey = floatPreferencesKey("spatial_audio_treble_db")
+
+// Low-quality audio enhance settings
+enum class EnhanceStrength(
+    val highCutFreqHz: Double,
+    val highCutGainDb: Double,
+    val lowBoostFreqHz: Double,
+    val lowBoostGainDb: Double,
+    val makeupGainDb: Double,
+    val thresholdDb: Double,
+    val ratio: Double,
+) {
+    LIGHT(
+        highCutFreqHz = 13000.0,
+        highCutGainDb = -3.0,
+        lowBoostFreqHz = 100.0,
+        lowBoostGainDb = 1.0,
+        makeupGainDb = 1.2,
+        thresholdDb = -18.0,
+        ratio = 1.5,
+    ),
+    MEDIUM(
+        highCutFreqHz = 12000.0,
+        highCutGainDb = -5.0,
+        lowBoostFreqHz = 90.0,
+        lowBoostGainDb = 2.0,
+        makeupGainDb = 2.2,
+        thresholdDb = -15.0,
+        ratio = 2.0,
+    ),
+    STRONG(
+        highCutFreqHz = 10500.0,
+        highCutGainDb = -7.0,
+        lowBoostFreqHz = 80.0,
+        lowBoostGainDb = 3.0,
+        makeupGainDb = 3.2,
+        thresholdDb = -12.0,
+        ratio = 2.5,
+    );
+
+    companion object {
+        fun fromIndex(index: Int): EnhanceStrength = when (index.coerceIn(0, 2)) {
+            0 -> LIGHT
+            1 -> MEDIUM
+            2 -> STRONG
+            else -> MEDIUM
+        }
+    }
+
+    fun toIndex(): Int = when (this) {
+        LIGHT -> 0
+        MEDIUM -> 1
+        STRONG -> 2
+    }
+}
+
+val EnhanceAudioEnabledKey = booleanPreferencesKey("enhance_audio_enabled")
+val EnhanceAudioAutoModeKey = booleanPreferencesKey("enhance_audio_auto_mode")
+val EnhanceAudioStrengthKey = stringPreferencesKey("enhance_audio_strength")
+

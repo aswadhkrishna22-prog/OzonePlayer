@@ -22,6 +22,10 @@ import moe.rukamori.archivetune.constants.CrossfadeEnabledKey
 import moe.rukamori.archivetune.constants.CrossfadeGaplessKey
 import moe.rukamori.archivetune.constants.DoubleTapSeekStepKey
 import moe.rukamori.archivetune.constants.DoubleTapToSeekKey
+import moe.rukamori.archivetune.constants.EnhanceAudioAutoModeKey
+import moe.rukamori.archivetune.constants.EnhanceAudioEnabledKey
+import moe.rukamori.archivetune.constants.EnhanceAudioStrengthKey
+import moe.rukamori.archivetune.constants.EnhanceStrength
 import moe.rukamori.archivetune.constants.DownloadLocationUriKey
 import moe.rukamori.archivetune.constants.EnableLosslessKey
 import moe.rukamori.archivetune.constants.FlacDownloadQualityKey
@@ -67,6 +71,9 @@ internal object PlayerContract {
     val QobuzAppId = QobuzAppIdKey
     val QobuzAppSecret = QobuzAppSecretKey
     val QobuzUserAuthToken = QobuzUserAuthTokenKey
+    val EnhanceAudioEnabled = EnhanceAudioEnabledKey
+    val EnhanceAudioAutoMode = EnhanceAudioAutoModeKey
+    val EnhanceAudioStrength = EnhanceAudioStrengthKey
 }
 
 @Immutable
@@ -100,6 +107,9 @@ data class PlayerSettingsUiState(
     val prefer320Kbps: Boolean = true,
     val doubleTapToSeek: Boolean = true,
     val doubleTapSeekStep: Int = 10,
+    val enhanceEnabled: Boolean = false,
+    val enhanceAutoMode: Boolean = false,
+    val enhanceStrength: EnhanceStrength = EnhanceStrength.MEDIUM,
 )
 
 @Immutable
@@ -138,6 +148,9 @@ data class PlayerSettingsUiActions(
     val onEqualizerClick: () -> Unit = {},
     val onSpatialAudioClick: () -> Unit = {},
     val onDualPlayClick: () -> Unit = {},
+    val onEnhanceEnabledChange: (Boolean) -> Unit = {},
+    val onEnhanceAutoModeChange: (Boolean) -> Unit = {},
+    val onEnhanceStrengthChange: (EnhanceStrength) -> Unit = {},
 )
 
 typealias PlayerSettingsActions = PlayerSettingsUiActions

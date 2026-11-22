@@ -117,3 +117,16 @@
 11. **Playlist Download Sheet Duplicate Song Key Collision Remediation:**
    - **Crash Remediation:** When long-pressing the download button in local/online playlists, `PlaylistDownloadSheet` rendered `LazyColumn` songs using `key = { it.id }`. If a playlist contained duplicate tracks (e.g. video ID `GTDJcvAcQAw` repeated), Compose threw `IllegalArgumentException: Key was already used`.
    - **Fix:** Switched `PlaylistDownloadSheet` to `itemsIndexed` with unique compound key `key = { index, song -> "${song.id}_$index" }`, deduplicated songs internally via `songs.distinctBy { it.id }` for accurate download size estimation and UI counts, and ensured all callers (`LocalPlaylistScreen`, `OnlinePlaylistScreen`, `AlbumScreen`) pass deduplicated download items to `DownloadUtil`.
+12. **Low-Quality Audio Enhancement (Enhance):**
+   - **Real DSP Audio Chain Integration:** `EnhanceAudioProcessor.kt` in `app/src/main/kotlin/moe/rukamori/archivetune/playback/processor/` plugged directly into ExoPlayer's `DefaultAudioSink` audio processor array in `PlayerEngineHolder.kt` and `DualPlayEngine.kt`.
+   - **DSP Pipeline:**
+     - High-shelf cut (10.5–13 kHz, -3 dB to -7 dB) via Transposed Direct Form II Biquads to attenuate hiss and codec fizz.
+     - Low-shelf boost (80–100 Hz, +1 dB to +3 dB) for acoustic body.
+     - Zero-latency dynamic feed-forward compressor with smooth envelope follower (10 ms attack, 100 ms release) and makeup gain (+1.2 dB to +3.2 dB) to enrich quiet, thin recordings.
+     - Hyperbolic tangent soft knee limiter for peaks > 0.9 to prevent digital clipping.
+   - **Latency & Bit-Identical Bypass:** 0 sample latency. When toggled off or inactive, bypasses cleanly via raw direct `ByteBuffer` transfer, ensuring 100% bit-identical pass-through. Live toggle responds immediately without pausing or restarting playback.
+   - **Settings & UI:** In Settings > Player and audio (`PlayerAudioSection.kt`):
+     - "Enhance" switch with subtitle: "Cleans up hiss and thin sound on low-quality songs. Cannot restore detail that is missing from the file."
+     - "Auto" mode option: automatically enables enhancement when current stream bitrate is below 160 kbps or Low Data mode is active, bypassing otherwise.
+     - "Strength" slider with Light / Medium / Strong discrete presets.
+     - Telemetry integration in `PipelineTelemetry.kt` and `SignalPathDialog.kt`.

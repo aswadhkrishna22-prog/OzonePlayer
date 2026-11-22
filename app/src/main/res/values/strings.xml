@@ -608,6 +608,14 @@
     <string name="enable_unison_lyrics">Enable Unison lyrics</string>
     <string name="enable_simpmusic_lyrics">Enable SimpMusic lyrics</string>
     <string name="player_and_audio">Player and audio</string>
+    <string name="enhance_audio_title">Enhance</string>
+    <string name="enhance_audio_desc">Cleans up hiss and thin sound on low-quality songs. Cannot restore detail that is missing from the file.</string>
+    <string name="enhance_auto_mode_title">Auto</string>
+    <string name="enhance_auto_mode_desc">Turn on when song is low bitrate (below 160 kbps) or Low Data mode is active</string>
+    <string name="enhance_strength_title">Strength</string>
+    <string name="enhance_strength_light">Light</string>
+    <string name="enhance_strength_medium">Medium</string>
+    <string name="enhance_strength_strong">Strong</string>
     <string name="settings_player_subtitle">Audio quality, crossfade, and equalizer</string>
     <string name="settings_section_account">Account &amp; Integrations</string>
     <string name="settings_section_appearance">Interface &amp; Appearance</string>
