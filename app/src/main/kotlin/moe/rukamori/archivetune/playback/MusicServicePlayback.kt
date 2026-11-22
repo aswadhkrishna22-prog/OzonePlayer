@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import moe.rukamori.archivetune.MainActivity
+import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.AutoSkipNextOnErrorKey
 import moe.rukamori.archivetune.constants.FlacQuality
 import moe.rukamori.archivetune.constants.PlaybackSource
@@ -120,7 +121,8 @@ internal fun MusicService.resolvePlaybackDataSpec(
             runCatching { jioSaavnStreamResolver.resolveById(mediaId) }.getOrNull()
         }
         if (directStream != null && directStream.url.isNotBlank()) {
-            val nominalBitrate = if (directStream.bitrateKbps > 0) directStream.bitrateKbps * 1000 else 160000
+            val streamBitrate = directStream.bitrateKbps ?: 160
+            val nominalBitrate = if (streamBitrate > 0) streamBitrate * 1000 else 160000
             scope.launch(Dispatchers.IO) {
                 val format = FormatEntity(
                     id = formatIdForSource(mediaId, PlaybackSource.FLAC),
@@ -146,7 +148,7 @@ internal fun MusicService.resolvePlaybackDataSpec(
                     codec = directStream.codec,
                     bitsPerSample = directStream.bitsPerSample,
                     sampleRateHz = directStream.sampleRateHz,
-                    bitrateKbps = directStream.bitrateKbps,
+                    bitrateKbps = streamBitrate,
                     origin = directStream.origin,
                 ),
             )
