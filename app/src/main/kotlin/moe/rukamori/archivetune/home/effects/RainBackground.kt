@@ -6,6 +6,7 @@
 
 package moe.rukamori.archivetune.home.effects
 
+import androidx.compose.animation.core.withInfiniteAnimationFrameMillis
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,10 +22,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.input.pointer.PointerPass
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -339,7 +341,7 @@ fun RainBackground(
                     Modifier.pointerInput(Unit) {
                         awaitPointerEventScope {
                             while (true) {
-                                val event = awaitPointerEvent(PointerPass.Initial)
+                                val event = awaitPointerEvent(PointerEventPass.Initial)
                                 val now = System.currentTimeMillis()
                                 for (change in event.changes) {
                                     if (change.pressed) {
@@ -424,7 +426,7 @@ fun RainGlassLyricsOverlay(
             .pointerInput(Unit) {
                 awaitPointerEventScope {
                     while (true) {
-                        val event = awaitPointerEvent(PointerPass.Initial)
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
                         val now = System.currentTimeMillis()
                         for (change in event.changes) {
                             if (change.pressed) {
