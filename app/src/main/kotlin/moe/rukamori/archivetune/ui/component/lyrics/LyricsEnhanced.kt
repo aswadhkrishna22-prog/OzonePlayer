@@ -100,7 +100,12 @@ fun LyricsEnhanced(
     val isSynced = remember(lyrics) { lyrics != null && (isLineSyncedLrc(lyrics) || isTtml(lyrics)) }
     val isTtmlFormat = remember(lyrics) { lyrics != null && isTtml(lyrics) }
 
-    val lyricsEntries: List<LyricsEntry> by produceState(initialValue = emptyList(), key1 = lyrics) {
+    val trackDurationMs = remember(mediaMetadata, player) {
+        val metaDuration = (mediaMetadata?.duration ?: 0) * 1000L
+        if (metaDuration > 0L) metaDuration else (player?.duration?.takeIf { it > 0L } ?: 0L)
+    }
+
+    val lyricsEntries: List<LyricsEntry> by produceState(initialValue = emptyList(), key1 = lyrics, key2 = trackDurationMs) {
         val raw = lyrics
         if (raw == null || raw == LYRICS_NOT_FOUND) {
             value = emptyList()
@@ -108,28 +113,32 @@ fun LyricsEnhanced(
             value =
                 withContext(Dispatchers.Default) {
                     when {
-                        isTtml(raw) -> parseTtml(raw)
-                        isLineSyncedLrc(raw) -> parseLyrics(raw)
+                        isTtml(raw) -> parseTtml(raw, (trackDurationMs / 1000).toInt())
+                        isLineSyncedLrc(raw) -> parseLyrics(raw, trackDurationMs)
                         else -> raw.lines().filter { it.isNotBlank() }.map { LyricsEntry(time = -1L, text = it.trim()) }
                     }
                 }
         }
     }
 
+    val isWordSynced = remember(lyricsEntries, isTtmlFormat) {
+        isTtmlFormat || lyricsEntries.any { it.words != null }
+    }
+
     var syncedLyrics by remember(lyricsSessionKey) { mutableStateOf(SyncedLyrics(emptyList())) }
     var syncedLyricsRenderVersion by remember(lyricsSessionKey) { mutableIntStateOf(0) }
 
-    LaunchedEffect(lyricsEntries, isTtmlFormat) {
+    LaunchedEffect(lyricsEntries, isWordSynced) {
         syncedLyrics = if (lyricsEntries.isEmpty()) {
             SyncedLyrics(emptyList())
         } else {
-            withContext(Dispatchers.Default) { buildSyncedLyrics(lyricsEntries, isTtmlFormat, emptyMap()) }
+            withContext(Dispatchers.Default) { buildSyncedLyrics(lyricsEntries, isWordSynced, emptyMap()) }
         }
     }
 
     LyricsRomanizationEffect(
         lyricsEntries = lyricsEntries,
-        isTtmlFormat = isTtmlFormat,
+        isTtmlFormat = isWordSynced,
         romanizationPreferences = styleState.romanizationPreferences,
         isReadyToParse = isReadyToParse,
         onEnrichedLyrics = { enriched ->
@@ -146,7 +155,7 @@ fun LyricsEnhanced(
             player = player,
             lyricsSessionKey = lyricsSessionKey,
             syncedLyrics = syncedLyrics,
-            isTtmlFormat = isTtmlFormat,
+            isTtmlFormat = isWordSynced,
             animationsDisabled = animationsDisabled,
             playbackSpeed = playbackParameters.speed,
             isReadyToParse = isReadyToParse,
@@ -178,7 +187,7 @@ fun LyricsEnhanced(
         syncedLyrics = syncedLyrics,
         lyricsSessionKey = lyricsSessionKey,
         isSynced = isSynced,
-        isTtmlFormat = isTtmlFormat,
+        isTtmlFormat = isWordSynced,
         isReadyToParse = isReadyToParse,
         isLyricsVisible = isLyricsVisible,
         isManualScrolling = timingState.isManualScrolling,

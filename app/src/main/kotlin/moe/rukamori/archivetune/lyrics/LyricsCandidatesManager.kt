@@ -81,10 +81,11 @@ object LyricsCandidatesManager {
 
         val syncKind = when {
             validLyrics == null -> LyricsSyncKind.NONE
-            LrcParser.hasWordSyncedLyrics(validLyrics) || LrcParser.isTtml(validLyrics) -> LyricsSyncKind.WORD
-            LrcParser.isLineSyncedLrc(validLyrics) -> LyricsSyncKind.LINE
-            LrcParser.hasMeaningfulLyricsContent(validLyrics) -> LyricsSyncKind.PLAIN
-            else -> LyricsSyncKind.NONE
+            else -> when (LrcParser.resolveSyncType(validLyrics, providerImpl.name)) {
+                LyricsSyncType.WORD -> LyricsSyncKind.WORD
+                LyricsSyncType.LINE -> LyricsSyncKind.LINE
+                LyricsSyncType.PLAIN -> if (LrcParser.hasMeaningfulLyricsContent(validLyrics)) LyricsSyncKind.PLAIN else LyricsSyncKind.NONE
+            }
         }
 
         return CandidateState(

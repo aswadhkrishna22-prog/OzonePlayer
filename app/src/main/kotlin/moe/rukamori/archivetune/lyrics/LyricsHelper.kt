@@ -225,7 +225,8 @@ class LyricsHelper
                                                 provider.getAllLyrics(
                                                     mediaId, songTitle, songArtists, songAlbum, duration,
                                                 ) { lyrics ->
-                                                    channel.trySend(IndexedLyrics(index, LyricsResult(provider.name, lyrics)))
+                                                    val syncType = LrcParser.resolveSyncType(lyrics, provider.name)
+                                                    channel.trySend(IndexedLyrics(index, LyricsResult(provider.name, lyrics, syncType)))
                                                 }
                                                 currentCoroutineContext().ensureActive()
                                                 true
@@ -250,7 +251,8 @@ class LyricsHelper
                             LrcParser.lyricsOrNotFound(result.result.lyrics)
                         }
                         if (normalized == LYRICS_NOT_FOUND) continue
-                        val entry = result.copy(result = result.result.copy(lyrics = normalized))
+                        val syncType = LrcParser.resolveSyncType(normalized, result.result.providerName)
+                        val entry = result.copy(result = result.result.copy(lyrics = normalized, syncType = syncType))
                         if (results.any { it.result == entry.result }) continue
                         results += entry
                         callback(entry.result)
@@ -266,7 +268,15 @@ class LyricsHelper
                         cache.put(
                             request,
                             CachedResults(
-                                results.sortedBy { it.index }.map { it.result },
+                                results.sortedWith(
+                                    compareByDescending<IndexedLyrics> {
+                                        when (it.result.syncType) {
+                                            LyricsSyncType.WORD -> 2
+                                            LyricsSyncType.LINE -> 1
+                                            LyricsSyncType.PLAIN -> 0
+                                        }
+                                    }.thenBy { it.index }
+                                ).map { it.result },
                                 SystemClock.elapsedRealtime() + SEARCH_CACHE_TTL_MS,
                             ),
                         )
@@ -285,7 +295,7 @@ class LyricsHelper
                     providerPermits.withPermit {
                         fetchProviderLyrics(provider, request)?.let { lyrics ->
                             withContext(Dispatchers.Default) {
-                                Candidate(index, lyrics, lyricsQuality(lyrics))
+                                Candidate(index, lyrics, lyricsQuality(lyrics, provider.name))
                             }
                         }
                     }
@@ -367,11 +377,12 @@ class LyricsHelper
                 null
             }
 
-        private fun lyricsQuality(lyrics: String): Int = when {
-            LrcParser.hasWordSyncedLyrics(lyrics) -> WORD_SYNCED_QUALITY
-            LrcParser.isTtml(lyrics) || LrcParser.isLineSyncedLrc(lyrics) -> 1
-            else -> 0
-        }
+        private fun lyricsQuality(lyrics: String, providerName: String? = null): Int =
+            when (LrcParser.resolveSyncType(lyrics, providerName)) {
+                LyricsSyncType.WORD -> WORD_SYNCED_QUALITY
+                LyricsSyncType.LINE -> 1
+                LyricsSyncType.PLAIN -> 0
+            }
 
         private fun logTimeout(provider: LyricsProvider) {
             GlobalLog.append(Log.WARN, "LyricsHelper", "Lyrics request timed out: ${provider.name}")
@@ -469,6 +480,7 @@ class LyricsHelper
 data class LyricsResult(
     val providerName: String,
     val lyrics: String,
+    val syncType: LyricsSyncType = LrcParser.resolveSyncType(lyrics, providerName),
 )
 
 object SharedLyricsEngine {

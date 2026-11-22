@@ -48,8 +48,8 @@ internal fun Double.toMilliseconds(): Int = (this * 1000.0).roundToInt().coerceA
 
 internal fun buildSyncedLyrics(
     entries: List<LyricsEntry>,
-    isTtml: Boolean,
-    romanizationMap: Map<Int, List<String?>>,
+    isTtml: Boolean = false,
+    romanizationMap: Map<Int, List<String?>> = emptyMap(),
 ): SyncedLyrics {
     if (entries.isEmpty()) return SyncedLyrics(emptyList())
     val safeEntries = if (entries.size > MAX_SYNCED_LYRICS_LINES) entries.take(MAX_SYNCED_LYRICS_LINES) else entries
@@ -63,7 +63,7 @@ internal fun buildSyncedLyrics(
 
         val boundedText = if (entry.text.length > MAX_LINE_CHARACTERS) entry.text.take(MAX_LINE_CHARACTERS) else entry.text
 
-        if (isTtml && entry.words != null) {
+        if (entry.words != null) {
             val translation = providedTranslationTextForEntry(entry)
             val mainWords = entry.words.filter { !it.isBackground }.let {
                 if (it.size > MAX_SYLLABLES_PER_LINE) it.take(MAX_SYLLABLES_PER_LINE) else it

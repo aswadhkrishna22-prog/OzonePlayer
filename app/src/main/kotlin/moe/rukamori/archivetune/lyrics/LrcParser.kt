@@ -10,11 +10,12 @@ import android.text.format.DateUtils
 import moe.rukamori.archivetune.betterlyrics.QRCParser
 import moe.rukamori.archivetune.betterlyrics.TTMLParser
 import moe.rukamori.archivetune.db.entities.LyricsEntity
+import moe.rukamori.archivetune.ui.component.toLyricsWrappingUnits
 
 @Suppress("RegExpRedundantEscape")
 object LrcParser {
-    val LINE_REGEX = Regex("""((\[\d{1,3}:\d{2}(?:[.:]\d{2,3})?\]\s*)+)(.*)""")
-    val TIME_REGEX = Regex("""\[(\d{1,3}):(\d{2})(?:[.:](\d{2,3}))?\]""")
+    val LINE_REGEX = Regex("""((\[\d{1,3}:\d{2}(?:[.:]\d+)?\]\s*)+)(.*)""")
+    val TIME_REGEX = Regex("""\[(\d{1,3}):(\d{2})(?:[.:](\d+))?\]""")
     private val WHITESPACE_REGEX = "\\s+".toRegex()
     private val ENHANCED_LRC_WORD_TIME_REGEX = Regex("""<\d{1,3}:\d{2}(?:[.:]\d{2,3})?>""")
     private val ENHANCED_LRC_WORD_TIME_CAPTURING_REGEX = Regex("""<(\d{1,3}):(\d{2})(?:[.:](\d{2,3}))?>""")
@@ -33,6 +34,22 @@ object LrcParser {
     private const val INSTRUMENTAL_GAP_THRESHOLD_MS = 5000L
     private const val INSTRUMENTAL_INTRO_START_MS = 1000L
     private const val INSTRUMENTAL_OUTRO_VOCAL_TAIL_MS = 2500L
+
+    fun resolveSyncType(lyrics: String, providerName: String? = null): LyricsSyncType {
+        val normalized = normalizeLyricsText(lyrics)
+        if (normalized.isBlank() || normalized == LyricsEntity.LYRICS_NOT_FOUND) {
+            return LyricsSyncType.PLAIN
+        }
+        val hasTimestamps = isLineSyncedLrc(normalized) || isTtml(normalized) || hasWordSyncedLyrics(normalized)
+        if (!hasTimestamps || providerName.equals("Unison", ignoreCase = true)) {
+            return LyricsSyncType.PLAIN
+        }
+        val hasRealWordTiming = isTtml(normalized) || hasWordSyncedLyrics(normalized)
+        if (hasRealWordTiming && (providerName == null || providerName.equals("BetterLyrics", ignoreCase = true) || providerName.equals("YouLyPlus", ignoreCase = true))) {
+            return LyricsSyncType.WORD
+        }
+        return LyricsSyncType.LINE
+    }
 
     fun isTtml(lyrics: String): Boolean {
         val trimmed = normalizeLyricsText(lyrics)
@@ -112,7 +129,11 @@ object LrcParser {
         return result
     }
 
-    fun parseLyrics(lyrics: String): List<LyricsEntry> {
+    fun parseLyrics(
+        lyrics: String,
+        trackDurationMs: Long = 0L,
+        estimateWordTimings: Boolean = true,
+    ): List<LyricsEntry> {
         val lines = lyrics.lines()
         val result = mutableListOf<LyricsEntry>()
 
@@ -122,8 +143,71 @@ object LrcParser {
                 result.addAll(entries)
             }
         }
-        val merged = mergeLineSyncedTranslations(result).sorted()
-        return merged
+        val nonBlank = result.filter { it.text.trim().isNotEmpty() }
+        val merged = mergeLineSyncedTranslations(nonBlank).sorted()
+
+        if (!estimateWordTimings || merged.isEmpty()) {
+            return merged
+        }
+
+        return estimateWordTimings(merged, trackDurationMs)
+    }
+
+    fun estimateWordTimings(
+        entries: List<LyricsEntry>,
+        trackDurationMs: Long = 0L,
+    ): List<LyricsEntry> {
+        if (entries.isEmpty()) return emptyList()
+
+        val validEntries = entries
+            .filter { it.time >= 0L && it.text.trim().isNotEmpty() }
+            .sortedBy { it.time }
+
+        if (validEntries.isEmpty()) return entries
+
+        return validEntries.mapIndexed { index, entry ->
+            if (entry.isInstrumental || entry.words != null) {
+                return@mapIndexed entry
+            }
+
+            val start = entry.time
+            val text = entry.text.trim()
+            val maxSing = (text.length * 120L).coerceIn(800L, 8000L)
+            val nextStart = validEntries.getOrNull(index + 1)?.time
+                ?: if (trackDurationMs > start) trackDurationMs else (start + maxSing + 80L)
+
+            val end = minOf(nextStart - 80L, start + maxSing).coerceAtLeast(start + 300L)
+
+            val words = text.toLyricsWrappingUnits().ifEmpty { listOf(text) }
+            val totalDuration = end - start
+            val totalWeight = words.sumOf { word ->
+                val len = word.trim().length.let { if (it > 0) it else word.length }.coerceAtLeast(1)
+                len + 2
+            }.coerceAtLeast(1)
+
+            var currentWordStartMs = start
+            val wordTimestamps = words.mapIndexed { wordIdx, word ->
+                val len = word.trim().length.let { if (it > 0) it else word.length }.coerceAtLeast(1)
+                val weight = len + 2
+                val wordEndMs = if (wordIdx == words.lastIndex) {
+                    end
+                } else {
+                    currentWordStartMs + (totalDuration * weight / totalWeight)
+                }
+                val wordTimestamp = WordTimestamp(
+                    text = word,
+                    startTime = currentWordStartMs / 1000.0,
+                    endTime = wordEndMs / 1000.0,
+                )
+                currentWordStartMs = wordEndMs
+                wordTimestamp
+            }
+
+            entry.copy(
+                words = wordTimestamps,
+                durationMs = end - start,
+            )
+        }
     }
 
     fun normalizeLyricsText(lyrics: String): String {
@@ -268,10 +352,10 @@ object LrcParser {
                 val min = timeMatchResult.groupValues[1].toLong()
                 val sec = timeMatchResult.groupValues[2].toLong()
                 val milString = timeMatchResult.groupValues[3]
-                var mil = milString.toLongOrNull() ?: 0L
-                when (milString.length) {
-                    1 -> mil *= 100
-                    2 -> mil *= 10
+                val mil = if (milString.isEmpty()) {
+                    0L
+                } else {
+                    milString.take(3).padEnd(3, '0').toLongOrNull() ?: 0L
                 }
                 val time = min * DateUtils.MINUTE_IN_MILLIS + sec * DateUtils.SECOND_IN_MILLIS + mil
                 LyricsEntry(time, text)
