@@ -98,7 +98,7 @@ internal fun Element.attribute(localName: String): String? {
     for (index in 0 until attributes.length) {
         val attribute = attributes.item(index) ?: continue
         val candidate = attribute.localName ?: attribute.nodeName.substringAfter(':')
-        if (candidate.equals(localName, ignoreCase = true)) {
+        if (candidate.equals(localName, ignoreCase = true) || attribute.nodeName.equals(localName, ignoreCase = true)) {
             return attribute.nodeValue?.trim()?.takeIf(String::isNotEmpty)
         }
     }
