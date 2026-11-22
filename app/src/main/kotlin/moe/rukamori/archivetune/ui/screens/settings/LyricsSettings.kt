@@ -102,6 +102,8 @@ fun LyricsSettings(
             deserializeLyricsProviderOrder(providerOrderStr)
         }
     val (lyricsLineBlur, onLyricsLineBlurChange) = rememberPreference(LyricsLineBlurKey, defaultValue = true)
+    val (lyricsRainEffect, onLyricsRainEffectChange) =
+        rememberPreference(LyricsContract.RainEffectKey, defaultValue = true)
     val (lyricsRomanizeJapanese, onLyricsRomanizeJapaneseChange) =
         rememberPreference(LyricsRomanizeJapaneseKey, defaultValue = true)
     val (lyricsRomanizeKorean, onLyricsRomanizeKoreanChange) =
@@ -182,6 +184,7 @@ fun LyricsSettings(
             lyricsClick = lyricsClick,
             lyricsScroll = lyricsScroll,
             lyricsLineBlur = lyricsLineBlur,
+            lyricsRainEffect = lyricsRainEffect,
             lyricsTextSize = lyricsTextSize,
             lyricsLineSpacing = lyricsLineSpacing,
             enableBetterLyrics = enableBetterLyrics,
@@ -211,6 +214,7 @@ fun LyricsSettings(
             onLyricsClickChange = onLyricsClickChange,
             onLyricsScrollChange = onLyricsScrollChange,
             onLyricsLineBlurChange = onLyricsLineBlurChange,
+            onLyricsRainEffectChange = onLyricsRainEffectChange,
             onLyricsTextSizeChange = onLyricsTextSizeChange,
             onLyricsLineSpacingChange = onLyricsLineSpacingChange,
             onOpenTextSizeDialog = { showLyricsTextSizeDialog = true },

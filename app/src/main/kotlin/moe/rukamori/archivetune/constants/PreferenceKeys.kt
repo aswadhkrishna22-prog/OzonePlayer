@@ -679,6 +679,7 @@ enum class LyricsAnimationStyle {
 val LyricsTextSizeKey = floatPreferencesKey("lyricsTextSize")
 val LyricsLineSpacingKey = floatPreferencesKey("lyricsLineSpacing")
 val LyricsLineBlurKey = booleanPreferencesKey("lyricsLineBlur")
+val LyricsRainEffectKey = booleanPreferencesKey("lyricsRainEffect")
 
 val TopSize = stringPreferencesKey("topSize")
 

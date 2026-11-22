@@ -150,10 +150,14 @@
       6. `MegalobizLyricsProvider`: Direct HTML parser extracting community-timed LRCs.
     - **UI & Reordering:** Full settings switches in Settings > Lyrics (`LyricsProvidersSections.kt`), draggable priority order dialog, and live candidate detection per provider in player 3-dot lyrics menu (`LyricsMenuProviders.kt` & `LyricsCandidatesManager.kt`).
     - **Security & Classification:** All 6 boolean keys strictly classified in `PlainPreferences.kt` to guarantee passing security test checks.
-16. **Ultra-Realistic Rain on Glass Background & Interactive Touch Wipe:**
-    - **Architecture & Physics (`RainBackground.kt`):** New `HomeBackgroundStyle.RAIN` providing a physics-based rain on window glass simulation for Home screen and Lyrics screen.
-    - **Droplet Coalescence & Trickling:** Active sliding drops experience stick-slip friction pauses, meandering path oscillation, and surface tension merging (absorbing static drops, gaining mass, expanding radius, and surging forward).
-    - **3D Optical Rendering:** Multi-layer Canvas rendering featuring dark meniscus refraction outlines, convex lens body gradients, pinpoint specular highlights at top-left, and caustic crescent glows at bottom-right.
-    - **Gyroscope Gravity Tilt:** Reuses `rememberParallaxState` to tilt droplet descent trajectory according to physical device tilt.
-    - **Interactive Touch Wipe:** Non-blocking pointer input tracking across the screen; dragging a finger clears water drops and mist along the touch trail, slowly re-condensing moisture over 6 seconds.
-    - **Misty Lyrics Integration (`RainGlassLyricsOverlay`):** Inactive lyrics (past lines and future lines) sit behind atmospheric foggy rainy glass, while the active singing lyric line shines with 100% clarity through a smooth focal aperture. Touch wipe on the lyrics screen clears condensation over inactive lines without interrupting scroll or click gestures.
+16. **Realistic Rain on Glass AGSL Shader Effect & Lyrics Background:**
+    - **AGSL Heartfelt Port (`LyricsBackgroundLayers.kt`):** High-fidelity AGSL port of Martijn Steinrucken's ("BigWIngs") renowned "Heartfelt" Shadertoy rain-on-glass shader applied via `RuntimeShader` + `RenderEffect.createRuntimeShaderEffect(shader, "uContent")`.
+    - **Isolated Background Layer:** Applied strictly to the blurred album-art background layer in `LyricsBackgroundLayers`. Never applied to lyrics text (`LyricsEnhanced`) or player controls, preserving pristine font clarity and touch responsiveness.
+    - **Optical Water Physics:** Realistic refracted droplets (inverting & sampling background content with normal offsets inside each drop), gravity-driven sliding droplets with stick-slip hesitation and winding paths, wet streak trails with remnant beads, high-density resting static droplets with evaporation breathing cycles, and directional specular crest highlights.
+    - **Atmospheric Mist/Fog:** Light atmospheric mist on glass that is procedurally wiped clean by sliding droplet wakes and droplets.
+    - **Performance Optimizations:**
+        1. **~30 FPS Frame Pacing:** State ticker throttled to ~33ms intervals, halving GPU invocation rate compared to 60/120Hz display refresh.
+        2. **Reduced Resolution Execution:** Background RenderNode measured and rendered at 0.5x resolution (1/4 total pixel count), scaled up by 2x with hardware bilinear filtering.
+        3. **Lifecycle-Aware Pausing:** Coroutine loop bound to `LocalLifecycleOwner.current.repeatOnLifecycle(Lifecycle.State.RESUMED)`, immediately halting when app is in the background or screen is turned off. Also stops when lyrics sheet is hidden (`!isVisible`).
+    - **Settings & Version Fallback:** Dedicated toggle in Settings > Lyrics (`LyricsRainEffectKey`, classified in `PlainPreferences.kt`). Automatically falls back to clean static blur on devices below Android 13 (API 33) or when the toggle / battery saver animations are disabled.
+    - **Home Background Simulation (`RainBackground.kt`):** Optional `HomeBackgroundStyle.RAIN` canvas effect for home screen.

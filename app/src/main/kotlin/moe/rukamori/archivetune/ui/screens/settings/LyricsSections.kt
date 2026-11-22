@@ -204,6 +204,8 @@ internal fun LyricsSettingsContent(
             onLyricsScrollChange = actions.onLyricsScrollChange,
             lyricsLineBlur = state.lyricsLineBlur,
             onLyricsLineBlurChange = actions.onLyricsLineBlurChange,
+            lyricsRainEffect = state.lyricsRainEffect,
+            onLyricsRainEffectChange = actions.onLyricsRainEffectChange,
             lyricsTextSize = state.lyricsTextSize,
             lyricsLineSpacing = state.lyricsLineSpacing,
             onOpenTextSizeDialog = actions.onOpenTextSizeDialog,

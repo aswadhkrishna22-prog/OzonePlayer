@@ -16,6 +16,7 @@ import moe.rukamori.archivetune.constants.EnableYouLyPlusLyricsKey
 import moe.rukamori.archivetune.constants.LyricsClickKey
 import moe.rukamori.archivetune.constants.LyricsLineBlurKey
 import moe.rukamori.archivetune.constants.LyricsLineSpacingKey
+import moe.rukamori.archivetune.constants.LyricsRainEffectKey
 import moe.rukamori.archivetune.constants.LyricsProviderOrderKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeChineseKey
 import moe.rukamori.archivetune.constants.LyricsRomanizeHindiKey
@@ -51,6 +52,7 @@ internal object LyricsContract {
     val SimpMusicKey = EnableSimpMusicLyricsKey
     val ProviderOrderKey = LyricsProviderOrderKey
     val LineBlurKey = LyricsLineBlurKey
+    val RainEffectKey = LyricsRainEffectKey
     val RomanizeJapaneseKey = LyricsRomanizeJapaneseKey
     val RomanizeKoreanKey = LyricsRomanizeKoreanKey
     val RomanizeChineseKey = LyricsRomanizeChineseKey
@@ -79,6 +81,7 @@ data class LyricsSettingsUiState(
     val lyricsClick: Boolean = true,
     val lyricsScroll: Boolean = true,
     val lyricsLineBlur: Boolean = true,
+    val lyricsRainEffect: Boolean = true,
     val lyricsTextSize: Float = LyricsContract.DEFAULT_TEXT_SIZE,
     val lyricsLineSpacing: Float = LyricsContract.DEFAULT_LINE_SPACING,
     val enableBetterLyrics: Boolean = true,
@@ -110,6 +113,7 @@ data class LyricsSettingsUiActions(
     val onLyricsClickChange: (Boolean) -> Unit = {},
     val onLyricsScrollChange: (Boolean) -> Unit = {},
     val onLyricsLineBlurChange: (Boolean) -> Unit = {},
+    val onLyricsRainEffectChange: (Boolean) -> Unit = {},
     val onLyricsTextSizeChange: (Float) -> Unit = {},
     val onLyricsLineSpacingChange: (Float) -> Unit = {},
     val onOpenTextSizeDialog: () -> Unit = {},
