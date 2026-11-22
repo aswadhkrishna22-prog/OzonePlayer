@@ -247,7 +247,7 @@ fun OnlinePlaylistScreen(
             PlaylistDownloadSheet(
                 title = playlist?.title.orEmpty(),
                 thumbnailUrl = playlist?.thumbnail,
-                songs = songs.map { it.toDownloadableSong() },
+                songs = songs.map { it.toDownloadableSong() }.distinctBy { it.id },
                 downloads = downloadUiState.downloads,
                 hasMoreSongs = viewModel.continuation != null,
                 onLoadMore = viewModel::loadMoreSongs,
@@ -257,7 +257,7 @@ fun OnlinePlaylistScreen(
                     downloadUiState.dismissed = false
                     sendAddMissingDownloads(
                         context = context,
-                        songs = selectedList.map { HeaderDownloadItem(id = it.id, title = it.title) },
+                        songs = selectedList.map { HeaderDownloadItem(id = it.id, title = it.title) }.distinctBy { it.id },
                         downloads = downloadUiState.downloads,
                     )
                     coroutineScope.launch {

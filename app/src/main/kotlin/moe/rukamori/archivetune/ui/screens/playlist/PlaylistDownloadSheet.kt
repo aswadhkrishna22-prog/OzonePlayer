@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -375,19 +376,22 @@ fun PlaylistDownloadSheet(
     var customSelectedIds by rememberSaveable { mutableStateOf(setOf<String>()) }
     var showStorageWarningDialog by remember { mutableStateOf(false) }
 
+    // Deduplicate songs by id to prevent duplicate download requests and ensure accurate storage estimation
+    val uniqueSongs = remember(songs) { songs.distinctBy { it.id } }
+
     // Partition downloadable songs
-    val eligibleSongs = remember(songs, downloads) {
-        songs.filter { song ->
+    val eligibleSongs = remember(uniqueSongs, downloads) {
+        uniqueSongs.filter { song ->
             downloads[song.id]?.state != Download.STATE_COMPLETED
         }
     }
 
-    val filteredSongs = remember(songs, searchQuery) {
+    val filteredSongs = remember(uniqueSongs, searchQuery) {
         if (searchQuery.isBlank()) {
-            songs
+            uniqueSongs
         } else {
             val q = searchQuery.trim().lowercase()
-            songs.filter {
+            uniqueSongs.filter {
                 it.title.lowercase().contains(q) || it.artistNames.lowercase().contains(q)
             }
         }
@@ -417,16 +421,16 @@ fun PlaylistDownloadSheet(
         }
     }
 
-    val selectedSongs = remember(songs, effectiveSelectedIds) {
-        songs.filter { it.id in effectiveSelectedIds }
+    val selectedSongs = remember(uniqueSongs, effectiveSelectedIds) {
+        uniqueSongs.filter { it.id in effectiveSelectedIds }
     }
 
     val estimate = remember(selectedSongs, effectiveBitrateBps) {
         PlaylistDownloadCalculator.calculateDownloadEstimate(selectedSongs, effectiveBitrateBps)
     }
 
-    val wholePlaylistEstimate = remember(songs, effectiveBitrateBps) {
-        PlaylistDownloadCalculator.calculateDownloadEstimate(songs, effectiveBitrateBps)
+    val wholePlaylistEstimate = remember(uniqueSongs, effectiveBitrateBps) {
+        PlaylistDownloadCalculator.calculateDownloadEstimate(uniqueSongs, effectiveBitrateBps)
     }
 
     val usableStorageBytes = remember {
@@ -507,16 +511,16 @@ fun PlaylistDownloadSheet(
         }
     }
 
-    val downloadedCount = remember(songs, downloads) {
-        songs.count { downloads[it.id]?.state == Download.STATE_COMPLETED }
+    val downloadedCount = remember(uniqueSongs, downloads) {
+        uniqueSongs.count { downloads[it.id]?.state == Download.STATE_COMPLETED }
     }
-    val unknownDurationCount = remember(songs) {
-        songs.count { it.durationSeconds <= 0 }
+    val unknownDurationCount = remember(uniqueSongs) {
+        uniqueSongs.count { it.durationSeconds <= 0 }
     }
 
-    val selectedStatusText = remember(selectedSongs.size, songs.size, downloadedCount, unknownDurationCount) {
+    val selectedStatusText = remember(selectedSongs.size, uniqueSongs.size, downloadedCount, unknownDurationCount) {
         buildString {
-            append("${selectedSongs.size} of ${songs.size} selected")
+            append("${selectedSongs.size} of ${uniqueSongs.size} selected")
             if (downloadedCount > 0) {
                 append(" ($downloadedCount already downloaded)")
             }
@@ -672,7 +676,7 @@ fun PlaylistDownloadSheet(
                             verticalArrangement = Arrangement.spacedBy(6.dp),
                         ) {
                             PlaylistChip(text = qualityChipText)
-                            PlaylistChip(text = stringResource(R.string.playlist_download_songs_count, songs.size))
+                            PlaylistChip(text = stringResource(R.string.playlist_download_songs_count, uniqueSongs.size))
                             PlaylistChip(text = totalDurationText)
                             PlaylistChip(text = stringResource(R.string.playlist_download_whole_estimate, wholePlaylistSizeText))
                         }
@@ -750,10 +754,10 @@ fun PlaylistDownloadSheet(
                                 .fillMaxWidth()
                                 .weight(1f, fill = false),
                         ) {
-                            items(
+                            itemsIndexed(
                                 items = filteredSongs,
-                                key = { it.id },
-                            ) { song ->
+                                key = { index, song -> "${song.id}_$index" },
+                            ) { _, song ->
                                 val isDownloaded = downloads[song.id]?.state == Download.STATE_COMPLETED
                                 val isSelected = song.id in effectiveSelectedIds
 

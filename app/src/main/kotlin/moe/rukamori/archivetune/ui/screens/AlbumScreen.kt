@@ -238,7 +238,7 @@ fun AlbumScreen(
             PlaylistDownloadSheet(
                 title = currentAlbum.album.title,
                 thumbnailUrl = currentAlbum.album.thumbnailUrl,
-                songs = currentAlbum.songs.map { it.toDownloadableSong() },
+                songs = currentAlbum.songs.map { it.toDownloadableSong() }.distinctBy { it.id },
                 downloads = downloadUiState.downloads,
                 hasMoreSongs = false,
                 onDismiss = { showDownloadSheet = false },
@@ -247,7 +247,7 @@ fun AlbumScreen(
                     downloadUiState.dismissed = false
                     sendAddMissingDownloads(
                         context = context,
-                        songs = selectedList.map { HeaderDownloadItem(id = it.id, title = it.title) },
+                        songs = selectedList.map { HeaderDownloadItem(id = it.id, title = it.title) }.distinctBy { it.id },
                         downloads = downloadUiState.downloads,
                     )
                 },
