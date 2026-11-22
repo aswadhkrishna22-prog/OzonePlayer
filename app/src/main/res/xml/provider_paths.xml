@@ -1,15 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Ozone Player (2026)
+  ~ Restrict FileProvider paths strictly to dedicated export directories.
+  ~ NEVER expose "." as root of files-path or cache-path, ensuring
+  ~ datastore/ (settings.preferences_pb and secure_settings.preferences_pb)
+  ~ can never be shared or accessed via FileProvider.
+  -->
 <paths>
-    <external-path
-        name="external_files"
-        path="." />
+    <!-- Scoped internal files: only local music artwork cache -->
     <files-path
-        name="files"
-        path="." />
+        name="local_artwork"
+        path="local_music_artwork/" />
+
+    <!-- Scoped cache paths: only explicit sharing and temporary update directories -->
     <cache-path
-        name="cache"
-        path="." />
-    <external-cache-path
-        name="external_cache"
-        path="." />
+        name="shared_crash_logs"
+        path="shared_crash_logs/" />
+    <cache-path
+        name="shared_logs"
+        path="shared_logs/" />
+    <cache-path
+        name="app_update"
+        path="app_update/" />
+    <cache-path
+        name="shared_images"
+        path="images/" />
 </paths>

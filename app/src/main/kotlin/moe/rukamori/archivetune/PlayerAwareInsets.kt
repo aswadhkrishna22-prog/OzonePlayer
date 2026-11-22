@@ -13,6 +13,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import moe.rukamori.archivetune.constants.AppBarHeight
+import moe.rukamori.archivetune.constants.FloatingToolbarHeight
 import moe.rukamori.archivetune.ui.PlayerViewModel
 import moe.rukamori.archivetune.ui.component.BottomSheetState
 import moe.rukamori.archivetune.ui.component.rememberBottomSheetState
@@ -23,6 +24,7 @@ fun rememberPlayerBottomSheetState(
     bottomInset: Dp,
     shouldShowNav: Boolean,
     useRail: Boolean,
+    navBarHeight: Dp = FloatingToolbarHeight,
 ): BottomSheetState =
     rememberBottomSheetState(
         dismissedBound = 0.dp,
@@ -30,6 +32,7 @@ fun rememberPlayerBottomSheetState(
             bottomInset = bottomInset,
             shouldShowNav = shouldShowNav,
             useRail = useRail,
+            navBarHeight = navBarHeight,
         ),
         expandedBound = maxHeight,
     )
@@ -42,6 +45,7 @@ fun rememberPlayerAwareWindowInsets(
     isMiniPlayerVisible: Boolean,
     floatingToolbarBottomPadding: Dp,
     windowsInsets: WindowInsets,
+    navBarHeight: Dp = FloatingToolbarHeight,
 ): WindowInsets =
     remember(
         useRail,
@@ -50,6 +54,7 @@ fun rememberPlayerAwareWindowInsets(
         isMiniPlayerVisible,
         floatingToolbarBottomPadding,
         windowsInsets,
+        navBarHeight,
     ) {
         val reservedBottom = PlayerDockGeometry.reservedBottomSpace(
             bottomInset = bottomInset,
@@ -57,6 +62,7 @@ fun rememberPlayerAwareWindowInsets(
             shouldShowNavigationBar = shouldShowNavigationBar,
             isMiniPlayerVisible = isMiniPlayerVisible,
             useRail = useRail,
+            navBarHeight = navBarHeight,
         )
         val horizontalSides = if (useRail) WindowInsetsSides.Right else WindowInsetsSides.Horizontal
 

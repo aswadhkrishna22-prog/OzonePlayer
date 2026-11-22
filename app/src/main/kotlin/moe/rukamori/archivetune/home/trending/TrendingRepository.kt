@@ -8,6 +8,8 @@ package moe.rukamori.archivetune.home.trending
 
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
@@ -19,6 +21,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import moe.rukamori.archivetune.constants.CountryCodeToName
+import moe.rukamori.archivetune.innertube.SearchFilter
 import moe.rukamori.archivetune.innertube.YouTube
 import moe.rukamori.archivetune.innertube.models.PlaylistItem
 import moe.rukamori.archivetune.innertube.models.SongItem
@@ -27,6 +30,7 @@ import moe.rukamori.archivetune.lowdata.LowDataManager
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
+import java.net.URLEncoder
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -107,12 +111,77 @@ class TrendingRepository(
         return regionCode to displayName
     }
 
-    suspend fun getYouTubeTrending(
+    fun getCachedHeroTrending(regionCode: String): List<TrendingTrack> {
+        val cacheFile = File(cacheDir, "hero_trending_${regionCode}.json")
+        val fallbackCacheFile = File(cacheDir, "hero_trending_latest.json")
+        val cached = readDiskCache(cacheFile) ?: readDiskCache(fallbackCacheFile)
+        return cached?.tracks?.map { it.toTrendingTrack() }.orEmpty()
+    }
+
+    suspend fun getHeroTrending(
         regionCode: String,
+        recentSongs: List<moe.rukamori.archivetune.db.entities.Song>,
+        searchQueries: List<String>,
         forceRefresh: Boolean = false,
     ): List<TrendingTrack> =
         withContext(Dispatchers.IO) {
-            val cacheFile = File(cacheDir, "yt_chart_${regionCode}.json")
+            val cacheFile = File(cacheDir, "hero_trending_${regionCode}.json")
+            val fallbackCacheFile = File(cacheDir, "hero_trending_latest.json")
+            val isLowData = LowDataManager.isLowDataModeActive.value
+            val now = System.currentTimeMillis()
+
+            val cached = readDiskCache(cacheFile) ?: readDiskCache(fallbackCacheFile)
+            val isCacheValid = cached != null && (now - cached.timestamp <= CHART_CACHE_TTL_MS)
+
+            if (!forceRefresh && cached != null && (isLowData || isCacheValid)) {
+                return@withContext cached.tracks.map { it.toTrendingTrack() }
+            }
+
+            // Separate trending source from YouTube Music charts and JioSaavn
+            val ytDeferred = async { runCatching { getYouTubeTrending(regionCode = regionCode, forceRefresh = forceRefresh) }.getOrDefault(emptyList()) }
+            val jioSaavnDeferred = async { runCatching { getJioSaavnTrending(regionCode = regionCode, forceRefresh = forceRefresh) }.getOrDefault(emptyList()) }
+
+            val ytTracks = ytDeferred.await()
+            val jioSaavnTracks = jioSaavnDeferred.await()
+
+            // Merge both trending sources into a combined pool
+            val combinedTracks = mutableListOf<TrendingTrack>()
+            val seenKeys = mutableSetOf<String>()
+            val maxLen = maxOf(ytTracks.size, jioSaavnTracks.size)
+            for (i in 0 until maxLen) {
+                if (i < ytTracks.size) {
+                    val t = ytTracks[i]
+                    val key = "${t.title.trim().lowercase(Locale.ROOT)}_${t.artist.trim().lowercase(Locale.ROOT)}"
+                    if (seenKeys.add(key)) combinedTracks.add(t)
+                }
+                if (i < jioSaavnTracks.size) {
+                    val t = jioSaavnTracks[i]
+                    val key = "${t.title.trim().lowercase(Locale.ROOT)}_${t.artist.trim().lowercase(Locale.ROOT)}"
+                    if (seenKeys.add(key)) combinedTracks.add(t)
+                }
+            }
+
+            if (combinedTracks.isNotEmpty()) {
+                val personalized = personalizeTracks(combinedTracks, recentSongs, searchQueries)
+                writeDiskCache(cacheFile, personalized)
+                writeDiskCache(fallbackCacheFile, personalized)
+                return@withContext personalized
+            }
+
+            // Fallback to cached if available
+            cached?.tracks?.map { it.toTrendingTrack() } ?: emptyList()
+        }
+
+    suspend fun getYouTubeTrending(
+        regionCode: String,
+        category: TrendingCategory = TrendingCategory.FOR_YOU,
+        detectedLanguage: String? = null,
+        forceRefresh: Boolean = false,
+    ): List<TrendingTrack> =
+        withContext(Dispatchers.IO) {
+            val langSlug = if (category == TrendingCategory.FOR_YOU) detectedLanguage?.lowercase(Locale.US)?.takeIf { it.isNotBlank() } ?: "" else ""
+            val cacheKey = "yt_${regionCode}_${category.id}${if (langSlug.isNotBlank()) "_$langSlug" else ""}.json"
+            val cacheFile = File(cacheDir, cacheKey)
             val isLowData = LowDataManager.isLowDataModeActive.value
             val now = System.currentTimeMillis()
 
@@ -124,8 +193,23 @@ class TrendingRepository(
                 return@withContext cached.tracks.map { it.toTrendingTrack() }
             }
 
-            // Fetch from YouTube
-            val freshTracks = fetchYouTubeTrendingFromNetwork(regionCode)
+            // Fetch from YouTube based on category
+            val freshTracks = when (category) {
+                TrendingCategory.GLOBAL -> fetchYouTubeTrendingFromNetwork(regionCode)
+                TrendingCategory.FOR_YOU -> {
+                    if (!detectedLanguage.isNullOrBlank()) {
+                        val searchTracks = fetchYouTubeTrendingByQuery("$detectedLanguage trending songs")
+                        if (searchTracks.isNotEmpty()) searchTracks else fetchYouTubeTrendingFromNetwork(regionCode)
+                    } else {
+                        fetchYouTubeTrendingFromNetwork(regionCode)
+                    }
+                }
+                else -> {
+                    val searchTracks = fetchYouTubeTrendingByQuery("${category.searchKeyword} trending songs")
+                    if (searchTracks.isNotEmpty()) searchTracks else fetchYouTubeTrendingFromNetwork(regionCode)
+                }
+            }
+
             if (freshTracks.isNotEmpty()) {
                 writeDiskCache(cacheFile, freshTracks)
                 return@withContext freshTracks
@@ -137,6 +221,7 @@ class TrendingRepository(
 
     suspend fun getAppleTrending(
         regionCode: String,
+        category: TrendingCategory = TrendingCategory.FOR_YOU,
         forceRefresh: Boolean = false,
     ): List<TrendingTrack> =
         withContext(Dispatchers.IO) {
@@ -162,10 +247,14 @@ class TrendingRepository(
 
     suspend fun getJioSaavnTrending(
         regionCode: String,
+        category: TrendingCategory = TrendingCategory.FOR_YOU,
+        detectedLanguage: String? = null,
         forceRefresh: Boolean = false,
     ): List<TrendingTrack> =
         withContext(Dispatchers.IO) {
-            val cacheFile = File(cacheDir, "jiosaavn_chart_${regionCode}.json")
+            val langSlug = if (category == TrendingCategory.FOR_YOU) detectedLanguage?.lowercase(Locale.US)?.takeIf { it.isNotBlank() } ?: "" else ""
+            val cacheKey = "jiosaavn_${regionCode}_${category.id}${if (langSlug.isNotBlank()) "_$langSlug" else ""}.json"
+            val cacheFile = File(cacheDir, cacheKey)
             val isLowData = LowDataManager.isLowDataModeActive.value
             val now = System.currentTimeMillis()
 
@@ -176,7 +265,20 @@ class TrendingRepository(
                 return@withContext cached.tracks.map { it.toTrendingTrack() }
             }
 
-            val freshTracks = fetchJioSaavnTrendingFromNetwork()
+            val freshTracks = when (category) {
+                TrendingCategory.GLOBAL -> fetchJioSaavnTrendingFromNetwork()
+                TrendingCategory.FOR_YOU -> {
+                    if (!detectedLanguage.isNullOrBlank()) {
+                        fetchJioSaavnTrendingSearch("$detectedLanguage trending songs")
+                    } else {
+                        fetchJioSaavnTrendingFromNetwork()
+                    }
+                }
+                else -> {
+                    fetchJioSaavnTrendingSearch("${category.searchKeyword} trending songs")
+                }
+            }
+
             if (freshTracks.isNotEmpty()) {
                 writeDiskCache(cacheFile, freshTracks)
                 return@withContext freshTracks
@@ -208,17 +310,106 @@ class TrendingRepository(
         return url
     }
 
+    fun detectUserTasteLanguage(
+        recentSongs: List<moe.rukamori.archivetune.db.entities.Song>,
+        allArtists: List<moe.rukamori.archivetune.db.entities.Artist>,
+        searchQueries: List<String>,
+    ): String? {
+        var malayalamScore = 0
+        var tamilScore = 0
+        var hindiScore = 0
+        var englishScore = 0
+
+        fun checkText(text: String, weight: Int = 3) {
+            for (ch in text) {
+                when (ch) {
+                    in '\u0D00'..'\u0D7F' -> malayalamScore += weight
+                    in '\u0B80'..'\u0BFF' -> tamilScore += weight
+                    in '\u0900'..'\u097F' -> hindiScore += weight
+                }
+            }
+        }
+
+        recentSongs.forEach { song ->
+            checkText(song.song.title, weight = 2)
+            song.artists.forEach { checkText(it.name, weight = 3) }
+        }
+        allArtists.forEach { checkText(it.artist.name, weight = 3) }
+        searchQueries.forEach { checkText(it, weight = 2) }
+
+        val allTextTokens = buildList {
+            addAll(recentSongs.map { it.song.title.lowercase(Locale.ROOT) })
+            addAll(recentSongs.flatMap { it.artists }.map { it.name.lowercase(Locale.ROOT) })
+            addAll(allArtists.map { it.artist.name.lowercase(Locale.ROOT) })
+            addAll(searchQueries.map { it.lowercase(Locale.ROOT) })
+        }
+
+        val malayalamKeywords = listOf(
+            "sushin", "hesham", "deepak dev", "shaan rahman", "yesudas", "chithra",
+            "mg sreekumar", "vineeth", "sithara", "job kurian", "harisankar", "rex vijayan",
+            "jassie gift", "vidyasagar", "mohanlal", "mammootty", "prithviraj", "malayalam",
+            "manjari", "sujatha", "alphons", "gopi sundar", "bijibal", "sharreth",
+            "stephen devassy", "dabzee", "fejo", "thirumaali", "neeraj madhav", "jakes bejoy",
+            "christo xavier", "vishnu vijay", "sanjeev t", "sooraj santhosh", "kallara", "pranavam"
+        )
+        val tamilKeywords = listOf(
+            "anirudh", "a.r. rahman", "ar rahman", "yuvan", "ilaiyaraaja", "ilayaraja",
+            "harris jayaraj", "sid sriram", "dhanush", "santhosh narayanan", "d. imman",
+            "gv prakash", "tamil", "vijay antony", "hiphop tamizha", "sam c.s.", "sean roldan",
+            "pradeep kumar", "dhibu ninan", "shweta mohan", "kollywood"
+        )
+        val hindiKeywords = listOf(
+            "arijit", "pritam", "badshah", "sachin-jigar", "shreya ghoshal", "vishal-shekhar",
+            "neha kakkar", "jubin nautiyal", "hindi", "bollywood", "kumar sanu", "alka yagnik",
+            "sonu nigam", "udit narayan", "atif aslam", "kk", "armaan malik", "darshan raval",
+            "jasleen royal", "amit trivedi", "yo yo honey singh"
+        )
+        val englishKeywords = listOf(
+            "taylor swift", "the weeknd", "ed sheeran", "billie eilish", "drake", "eminem",
+            "coldplay", "linkin park", "imagine dragons", "dua lipa", "post malone", "bruno mars",
+            "rock", "pop", "hip hop", "metal", "queen", "beatles", "metallica", "travis scott",
+            "kanye", "maroon 5", "charlie puth", "shawn mendes", "justin bieber", "kendrick lamar",
+            "rihanna", "adele", "lana del rey"
+        )
+
+        allTextTokens.forEach { token ->
+            if (malayalamKeywords.any { token.contains(it) }) malayalamScore += 5
+            if (tamilKeywords.any { token.contains(it) }) tamilScore += 5
+            if (hindiKeywords.any { token.contains(it) }) hindiScore += 5
+            if (englishKeywords.any { token.contains(it) }) englishScore += 4
+        }
+
+        val maxScore = maxOf(malayalamScore, tamilScore, hindiScore, englishScore)
+        return if (maxScore >= 4) {
+            when (maxScore) {
+                malayalamScore -> "Malayalam"
+                tamilScore -> "Tamil"
+                hindiScore -> "Hindi"
+                englishScore -> "English"
+                else -> null
+            }
+        } else {
+            null
+        }
+    }
+
     fun personalizeTracks(
         tracks: List<TrendingTrack>,
         recentSongs: List<moe.rukamori.archivetune.db.entities.Song>,
         searchQueries: List<String>,
+        allArtists: List<moe.rukamori.archivetune.db.entities.Artist> = emptyList(),
     ): List<TrendingTrack> {
         if (tracks.isEmpty()) return emptyList()
-        if (recentSongs.isEmpty() && searchQueries.isEmpty()) return tracks
+        if (recentSongs.isEmpty() && searchQueries.isEmpty() && allArtists.isEmpty()) return tracks
 
         val recentArtists = recentSongs
             .flatMap { it.artists }
             .map { it.name.trim().lowercase(Locale.ROOT) }
+            .filter { it.isNotBlank() }
+            .toSet()
+
+        val topArtistNames = allArtists
+            .map { it.artist.name.trim().lowercase(Locale.ROOT) }
             .filter { it.isNotBlank() }
             .toSet()
 
@@ -241,22 +432,27 @@ class TrendingRepository(
 
             var affinityBoost = 0.0
 
-            // 1. Artist match from recent listening history
+            // 1. Top artist match from library playtime
+            if (topArtistNames.any { top -> trackArtist.contains(top) || top.contains(trackArtist) }) {
+                affinityBoost += 0.80
+            }
+
+            // 2. Artist match from recent listening history
             if (recentArtists.any { recent -> trackArtist.contains(recent) || recent.contains(trackArtist) }) {
                 affinityBoost += 0.50
             }
 
-            // 2. Artist match from recent search history
+            // 3. Artist match from recent search history
             if (cleanQueries.any { query -> trackArtist.contains(query) || query.contains(trackArtist) }) {
                 affinityBoost += 0.40
             }
 
-            // 3. Title match from search history or recent songs
+            // 4. Title match from search history or recent songs
             if (cleanQueries.any { query -> trackTitle.contains(query) } || recentTitleTokens.contains(trackTitle)) {
                 affinityBoost += 0.30
             }
 
-            // 4. Regional language / genre keyword matches
+            // 5. Regional language / genre keyword matches
             val languageTokens = listOf("malayalam", "hindi", "tamil", "punjabi", "telugu", "kannada", "english", "rock", "pop", "hip hop", "rap", "edm", "lofi")
             val userInterestedLanguages = languageTokens.filter { lang ->
                 cleanQueries.any { it.contains(lang) }
@@ -415,9 +611,31 @@ class TrendingRepository(
         }
     }
 
-    private fun fetchJioSaavnTrendingSearch(): List<TrendingTrack> {
+    private suspend fun fetchYouTubeTrendingByQuery(query: String): List<TrendingTrack> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val searchResult = YouTube.search(query = query, filter = SearchFilter.FILTER_SONG).getOrNull()
+                val songItems = searchResult?.items?.filterIsInstance<SongItem>().orEmpty()
+                songItems.take(TOP_TRACKS_LIMIT).map { song ->
+                    TrendingTrack(
+                        id = song.id,
+                        title = song.title,
+                        artist = song.artists.joinToString(", ") { it.name },
+                        artworkUrl = normalizeToSquareHighResArtwork(song.thumbnail),
+                        durationSeconds = song.duration,
+                        isApple = false,
+                        isJioSaavn = false,
+                        explicit = song.explicit,
+                        youtubeSongItem = song,
+                    )
+                }
+            }.getOrDefault(emptyList())
+        }
+
+    private fun fetchJioSaavnTrendingSearch(query: String = "trending songs"): List<TrendingTrack> {
         return try {
-            val searchUrl = "https://www.jiosaavn.com/api.php?__call=search.getResults&_format=json&_marker=0&api_version=4&ctx=web6dot0&n=20&p=1&q=trending%20songs"
+            val encodedQuery = URLEncoder.encode(query, "UTF-8")
+            val searchUrl = "https://www.jiosaavn.com/api.php?__call=search.getResults&_format=json&_marker=0&api_version=4&ctx=web6dot0&n=20&p=1&q=$encodedQuery"
             val req = Request.Builder().url(searchUrl).header("User-Agent", "Mozilla/5.0").header("Accept", "application/json").build()
             val res = httpClient.newCall(req).execute()
             if (!res.isSuccessful) return emptyList()

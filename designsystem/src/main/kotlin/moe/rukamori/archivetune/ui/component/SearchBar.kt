@@ -10,6 +10,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
@@ -26,8 +27,10 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -91,6 +94,7 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.blur.HazeBlurStyle
 import dev.chrisbanes.haze.blur.HazeColorEffect
 import dev.chrisbanes.haze.blur.hazeBlur
+import com.kyant.backdrop.Backdrop
 import moe.rukamori.archivetune.constants.AppBarHeight
 import moe.rukamori.archivetune.designsystem.R
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
@@ -125,8 +129,10 @@ fun TopSearch(
     pureBlack: Boolean = false,
     blurRadius: Float = SettingsDimensions.BlurRadiusDefault,
     showBorder: Boolean = true,
+    glassBackdrop: Backdrop? = LocalGlassBackdrop.current,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val isDark = pureBlack || isSystemInDarkTheme()
     val animationProgress: Float by animateFloatAsState(
         targetValue = if (active) 1f else 0f,
         animationSpec = tween(durationMillis = AnimationDurationMillis),
@@ -172,18 +178,6 @@ fun TopSearch(
     }
 
     val containerColor = if (pureBlack) Color.Black else colors.containerColor
-    val fixedTintAlpha = if (pureBlack) SettingsDimensions.HazePureBlackTintAlpha else SettingsDimensions.HazeDefaultTintAlpha
-    val hazeStyle =
-        remember(containerColor, blurRadius, pureBlack) {
-            val tintEffect = HazeColorEffect.tint(containerColor.copy(alpha = fixedTintAlpha))
-            HazeBlurStyle {
-                backgroundColor(containerColor)
-                colorEffects(listOf(tintEffect))
-                fallbackColorEffect(tintEffect)
-                blurRadius(blurRadius.dp)
-                noiseFactor(SettingsDimensions.HazeNoiseFactor)
-            }
-        }
 
     BoxWithConstraints(
         modifier = modifier.offset { IntOffset(x = 0, y = 0) },
@@ -220,11 +214,55 @@ fun TopSearch(
 
         val borderFade = (1f - animationProgress).coerceIn(0f, 1f)
 
+        val glassModifier = when {
+            glassBackdrop != null && animationProgress < 0.5f -> {
+                Modifier.backdropLiquidGlass(
+                    backdrop = glassBackdrop,
+                    shape = animatedShape,
+                    isDark = isDark,
+                    interactive = false,
+                    lensDivisor = 8f,
+                    lensMaxRadiusDivisor = 3f,
+                    scrimAlpha = if (isDark) 0.18f else 0.10f,
+                )
+            }
+            animationProgress >= 0.5f -> {
+                val overlayBg = (if (pureBlack) Color.Black else MaterialTheme.colorScheme.background)
+                    .copy(alpha = if (pureBlack) 1f else 0.96f)
+                Modifier
+                    .background(overlayBg, animatedShape)
+                    .then(
+                        if (hazeState != null) {
+                            Modifier.hazeBlur(
+                                input = HazeInput.Sources(hazeState),
+                                style = HazeBlurStyle {
+                                    blurRadius(24.dp)
+                                    backgroundColor(Color.Transparent)
+                                },
+                                performanceMode = HazePerformanceMode.Fixed(SettingsDimensions.HazeQualityFraction),
+                            )
+                        } else Modifier
+                    )
+            }
+            else -> {
+                Modifier.liquidGlass(
+                    shape = animatedShape,
+                    hazeState = hazeState,
+                    pureBlack = pureBlack,
+                    preset = if (animationProgress > 0.5f) LiquidGlassPreset.Header else LiquidGlassPreset.Pill,
+                    blurRadius = androidx.compose.ui.unit.lerp(8.dp, 22.dp, animationProgress),
+                    tintAlpha = if (pureBlack) 0.50f else androidx.compose.ui.util.lerp(0.10f, 0.32f, animationProgress),
+                    showBorder = showBorder && borderFade > 0f,
+                    cornerRadiusDp = androidx.compose.ui.unit.lerp(SearchBarCornerRadius, 0.dp, animationProgress),
+                )
+            }
+        }
+
         Surface(
             shape = animatedShape,
             color = Color.Transparent,
             contentColor = contentColorFor(containerColor),
-            tonalElevation = if (hazeState != null) 0.dp else tonalElevation,
+            tonalElevation = 0.dp,
             modifier =
                 Modifier
                     .padding(
@@ -233,64 +271,80 @@ fun TopSearch(
                         end = endPadding,
                     )
                     .size(width = width, height = height)
-                    .clip(animatedShape)
-                    .then(
-                        if (hazeState != null) {
-                            Modifier.hazeBlur(
-                                input = HazeInput.Sources(hazeState),
-                                style = hazeStyle,
-                                performanceMode = HazePerformanceMode.Fixed(SettingsDimensions.HazeQualityFraction),
-                            )
-                        } else {
-                            Modifier.background(containerColor)
-                        },
-                    )
-                    .then(
-                        if (showBorder && hazeState != null && borderFade > 0f) {
-                            Modifier.glassStroke(
-                                shape = animatedShape,
-                                strokeWidth = SettingsDimensions.GlassBorderThickness,
-                                topAlpha = SettingsDimensions.GlassBorderTopAlpha * borderFade,
-                                bottomAlpha = SettingsDimensions.GlassBorderBottomAlpha * borderFade,
-                                topColor = Color.White,
-                                bottomColor = Color.Black,
-                            )
-                        } else {
-                            Modifier
-                        },
-                    ),
+                    .then(glassModifier),
         ) {
-            Column {
-                SearchBarInputField(
-                    query = query,
-                    onQueryChange = onQueryChange,
-                    onSearch = onSearch,
-                    active = active,
-                    onActiveChange = onActiveChange,
-                    modifier = Modifier.padding(animatedInputFieldPadding),
-                    enabled = enabled,
-                    placeholder = placeholder,
-                    leadingIcon = leadingIcon,
-                    trailingIcon = trailingIcon,
-                    colors =
-                        TextFieldDefaults.colors(
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            disabledContainerColor = Color.Transparent,
-                            cursorColor = MaterialTheme.colorScheme.primary,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                        ),
-                    interactionSource = interactionSource,
-                    focusRequester = focusRequester,
-                    leftFocusRequester = leftFocusRequester,
-                )
+            Column(modifier = Modifier.fillMaxSize()) {
+                val inputRowModifier = if (animationProgress >= 0.5f) {
+                    val inputCapsuleShape = RoundedCornerShape(28.dp)
+                    val inputGlass = if (glassBackdrop != null) {
+                        Modifier.backdropLiquidGlass(
+                            backdrop = glassBackdrop,
+                            shape = inputCapsuleShape,
+                            isDark = isDark,
+                            interactive = false,
+                            lensDivisor = 8f,
+                            lensMaxRadiusDivisor = 3f,
+                            scrimAlpha = if (isDark) 0.18f else 0.10f,
+                        )
+                    } else {
+                        Modifier.background(
+                            if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f),
+                            inputCapsuleShape,
+                        )
+                    }
+                    Modifier
+                        .padding(horizontal = 16.dp)
+                        .then(inputGlass)
+                        .clip(inputCapsuleShape)
+                } else {
+                    Modifier
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(animatedInputFieldPadding)
+                        .then(inputRowModifier),
+                ) {
+                    SearchBarInputField(
+                        query = query,
+                        onQueryChange = onQueryChange,
+                        onSearch = onSearch,
+                        active = active,
+                        onActiveChange = onActiveChange,
+                        enabled = enabled,
+                        placeholder = placeholder,
+                        leadingIcon = leadingIcon,
+                        trailingIcon = trailingIcon,
+                        colors =
+                            TextFieldDefaults.colors(
+                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                disabledContainerColor = Color.Transparent,
+                                cursorColor = MaterialTheme.colorScheme.primary,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                            ),
+                        interactionSource = interactionSource,
+                        focusRequester = focusRequester,
+                        leftFocusRequester = leftFocusRequester,
+                    )
+                }
 
                 if (animationProgress > 0) {
-                    Column(Modifier.alpha(animationProgress)) {
-                        content()
+                    Spacer(Modifier.height(12.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .imePadding()
+                            .alpha(animationProgress),
+                    ) {
+                        Column {
+                            content()
+                        }
                     }
                 }
             }
@@ -425,9 +479,9 @@ private fun TextRange.coerceInText(textLength: Int): TextRange =
     )
 
 // Measurement specs
-val InputFieldHeight = 48.dp
-private val SearchBarCornerRadius: Dp = InputFieldHeight / 2
+val InputFieldHeight = 56.dp
+private val SearchBarCornerRadius: Dp = 28.dp
 internal val SearchBarVerticalPadding: Dp = 8.dp
-internal val SearchBarHorizontalPadding: Dp = 12.dp
+internal val SearchBarHorizontalPadding: Dp = 16.dp
 val SearchBarIconOffsetX: Dp = 4.dp
 private const val AnimationDurationMillis: Int = 300

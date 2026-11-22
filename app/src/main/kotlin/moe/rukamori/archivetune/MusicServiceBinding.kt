@@ -36,7 +36,7 @@ class MusicServiceBinding(
                 }
                 isMusicServiceBound = true
                 if (service is MusicBinder) {
-                    val conn = PlayerConnection(activity, service, activity.database, activity.lifecycleScope)
+                    val conn = PlayerConnection(activity.applicationContext, service, activity.database, activity.lifecycleScope)
                     playerConnection = conn
                     activity.playerConnectionHolder.connection.value = conn
 
@@ -80,6 +80,13 @@ class MusicServiceBinding(
     }
 
     fun onDestroy() {
+        val conn = playerConnection
+        conn?.dispose()
+        playerConnection = null
+        if (activity.playerConnectionHolder.connection.value === conn) {
+            activity.playerConnectionHolder.connection.value = null
+        }
+
         val shouldStopOnTaskClear =
             if (!activity.isFinishing) {
                 false
@@ -88,10 +95,9 @@ class MusicServiceBinding(
             }
 
         if (shouldStopOnTaskClear) {
-            playerConnection?.service?.stopAndClearPlayback(clearPersistentState = true)
+            conn?.service?.stopAndClearPlayback(clearPersistentState = true)
             safeUnbindMusicService()
             activity.stopService(Intent(activity, MusicService::class.java))
-            playerConnection = null
         }
     }
 }

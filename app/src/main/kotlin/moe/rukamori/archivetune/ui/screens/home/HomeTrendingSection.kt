@@ -63,11 +63,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.GridThumbnailCornerRadius
+import moe.rukamori.archivetune.constants.PlaybackSource
+import moe.rukamori.archivetune.db.entities.FormatEntity
 import moe.rukamori.archivetune.extensions.toMediaItem
+import moe.rukamori.archivetune.flaccore.streaming.JioSaavnDecryptor
+import moe.rukamori.archivetune.flaccore.streaming.JioSaavnQualityCache
 import moe.rukamori.archivetune.home.HomeAction
+import moe.rukamori.archivetune.home.trending.TrendingCategory
 import moe.rukamori.archivetune.home.trending.TrendingRepository
 import moe.rukamori.archivetune.home.trending.TrendingResolutionResult
 import moe.rukamori.archivetune.home.trending.TrendingSource
@@ -78,6 +85,8 @@ import moe.rukamori.archivetune.innertube.models.SongItem
 import moe.rukamori.archivetune.innertube.models.WatchEndpoint
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.models.toMediaMetadata
+import moe.rukamori.archivetune.playback.formatIdForSource
+import moe.rukamori.archivetune.playback.queues.JioSaavnQueue
 import moe.rukamori.archivetune.playback.queues.ListQueue
 import moe.rukamori.archivetune.playback.queues.YouTubeQueue
 import moe.rukamori.archivetune.ui.component.GridItem
@@ -102,10 +111,22 @@ internal fun LazyListScope.homeTrendingSection(
     if (tracks.isEmpty() && !state.isLoading) return
 
     val headerTitle =
-        if (state.regionDisplayName.isNotBlank()) {
-            mediaContext.navController.context.getString(R.string.trending_in, state.regionDisplayName)
-        } else {
-            mediaContext.navController.context.getString(R.string.trending)
+        when (state.selectedCategory) {
+            TrendingCategory.FOR_YOU -> {
+                if (!state.detectedLanguage.isNullOrBlank()) {
+                    mediaContext.navController.context.getString(R.string.for_you_in, state.detectedLanguage)
+                } else {
+                    mediaContext.navController.context.getString(R.string.for_you)
+                }
+            }
+            TrendingCategory.GLOBAL -> {
+                if (state.regionDisplayName.isNotBlank()) {
+                    mediaContext.navController.context.getString(R.string.trending_in, state.regionDisplayName)
+                } else {
+                    mediaContext.navController.context.getString(R.string.top_charts)
+                }
+            }
+            else -> mediaContext.navController.context.getString(R.string.for_you_in, state.selectedCategory.title)
         }
 
     sectionSpacer("trending")
@@ -127,9 +148,14 @@ internal fun LazyListScope.homeTrendingSection(
         key = "home_trending_chips",
         contentType = "trending_chips",
     ) {
-        TrendingSourceChipsRow(
+        TrendingFiltersRow(
+            selectedCategory = state.selectedCategory,
             selectedSource = state.selectedSource,
             isAppleAvailable = state.isAppleAvailable,
+            isJioSaavnAvailable = state.isJioSaavnAvailable,
+            onCategorySelected = { category ->
+                mediaContext.onAction(HomeAction.SelectTrendingCategory(category))
+            },
             onSourceSelected = { source ->
                 mediaContext.onAction(HomeAction.SelectTrendingSource(source))
             },
@@ -154,48 +180,75 @@ internal fun LazyListScope.homeTrendingSection(
 }
 
 @Composable
-private fun TrendingSourceChipsRow(
+private fun TrendingFiltersRow(
+    selectedCategory: TrendingCategory,
     selectedSource: TrendingSource,
     isAppleAvailable: Boolean,
+    isJioSaavnAvailable: Boolean,
+    onCategorySelected: (TrendingCategory) -> Unit,
     onSourceSelected: (TrendingSource) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = LocalOzoneColors.current
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier =
             modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 4.dp),
     ) {
+        // Category / Language chips
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.horizontalScroll(rememberScrollState()),
         ) {
-            TrendingChip(
+            TrendingCategory.entries.forEach { category ->
+                val isSelected = category == selectedCategory
+                TrendingChip(
+                    text = category.title,
+                    isSelected = isSelected,
+                    leadingIcon = if (category == TrendingCategory.FOR_YOU) {
+                        {
+                            Icon(
+                                painter = painterResource(R.drawable.auto_awesome),
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else Color(0xFFFFB300),
+                            )
+                        }
+                    } else null,
+                    onClick = { onCategorySelected(category) },
+                )
+            }
+        }
+
+        // Source switcher pills
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+        ) {
+            TrendingSourceChip(
                 text = stringResource(R.string.youtube_music),
                 isSelected = selectedSource == TrendingSource.YOUTUBE,
                 onClick = { onSourceSelected(TrendingSource.YOUTUBE) },
             )
 
+            if (isJioSaavnAvailable) {
+                TrendingSourceChip(
+                    text = stringResource(R.string.jiosaavn),
+                    isSelected = selectedSource == TrendingSource.JIOSAAVN,
+                    onClick = { onSourceSelected(TrendingSource.JIOSAAVN) },
+                )
+            }
+
             if (isAppleAvailable) {
-                TrendingChip(
+                TrendingSourceChip(
                     text = stringResource(R.string.apple_music_top_songs),
                     isSelected = selectedSource == TrendingSource.APPLE,
                     onClick = { onSourceSelected(TrendingSource.APPLE) },
                 )
             }
-        }
-
-        if (selectedSource == TrendingSource.APPLE) {
-            Text(
-                text = stringResource(R.string.source_apple_music),
-                style = MaterialTheme.typography.labelSmall,
-                color = colors.textSecondary.copy(alpha = 0.8f),
-                modifier = Modifier.padding(start = 8.dp),
-            )
         }
     }
 }
@@ -204,6 +257,7 @@ private fun TrendingSourceChipsRow(
 private fun TrendingChip(
     text: String,
     isSelected: Boolean,
+    leadingIcon: @Composable (() -> Unit)? = null,
     onClick: () -> Unit,
 ) {
     val colors = LocalOzoneColors.current
@@ -232,12 +286,55 @@ private fun TrendingChip(
                 )
                 .ozoneClickable(pressedScale = 0.94f, onClick = onClick),
     ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+        ) {
+            leadingIcon?.invoke()
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = textColor,
+            )
+        }
+    }
+}
+
+@Composable
+private fun TrendingSourceChip(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    val colors = LocalOzoneColors.current
+    val bgColor =
+        if (isSelected) {
+            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f)
+        } else {
+            colors.glassBackground.copy(alpha = 0.5f)
+        }
+    val textColor =
+        if (isSelected) {
+            MaterialTheme.colorScheme.onSecondaryContainer
+        } else {
+            colors.textSecondary
+        }
+
+    Surface(
+        shape = CircleShape,
+        color = bgColor,
+        modifier =
+            Modifier
+                .ozoneClickable(pressedScale = 0.94f, onClick = onClick),
+    ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
             color = textColor,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
         )
     }
 }

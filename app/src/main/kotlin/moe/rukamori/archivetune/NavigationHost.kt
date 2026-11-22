@@ -23,6 +23,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
+import com.kyant.backdrop.Backdrop
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import moe.rukamori.archivetune.constants.UpdateChannel
@@ -58,6 +59,9 @@ fun NavigationHost(
     navigationItems: List<Screens> = remember(isTvDevice) {
         if (isTvDevice) Screens.TvMainScreens else Screens.MainScreens
     },
+    searchActive: Boolean = false,
+    glassBackdrop: Backdrop? = null,
+    pureBlack: Boolean = false,
     @Suppress("UNUSED_PARAMETER") updateChannel: UpdateChannel = defaultUpdateChannel,
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -190,6 +194,9 @@ fun NavigationHost(
             disableAnimations,
             homeScrollConnection = homeScrollConnection,
             searchScrollConnection = searchScrollConnection,
+            searchActive = searchActive,
+            glassBackdrop = glassBackdrop,
+            pureBlack = pureBlack,
         )
     }
 }

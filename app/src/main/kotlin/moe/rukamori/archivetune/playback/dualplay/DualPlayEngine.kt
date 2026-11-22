@@ -252,6 +252,9 @@ class DualPlayEngine(
             .setSpatializationBehavior(C.SPATIALIZATION_BEHAVIOR_NEVER)
             .build()
         service.localPlayer.setAudioAttributes(dualPlayAttrs, false)
+        (service.activeDeck.player as? ExoPlayer)?.let {
+            if (it !== service.localPlayer) it.setAudioAttributes(dualPlayAttrs, false)
+        }
 
         // ── 5. Activate channel-split mode ────────────────────────────────────
         DualPlayChannelState.mode  = ChannelMode.ACTIVE
@@ -269,6 +272,9 @@ class DualPlayEngine(
 
         // ── 9. Disable audio offload so processors are never bypassed ──────────
         service.localPlayer.setOffloadEnabled(false)
+        (service.activeDeck.player as? ExoPlayer)?.let {
+            if (it !== service.localPlayer) it.setOffloadEnabled(false)
+        }
         playerB?.setOffloadEnabled(false)
 
         _state.value = _state.value.copy(
@@ -303,6 +309,9 @@ class DualPlayEngine(
         // Restore Player A AudioAttributes
         val originalAttrs = savedAudioAttributesA ?: service.playbackAudioAttributes()
         service.localPlayer.setAudioAttributes(originalAttrs, false)
+        (service.activeDeck.player as? ExoPlayer)?.let {
+            if (it !== service.localPlayer) it.setAudioAttributes(originalAttrs, false)
+        }
         savedAudioAttributesA = null
 
         // Restore SpatialProcessor
@@ -384,7 +393,9 @@ class DualPlayEngine(
     fun seekA(posMs: Long) { service.player.seekTo(posMs) }
     fun setVolumeA(v: Float) {
         val clamped = v.coerceIn(0f, 1f)
-        service.localPlayer.volume = clamped
+        runCatching { service.player.volume = clamped }
+        runCatching { service.localPlayer.volume = clamped }
+        runCatching { (service.activeDeck.player as? ExoPlayer)?.volume = clamped }
         _state.value = _state.value.copy(volumeA = clamped)
     }
 

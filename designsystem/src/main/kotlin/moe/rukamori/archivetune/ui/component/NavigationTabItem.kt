@@ -1,23 +1,33 @@
 package moe.rukamori.archivetune.ui.component
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -27,18 +37,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import moe.rukamori.archivetune.ui.screens.Screens
 import moe.rukamori.archivetune.ui.theme.ozoneCombinedClickable
 
-import moe.rukamori.archivetune.constants.NavigationTabContentPaddingVertical
 import moe.rukamori.archivetune.constants.NavigationTabIconSize
-import moe.rukamori.archivetune.constants.NavigationTabLabelSize
-import moe.rukamori.archivetune.constants.NavigationTabLabelTopPadding
 import moe.rukamori.archivetune.constants.NavigationTabPressedScale
 import moe.rukamori.archivetune.constants.NavigationTabSelectorInitialScale
 import moe.rukamori.archivetune.constants.NavigationTabSelectorVisibleThreshold
@@ -79,16 +83,18 @@ internal fun RowScope.NavigationTabItem(
 
     val iconScale by animateFloatAsState(
         targetValue = if (selected) 1.06f else 0.94f,
-        animationSpec = androidx.compose.animation.core.spring(
+        animationSpec = spring(
             dampingRatio = 0.52f,
             stiffness = 380f,
         ),
         label = "IconScale",
     )
 
+    val itemWeight = if (selected) 1.85f else 1.0f
+
     Box(
         modifier = modifier
-            .weight(1f)
+            .weight(itemWeight)
             .fillMaxHeight()
             .padding(
                 horizontal = NavigationTabSlotPaddingHorizontal,
@@ -119,11 +125,11 @@ internal fun RowScope.NavigationTabItem(
             )
         }
 
-        // Accessible highlight pill behind the selected icon (text labels removed for modern aesthetic)
         Box(
             modifier = Modifier
-                .size(width = 56.dp, height = 32.dp)
-                .clip(RoundedCornerShape(16.dp))
+                .height(40.dp)
+                .wrapContentWidth()
+                .clip(RoundedCornerShape(20.dp))
                 .background(
                     if (selectionFactor > 0.05f) {
                         if (pureBlack) {
@@ -134,20 +140,47 @@ internal fun RowScope.NavigationTabItem(
                     } else {
                         Color.Transparent
                     }
-                ),
+                )
+                .padding(horizontal = if (selected) 12.dp else 8.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                painter = painterResource(if (selected) screen.iconIdActive else screen.iconIdInactive),
-                contentDescription = stringResource(screen.titleId),
-                tint = contentColor,
-                modifier = Modifier
-                    .size(NavigationTabIconSize)
-                    .graphicsLayer {
-                        scaleX = iconScale
-                        scaleY = iconScale
-                    },
-            )
+            Row(
+                modifier = Modifier.wrapContentSize(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                Icon(
+                    painter = painterResource(if (selected) screen.iconIdActive else screen.iconIdInactive),
+                    contentDescription = stringResource(screen.titleId),
+                    tint = contentColor,
+                    modifier = Modifier
+                        .size(NavigationTabIconSize)
+                        .graphicsLayer {
+                            scaleX = iconScale
+                            scaleY = iconScale
+                        },
+                )
+                AnimatedVisibility(
+                    visible = selected,
+                    enter = fadeIn(animationSpec = tween(150)) + expandHorizontally(
+                        animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f),
+                        expandFrom = Alignment.Start,
+                    ),
+                    exit = fadeOut(animationSpec = tween(100)) + shrinkHorizontally(
+                        animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f),
+                        shrinkTowards = Alignment.Start,
+                    ),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Spacer(Modifier.width(6.dp))
+                        StaggeredLetterReveal(
+                            text = stringResource(screen.titleId),
+                            tint = contentColor,
+                            captured = false,
+                        )
+                    }
+                }
+            }
         }
     }
 }

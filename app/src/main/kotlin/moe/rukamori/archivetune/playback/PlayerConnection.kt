@@ -55,6 +55,7 @@ class PlayerConnection(
     val database: MusicDatabase,
     val scope: CoroutineScope,
 ) : Player.Listener {
+    private val appContext = context.applicationContext
     val service = binder.service
     val player = service.player
     val localPlayer = service.localPlayer
@@ -75,8 +76,20 @@ class PlayerConnection(
         )
     val mediaMetadata = service.currentMediaMetadata
     val currentSong =
-        mediaMetadata.flatMapLatest {
-            database.song(it?.id)
+        mediaMetadata.flatMapLatest { metadata ->
+            if (metadata == null) {
+                kotlinx.coroutines.flow.flowOf(null)
+            } else {
+                val cleanSpotifyId = (metadata.spotifyTrackId ?: metadata.id)
+                    .removePrefix("spotify:track:")
+                    .removePrefix("spotify:")
+                    .takeIf { it.isNotBlank() }
+                database.songByMetadata(
+                    songId = metadata.id,
+                    spotifyId = cleanSpotifyId,
+                    isrc = metadata.isrc?.takeIf { it.isNotBlank() },
+                )
+            }
         }
     val currentLyrics =
         mediaMetadata.flatMapLatest { mediaMetadata ->

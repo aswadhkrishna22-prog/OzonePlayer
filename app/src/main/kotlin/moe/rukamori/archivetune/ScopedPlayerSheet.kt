@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.kyant.backdrop.Backdrop
 import dev.chrisbanes.haze.HazeState
 import moe.rukamori.archivetune.playback.PlayerConnection
 import moe.rukamori.archivetune.ui.PlayerViewModel
@@ -18,6 +19,8 @@ internal fun ScopedPlayerSheet(
     navController: NavController,
     bottomNavigationBarHeight: Dp,
     hazeState: HazeState?,
+    glassBackdrop: Backdrop? = null,
+    blurNavBar: Boolean = true,
     pureBlack: Boolean,
     blurRadius: Float,
     useRail: Boolean = false,
@@ -63,6 +66,8 @@ internal fun ScopedPlayerSheet(
         bottomBarHeight = bottomNavigationBarHeight,
         useRail = useRail,
         hazeState = hazeState,
+        glassBackdrop = glassBackdrop,
+        blurNavBar = blurNavBar,
         pureBlack = pureBlack,
         blurRadius = blurRadius,
         dropState = dropState,
