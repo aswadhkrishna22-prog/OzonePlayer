@@ -17,7 +17,6 @@ import moe.rukamori.archivetune.constants.RadioSourceJioSaavnKey
 import moe.rukamori.archivetune.constants.RadioSourceYouTubeKey
 import moe.rukamori.archivetune.db.MusicDatabase
 import moe.rukamori.archivetune.extensions.toMediaItem
-import moe.rukamori.archivetune.extensions.toMediaMetadata
 import moe.rukamori.archivetune.flaccore.model.TrackQuery
 import moe.rukamori.archivetune.flaccore.streaming.JioSaavnCandidate
 import moe.rukamori.archivetune.flaccore.streaming.JioSaavnStreamResolver
@@ -25,6 +24,7 @@ import moe.rukamori.archivetune.innertube.YouTube
 import moe.rukamori.archivetune.innertube.models.SongItem
 import moe.rukamori.archivetune.innertube.models.WatchEndpoint
 import moe.rukamori.archivetune.models.MediaMetadata
+import moe.rukamori.archivetune.models.toMediaMetadata
 import moe.rukamori.archivetune.utils.get
 import timber.log.Timber
 import java.util.Collections
@@ -156,8 +156,9 @@ class InfiniteRadioQueue(
                 )
                 if (similarity >= 35.0) {
                     jioSaavnStationId = jioSaavnResolver.createEntityStation(best.id)
-                    if (seedLanguage == null && !best.language.isNullOrBlank()) {
-                        seedLanguage = best.language.lowercase().trim()
+                    val bestLang = best.language
+                    if (seedLanguage == null && !bestLang.isNullOrBlank()) {
+                        seedLanguage = bestLang.lowercase().trim()
                     }
                 } else {
                     Timber.d("JioSaavn candidate '${best.title}' below similarity threshold ($similarity < 35.0)")
@@ -189,7 +190,7 @@ class InfiniteRadioQueue(
                     durA = seed.duration.toLong(),
                     titleB = candidate.title,
                     artistB = candidate.artists.joinToString(" ") { it.name },
-                    durB = candidate.duration.toLong(),
+                    durB = (candidate.duration ?: 0).toLong(),
                 )
                 if (similarity >= 35.0) {
                     matchedYtId = candidate.id
@@ -207,14 +208,16 @@ class InfiniteRadioQueue(
     }
 
     private suspend fun detectSeedLanguage(): String? {
-        if (seedCandidate != null && !seedCandidate.language.isNullOrBlank()) {
-            return seedCandidate.language.lowercase().trim()
+        val seedCandLang = seedCandidate?.language
+        if (!seedCandLang.isNullOrBlank()) {
+            return seedCandLang.lowercase().trim()
         }
 
         if (seed.id.startsWith("jiosaavn_")) {
             val candidate = jioSaavnResolver.fetchSongDetails(seed.id)
-            if (candidate != null && !candidate.language.isNullOrBlank()) {
-                return candidate.language.lowercase().trim()
+            val candidateLang = candidate?.language
+            if (!candidateLang.isNullOrBlank()) {
+                return candidateLang.lowercase().trim()
             }
         }
 
@@ -321,10 +324,11 @@ class InfiniteRadioQueue(
                         val artistStr = songItem.artists.joinToString(" ") { it.name }
                         if (isLanguageMismatch(null, songItem.title, artistStr, seedLanguage)) continue
                         if (isVariantOrCover(songItem.title, seed.title)) continue
-                        if (isDuplicate(songItem.title, artistStr, songItem.duration.toLong())) continue
+                        val durSec = (songItem.duration ?: 0).toLong()
+                        if (isDuplicate(songItem.title, artistStr, durSec)) continue
 
                         playedIds.add(songItem.id)
-                        recordTrackSignature(songItem.title, artistStr, songItem.duration.toLong())
+                        recordTrackSignature(songItem.title, artistStr, durSec)
 
                         val meta = songItem.toMediaMetadata()
                         database?.insert(meta)

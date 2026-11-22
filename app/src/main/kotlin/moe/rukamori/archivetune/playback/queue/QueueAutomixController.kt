@@ -131,12 +131,12 @@ internal class QueueAutomixController(
                 Timber.e(throwable, "Failed to start radio seamlessly")
             },
         ) {
+            val ds = effectiveDataStore
             val radioQueue =
                 InfiniteRadioQueue(
                     seed = currentMediaMetadata,
                     dataStore = ds,
                 )
-            val ds = effectiveDataStore
             val hideExplicit = ds?.get(HideExplicitKey, false) ?: false
             val hideVideo = ds?.get(HideVideoKey, false) ?: false
             val initialStatus =
