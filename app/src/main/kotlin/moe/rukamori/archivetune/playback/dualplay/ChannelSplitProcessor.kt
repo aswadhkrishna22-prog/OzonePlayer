@@ -13,21 +13,21 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 /**
- * One instance per ExoPlayer audio sink.  NEVER share between two sinks.
+ * One instance per ExoPlayer audio sink. NEVER share between two sinks.
  *
  * [assignedSide] identifies which Player this processor belongs to:
  *   [ProcessorSide.LEFT]  → Player A: reads [DualPlayChannelState.modeA]
  *   [ProcessorSide.RIGHT] → Player B: reads [DualPlayChannelState.modeB]
  *
  * [EarMode] controls per-processor routing:
- *   LEFT_ONLY  → L = mono-mix (L+R)/2, R = 0
- *   RIGHT_ONLY → L = 0, R = mono-mix (L+R)/2
- *   STEREO     → passthrough (Dual Play off or "M" selected)
+ *   LEFT_ONLY  → L = mono-mix, R = 0 (silence)
+ *   RIGHT_ONLY → L = 0 (silence), R = mono-mix
+ *   STEREO     → passthrough (or duplicate mono to both channels)
  *
- * Always in the sink chain; mode changes are instant (no seek/re-prepare needed).
+ * Output format is ALWAYS stereo (2 channels) for supported PCM encodings,
+ * guaranteeing clean channel separation even for mono (1-ch) or multichannel (>2-ch) sources.
  *
- * Supported encodings: PCM_16BIT and PCM_FLOAT. Others → [AudioFormat.NOT_SET]
- * (Media3 bypasses the processor transparently; debug banner is set).
+ * Mode changes are instant and dynamic (no seek/re-prepare needed).
  */
 @UnstableApi
 class ChannelSplitProcessor(
@@ -35,6 +35,7 @@ class ChannelSplitProcessor(
 ) : BaseAudioProcessor() {
 
     private var encoding = C.ENCODING_PCM_16BIT
+    private var inputChannels = 2
     private var lastLoggedMode: EarMode? = null
     private var lastRmsLogTime = 0L
     private var sumSqLeft = 0.0
@@ -47,20 +48,25 @@ class ChannelSplitProcessor(
         val enc = inputAudioFormat.encoding
         val ch  = inputAudioFormat.channelCount
         val sr  = inputAudioFormat.sampleRate
-        val supported =
-            (enc == C.ENCODING_PCM_16BIT || enc == C.ENCODING_PCM_FLOAT) && ch == 2
+
+        // Support any channel count >= 1 for PCM_16BIT and PCM_FLOAT.
+        // The output format is ALWAYS 2 channels (stereo) so channel isolation is preserved.
+        val supported = (enc == C.ENCODING_PCM_16BIT || enc == C.ENCODING_PCM_FLOAT) && ch >= 1
         val currentMode = when (assignedSide) {
             ProcessorSide.LEFT  -> DualPlayChannelState.modeA
             ProcessorSide.RIGHT -> DualPlayChannelState.modeB
         }
+
         return if (supported) {
             encoding = enc
+            inputChannels = ch
+            DualPlayChannelState.unsupportedFormatDescription = null
             val encName = if (enc == C.ENCODING_PCM_16BIT) "PCM_16BIT" else "PCM_FLOAT"
             Timber.tag(TAG).i(
-                "ChannelSplitProcessor[%s]: onConfigure reconfigure: encoding=%s ($enc), channels=%d, sampleRate=%d, mode=%s",
+                "ChannelSplitProcessor[%s]: onConfigure configured: encoding=%s ($enc), inputChannels=%d -> outputChannels=2, sampleRate=%d, mode=%s",
                 assignedSide, encName, ch, sr, currentMode,
             )
-            inputAudioFormat
+            AudioFormat(sr, 2, enc)
         } else {
             val desc = "encoding=$enc channelCount=$ch sampleRate=$sr (assignedSide=$assignedSide, mode=$currentMode)"
             Timber.tag(TAG).w(
@@ -87,6 +93,8 @@ class ChannelSplitProcessor(
         sumSqLeft = 0.0
         sumSqRight = 0.0
         sampleCount = 0L
+        inputChannels = 2
+        encoding = C.ENCODING_PCM_16BIT
         Timber.tag(TAG).d("ChannelSplitProcessor[%s]: onReset called", assignedSide)
     }
 
@@ -94,37 +102,27 @@ class ChannelSplitProcessor(
         val n = input.remaining()
         if (n == 0) return
 
-        // Global kill-switch: when Dual Play is OFF → passthrough for both processors.
-        if (DualPlayChannelState.mode == ChannelMode.OFF) {
-            passThrough(input)
-            return
-        }
-
-        // Read THIS processor's individual ear mode.
-        val earMode = when (assignedSide) {
-            ProcessorSide.LEFT  -> DualPlayChannelState.modeA
-            ProcessorSide.RIGHT -> DualPlayChannelState.modeB
+        val earMode = if (DualPlayChannelState.mode == ChannelMode.OFF) {
+            EarMode.STEREO
+        } else {
+            when (assignedSide) {
+                ProcessorSide.LEFT  -> DualPlayChannelState.modeA
+                ProcessorSide.RIGHT -> DualPlayChannelState.modeB
+            }
         }
 
         if (earMode != lastLoggedMode) {
             lastLoggedMode = earMode
             Timber.tag(TAG).i(
-                "ChannelSplitProcessor[%s]: earMode changed to %s (encoding=%d)",
-                assignedSide, earMode, encoding,
+                "ChannelSplitProcessor[%s]: earMode changed to %s (encoding=%d, inputChannels=%d)",
+                assignedSide, earMode, encoding, inputChannels,
             )
         }
 
-        if (earMode == EarMode.STEREO) {
-            passThrough(input)
-            return
-        }
-
-        val keepLeft = earMode == EarMode.LEFT_ONLY
-
         when (encoding) {
-            C.ENCODING_PCM_16BIT -> processShort(input, keepLeft = keepLeft)
-            C.ENCODING_PCM_FLOAT -> processFloat(input, keepLeft = keepLeft)
-            else                 -> passThrough(input)
+            C.ENCODING_PCM_16BIT -> processShort(input, earMode)
+            C.ENCODING_PCM_FLOAT -> processFloat(input, earMode)
+            else -> passThrough(input)
         }
     }
 
@@ -139,82 +137,209 @@ class ChannelSplitProcessor(
         out.flip()
     }
 
-    /** PCM 16-bit stereo interleaved: [L0_lo, L0_hi, R0_lo, R0_hi, …] */
-    private fun processShort(input: ByteBuffer, keepLeft: Boolean) {
-        val count = input.remaining()
-        if (count < 4) return
-        val frames = count / 4
+    /**
+     * Process 16-bit PCM input of [inputChannels] channels and output 2-channel stereo.
+     * Muted channel is guaranteed absolute digital silence (0).
+     */
+    private fun processShort(input: ByteBuffer, earMode: EarMode) {
+        val bytesPerFrame = inputChannels * 2
+        val frames = input.remaining() / bytesPerFrame
+        if (frames == 0) return
+
+        // Fast-path: stereo input and STEREO earMode -> direct copy
+        if (inputChannels == 2 && earMode == EarMode.STEREO) {
+            passThrough(input)
+            return
+        }
+
         val out = replaceOutputBuffer(frames * 4)
         out.order(ByteOrder.nativeOrder())
         val isDebug = moe.rukamori.archivetune.BuildConfig.DEBUG
-        while (input.remaining() >= 4) {
-            val l = input.short
-            val r = input.short
-            val mono = ((l.toInt() + r.toInt()) shr 1).toShort()
-            val outL: Short
-            val outR: Short
-            if (keepLeft) {
-                outL = mono
-                outR = 0
-            } else {
-                outL = 0
-                outR = mono
-            }
-            out.putShort(outL)
-            out.putShort(outR)
 
-            if (isDebug) {
-                val normL = outL.toDouble() / 32768.0
-                val normR = outR.toDouble() / 32768.0
-                sumSqLeft += normL * normL
-                sumSqRight += normR * normR
-                sampleCount++
+        when (inputChannels) {
+            1 -> {
+                // Mono input: expand to stereo with clean channel routing
+                for (i in 0 until frames) {
+                    val sample = input.short
+                    val outL: Short
+                    val outR: Short
+                    when (earMode) {
+                        EarMode.LEFT_ONLY  -> { outL = sample; outR = 0 }
+                        EarMode.RIGHT_ONLY -> { outL = 0; outR = sample }
+                        EarMode.STEREO     -> { outL = sample; outR = sample }
+                    }
+                    out.putShort(outL)
+                    out.putShort(outR)
+
+                    if (isDebug) {
+                        accumulateRms(outL.toDouble() / 32768.0, outR.toDouble() / 32768.0)
+                    }
+                }
+            }
+            2 -> {
+                // Stereo input: downmix to mono when routing to single ear, or passthrough
+                for (i in 0 until frames) {
+                    val l = input.short
+                    val r = input.short
+                    val outL: Short
+                    val outR: Short
+                    when (earMode) {
+                        EarMode.LEFT_ONLY -> {
+                            val mono = ((l.toInt() + r.toInt()) / 2).toShort()
+                            outL = mono
+                            outR = 0
+                        }
+                        EarMode.RIGHT_ONLY -> {
+                            val mono = ((l.toInt() + r.toInt()) / 2).toShort()
+                            outL = 0
+                            outR = mono
+                        }
+                        EarMode.STEREO -> {
+                            outL = l
+                            outR = r
+                        }
+                    }
+                    out.putShort(outL)
+                    out.putShort(outR)
+
+                    if (isDebug) {
+                        accumulateRms(outL.toDouble() / 32768.0, outR.toDouble() / 32768.0)
+                    }
+                }
+            }
+            else -> {
+                // Multichannel (>2 channels): downmix across all channels
+                for (i in 0 until frames) {
+                    var sum = 0
+                    for (ch in 0 until inputChannels) {
+                        sum += input.short.toInt()
+                    }
+                    val mono = (sum / inputChannels).coerceIn(-32768, 32767).toShort()
+                    val outL: Short
+                    val outR: Short
+                    when (earMode) {
+                        EarMode.LEFT_ONLY  -> { outL = mono; outR = 0 }
+                        EarMode.RIGHT_ONLY -> { outL = 0; outR = mono }
+                        EarMode.STEREO     -> { outL = mono; outR = mono }
+                    }
+                    out.putShort(outL)
+                    out.putShort(outR)
+
+                    if (isDebug) {
+                        accumulateRms(outL.toDouble() / 32768.0, outR.toDouble() / 32768.0)
+                    }
+                }
             }
         }
         out.flip()
 
         if (isDebug) {
-            maybeLogRms("PCM_16BIT", if (keepLeft) EarMode.LEFT_ONLY else EarMode.RIGHT_ONLY)
+            maybeLogRms("PCM_16BIT", earMode)
         }
     }
 
-    /** PCM float stereo interleaved: [L0_f32, R0_f32, …] range [-1, 1] */
-    private fun processFloat(input: ByteBuffer, keepLeft: Boolean) {
-        val count = input.remaining()
-        if (count < 8) return
-        val frames = count / 8
+    /**
+     * Process 32-bit float PCM input of [inputChannels] channels and output 2-channel stereo.
+     * Muted channel is guaranteed absolute digital silence (0.0f).
+     */
+    private fun processFloat(input: ByteBuffer, earMode: EarMode) {
+        val bytesPerFrame = inputChannels * 4
+        val frames = input.remaining() / bytesPerFrame
+        if (frames == 0) return
+
+        // Fast-path: stereo input and STEREO earMode -> direct copy
+        if (inputChannels == 2 && earMode == EarMode.STEREO) {
+            passThrough(input)
+            return
+        }
+
         val out = replaceOutputBuffer(frames * 8)
         out.order(ByteOrder.nativeOrder())
         val isDebug = moe.rukamori.archivetune.BuildConfig.DEBUG
-        while (input.remaining() >= 8) {
-            val l = input.float
-            val r = input.float
-            val mono = (l + r) * 0.5f
-            val outL: Float
-            val outR: Float
-            if (keepLeft) {
-                outL = mono
-                outR = 0f
-            } else {
-                outL = 0f
-                outR = mono
-            }
-            out.putFloat(outL)
-            out.putFloat(outR)
 
-            if (isDebug) {
-                val normL = outL.toDouble()
-                val normR = outR.toDouble()
-                sumSqLeft += normL * normL
-                sumSqRight += normR * normR
-                sampleCount++
+        when (inputChannels) {
+            1 -> {
+                for (i in 0 until frames) {
+                    val sample = input.float
+                    val outL: Float
+                    val outR: Float
+                    when (earMode) {
+                        EarMode.LEFT_ONLY  -> { outL = sample; outR = 0f }
+                        EarMode.RIGHT_ONLY -> { outL = 0f; outR = sample }
+                        EarMode.STEREO     -> { outL = sample; outR = sample }
+                    }
+                    out.putFloat(outL)
+                    out.putFloat(outR)
+
+                    if (isDebug) {
+                        accumulateRms(outL.toDouble(), outR.toDouble())
+                    }
+                }
+            }
+            2 -> {
+                for (i in 0 until frames) {
+                    val l = input.float
+                    val r = input.float
+                    val outL: Float
+                    val outR: Float
+                    when (earMode) {
+                        EarMode.LEFT_ONLY -> {
+                            val mono = (l + r) * 0.5f
+                            outL = mono
+                            outR = 0f
+                        }
+                        EarMode.RIGHT_ONLY -> {
+                            val mono = (l + r) * 0.5f
+                            outL = 0f
+                            outR = mono
+                        }
+                        EarMode.STEREO -> {
+                            outL = l
+                            outR = r
+                        }
+                    }
+                    out.putFloat(outL)
+                    out.putFloat(outR)
+
+                    if (isDebug) {
+                        accumulateRms(outL.toDouble(), outR.toDouble())
+                    }
+                }
+            }
+            else -> {
+                for (i in 0 until frames) {
+                    var sum = 0f
+                    for (ch in 0 until inputChannels) {
+                        sum += input.float
+                    }
+                    val mono = (sum / inputChannels).coerceIn(-1f, 1f)
+                    val outL: Float
+                    val outR: Float
+                    when (earMode) {
+                        EarMode.LEFT_ONLY  -> { outL = mono; outR = 0f }
+                        EarMode.RIGHT_ONLY -> { outL = 0f; outR = mono }
+                        EarMode.STEREO     -> { outL = mono; outR = mono }
+                    }
+                    out.putFloat(outL)
+                    out.putFloat(outR)
+
+                    if (isDebug) {
+                        accumulateRms(outL.toDouble(), outR.toDouble())
+                    }
+                }
             }
         }
         out.flip()
 
         if (isDebug) {
-            maybeLogRms("PCM_FLOAT", if (keepLeft) EarMode.LEFT_ONLY else EarMode.RIGHT_ONLY)
+            maybeLogRms("PCM_FLOAT", earMode)
         }
+    }
+
+    private fun accumulateRms(normL: Double, normR: Double) {
+        sumSqLeft += normL * normL
+        sumSqRight += normR * normR
+        sampleCount++
     }
 
     private fun maybeLogRms(encName: String, mode: EarMode) {

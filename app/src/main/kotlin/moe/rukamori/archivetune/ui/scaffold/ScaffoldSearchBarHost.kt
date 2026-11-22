@@ -35,6 +35,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.util.fastAny
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
+import com.kyant.backdrop.Backdrop
 import dev.chrisbanes.haze.HazeState
 import moe.rukamori.archivetune.OnlineSearchSortMenu
 import moe.rukamori.archivetune.R
@@ -58,6 +59,7 @@ fun ScaffoldSearchBarHost(
     pureBlack: Boolean,
     blurRadius: Float,
     modifier: Modifier = Modifier,
+    glassBackdrop: Backdrop? = null,
 ) {
     val voiceSearchLauncher = rememberVoiceSearchLauncher(searchState)
     val (onlineSearchViewModel, onlineSearchSortState) = rememberOnlineSearchSort(navBackStackEntry)
@@ -190,6 +192,7 @@ fun ScaffoldSearchBarHost(
             hazeState = searchHazeState,
             pureBlack = pureBlack,
             blurRadius = blurRadius,
+            glassBackdrop = glassBackdrop,
         ) {
             ScaffoldSearchResults(
                 searchSource = searchState.searchSource,

@@ -11,7 +11,7 @@ All translations are managed exclusively via **Hosted Weblate**. Please do not o
 - When reporting a playback or metadata bug, please attach your Android version, device model, and Logcat output if possible.
 
 ## 💻 Code Contributions
-1. Fork the repo and create your branch from `main` (e.g. `feat/new-audio-effect` or `fix/lyrics-timeout`).
+1. Fork the repo and create your branch from `dev` (e.g. `feat/new-audio-effect` or `fix/lyrics-timeout`).
 2. Adhere to our architectural rules (Compose, UDF, 19-module boundaries — there are no `:feature:*` or `:service:*` modules). See [Architecture Docs](docs/architecture/ARCHITECTURE.md), [Modules](docs/architecture/MODULES.md), and [Ozone Rules](docs/development/OZONE_RULES.md).
 3. Follow the [Coding Standard](docs/development/CODING_STANDARD.md) (naming, mappers, Flow collection).
 4. Keep `docs/` in sync when your change affects architecture, modules, or workflows.

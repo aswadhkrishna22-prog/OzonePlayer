@@ -1,6 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="playback_source">Source</string>
+    <string name="custom_app_icon">Custom app icon</string>
+    <string name="app_icon_delay_note">The launcher may take a few seconds to update the icon.</string>
     <string name="source_yt_music">YT Music</string>
     <string name="source_flac">FLAC</string>
 <string name="flac_quality_cd">CD (16-bit/44.1 kHz)</string>
@@ -551,13 +553,22 @@
     <string name="playback_error_cause">Cause</string>
     <string name="content_language">Default content language</string>
     <string name="content_country">Default content country</string>
-    <string name="show_trending_on_home">Show trending on Home</string>
-    <string name="show_trending_on_home_summary">Show top trending songs section on the Home screen</string>
+    <string name="show_trending_on_home">Show \"For You\" on Home</string>
+    <string name="show_trending_on_home_summary">Show personalized trending and recommended songs on the Home screen</string>
     <string name="trending_region">Trending region</string>
     <string name="trending_region_auto">Auto (Content country)</string>
     <string name="youtube_music">YouTube Music</string>
     <string name="trending_in">Trending in %1$s</string>
-    <string name="trending_now">Trending now</string>
+    <string name="trending_now">For You</string>
+    <string name="for_you">For You</string>
+    <string name="for_you_in">For You • %1$s</string>
+    <string name="top_charts">Top Charts</string>
+    <string name="category_for_you">For You</string>
+    <string name="category_malayalam">Malayalam</string>
+    <string name="category_tamil">Tamil</string>
+    <string name="category_hindi">Hindi</string>
+    <string name="category_english">English</string>
+    <string name="category_top_charts">Top Charts</string>
     <string name="jiosaavn">JioSaavn</string>
     <string name="source_jiosaavn">Source: JioSaavn</string>
     <string name="source_apple_music">Source: Apple Music</string>
@@ -1294,6 +1305,8 @@
     <string name="automix_duration_4s">4s</string>
     <string name="automix_duration_8s">8s</string>
     <string name="automix_duration_12s">12s</string>
+    <string name="automix_duration_16s">16s</string>
+    <string name="automix_duration_20s">20s</string>
     <string name="sponsor_block_group">SponsorBlock</string>
     <string name="sponsor_block_use">Use SponsorBlock</string>
     <string name="sponsor_block_categories">Categories</string>

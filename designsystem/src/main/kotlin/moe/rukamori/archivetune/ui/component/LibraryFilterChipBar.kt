@@ -2,6 +2,7 @@ package moe.rukamori.archivetune.ui.component
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -118,14 +119,9 @@ private fun LibraryFilterChipItem(
 ) {
     val ozoneColors = LocalOzoneColors.current
     val backgroundColor = if (selected) {
-        MaterialTheme.colorScheme.primaryContainer
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.90f)
     } else {
-        ozoneColors.glassBackground
-    }
-    val borderColor = if (selected) {
-        Color.Transparent
-    } else {
-        ozoneColors.glassBorder
+        Color.White.copy(alpha = 0.08f)
     }
     val contentColor = if (selected) {
         MaterialTheme.colorScheme.onPrimaryContainer
@@ -137,13 +133,14 @@ private fun LibraryFilterChipItem(
         modifier = Modifier
             .height(SettingsDimensions.LibraryTabHeight)
             .ozoneClickable(onClick = onClick)
-            .ozoneGlassCard(
-                shape = CircleShape,
-                backgroundColor = backgroundColor,
-                borderColor = borderColor,
-                strokeWidth = SettingsDimensions.GlassBorderThickness,
-            )
             .clip(CircleShape)
+            .background(backgroundColor, CircleShape)
+            .liquidBubbleHighlight(
+                cornerRadiusDp = SettingsDimensions.LibraryTabHeight / 2,
+                isDark = true,
+                hasTopSheen = true,
+                sheenAlpha = if (selected) 0.12f else 0.05f,
+            )
             .padding(horizontal = SettingsDimensions.LibraryTabPaddingH),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),

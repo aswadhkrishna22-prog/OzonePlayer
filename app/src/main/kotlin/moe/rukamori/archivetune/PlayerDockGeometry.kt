@@ -31,11 +31,12 @@ internal object PlayerDockGeometry {
     fun sheetCollapsedOffset(
         safeBottomPadding: Dp,
         bottomBarHeight: Dp,
+        navBarHeight: Dp = FloatingToolbarHeight,
     ): Dp {
-        val progress = if (FloatingToolbarHeight > 0.dp) {
-            (bottomBarHeight / FloatingToolbarHeight).coerceIn(0f, 1f)
+        val progress = if (navBarHeight > 0.dp) {
+            (bottomBarHeight / navBarHeight).coerceIn(0f, 1f)
         } else 0f
-        val navContribution = (FloatingToolbarHeight + FloatingToolbarBottomPadding) * progress
+        val navContribution = (navBarHeight + FloatingToolbarBottomPadding) * progress
         return safeBottomPadding + navContribution + MiniPlayerBottomSpacing + MiniPlayerHeight
     }
 
@@ -43,8 +44,9 @@ internal object PlayerDockGeometry {
         bottomInset: Dp,
         shouldShowNav: Boolean,
         useRail: Boolean,
+        navBarHeight: Dp = FloatingToolbarHeight,
     ): Dp = bottomInset + if (shouldShowNav && !useRail) {
-        MiniPlayerWithNavBarOffset
+        FloatingToolbarBottomPadding + navBarHeight + MiniPlayerBottomSpacing + MiniPlayerHeight
     } else {
         MiniPlayerOnlyOffset
     }
@@ -55,9 +57,10 @@ internal object PlayerDockGeometry {
         shouldShowNavigationBar: Boolean,
         isMiniPlayerVisible: Boolean,
         useRail: Boolean,
+        navBarHeight: Dp = FloatingToolbarHeight,
     ): Dp {
         val navBottom = if (shouldShowNavigationBar && !useRail) {
-            navigationBarBottomOffset(floatingToolbarBottomPadding)
+            navigationBarBottomOffset(floatingToolbarBottomPadding, navBarHeight)
         } else {
             bottomInset
         }

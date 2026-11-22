@@ -63,11 +63,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.GridThumbnailCornerRadius
+import moe.rukamori.archivetune.constants.PlaybackSource
+import moe.rukamori.archivetune.db.entities.FormatEntity
 import moe.rukamori.archivetune.extensions.toMediaItem
+import moe.rukamori.archivetune.flaccore.streaming.JioSaavnDecryptor
+import moe.rukamori.archivetune.flaccore.streaming.JioSaavnQualityCache
 import moe.rukamori.archivetune.home.HomeAction
+import moe.rukamori.archivetune.home.trending.TrendingCategory
 import moe.rukamori.archivetune.home.trending.TrendingRepository
 import moe.rukamori.archivetune.home.trending.TrendingResolutionResult
 import moe.rukamori.archivetune.home.trending.TrendingSource
@@ -78,6 +85,8 @@ import moe.rukamori.archivetune.innertube.models.SongItem
 import moe.rukamori.archivetune.innertube.models.WatchEndpoint
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.models.toMediaMetadata
+import moe.rukamori.archivetune.playback.formatIdForSource
+import moe.rukamori.archivetune.playback.queues.JioSaavnQueue
 import moe.rukamori.archivetune.playback.queues.ListQueue
 import moe.rukamori.archivetune.playback.queues.YouTubeQueue
 import moe.rukamori.archivetune.ui.component.GridItem
@@ -102,10 +111,22 @@ internal fun LazyListScope.homeTrendingSection(
     if (tracks.isEmpty() && !state.isLoading) return
 
     val headerTitle =
-        if (state.regionDisplayName.isNotBlank()) {
-            mediaContext.navController.context.getString(R.string.trending_in, state.regionDisplayName)
-        } else {
-            mediaContext.navController.context.getString(R.string.trending)
+        when (state.selectedCategory) {
+            TrendingCategory.FOR_YOU -> {
+                if (!state.detectedLanguage.isNullOrBlank()) {
+                    mediaContext.navController.context.getString(R.string.for_you_in, state.detectedLanguage)
+                } else {
+                    mediaContext.navController.context.getString(R.string.for_you)
+                }
+            }
+            TrendingCategory.GLOBAL -> {
+                if (state.regionDisplayName.isNotBlank()) {
+                    mediaContext.navController.context.getString(R.string.trending_in, state.regionDisplayName)
+                } else {
+                    mediaContext.navController.context.getString(R.string.top_charts)
+                }
+            }
+            else -> mediaContext.navController.context.getString(R.string.for_you_in, state.selectedCategory.title)
         }
 
     sectionSpacer("trending")
@@ -127,9 +148,14 @@ internal fun LazyListScope.homeTrendingSection(
         key = "home_trending_chips",
         contentType = "trending_chips",
     ) {
-        TrendingSourceChipsRow(
+        TrendingFiltersRow(
+            selectedCategory = state.selectedCategory,
             selectedSource = state.selectedSource,
             isAppleAvailable = state.isAppleAvailable,
+            isJioSaavnAvailable = state.isJioSaavnAvailable,
+            onCategorySelected = { category ->
+                mediaContext.onAction(HomeAction.SelectTrendingCategory(category))
+            },
             onSourceSelected = { source ->
                 mediaContext.onAction(HomeAction.SelectTrendingSource(source))
             },
@@ -154,48 +180,75 @@ internal fun LazyListScope.homeTrendingSection(
 }
 
 @Composable
-private fun TrendingSourceChipsRow(
+private fun TrendingFiltersRow(
+    selectedCategory: TrendingCategory,
     selectedSource: TrendingSource,
     isAppleAvailable: Boolean,
+    isJioSaavnAvailable: Boolean,
+    onCategorySelected: (TrendingCategory) -> Unit,
     onSourceSelected: (TrendingSource) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = LocalOzoneColors.current
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier =
             modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 4.dp),
     ) {
+        // Category / Language chips
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.horizontalScroll(rememberScrollState()),
         ) {
-            TrendingChip(
+            TrendingCategory.entries.forEach { category ->
+                val isSelected = category == selectedCategory
+                TrendingChip(
+                    text = category.title,
+                    isSelected = isSelected,
+                    leadingIcon = if (category == TrendingCategory.FOR_YOU) {
+                        {
+                            Icon(
+                                painter = painterResource(R.drawable.auto_awesome),
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else Color(0xFFFFB300),
+                            )
+                        }
+                    } else null,
+                    onClick = { onCategorySelected(category) },
+                )
+            }
+        }
+
+        // Source switcher pills
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+        ) {
+            TrendingSourceChip(
                 text = stringResource(R.string.youtube_music),
                 isSelected = selectedSource == TrendingSource.YOUTUBE,
                 onClick = { onSourceSelected(TrendingSource.YOUTUBE) },
             )
 
+            if (isJioSaavnAvailable) {
+                TrendingSourceChip(
+                    text = stringResource(R.string.jiosaavn),
+                    isSelected = selectedSource == TrendingSource.JIOSAAVN,
+                    onClick = { onSourceSelected(TrendingSource.JIOSAAVN) },
+                )
+            }
+
             if (isAppleAvailable) {
-                TrendingChip(
+                TrendingSourceChip(
                     text = stringResource(R.string.apple_music_top_songs),
                     isSelected = selectedSource == TrendingSource.APPLE,
                     onClick = { onSourceSelected(TrendingSource.APPLE) },
                 )
             }
-        }
-
-        if (selectedSource == TrendingSource.APPLE) {
-            Text(
-                text = stringResource(R.string.source_apple_music),
-                style = MaterialTheme.typography.labelSmall,
-                color = colors.textSecondary.copy(alpha = 0.8f),
-                modifier = Modifier.padding(start = 8.dp),
-            )
         }
     }
 }
@@ -204,6 +257,7 @@ private fun TrendingSourceChipsRow(
 private fun TrendingChip(
     text: String,
     isSelected: Boolean,
+    leadingIcon: @Composable (() -> Unit)? = null,
     onClick: () -> Unit,
 ) {
     val colors = LocalOzoneColors.current
@@ -232,12 +286,55 @@ private fun TrendingChip(
                 )
                 .ozoneClickable(pressedScale = 0.94f, onClick = onClick),
     ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+        ) {
+            leadingIcon?.invoke()
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = textColor,
+            )
+        }
+    }
+}
+
+@Composable
+private fun TrendingSourceChip(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    val colors = LocalOzoneColors.current
+    val bgColor =
+        if (isSelected) {
+            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f)
+        } else {
+            colors.glassBackground.copy(alpha = 0.5f)
+        }
+    val textColor =
+        if (isSelected) {
+            MaterialTheme.colorScheme.onSecondaryContainer
+        } else {
+            colors.textSecondary
+        }
+
+    Surface(
+        shape = CircleShape,
+        color = bgColor,
+        modifier =
+            Modifier
+                .ozoneClickable(pressedScale = 0.94f, onClick = onClick),
+    ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
             color = textColor,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
         )
     }
 }
@@ -394,6 +491,115 @@ private fun TrendingShelfContent(
                                                 loadingTrackId = null
                                             }
                                         }
+                                    } else if (track.isJioSaavn) {
+                                        // JioSaavn track resolution & playback
+                                        if (isResolvingThis || trendingRepository == null) return@combinedClickable
+                                        loadingTrackId = track.id
+                                        scope.launch {
+                                            try {
+                                                val db = mediaContext.playerConnection.database
+                                                val mediaItems = withContext(Dispatchers.IO) {
+                                                    tracks.filter { it.isJioSaavn }.mapNotNull { item ->
+                                                        val enc = item.encryptedMediaUrl
+                                                        val rawUrl = if (!enc.isNullOrBlank()) {
+                                                            JioSaavnDecryptor.decryptMediaUrl(enc)
+                                                        } else null
+
+                                                        val itemMediaId = if (item.id.startsWith("jiosaavn_")) item.id else "jiosaavn_${item.id}"
+
+                                                        if (!rawUrl.isNullOrBlank()) {
+                                                            JioSaavnQualityCache.storeRawUrl(itemMediaId, rawUrl)
+                                                            val workingTier = JioSaavnQualityCache.getWorkingTier(itemMediaId)
+                                                            val streamUrl = JioSaavnDecryptor.getUrlForTier(rawUrl, workingTier)
+                                                            val nominalBitrate = if (workingTier.nominalBitrateKbps > 0) workingTier.nominalBitrateKbps * 1000 else 160000
+
+                                                            val itemMetadata = MediaMetadata(
+                                                                id = itemMediaId,
+                                                                title = item.title,
+                                                                artists = listOf(MediaMetadata.Artist(id = null, name = item.artist)),
+                                                                duration = item.durationSeconds ?: -1,
+                                                                thumbnailUrl = item.artworkUrl,
+                                                                explicit = item.explicit,
+                                                            )
+
+                                                            db.insert(itemMetadata)
+                                                            val formatEntity = FormatEntity(
+                                                                id = formatIdForSource(itemMediaId, PlaybackSource.FLAC),
+                                                                itag = 0,
+                                                                mimeType = "audio/mp4",
+                                                                codecs = "mp4a.40.2",
+                                                                bitrate = nominalBitrate,
+                                                                sampleRate = 44100,
+                                                                contentLength = (nominalBitrate.toLong() / 8L) * (item.durationSeconds ?: 200),
+                                                                loudnessDb = null,
+                                                                playbackUrl = streamUrl,
+                                                                bitsPerSample = 16,
+                                                            )
+                                                            db.upsert(formatEntity)
+                                                            db.upsert(formatEntity.copy(id = itemMediaId))
+
+                                                            MediaItem.Builder()
+                                                                .setMediaId(itemMediaId)
+                                                                .setUri(streamUrl.toUri())
+                                                                .setCustomCacheKey(itemMediaId)
+                                                                .setTag(itemMetadata)
+                                                                .setMediaMetadata(
+                                                                    androidx.media3.common.MediaMetadata.Builder()
+                                                                        .setTitle(item.title)
+                                                                        .setSubtitle(item.artist)
+                                                                        .setArtist(item.artist)
+                                                                        .setArtworkUri(item.artworkUrl?.toUri())
+                                                                        .setIsPlayable(true)
+                                                                        .setMediaType(androidx.media3.common.MediaMetadata.MEDIA_TYPE_MUSIC)
+                                                                        .build(),
+                                                                )
+                                                                .build()
+                                                        } else {
+                                                            null
+                                                        }
+                                                    }
+                                                }
+
+                                                val targetMediaId = if (track.id.startsWith("jiosaavn_")) track.id else "jiosaavn_${track.id}"
+                                                val startIndex = mediaItems.indexOfFirst { it.mediaId == targetMediaId }
+
+                                                if (mediaItems.isNotEmpty() && startIndex >= 0) {
+                                                    mediaContext.playerConnection.playQueue(
+                                                        JioSaavnQueue(
+                                                            title = sectionTitle,
+                                                            items = mediaItems,
+                                                            startIndex = startIndex,
+                                                        ),
+                                                    )
+                                                } else {
+                                                    // Fallback to YouTube matching if JioSaavn stream could not be decrypted
+                                                    when (val res = trendingRepository.resolver.resolveTrack(track)) {
+                                                        is TrendingResolutionResult.Success -> {
+                                                            val song = res.songItem
+                                                            mediaContext.playerConnection.playQueue(
+                                                                YouTubeQueue(
+                                                                    endpoint = song.endpoint ?: WatchEndpoint(videoId = song.id),
+                                                                    preloadItem = song.toMediaMetadata().copy(spotifyTrackId = track.id),
+                                                                ),
+                                                            )
+                                                        }
+                                                        is TrendingResolutionResult.NotFound -> {
+                                                            withContext(Dispatchers.Main) {
+                                                                Toast.makeText(
+                                                                    context,
+                                                                    context.getString(R.string.could_not_find_song_try_searching),
+                                                                    Toast.LENGTH_SHORT,
+                                                                ).show()
+                                                                val query = "${track.title} ${track.artist}".trim()
+                                                                mediaContext.navController.navigate(onlineSearchResultRoute(query))
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            } finally {
+                                                loadingTrackId = null
+                                            }
+                                        }
                                     } else {
                                         // YouTube track: play chart as queue
                                         val mediaItems =
@@ -417,13 +623,49 @@ private fun TrendingShelfContent(
     }
 }
 
-private fun TrendingTrack.toMediaItem(): MediaItem =
-    youtubeSongItem?.toMediaItem()
-        ?: MediaMetadata(
-            id = id,
-            title = title,
-            artists = listOf(MediaMetadata.Artist(id = null, name = artist)),
-            duration = durationSeconds ?: -1,
-            thumbnailUrl = artworkUrl,
-            explicit = explicit,
-        ).toMediaItem()
+private fun TrendingTrack.toMediaItem(): MediaItem {
+    if (youtubeSongItem != null) return youtubeSongItem.toMediaItem()
+
+    if (isJioSaavn && !encryptedMediaUrl.isNullOrBlank()) {
+        val rawUrl = JioSaavnDecryptor.decryptMediaUrl(encryptedMediaUrl)
+        val itemMediaId = if (id.startsWith("jiosaavn_")) id else "jiosaavn_$id"
+        if (!rawUrl.isNullOrBlank()) {
+            JioSaavnQualityCache.storeRawUrl(itemMediaId, rawUrl)
+            val workingTier = JioSaavnQualityCache.getWorkingTier(itemMediaId)
+            val streamUrl = JioSaavnDecryptor.getUrlForTier(rawUrl, workingTier)
+            val itemMetadata = MediaMetadata(
+                id = itemMediaId,
+                title = title,
+                artists = listOf(MediaMetadata.Artist(id = null, name = artist)),
+                duration = durationSeconds ?: -1,
+                thumbnailUrl = artworkUrl,
+                explicit = explicit,
+            )
+            return MediaItem.Builder()
+                .setMediaId(itemMediaId)
+                .setUri(streamUrl.toUri())
+                .setCustomCacheKey(itemMediaId)
+                .setTag(itemMetadata)
+                .setMediaMetadata(
+                    androidx.media3.common.MediaMetadata.Builder()
+                        .setTitle(title)
+                        .setSubtitle(artist)
+                        .setArtist(artist)
+                        .setArtworkUri(artworkUrl?.toUri())
+                        .setIsPlayable(true)
+                        .setMediaType(androidx.media3.common.MediaMetadata.MEDIA_TYPE_MUSIC)
+                        .build(),
+                )
+                .build()
+        }
+    }
+
+    return MediaMetadata(
+        id = id,
+        title = title,
+        artists = listOf(MediaMetadata.Artist(id = null, name = artist)),
+        duration = durationSeconds ?: -1,
+        thumbnailUrl = artworkUrl,
+        explicit = explicit,
+    ).toMediaItem()
+}

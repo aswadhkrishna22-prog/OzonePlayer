@@ -271,7 +271,12 @@ fun SpotifyTrackListItem(
     track: SpotifyTrack,
     modifier: Modifier = Modifier,
     albumIndex: Int? = null,
+    isLiked: Boolean = false,
+    onToggleLike: (() -> Unit)? = null,
     badges: @Composable RowScope.() -> Unit = {
+        if (isLiked && onToggleLike == null) {
+            ItemFavoriteBadge()
+        }
         if (track.explicit) {
             Icon(
                 painter = painterResource(R.drawable.explicit),
@@ -313,7 +318,22 @@ fun SpotifyTrackListItem(
                 modifier = Modifier.size(ListThumbnailSize),
             )
         },
-        trailingContent = trailingContent,
+        trailingContent = {
+            if (onToggleLike != null) {
+                IconButton(
+                    onClick = onToggleLike,
+                    modifier = Modifier.size(40.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(if (isLiked) R.drawable.favorite else R.drawable.favorite_border),
+                        contentDescription = null,
+                        tint = if (isLiked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+            trailingContent()
+        },
         modifier = modifier,
         isActive = isActive,
     )

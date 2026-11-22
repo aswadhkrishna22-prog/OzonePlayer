@@ -384,6 +384,39 @@ fun OnlineSearchResult(
                 thumbnail = candidate.imageUrl?.replace("150x150", "500x500").orEmpty(),
                 explicit = false,
             )
+        coroutineScope.launch(Dispatchers.IO) {
+            val rawUrl = JioSaavnDecryptor.decryptMediaUrl(candidate.encryptedMediaUrl)
+            if (!rawUrl.isNullOrBlank()) {
+                JioSaavnQualityCache.storeRawUrl(itemMediaId, rawUrl)
+                val workingTier = JioSaavnQualityCache.getWorkingTier(itemMediaId)
+                val streamUrl = JioSaavnDecryptor.getUrlForTier(rawUrl, workingTier)
+                val nominalBitrate = if (workingTier.nominalBitrateKbps > 0) workingTier.nominalBitrateKbps * 1000 else 160000
+
+                val itemMetadata = MediaMetadata(
+                    id = itemMediaId,
+                    title = candidate.title,
+                    artists = candidate.artists.map { MediaMetadata.Artist(id = null, name = it) },
+                    duration = candidate.durationSec.toInt(),
+                    thumbnailUrl = candidate.imageUrl?.replace("150x150", "500x500"),
+                    album = candidate.album?.let { MediaMetadata.Album(id = "jiosaavn_album_${candidate.id}", title = it) },
+                )
+                database.insert(itemMetadata)
+                val formatEntity = FormatEntity(
+                    id = formatIdForSource(itemMediaId, PlaybackSource.FLAC),
+                    itag = 0,
+                    mimeType = "audio/mp4",
+                    codecs = "mp4a.40.2",
+                    bitrate = nominalBitrate,
+                    sampleRate = 44100,
+                    contentLength = (nominalBitrate.toLong() / 8L) * candidate.durationSec,
+                    loudnessDb = null,
+                    playbackUrl = streamUrl,
+                    bitsPerSample = 16,
+                )
+                database.upsert(formatEntity)
+                database.upsert(formatEntity.copy(id = itemMediaId))
+            }
+        }
         menuState.show {
             YouTubeSongMenu(
                 song = songItem,

@@ -20,6 +20,8 @@ import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.search.LoadSearchDiscoveryUseCase
 import moe.rukamori.archivetune.search.SearchDiscoveryUiModel
+import moe.rukamori.archivetune.utils.reportException
+import timber.log.Timber
 import javax.inject.Inject
 
 sealed interface SearchDiscoveryScreenState {
@@ -33,6 +35,7 @@ sealed interface SearchDiscoveryScreenState {
 
     data class Error(
         @StringRes val messageResId: Int,
+        val details: String? = null,
     ) : SearchDiscoveryScreenState
 }
 
@@ -84,13 +87,23 @@ class SearchDiscoveryViewModel
                                             SearchDiscoveryScreenState.Success(data)
                                         }
                                     },
-                                    onFailure = {
-                                        SearchDiscoveryScreenState.Error(R.string.error_unknown)
+                                    onFailure = { throwable ->
+                                        Timber.e(throwable, "SearchDiscoveryViewModel: loadSearchDiscovery failed: ${throwable.message}")
+                                        reportException(throwable)
+                                        SearchDiscoveryScreenState.Error(
+                                            messageResId = R.string.error_unknown,
+                                            details = throwable.localizedMessage ?: throwable.message ?: throwable.javaClass.simpleName,
+                                        )
                                     },
                                 )
                         } catch (throwable: Throwable) {
                             if (throwable is CancellationException) throw throwable
-                            SearchDiscoveryScreenState.Error(R.string.error_unknown)
+                            Timber.e(throwable, "SearchDiscoveryViewModel: exception in load: ${throwable.message}")
+                            reportException(throwable)
+                            SearchDiscoveryScreenState.Error(
+                                messageResId = R.string.error_unknown,
+                                details = throwable.localizedMessage ?: throwable.message ?: throwable.javaClass.simpleName,
+                            )
                         }
                 }
         }

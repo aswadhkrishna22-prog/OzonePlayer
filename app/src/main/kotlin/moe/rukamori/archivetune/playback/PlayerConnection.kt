@@ -41,6 +41,10 @@ import moe.rukamori.archivetune.extensions.getQueueWindows
 import moe.rukamori.archivetune.playback.MusicService.MusicBinder
 import moe.rukamori.archivetune.playback.requestTogetherControl
 import moe.rukamori.archivetune.playback.queues.Queue
+import moe.rukamori.archivetune.playback.queues.YouTubeQueue
+import moe.rukamori.archivetune.innertube.YouTube
+import moe.rukamori.archivetune.innertube.models.WatchEndpoint
+import moe.rukamori.archivetune.models.toMediaMetadata
 import moe.rukamori.archivetune.utils.reportException
 import jakarta.inject.Inject
 import kotlin.math.roundToInt
@@ -55,6 +59,7 @@ class PlayerConnection(
     val database: MusicDatabase,
     val scope: CoroutineScope,
 ) : Player.Listener {
+    private val appContext = context.applicationContext
     val service = binder.service
     val player = service.player
     val localPlayer = service.localPlayer
@@ -75,8 +80,20 @@ class PlayerConnection(
         )
     val mediaMetadata = service.currentMediaMetadata
     val currentSong =
-        mediaMetadata.flatMapLatest {
-            database.song(it?.id)
+        mediaMetadata.flatMapLatest { metadata ->
+            if (metadata == null) {
+                kotlinx.coroutines.flow.flowOf(null)
+            } else {
+                val cleanSpotifyId = (metadata.spotifyTrackId ?: metadata.id)
+                    .removePrefix("spotify:track:")
+                    .removePrefix("spotify:")
+                    .takeIf { it.isNotBlank() }
+                database.songByMetadata(
+                    songId = metadata.id,
+                    spotifyId = cleanSpotifyId,
+                    isrc = metadata.isrc?.takeIf { it.isNotBlank() },
+                )
+            }
         }
     val currentLyrics =
         mediaMetadata.flatMapLatest { mediaMetadata ->
@@ -311,7 +328,8 @@ class PlayerConnection(
         if (playbackError != null) {
             val currentItem = player.currentMediaItem
             val currentPos = runCatching { player.currentPosition }.getOrDefault(0L)
-            if (JioSaavnPlaybackFallback.isJioSaavnTrack(currentItem) &&
+            val isJioSaavn = JioSaavnPlaybackFallback.isJioSaavnTrack(currentItem, playbackError)
+            if (isJioSaavn &&
                 JioSaavnPlaybackFallback.isPrePlaybackSourceError(playbackError, currentPos)
             ) {
                 val handled = JioSaavnPlaybackFallback.tryFallback(player, database, scope)
@@ -319,6 +337,51 @@ class PlayerConnection(
                     timber.log.Timber.tag("PlayerConnection").i("JioSaavn early source error automatically retrying next lower quality; suppressing error UI")
                     return
                 }
+
+                // If JioSaavn CDN fallback exhausted, seamlessly resolve via YouTube without error dialog
+                var title = currentItem?.mediaMetadata?.title?.toString()
+                var artist = currentItem?.mediaMetadata?.artist?.toString().orEmpty()
+                val mediaId = currentItem?.mediaId.orEmpty()
+                timber.log.Timber.tag("PlayerConnection").i("JioSaavn CDN failed; falling back to YouTube for '$title $artist'")
+                scope.launch(Dispatchers.IO) {
+                    if (title.isNullOrBlank() && mediaId.isNotBlank()) {
+                        val dbSong = database.song(mediaId).firstOrNull()
+                        title = dbSong?.title
+                        artist = dbSong?.artists?.joinToString(", ") { it.name }.orEmpty()
+                    }
+                    if (!title.isNullOrBlank()) {
+                        val query = "$title $artist".trim()
+                        val match = runCatching {
+                            YouTube.search(query, YouTube.SearchFilter.FILTER_SONG).getOrNull()
+                                ?.items?.filterIsInstance<moe.rukamori.archivetune.innertube.models.SongItem>()?.firstOrNull()
+                                ?: YouTube.search(query, YouTube.SearchFilter.FILTER_VIDEO).getOrNull()
+                                    ?.items?.filterIsInstance<moe.rukamori.archivetune.innertube.models.SongItem>()?.firstOrNull()
+                                ?: YouTube.search(query, null).getOrNull()
+                                    ?.items?.filterIsInstance<moe.rukamori.archivetune.innertube.models.SongItem>()?.firstOrNull()
+                        }.getOrNull()
+                        if (match != null) {
+                            withContext(Dispatchers.Main) {
+                                playQueue(
+                                    YouTubeQueue(
+                                        endpoint = match.endpoint ?: WatchEndpoint(videoId = match.id),
+                                        preloadItem = match.toMediaMetadata(),
+                                    ),
+                                )
+                            }
+                            return@launch
+                        }
+                    }
+                    withContext(Dispatchers.Main) {
+                        if (player.hasNextMediaItem()) {
+                            player.seekToNextMediaItem()
+                            player.prepare()
+                            player.play()
+                        } else {
+                            dismissPlaybackError()
+                        }
+                    }
+                }
+                return
             }
 
             reportException(playbackError)

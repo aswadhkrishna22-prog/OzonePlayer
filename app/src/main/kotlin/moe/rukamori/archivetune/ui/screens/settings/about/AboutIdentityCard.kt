@@ -65,6 +65,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.appicon.OzoneLogo
+import moe.rukamori.archivetune.appicon.rememberCurrentAppIcon
 import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
 import moe.rukamori.archivetune.ui.theme.ozoneClickable
 import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
@@ -230,24 +232,11 @@ internal fun AboutIdentityCard(
 
 @Composable
 internal fun SurfaceAppIcon(modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    ) {
-        val iconTint = MaterialTheme.colorScheme.onPrimaryContainer
-        val iconColorFilter = remember(iconTint) { ColorFilter.tint(iconTint) }
-        Image(
-            painter = painterResource(R.drawable.about_splash),
-            contentDescription = null,
-            colorFilter = iconColorFilter,
-            modifier =
-                Modifier
-                    .padding(16.dp)
-                    .size(64.dp),
-        )
-    }
+    val currentVariant = rememberCurrentAppIcon()
+    OzoneLogo(
+        variant = currentVariant,
+        modifier = modifier.size(72.dp),
+    )
 }
 
 @Composable

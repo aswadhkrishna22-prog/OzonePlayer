@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.update
 import moe.rukamori.archivetune.constants.ContentCountryKey
 import moe.rukamori.archivetune.constants.ShowTrendingOnHomeKey
 import moe.rukamori.archivetune.constants.TrendingRegionKey
+import moe.rukamori.archivetune.db.entities.Artist
+import moe.rukamori.archivetune.home.trending.TrendingCategory
 import moe.rukamori.archivetune.home.trending.TrendingRepository
 import moe.rukamori.archivetune.home.trending.TrendingSource
 import moe.rukamori.archivetune.home.trending.TrendingUiState
@@ -453,12 +455,31 @@ constructor(
                     refresh()
                     val state = _trendingUiState.value
                     if (state != null) {
-                        loadTrendingData(state.regionCode, state.regionDisplayName, forceRefresh = true)
+                        loadTrendingData(
+                            regionCode = state.regionCode,
+                            regionDisplayName = state.regionDisplayName,
+                            category = state.selectedCategory,
+                            forceRefresh = true,
+                        )
                     }
                 }
                 is HomeAction.SelectTrendingSource -> {
                     _trendingUiState.update { current ->
                         current?.copy(selectedSource = action.source)
+                    }
+                }
+                is HomeAction.SelectTrendingCategory -> {
+                    _trendingUiState.update { current ->
+                        current?.copy(selectedCategory = action.category)
+                    }
+                    val state = _trendingUiState.value
+                    if (state != null) {
+                        loadTrendingData(
+                            regionCode = state.regionCode,
+                            regionDisplayName = state.regionDisplayName,
+                            category = action.category,
+                            forceRefresh = false,
+                        )
                     }
                 }
                 HomeAction.LoadCommunityPreviews -> loadCommunityPreviewsOnScroll()
@@ -467,39 +488,56 @@ constructor(
             }
         }
 
-        private fun loadTrendingData(regionCode: String, regionDisplayName: String, forceRefresh: Boolean) {
+        private fun loadTrendingData(
+            regionCode: String,
+            regionDisplayName: String,
+            category: TrendingCategory = _trendingUiState.value?.selectedCategory ?: TrendingCategory.FOR_YOU,
+            forceRefresh: Boolean,
+        ) {
             trendingJob?.cancel()
             trendingJob = viewModelScope.launch(Dispatchers.IO) {
                 val current = _trendingUiState.value ?: TrendingUiState()
+                val cachedHeroTracks = trendingRepository.getCachedHeroTrending(regionCode)
                 _trendingUiState.value =
                     current.copy(
                         regionCode = regionCode,
                         regionDisplayName = regionDisplayName,
-                        isLoading = current.currentTracks.isEmpty(),
+                        selectedCategory = category,
+                        heroTracks = if (current.heroTracks.isEmpty()) cachedHeroTracks else current.heroTracks,
+                        isLoading = current.currentTracks.isEmpty() && cachedHeroTracks.isEmpty(),
                     )
 
-                val ytDeferred = async { trendingRepository.getYouTubeTrending(regionCode, forceRefresh) }
-                val jioSaavnDeferred = async { trendingRepository.getJioSaavnTrending(regionCode, forceRefresh) }
-                val appleDeferred = async { trendingRepository.getAppleTrending(regionCode, forceRefresh) }
+                // Retrieve user listening history & library for taste detection & personalization
+                val recentSongs: List<Song> = runCatching { database.recentSongs(50).first() }.getOrDefault(emptyList())
+                val allArtists: List<Artist> = runCatching { database.allArtistsByPlayTime().first() }.getOrDefault(emptyList())
+                val searchHistory: List<SearchHistory> = runCatching { database.searchHistory("").first() }.getOrDefault(emptyList())
+                val searchQueries: List<String> = searchHistory.map { it.query }
 
+                val detectedLanguage = trendingRepository.detectUserTasteLanguage(recentSongs, allArtists, searchQueries)
+
+                val heroDeferred = async { trendingRepository.getHeroTrending(regionCode, recentSongs, searchQueries, forceRefresh) }
+                val ytDeferred = async { trendingRepository.getYouTubeTrending(regionCode, category, detectedLanguage, forceRefresh) }
+                val jioSaavnDeferred = async { trendingRepository.getJioSaavnTrending(regionCode, category, detectedLanguage, forceRefresh) }
+                val appleDeferred = async { trendingRepository.getAppleTrending(regionCode, category, forceRefresh) }
+
+                val heroTracks = heroDeferred.await()
                 val ytRaw = ytDeferred.await()
                 val jioSaavnRaw = jioSaavnDeferred.await()
                 val appleTracks = appleDeferred.await()
 
-                // Personalize trending songs based on user's recent songs and search history
-                val recentSongs: List<Song> = runCatching { database.recentSongs(50).first() }.getOrDefault(emptyList())
-                val searchHistory: List<SearchHistory> = runCatching { database.searchHistory("").first() }.getOrDefault(emptyList())
-                val searchQueries: List<String> = searchHistory.map { it.query }
-
-                val ytTracks = trendingRepository.personalizeTracks(ytRaw, recentSongs, searchQueries)
-                val jioSaavnTracks = trendingRepository.personalizeTracks(jioSaavnRaw, recentSongs, searchQueries)
+                // Personalize trending songs based on user's top artists, recent songs, and search history
+                val ytTracks = trendingRepository.personalizeTracks(ytRaw, recentSongs, searchQueries, allArtists)
+                val jioSaavnTracks = trendingRepository.personalizeTracks(jioSaavnRaw, recentSongs, searchQueries, allArtists)
 
                 _trendingUiState.value =
                     TrendingUiState(
                         selectedSource = _trendingUiState.value?.selectedSource ?: TrendingSource.YOUTUBE,
+                        selectedCategory = category,
+                        detectedLanguage = detectedLanguage,
                         youtubeTracks = ytTracks,
                         jioSaavnTracks = jioSaavnTracks,
                         appleTracks = appleTracks,
+                        heroTracks = heroTracks,
                         isJioSaavnAvailable = jioSaavnTracks.isNotEmpty(),
                         isAppleAvailable = appleTracks.isNotEmpty(),
                         regionCode = regionCode,
@@ -566,7 +604,12 @@ constructor(
                 }
                 val (regionCode, regionDisplayName) =
                     trendingRepository.resolveEffectiveRegion(trendingRegion, contentCountry)
-                loadTrendingData(regionCode, regionDisplayName, forceRefresh = false)
+                loadTrendingData(
+                    regionCode = regionCode,
+                    regionDisplayName = regionDisplayName,
+                    category = _trendingUiState.value?.selectedCategory ?: TrendingCategory.FOR_YOU,
+                    forceRefresh = false,
+                )
             }
         }
 
