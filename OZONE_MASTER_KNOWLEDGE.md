@@ -134,3 +134,19 @@
     - **Architecture:** Introduces estimated word-by-word lyric animation for providers returning line-timed (LRC) lyrics (LrcLib, SimpMusic, KuGou), leaving real word-timed providers (BetterLyrics, YouLyPlus) untouched.
     - **Mathematical Syllable Estimator (`LrcParser.kt`):** Parses fractional timestamps, clamps singing duration to `min(nextStart - 80ms, start + maxSing)` (800..8000ms), and weights words by `(length + 2)` to distribute duration naturally.
     - **Rendering & Badging:** Syllables feed into Accompanist `KaraokeLyricsView` via `buildSyncedLyrics`. Auto-prioritizes `WORD > LINE > PLAIN` and displays 'Estimated' badge on LINE results in `LyricsMenuProviders.kt`.
+14. **TTML Lyrics & Background Vocals Support:**
+    - **Timing Modes (`itunes:timing`):** Reads root `itunes:timing` attribute. `Word` mode uses `<span begin end>` word timing directly. `Line` mode estimates word timing per `<p begin end>` line using the line's provided begin and end times directly (without 120ms/char cap or next-line-start logic, using `length + 2` word weighting).
+    - **Unified Time Parsing:** Supports `mm:ss.mmm`, `hh:mm:ss.mmm`, and `12.5s` formats across TTML and LRC parsers.
+    - **Shared Word Splitter:** Unified `splitWords(start, end, text, isBackground)` function shared between TTML and LRC estimation paths.
+    - **Metadata `lyricOffset`:** Protected behind `RESPECT_TTML_LYRIC_OFFSET` constant (OFF by default) to test whether provider timestamps already include audio offsets.
+    - **Parenthetical Background Vocals:** Lines fully enclosed in parentheses `(...)` or `（...）` automatically render dimmer and smaller via `KaraokeLine.AccompanimentKaraokeLine` and styling tokens.
+15. **Multi-Provider Lyrics Ecosystem (Ported from LastWave):**
+    - **6 New Lyrics Providers:**
+      1. `AppleMusicLyricsProvider`: Paxsenix Lyrically + iTunes entity search with direct TTML and v2 envelope fallback.
+      2. `MusixmatchLyricsProvider`: HMAC-SHA256 request signing with token recycling for real LRC subtitle streams.
+      3. `GeniusLyricsProvider`: Web scraping parser with HTML unescaping and annotation stripping.
+      4. `BiniLyricsProvider`: Syllable-sync word-timed provider with ISRC recording identification.
+      5. `LrcRedLyricsProvider`: Fast ISRC-based Apple TTML and LRC resolver via Bini metadata.
+      6. `MegalobizLyricsProvider`: Direct HTML parser extracting community-timed LRCs.
+    - **UI & Reordering:** Full settings switches in Settings > Lyrics (`LyricsProvidersSections.kt`), draggable priority order dialog, and live candidate detection per provider in player 3-dot lyrics menu (`LyricsMenuProviders.kt` & `LyricsCandidatesManager.kt`).
+    - **Security & Classification:** All 6 boolean keys strictly classified in `PlainPreferences.kt` to guarantee passing security test checks.

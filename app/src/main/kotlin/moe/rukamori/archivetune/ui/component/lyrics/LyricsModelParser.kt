@@ -14,6 +14,7 @@ import com.mocharealm.accompanist.lyrics.core.model.karaoke.KaraokeSyllable
 import com.mocharealm.accompanist.lyrics.core.model.synced.SyncedLine
 import kotlin.math.roundToInt
 import moe.rukamori.archivetune.lyrics.LyricsEntry
+import moe.rukamori.archivetune.lyrics.LrcParser.isLineInParentheses
 import moe.rukamori.archivetune.lyrics.Romanizer.providedTranslationTextForEntry
 import moe.rukamori.archivetune.lyrics.WordTimestamp
 import moe.rukamori.archivetune.ui.component.toLyricsWrappingUnits
@@ -65,10 +66,11 @@ internal fun buildSyncedLyrics(
 
         if (entry.words != null) {
             val translation = providedTranslationTextForEntry(entry)
-            val mainWords = entry.words.filter { !it.isBackground }.let {
+            val isParenthetical = isLineInParentheses(entry.text)
+            val mainWords = (if (isParenthetical) emptyList() else entry.words.filter { !it.isBackground }).let {
                 if (it.size > MAX_SYLLABLES_PER_LINE) it.take(MAX_SYLLABLES_PER_LINE) else it
             }
-            val bgWords = entry.words.filter { it.isBackground }.let {
+            val bgWords = (if (isParenthetical) entry.words else entry.words.filter { it.isBackground }).let {
                 if (it.size > MAX_SYLLABLES_PER_LINE) it.take(MAX_SYLLABLES_PER_LINE) else it
             }
             val alignment =
@@ -77,10 +79,45 @@ internal fun buildSyncedLyrics(
                     else -> KaraokeAlignment.Start
                 }
 
+            val wordPhonetics = romanizationMap[index] ?: emptyList()
+
+            // If the entire line is background (parenthetical or only background words), render as AccompanimentKaraokeLine
+            if (mainWords.isEmpty() && bgWords.isNotEmpty()) {
+                val bgSyllables = bgWords.toKaraokeSyllables(wordPhonetics)
+                if (bgSyllables.isNotEmpty()) {
+                    val lineStart = bgSyllables.first().start
+                    val lineEnd = bgSyllables.last().end
+                    if (lineEnd > lineStart) {
+                        if (totalSyllableCount + bgSyllables.size > MAX_TOTAL_SYLLABLES_PER_TRACK) {
+                            lines.add(
+                                SyncedLine(
+                                    content = boundedText.ifBlank { bgSyllables.joinToString("") { it.content } },
+                                    translation = translation,
+                                    start = lineStart,
+                                    end = lineEnd,
+                                ),
+                            )
+                            return@forEachIndexed
+                        }
+                        totalSyllableCount += bgSyllables.size
+                        lines.add(
+                            KaraokeLine.AccompanimentKaraokeLine(
+                                syllables = bgSyllables,
+                                translation = translation,
+                                alignment = alignment,
+                                start = lineStart,
+                                end = lineEnd,
+                                phonetic = null,
+                            ),
+                        )
+                    }
+                }
+                return@forEachIndexed
+            }
+
             val wordsForMain = if (mainWords.isNotEmpty()) mainWords else entry.words.let {
                 if (it.size > MAX_SYLLABLES_PER_LINE) it.take(MAX_SYLLABLES_PER_LINE) else it
             }
-            val wordPhonetics = romanizationMap[index] ?: emptyList()
             val mainSyllables = wordsForMain.toKaraokeSyllables(wordPhonetics)
 
             if (mainSyllables.isEmpty()) return@forEachIndexed
@@ -179,9 +216,10 @@ internal fun buildLineSyncedLrcLine(
     allowKaraoke: Boolean = true,
 ): ISyncedLine {
     val translation = providedTranslationTextForEntry(entry)
+    val isParenthetical = isLineInParentheses(entry.text)
     val normalizedRomanizedText = romanizedText?.trim()?.takeIf { it.isNotEmpty() }
 
-    if (normalizedRomanizedText == null || !allowKaraoke) {
+    if ((normalizedRomanizedText == null && !isParenthetical) || !allowKaraoke) {
         return SyncedLine(
             content = entry.text,
             translation = translation,
@@ -193,18 +231,29 @@ internal fun buildLineSyncedLrcLine(
     val syllables =
         buildWrappingKaraokeSyllables(
             content = entry.text,
-            romanizedText = normalizedRomanizedText,
+            romanizedText = normalizedRomanizedText.orEmpty(),
             start = start,
             end = end,
         )
 
-    return KaraokeLine.MainKaraokeLine(
-        syllables = syllables,
-        translation = translation,
-        alignment = KaraokeAlignment.Start,
-        start = start,
-        end = end,
-    )
+    return if (isParenthetical) {
+        KaraokeLine.AccompanimentKaraokeLine(
+            syllables = syllables,
+            translation = translation,
+            alignment = KaraokeAlignment.Start,
+            start = start,
+            end = end,
+            phonetic = null,
+        )
+    } else {
+        KaraokeLine.MainKaraokeLine(
+            syllables = syllables,
+            translation = translation,
+            alignment = KaraokeAlignment.Start,
+            start = start,
+            end = end,
+        )
+    }
 }
 
 internal fun buildWrappingKaraokeSyllables(

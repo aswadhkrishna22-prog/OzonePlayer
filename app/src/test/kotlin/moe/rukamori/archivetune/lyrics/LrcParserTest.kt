@@ -159,4 +159,171 @@ class LrcParserTest {
         val parsed = LrcParser.parseLyrics(plain)
         assertTrue(parsed.isEmpty() || parsed.all { it.words == null })
     }
+
+    @Test
+    fun `parseTimeMs parses mm ss mmm, hh mm ss mmm, and 12 5s formats`() {
+        assertEquals(135300L, LrcParser.parseTimeMs("02:15.300"))
+        assertEquals(135300L, LrcParser.parseTimeMs("00:02:15.300"))
+        assertEquals(3612500L, LrcParser.parseTimeMs("01:00:12.500"))
+        assertEquals(12500L, LrcParser.parseTimeMs("12.5s"))
+        assertEquals(12500L, LrcParser.parseTimeMs("12.5"))
+        assertEquals(929L, LrcParser.parseTimeMs("929ms"))
+        assertEquals(10490L, LrcParser.parseTimeMs("00:10.49"))
+    }
+
+    @Test
+    fun `splitWords distributes duration with length plus two weighting and marks background`() {
+        val words = LrcParser.splitWords(10000L, 20000L, "(I wonderful)")
+        assertEquals(2, words.size)
+        // Parentheses should mark all words as background
+        assertTrue(words[0].isBackground)
+        assertTrue(words[1].isBackground)
+        assertEquals(10.0, words[0].startTime, 0.001)
+        assertEquals(20.0, words[1].endTime, 0.001)
+        // Word 1: "(I" -> length 2 -> weight 4
+        // Word 2: "wonderful)" -> length 10 -> weight 12
+        // Total weight 16 -> word 2 has 3x duration of word 1
+        val dur1 = words[0].endTime - words[0].startTime
+        val dur2 = words[1].endTime - words[1].startTime
+        assertTrue(dur2 > dur1 * 2.5)
+    }
+
+    @Test
+    fun `parseTtml with itunes timing Line uses line begin and end directly without 120ms char cap`() {
+        // "Hello" is 5 chars. Under LRC 120ms/char cap it would be clamped to min 800ms.
+        // But in TTML Line mode, begin="00:00:10.000" end="00:00:20.000" (10s duration)
+        // must use the full 10 seconds directly without applying the 120ms cap.
+        val ttml = """
+            <tt xmlns="http://www.w3.org/ns/ttml" xmlns:itunes="http://music.apple.com/lyric-ttml-internal" itunes:timing="Line">
+                <body>
+                    <div>
+                        <p begin="00:00:10.000" end="00:00:20.000">Hello world</p>
+                    </div>
+                </body>
+            </tt>
+        """.trimIndent()
+        val parsed = LrcParser.parseTtml(ttml)
+        assertEquals(1, parsed.size)
+        assertEquals(10000L, parsed[0].time)
+        assertEquals(10000L, parsed[0].durationMs)
+        val words = parsed[0].words
+        assertNotNull(words)
+        assertEquals(2, words!!.size)
+        assertEquals(10.0, words[0].startTime, 0.001)
+        assertEquals(20.0, words[1].endTime, 0.001)
+    }
+
+    @Test
+    fun `parseTtml with itunes timing Word uses span timings directly`() {
+        val ttml = """
+            <tt xmlns="http://www.w3.org/ns/ttml" xmlns:itunes="http://music.apple.com/lyric-ttml-internal" itunes:timing="Word">
+                <body>
+                    <div>
+                        <p begin="00:00:10.000" end="00:00:15.000">
+                            <span begin="00:00:10.200" end="00:00:11.000">Hello </span>
+                            <span begin="00:00:11.500" end="00:00:13.000">world</span>
+                        </p>
+                    </div>
+                </body>
+            </tt>
+        """.trimIndent()
+        val parsed = LrcParser.parseTtml(ttml)
+        assertEquals(1, parsed.size)
+        val words = parsed[0].words
+        assertNotNull(words)
+        assertEquals(2, words!!.size)
+        assertEquals(10.2, words[0].startTime, 0.001)
+        assertEquals(11.0, words[0].endTime, 0.001)
+        assertEquals(11.5, words[1].startTime, 0.001)
+        assertEquals(13.0, words[1].endTime, 0.001)
+    }
+
+    @Test
+    fun `parseTtml marks lines fully inside parentheses as background vocals`() {
+        val ttml = """
+            <tt xmlns="http://www.w3.org/ns/ttml" xmlns:itunes="http://music.apple.com/lyric-ttml-internal" itunes:timing="Line">
+                <body>
+                    <div>
+                        <p begin="00:00:10.000" end="00:00:14.000">Lead vocal line</p>
+                        <p begin="00:00:14.500" end="00:00:18.000">(Backing vocal response)</p>
+                    </div>
+                </body>
+            </tt>
+        """.trimIndent()
+        val parsed = LrcParser.parseTtml(ttml)
+        assertEquals(2, parsed.size)
+        
+        val leadWords = parsed[0].words
+        assertNotNull(leadWords)
+        assertTrue(leadWords!!.all { !it.isBackground })
+
+        val bgWords = parsed[1].words
+        assertNotNull(bgWords)
+        assertTrue("All words in parenthetical line must be marked as background", bgWords!!.all { it.isBackground })
+    }
+
+    @Test
+    fun `resolveSyncType respects itunes timing Line vs Word`() {
+        val ttmlLine = """
+            <tt xmlns="http://www.w3.org/ns/ttml" xmlns:itunes="http://music.apple.com/lyric-ttml-internal" itunes:timing="Line">
+                <body><div><p begin="00:00:12.340" end="00:00:15.000">Hello world</p></div></body>
+            </tt>
+        """.trimIndent()
+        val ttmlWord = """
+            <tt xmlns="http://www.w3.org/ns/ttml" xmlns:itunes="http://music.apple.com/lyric-ttml-internal" itunes:timing="Word">
+                <body><div><p begin="00:00:12.340" end="00:00:15.000"><span begin="00:00:12.340" end="00:00:15.000">Hello</span></p></div></body>
+            </tt>
+        """.trimIndent()
+
+        assertEquals(LyricsSyncType.LINE, LrcParser.resolveSyncType(ttmlLine, "YouLyPlus"))
+        assertEquals(LyricsSyncType.WORD, LrcParser.resolveSyncType(ttmlWord, "YouLyPlus"))
+    }
+
+    @Test
+    fun `lyricOffset is ignored by default because constant is false`() {
+        val ttml = """
+            <tt xmlns="http://www.w3.org/ns/ttml" itunes:timing="Line">
+                <head>
+                    <audio lyricOffset="0.929" role="spatial"/>
+                </head>
+                <body><div><p begin="00:00:10.000" end="00:00:15.000">Hello</p></div></body>
+            </tt>
+        """.trimIndent()
+        val parsed = LrcParser.parseTtml(ttml)
+        assertEquals(1, parsed.size)
+        // With RESPECT_TTML_LYRIC_OFFSET == false by default, time is 10000L, not 10929L
+        assertEquals(10000L, parsed[0].time)
+    }
+
+    @Test
+    fun `lyricOffset is respected when flag is enabled`() {
+        val ttml = """
+            <tt xmlns="http://www.w3.org/ns/ttml" itunes:timing="Line">
+                <head>
+                    <audio lyricOffset="0.929" role="spatial"/>
+                </head>
+                <body><div><p begin="00:00:10.000" end="00:00:15.000">Hello</p></div></body>
+            </tt>
+        """.trimIndent()
+        moe.rukamori.archivetune.betterlyrics.TTMLParser.RESPECT_TTML_LYRIC_OFFSET = true
+        try {
+            val parsed = LrcParser.parseTtml(ttml)
+            assertEquals(1, parsed.size)
+            // With RESPECT_TTML_LYRIC_OFFSET == true, offset 929ms is applied exactly once
+            assertEquals(10929L, parsed[0].time)
+            assertEquals(15929L, parsed[0].time + parsed[0].durationMs)
+        } finally {
+            moe.rukamori.archivetune.betterlyrics.TTMLParser.RESPECT_TTML_LYRIC_OFFSET = false
+        }
+    }
+
+    @Test
+    fun `splitWords can be called with 3 arguments and respects parentheses`() {
+        val words = LrcParser.splitWords(1000L, 5000L, "(Lead background)")
+        assertEquals(2, words.size)
+        assertTrue(words[0].isBackground)
+        assertTrue(words[1].isBackground)
+        assertEquals(1.0, words[0].startTime, 0.001)
+        assertEquals(5.0, words[1].endTime, 0.001)
+    }
 }

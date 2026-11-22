@@ -399,7 +399,7 @@ class LyricsDelegate(
                 LrcParser.parseTtml(normalized, (durationMs / 1000).toInt())
             }
             LrcParser.isLineSyncedLrc(normalized) -> {
-                LrcParser.parseLyrics(normalized)
+                LrcParser.parseLyrics(normalized, durationMs)
             }
             else -> {
                 normalized.lines()

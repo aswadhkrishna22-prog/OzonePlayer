@@ -113,11 +113,12 @@ internal fun rememberLyricsStyleState(
             )
         }
     val accompanimentTextStyle =
-        remember(lyricsTextSize, lyricsLineSpacing, lyricsFontFamily, typography) {
+        remember(lyricsTextSize, lyricsLineSpacing, lyricsFontFamily, typography, textColor) {
             typography.titleLarge.copy(
                 fontSize = (lyricsTextSize * 0.82f).sp,
                 lineHeight = (lyricsTextSize * 0.82f * lyricsLineSpacing).sp,
                 fontFamily = lyricsFontFamily,
+                color = textColor.copy(alpha = 0.70f),
             )
         }
     val phoneticTextStyle =

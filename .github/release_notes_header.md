@@ -1,5 +1,13 @@
 ### ✨ What's New in This Release
 
+- 📜 **TTML Timed Lyrics & Background Vocal Styling**:
+  - Full support for TTML lyrics format returned by providers such as YouLyPlus.
+  - Respects root `itunes:timing`: `Word` mode uses direct `<span begin end>` syllable timings, while `Line` mode estimates word timing per `<p begin end>` line using the line's provided begin and end times directly with word-weighting.
+  - Multi-format time parser supporting `mm:ss.mmm`, `hh:mm:ss.mmm`, and `12.5s` timestamps.
+  - Shared `splitWords(start, end, text)` algorithm across LRC and TTML estimation paths.
+  - Lines fully inside parentheses render dimmer and smaller as background vocals via `AccompanimentKaraokeLine`.
+  - Configurable `RESPECT_TTML_LYRIC_OFFSET` flag (default OFF) to verify whether begin times already incorporate audio offsets.
+
 - 🎤 **Estimated Word-by-Word Synced Lyrics**:
   - Introduces smooth word-by-word karaoke animation for providers returning line-timed (LRC) lyrics (LrcLib, SimpMusic, KuGou), while leaving native word-timed providers (BetterLyrics, YouLyPlus) untouched.
   - Mathematical syllable-length estimator in `LrcParser` parses decimal fractions and distributes singing durations across words weighted by length.

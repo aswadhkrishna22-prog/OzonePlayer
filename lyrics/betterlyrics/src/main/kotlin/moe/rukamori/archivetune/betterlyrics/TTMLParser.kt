@@ -8,6 +8,12 @@
 package moe.rukamori.archivetune.betterlyrics
 
 object TTMLParser {
+    /**
+     * Clearly named constant/flag to respect the lyricOffset value in TTML metadata.
+     * OFF (false) by default so developers can test whether begin times already include it.
+     */
+    var RESPECT_TTML_LYRIC_OFFSET: Boolean = false
+
     data class ParsedLine(
         val text: String,
         val startTime: Double,
@@ -19,6 +25,7 @@ object TTMLParser {
         val providerRomanizedWords: List<String>? = null,
         val providerRomanizedLanguage: String? = null,
         val providerTranslationText: String? = null,
+        val timingMode: TtmlTimingMode = TtmlTimingMode.WORD,
     )
 
     data class ParsedWord(
@@ -52,8 +59,24 @@ object TTMLParser {
             if (rawLines.isEmpty()) throw TtmlParseException(TtmlParseFailure.MISSING_LINES)
 
             val agents = TtmlSpanHandler.resolveUnknownAgents(declaredAgents, rawLines)
-            val lines = TtmlSpanHandler.resolveLines(rawLines, bodyEndMs, agents.associateBy(TtmlAgent::id))
-            if (lines.isEmpty()) throw TtmlParseException(TtmlParseFailure.INVALID_TIMING)
+            val rawResolvedLines = TtmlSpanHandler.resolveLines(rawLines, bodyEndMs, agents.associateBy(TtmlAgent::id))
+            if (rawResolvedLines.isEmpty()) throw TtmlParseException(TtmlParseFailure.INVALID_TIMING)
+
+            val lyricOffsetMs = extractLyricOffset(root)
+            val effectiveOffsetMs = if (RESPECT_TTML_LYRIC_OFFSET) (lyricOffsetMs ?: 0L) else 0L
+
+            val lines = if (effectiveOffsetMs != 0L) {
+                rawResolvedLines.map { line ->
+                    line.copy(
+                        timing = TtmlTimeRange(
+                            startMs = line.timing.startMs + effectiveOffsetMs,
+                            endMs = line.timing.endMs + effectiveOffsetMs,
+                        )
+                    )
+                }
+            } else {
+                rawResolvedLines
+            }
 
             val hasTimedSegments =
                 lines.any { line ->
@@ -61,65 +84,113 @@ object TTMLParser {
                         line.backgrounds.any { track -> track.segments.any { it.timing != null } }
                 }
 
+            val declaredTiming = root.attribute("timing") ?: root.attribute("itunes:timing")
+            val timingMode = when {
+                declaredTiming?.equals("Word", ignoreCase = true) == true -> TtmlTimingMode.WORD
+                declaredTiming?.equals("Line", ignoreCase = true) == true -> TtmlTimingMode.LINE
+                hasTimedSegments -> TtmlTimingMode.WORD
+                else -> TtmlTimingMode.LINE
+            }
+
             TtmlDocument(
                 language = root.attribute("lang"),
-                timingMode = if (hasTimedSegments) TtmlTimingMode.WORD else TtmlTimingMode.LINE,
+                timingMode = timingMode,
                 agents = agents,
                 lines = lines.sortedWith(compareBy<TtmlLine> { it.timing.startMs }.thenBy { it.sourceOrder }),
+                lyricOffsetMs = lyricOffsetMs,
             )
         }.recoverCatching { throwable ->
             if (throwable is TtmlParseException) throw throwable
             throw TtmlParseException(TtmlParseFailure.MALFORMED_XML, throwable)
         }
 
+    fun extractLyricOffset(root: org.w3c.dom.Element): Long? {
+        root.descendantElements().firstOrNull { it.hasLocalName("audio") }?.let { audio ->
+            val offsetStr = audio.attribute("lyricOffset") ?: audio.attribute("itunes:lyricOffset")
+            if (offsetStr != null) {
+                return TtmlTimeParser.parseTimeOffset(offsetStr)
+            }
+        }
+        root.descendantElements().firstOrNull { it.hasLocalName("lyricOffset") }?.let { elem ->
+            val text = elem.textContent?.trim()
+            if (!text.isNullOrEmpty()) {
+                return TtmlTimeParser.parseTimeOffset(text)
+            }
+        }
+        root.descendantElements().firstOrNull { elem ->
+            elem.hasLocalName("meta") && (
+                elem.attribute("name")?.equals("lyricOffset", ignoreCase = true) == true ||
+                elem.attribute("itunes:name")?.equals("lyricOffset", ignoreCase = true) == true
+            )
+        }?.let { meta ->
+            meta.attribute("content")?.let { content ->
+                return TtmlTimeParser.parseTimeOffset(content)
+            }
+        }
+        val rootOffset = root.attribute("lyricOffset") ?: root.attribute("itunes:lyricOffset")
+        if (rootOffset != null) {
+            return TtmlTimeParser.parseTimeOffset(rootOffset)
+        }
+        root.descendantElements().firstOrNull { it.hasLocalName("metadata") || it.hasLocalName("head") }?.let { elem ->
+            val offset = elem.attribute("lyricOffset") ?: elem.attribute("itunes:lyricOffset")
+            if (offset != null) {
+                return TtmlTimeParser.parseTimeOffset(offset)
+            }
+        }
+        return null
+    }
+
     fun parseTTML(ttml: String): List<ParsedLine> =
         parseDocument(ttml)
             .getOrNull()
-            ?.lines
-            .orEmpty()
-            .map { line ->
-                val mainWords =
-                    line.main.segments.mapNotNull { segment ->
-                        segment.timing?.let { timing ->
-                            ParsedWord(
-                                text = segment.text,
-                                startTime = timing.startMs / TtmlTimeParser.MILLIS_PER_SECOND,
-                                endTime = timing.endMs / TtmlTimeParser.MILLIS_PER_SECOND,
-                            )
-                        }
-                    }
-                val backgroundWords =
-                    line.backgrounds.flatMap { track ->
-                        track.segments.mapNotNull { segment ->
+            ?.let { doc ->
+                val offsetSeconds = if (RESPECT_TTML_LYRIC_OFFSET) ((doc.lyricOffsetMs ?: 0L) / TtmlTimeParser.MILLIS_PER_SECOND) else 0.0
+                doc.lines.map { line ->
+                    val mainWords =
+                        line.main.segments.mapNotNull { segment ->
                             segment.timing?.let { timing ->
                                 ParsedWord(
                                     text = segment.text,
-                                    startTime = timing.startMs / TtmlTimeParser.MILLIS_PER_SECOND,
-                                    endTime = timing.endMs / TtmlTimeParser.MILLIS_PER_SECOND,
-                                    isBackground = true,
+                                    startTime = (timing.startMs / TtmlTimeParser.MILLIS_PER_SECOND) + offsetSeconds,
+                                    endTime = (timing.endMs / TtmlTimeParser.MILLIS_PER_SECOND) + offsetSeconds,
                                 )
                             }
                         }
-                    }
-                val romanization = TtmlSpanHandler.chooseRomanization(line.romanizations)
+                    val backgroundWords =
+                        line.backgrounds.flatMap { track ->
+                            track.segments.mapNotNull { segment ->
+                                segment.timing?.let { timing ->
+                                    ParsedWord(
+                                        text = segment.text,
+                                        startTime = (timing.startMs / TtmlTimeParser.MILLIS_PER_SECOND) + offsetSeconds,
+                                        endTime = (timing.endMs / TtmlTimeParser.MILLIS_PER_SECOND) + offsetSeconds,
+                                        isBackground = true,
+                                    )
+                                }
+                            }
+                        }
+                    val romanization = TtmlSpanHandler.chooseRomanization(line.romanizations)
 
-                ParsedLine(
-                    text = line.text,
-                    startTime = line.timing.startMs / TtmlTimeParser.MILLIS_PER_SECOND,
-                    endTime = line.timing.endMs / TtmlTimeParser.MILLIS_PER_SECOND,
-                    words = mainWords + backgroundWords,
-                    agent = line.agent?.id,
-                    providerRomanizedText = romanization?.text?.normalizedText(),
-                    providerRomanizedWords =
-                        romanization
-                            ?.segments
-                            ?.map { it.text.normalizedText() }
-                            ?.filter(String::isNotEmpty)
-                            ?.takeIf { words -> words.isNotEmpty() },
-                    providerRomanizedLanguage = romanization?.language,
-                    providerTranslationText = line.translations.firstOrNull()?.text?.normalizedText(),
-                )
-            }
+                    ParsedLine(
+                        text = line.text,
+                        startTime = (line.timing.startMs / TtmlTimeParser.MILLIS_PER_SECOND),
+                        endTime = (line.timing.endMs / TtmlTimeParser.MILLIS_PER_SECOND),
+                        words = if (doc.timingMode == TtmlTimingMode.WORD) (mainWords + backgroundWords) else emptyList(),
+                        isBackground = line.backgrounds.isNotEmpty() && line.main.text.isBlank(),
+                        agent = line.agent?.id,
+                        providerRomanizedText = romanization?.text?.normalizedText(),
+                        providerRomanizedWords =
+                            romanization
+                                ?.segments
+                                ?.map { it.text.normalizedText() }
+                                ?.filter(String::isNotEmpty)
+                                ?.takeIf { words -> words.isNotEmpty() },
+                        providerRomanizedLanguage = romanization?.language,
+                        providerTranslationText = line.translations.firstOrNull()?.text?.normalizedText(),
+                        timingMode = doc.timingMode,
+                    )
+                }
+            }.orEmpty()
 
     fun parse(ttml: String): List<ParsedLine> = parseTTML(ttml)
 }
