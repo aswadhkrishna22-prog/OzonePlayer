@@ -230,7 +230,7 @@ internal fun LyricsDisplaySection(
                 },
                 icon = { Icon(painterResource(R.drawable.blur_on), null) },
                 checked = lyricsRainEffect && isSupported,
-                enabled = isSupported,
+                isEnabled = isSupported,
                 onCheckedChange = onLyricsRainEffectChange,
             )
         }
