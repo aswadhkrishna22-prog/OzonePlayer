@@ -318,7 +318,7 @@ fun LocalPlaylistScreen(
             PlaylistDownloadSheet(
                 title = playlist?.playlist?.name.orEmpty(),
                 thumbnailUrl = playlist?.thumbnails?.firstOrNull() ?: playlist?.playlist?.thumbnailUrl,
-                songs = songs.map { it.toDownloadableSong() },
+                songs = songs.map { it.toDownloadableSong() }.distinctBy { it.id },
                 downloads = downloadUiState.downloads,
                 hasMoreSongs = false,
                 onDismiss = { showDownloadSheet = false },
@@ -327,7 +327,7 @@ fun LocalPlaylistScreen(
                     downloadUiState.dismissed = false
                     sendAddMissingDownloads(
                         context = context,
-                        songs = selectedList.map { HeaderDownloadItem(id = it.id, title = it.title) },
+                        songs = selectedList.map { HeaderDownloadItem(id = it.id, title = it.title) }.distinctBy { it.id },
                         downloads = downloadUiState.downloads,
                     )
                     coroutineScope.launch {
