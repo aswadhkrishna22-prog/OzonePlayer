@@ -8,6 +8,12 @@ package moe.rukamori.archivetune.lyrics
 
 import kotlinx.coroutines.flow.MutableStateFlow
 
+enum class LyricsSyncType {
+    WORD,
+    LINE,
+    PLAIN,
+}
+
 data class WordTimestamp(
     val text: String,
     val startTime: Double,
