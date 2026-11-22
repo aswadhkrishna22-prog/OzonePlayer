@@ -30,6 +30,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import moe.rukamori.archivetune.lyrics.LrcParser.isLineInParentheses
 
 @Immutable
 internal data class PlainLyrics(
@@ -95,12 +96,22 @@ internal fun PlainLyricLineItem(
     onLineClicked: (String) -> Unit,
     onLinePressed: (String) -> Unit,
 ) {
-    val contentColor =
+    val isParenthetical = isLineInParentheses(line.text)
+    val baseContentColor =
         if (selected) {
             MaterialTheme.colorScheme.primary
         } else {
             textColor
         }
+    val contentColor = if (isParenthetical && !selected) baseContentColor.copy(alpha = 0.65f) else baseContentColor
+    val effectiveTextStyle = if (isParenthetical) {
+        textStyle.copy(
+            fontSize = (textStyle.fontSize.value * 0.82f).sp,
+            lineHeight = (textStyle.lineHeight.value * 0.82f).sp,
+        )
+    } else {
+        textStyle
+    }
 
     val modifier = Modifier
         .fillMaxWidth()
@@ -115,24 +126,24 @@ internal fun PlainLyricLineItem(
         Column(modifier = modifier) {
             Text(
                 text = line.text,
-                style = textStyle,
+                style = effectiveTextStyle,
                 color = contentColor,
             )
             Text(
                 text = line.translation,
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = (textStyle.fontSize.value * 0.55f).sp,
-                    lineHeight = (textStyle.fontSize.value * 0.75f).sp,
+                    fontSize = (effectiveTextStyle.fontSize.value * 0.55f).sp,
+                    lineHeight = (effectiveTextStyle.fontSize.value * 0.75f).sp,
                     fontWeight = FontWeight.Normal,
                 ),
                 color = contentColor.copy(alpha = 0.76f),
-                modifier = Modifier.padding(top = (textStyle.fontSize.value * 0.3f).dp),
+                modifier = Modifier.padding(top = (effectiveTextStyle.fontSize.value * 0.3f).dp),
             )
         }
     } else {
         Text(
             text = line.text,
-            style = textStyle,
+            style = effectiveTextStyle,
             color = contentColor,
             modifier = modifier,
         )

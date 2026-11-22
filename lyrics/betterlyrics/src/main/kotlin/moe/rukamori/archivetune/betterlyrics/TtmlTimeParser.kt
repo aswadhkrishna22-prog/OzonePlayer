@@ -19,7 +19,7 @@ internal object TtmlTimeParser {
     const val MILLIS_PER_SECOND = 1000.0
     const val DEFAULT_FINAL_LINE_DURATION_MS = 4000L
 
-    private val OFFSET_TIME_REGEX = Regex("""^([0-9]+(?:\.[0-9]+)?)(ms|h|m|s|f|t)$""", RegexOption.IGNORE_CASE)
+    private val OFFSET_TIME_REGEX = Regex("""^([+-]?[0-9]+(?:\.[0-9]+)?)(ms|h|m|s|f|t)?$""", RegexOption.IGNORE_CASE)
 
     fun readTimingContext(root: Element): TimingContext {
         val baseFrameRate = root.attribute("frameRate")?.toDoubleOrNull()?.takeIf { it.isFinite() && it > 0.0 } ?: 30.0
@@ -37,21 +37,23 @@ internal object TtmlTimeParser {
 
     fun parseTime(
         rawValue: String,
-        context: TimingContext,
+        context: TimingContext = TimingContext(30.0, 30.0),
     ): Long? {
-        val value = rawValue.trim()
+        val value = rawValue.trim().replace(',', '.')
         if (value.isEmpty()) return null
 
         OFFSET_TIME_REGEX.matchEntire(value)?.let { match ->
-            val amount = match.groupValues[1].toDoubleOrNull()?.takeIf { it.isFinite() && it >= 0.0 } ?: return null
+            val amount = match.groupValues[1].toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
+            val unit = match.groupValues[2].lowercase()
             val seconds =
-                when (match.groupValues[2].lowercase()) {
+                when (unit) {
                     "h" -> amount * 3600.0
                     "m" -> amount * 60.0
                     "s" -> amount
                     "ms" -> amount / 1000.0
                     "f" -> amount / context.frameRate
                     "t" -> amount / context.tickRate
+                    "" -> amount
                     else -> return null
                 }
             return seconds.toMillisecondsOrNull()
@@ -72,9 +74,11 @@ internal object TtmlTimeParser {
         return seconds.toMillisecondsOrNull()
     }
 
+    fun parseTimeOffset(rawValue: String): Long? = parseTime(rawValue, TimingContext(30.0, 30.0))
+
     private fun Double.toMillisecondsOrNull(): Long? {
         val milliseconds = this * 1000.0
-        if (!milliseconds.isFinite() || milliseconds < 0.0 || milliseconds > Long.MAX_VALUE.toDouble()) return null
+        if (!milliseconds.isFinite() || milliseconds < Long.MIN_VALUE.toDouble() || milliseconds > Long.MAX_VALUE.toDouble()) return null
         return milliseconds.roundToLong()
     }
 }
