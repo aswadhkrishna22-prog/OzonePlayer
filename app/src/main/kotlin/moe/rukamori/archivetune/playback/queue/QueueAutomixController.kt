@@ -30,6 +30,7 @@ import moe.rukamori.archivetune.extensions.SilentHandler
 import moe.rukamori.archivetune.innertube.models.WatchEndpoint
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.playback.queues.EmptyQueue
+import moe.rukamori.archivetune.playback.queues.InfiniteRadioQueue
 import moe.rukamori.archivetune.playback.queues.Queue
 import moe.rukamori.archivetune.playback.queues.YouTubeQueue
 import moe.rukamori.archivetune.together.TogetherSessionState
@@ -131,10 +132,9 @@ internal class QueueAutomixController(
             },
         ) {
             val radioQueue =
-                YouTubeQueue(
-                    endpoint = WatchEndpoint(videoId = currentMediaId),
-                    preloadItem = currentMediaMetadata,
-                    followAutomixPreview = true,
+                InfiniteRadioQueue(
+                    seed = currentMediaMetadata,
+                    dataStore = ds,
                 )
             val ds = effectiveDataStore
             val hideExplicit = ds?.get(HideExplicitKey, false) ?: false

@@ -51,6 +51,9 @@ import moe.rukamori.archivetune.constants.AutoSkipNextOnErrorKey
 import moe.rukamori.archivetune.lowdata.AutoLowDataMode
 import moe.rukamori.archivetune.constants.AutoStartOnBluetoothKey
 import moe.rukamori.archivetune.constants.BeastModeAutoPromptKey
+import moe.rukamori.archivetune.constants.RadioEnabledKey
+import moe.rukamori.archivetune.constants.RadioSourceJioSaavnKey
+import moe.rukamori.archivetune.constants.RadioSourceYouTubeKey
 import moe.rukamori.archivetune.constants.SmartVibeQueueKey
 import moe.rukamori.archivetune.constants.AutomixEnabledKey
 import moe.rukamori.archivetune.constants.AutomixTransitionDuration
@@ -145,6 +148,18 @@ fun PlayerSettings(navController: NavController) {
     )
     val (smartVibeQueue, onSmartVibeQueueChange) = rememberPreference(
         SmartVibeQueueKey,
+        defaultValue = true,
+    )
+    val (radioEnabled, onRadioEnabledChange) = rememberPreference(
+        RadioEnabledKey,
+        defaultValue = true,
+    )
+    val (radioSourceJioSaavn, onRadioSourceJioSaavnChange) = rememberPreference(
+        RadioSourceJioSaavnKey,
+        defaultValue = true,
+    )
+    val (radioSourceYouTube, onRadioSourceYouTubeChange) = rememberPreference(
+        RadioSourceYouTubeKey,
         defaultValue = true,
     )
     val (stopMusicOnTaskClear, onStopMusicOnTaskClearChange) = rememberPreference(
@@ -247,6 +262,9 @@ fun PlayerSettings(navController: NavController) {
         autoStartOnBluetooth = autoStartOnBluetooth,
         beastModeAutoPrompt = beastModeAutoPrompt,
         smartVibeQueue = smartVibeQueue,
+        radioEnabled = radioEnabled,
+        radioSourceJioSaavn = radioSourceJioSaavn,
+        radioSourceYouTube = radioSourceYouTube,
         stopMusicOnTaskClear = stopMusicOnTaskClear,
         wakelockEnabled = wakelockEnabled,
         crossfadeEnabled = crossfadeEnabled,
@@ -288,6 +306,9 @@ fun PlayerSettings(navController: NavController) {
             onAutoStartOnBluetoothChange = onAutoStartOnBluetoothChange,
             onBeastModeAutoPromptChange = onBeastModeAutoPromptChange,
             onSmartVibeQueueChange = onSmartVibeQueueChange,
+            onRadioEnabledChange = onRadioEnabledChange,
+            onRadioSourceJioSaavnChange = onRadioSourceJioSaavnChange,
+            onRadioSourceYouTubeChange = onRadioSourceYouTubeChange,
             onStopMusicOnTaskClearChange = onStopMusicOnTaskClearChange,
             onWakelockChange = onWakelockChange,
             onDoubleTapToSeekChange = onDoubleTapToSeekChange,

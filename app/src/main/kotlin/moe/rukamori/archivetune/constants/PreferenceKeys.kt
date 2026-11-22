@@ -300,6 +300,9 @@ enum class AutomixTransitionDuration(val value: String) {
     S20("20"),
 }
 val AutoLoadMoreKey = booleanPreferencesKey("autoLoadMore")
+val RadioEnabledKey = booleanPreferencesKey("radioEnabled")
+val RadioSourceJioSaavnKey = booleanPreferencesKey("radioSourceJioSaavn")
+val RadioSourceYouTubeKey = booleanPreferencesKey("radioSourceYouTube")
 val AutoDownloadOnLikeKey = booleanPreferencesKey("autoDownloadOnLike")
 val AutoSkipNextOnErrorKey = booleanPreferencesKey("autoSkipNextOnError")
 val PauseOnDeviceMuteKey = booleanPreferencesKey("pauseOnDeviceMute")

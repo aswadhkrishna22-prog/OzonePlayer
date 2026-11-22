@@ -65,6 +65,35 @@ internal fun PlayerBehaviorSection(
         }
         item {
             SwitchPreference(
+                title = { Text(stringResource(R.string.radio_enabled_title)) },
+                description = stringResource(R.string.radio_enabled_desc),
+                icon = { Icon(painterResource(R.drawable.radio), null) },
+                checked = state.radioEnabled,
+                onCheckedChange = actions.onRadioEnabledChange,
+            )
+        }
+        if (state.radioEnabled) {
+            item {
+                SwitchPreference(
+                    title = { Text(stringResource(R.string.radio_source_jiosaavn_title)) },
+                    description = stringResource(R.string.radio_source_jiosaavn_desc),
+                    icon = { Icon(painterResource(R.drawable.queue_music), null) },
+                    checked = state.radioSourceJioSaavn,
+                    onCheckedChange = actions.onRadioSourceJioSaavnChange,
+                )
+            }
+            item {
+                SwitchPreference(
+                    title = { Text(stringResource(R.string.radio_source_youtube_title)) },
+                    description = stringResource(R.string.radio_source_youtube_desc),
+                    icon = { Icon(painterResource(R.drawable.play), null) },
+                    checked = state.radioSourceYouTube,
+                    onCheckedChange = actions.onRadioSourceYouTubeChange,
+                )
+            }
+        }
+        item {
+            SwitchPreference(
                 title = { Text(stringResource(R.string.pause_on_device_mute)) },
                 icon = { Icon(painterResource(R.drawable.volume_off), null) },
                 checked = state.pauseOnDeviceMute,

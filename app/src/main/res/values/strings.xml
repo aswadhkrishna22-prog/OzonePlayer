@@ -1381,6 +1381,15 @@
     <string name="smart_vibe_queue_title">Smart Vibe Queue</string>
     <string name="smart_vibe_queue_desc">Keep queue songs in the same energy vibe (Power, Love, Emotional) when starting radio</string>
 
+    <!-- Infinite Radio Queue Settings -->
+    <string name="radio_settings_group_title">Infinite Radio</string>
+    <string name="radio_enabled_title">Infinite Radio Queue</string>
+    <string name="radio_enabled_desc">Automatically queue similar songs from JioSaavn &amp; YouTube Music</string>
+    <string name="radio_source_jiosaavn_title">JioSaavn Radio</string>
+    <string name="radio_source_jiosaavn_desc">Include similar tracks from JioSaavn station</string>
+    <string name="radio_source_youtube_title">YouTube Music Radio</string>
+    <string name="radio_source_youtube_desc">Include similar tracks from YouTube Music radio</string>
+
     <!-- Version Picker / Match Override -->
     <string name="wrong_song_pick_another">Wrong song? Pick another version</string>
     <string name="wrong_song_pick_another_desc">Choose the exact version from YouTube Music</string>

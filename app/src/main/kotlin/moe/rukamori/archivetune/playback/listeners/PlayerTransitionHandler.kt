@@ -35,6 +35,7 @@ import moe.rukamori.archivetune.extensions.mediaItems
 import moe.rukamori.archivetune.extensions.metadata
 import moe.rukamori.archivetune.innertube.models.WatchEndpoint
 import moe.rukamori.archivetune.playback.MusicServicePlayerListeners
+import moe.rukamori.archivetune.playback.queues.InfiniteRadioQueue
 import moe.rukamori.archivetune.playback.queues.Queue
 import moe.rukamori.archivetune.playback.queues.YouTubeQueue
 import moe.rukamori.archivetune.playback.queues.filterExplicit
@@ -226,10 +227,19 @@ internal class PlayerTransitionHandler(
             // No redundant seeding update check.
         }
 
-        val remainingTracks = player.mediaItemCount - player.currentMediaItemIndex
         val currentQ = queueDelegate.currentQueue
 
-        val shouldPage = if (currentQ.isContextQueue) true else dataStore.get(AutoLoadMoreKey, true)
+        // Trim old played items in InfiniteRadioQueue to keep Media3 playlist memory bounded
+        if (currentQ is InfiniteRadioQueue) {
+            val currentIdx = player.currentMediaItemIndex
+            if (currentIdx >= 3) {
+                val trimCount = currentIdx - 1
+                player.removeMediaItems(0, trimCount)
+            }
+        }
+
+        val remainingTracks = player.mediaItemCount - player.currentMediaItemIndex
+        val shouldPage = if (currentQ.isContextQueue || currentQ is InfiniteRadioQueue) true else dataStore.get(AutoLoadMoreKey, true)
 
         if (!queueDelegate.suppressAutoPlayback &&
             !queueDelegate.isInitializingQueue &&

@@ -35,6 +35,9 @@ import moe.rukamori.archivetune.constants.PlaybackSourceKey
 import moe.rukamori.archivetune.constants.QobuzAppIdKey
 import moe.rukamori.archivetune.constants.QobuzAppSecretKey
 import moe.rukamori.archivetune.constants.QobuzUserAuthTokenKey
+import moe.rukamori.archivetune.constants.RadioEnabledKey
+import moe.rukamori.archivetune.constants.RadioSourceJioSaavnKey
+import moe.rukamori.archivetune.constants.RadioSourceYouTubeKey
 import moe.rukamori.archivetune.constants.SkipSilenceKey
 import moe.rukamori.archivetune.constants.StopMusicOnTaskClearKey
 import moe.rukamori.archivetune.constants.WakelockKey
@@ -67,6 +70,9 @@ internal object PlayerContract {
     val QobuzAppId = QobuzAppIdKey
     val QobuzAppSecret = QobuzAppSecretKey
     val QobuzUserAuthToken = QobuzUserAuthTokenKey
+    val RadioEnabled = RadioEnabledKey
+    val RadioSourceJioSaavn = RadioSourceJioSaavnKey
+    val RadioSourceYouTube = RadioSourceYouTubeKey
 }
 
 @Immutable
@@ -84,6 +90,9 @@ data class PlayerSettingsUiState(
     val autoStartOnBluetooth: Boolean = false,
     val beastModeAutoPrompt: Boolean = true,
     val smartVibeQueue: Boolean = true,
+    val radioEnabled: Boolean = true,
+    val radioSourceJioSaavn: Boolean = true,
+    val radioSourceYouTube: Boolean = true,
     val stopMusicOnTaskClear: Boolean = false,
     val wakelockEnabled: Boolean = false,
     val crossfadeEnabled: Boolean = false,
@@ -120,6 +129,9 @@ data class PlayerSettingsUiActions(
     val onAutoStartOnBluetoothChange: (Boolean) -> Unit = {},
     val onBeastModeAutoPromptChange: (Boolean) -> Unit = {},
     val onSmartVibeQueueChange: (Boolean) -> Unit = {},
+    val onRadioEnabledChange: (Boolean) -> Unit = {},
+    val onRadioSourceJioSaavnChange: (Boolean) -> Unit = {},
+    val onRadioSourceYouTubeChange: (Boolean) -> Unit = {},
     val onStopMusicOnTaskClearChange: (Boolean) -> Unit = {},
     val onWakelockChange: (Boolean) -> Unit = {},
     val onCrossfadeEnabledChange: (Boolean) -> Unit = {},

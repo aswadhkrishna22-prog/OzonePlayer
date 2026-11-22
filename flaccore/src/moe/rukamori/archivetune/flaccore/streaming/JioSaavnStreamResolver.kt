@@ -31,6 +31,7 @@ data class JioSaavnCandidate(
     val artists: List<String>,
     val encryptedMediaUrl: String,
     val imageUrl: String?,
+    val language: String? = null,
 )
 
 /**
@@ -39,7 +40,7 @@ data class JioSaavnCandidate(
  * and international tracks to direct Azure/Akamai CDN 320 kbps audio streams.
  */
 class JioSaavnStreamResolver(
-    private val client: OkHttpClient,
+    private val client: OkHttpClient = defaultClient,
 ) {
     private val logger = FlacLogger(TAG)
     private val json = Json { ignoreUnknownKeys = true; isLenient = true; coerceInputValues = true }
@@ -225,43 +226,123 @@ class JioSaavnStreamResolver(
         }
     }
 
+    fun parseCandidateFromJsonObject(obj: JsonObject): JioSaavnCandidate? {
+        val id = obj["id"]?.jsonPrimitive?.contentOrNull.orEmpty()
+        val title = unescapeHtml(obj["title"]?.jsonPrimitive?.contentOrNull.orEmpty())
+        val subtitle = unescapeHtml(obj["subtitle"]?.jsonPrimitive?.contentOrNull.orEmpty())
+        val image = obj["image"]?.jsonPrimitive?.contentOrNull
+        val language = obj["language"]?.jsonPrimitive?.contentOrNull
+        val moreInfo = obj["more_info"] as? JsonObject
+        val album = unescapeHtml(moreInfo?.get("album")?.jsonPrimitive?.contentOrNull.orEmpty())
+        val encUrl = moreInfo?.get("encrypted_media_url")?.jsonPrimitive?.contentOrNull.orEmpty()
+        val durationStr = moreInfo?.get("duration")?.jsonPrimitive?.contentOrNull.orEmpty()
+        val durationSec = durationStr.toLongOrNull() ?: 0L
+
+        val artistMap = moreInfo?.get("artistMap") as? JsonObject
+        val artists = mutableListOf<String>()
+        (artistMap?.get("primary_artists") as? JsonArray)?.forEach { a ->
+            (a as? JsonObject)?.get("name")?.jsonPrimitive?.contentOrNull?.let { artists.add(unescapeHtml(it)) }
+        }
+        (artistMap?.get("artists") as? JsonArray)?.forEach { a ->
+            (a as? JsonObject)?.get("name")?.jsonPrimitive?.contentOrNull?.let { artists.add(unescapeHtml(it)) }
+        }
+        if (artists.isEmpty() && subtitle.isNotBlank()) {
+            artists.add(subtitle)
+        }
+
+        return if (id.isNotBlank() && title.isNotBlank() && encUrl.isNotBlank()) {
+            JioSaavnCandidate(
+                id = id,
+                title = title,
+                subtitle = subtitle,
+                album = album,
+                durationSec = durationSec,
+                artists = artists.distinct(),
+                encryptedMediaUrl = encUrl,
+                imageUrl = image,
+                language = language,
+            )
+        } else null
+    }
+
     private fun parseCandidateList(elements: JsonArray): List<JioSaavnCandidate> {
         return elements.mapNotNull { element ->
             val obj = element as? JsonObject ?: return@mapNotNull null
-            val id = obj["id"]?.jsonPrimitive?.contentOrNull.orEmpty()
-            val title = unescapeHtml(obj["title"]?.jsonPrimitive?.contentOrNull.orEmpty())
-            val subtitle = unescapeHtml(obj["subtitle"]?.jsonPrimitive?.contentOrNull.orEmpty())
-            val image = obj["image"]?.jsonPrimitive?.contentOrNull
-            val moreInfo = obj["more_info"] as? JsonObject
-            val album = unescapeHtml(moreInfo?.get("album")?.jsonPrimitive?.contentOrNull.orEmpty())
-            val encUrl = moreInfo?.get("encrypted_media_url")?.jsonPrimitive?.contentOrNull.orEmpty()
-            val durationStr = moreInfo?.get("duration")?.jsonPrimitive?.contentOrNull.orEmpty()
-            val durationSec = durationStr.toLongOrNull() ?: 0L
+            parseCandidateFromJsonObject(obj)
+        }
+    }
 
-            val artistMap = moreInfo?.get("artistMap") as? JsonObject
-            val artists = mutableListOf<String>()
-            (artistMap?.get("primary_artists") as? JsonArray)?.forEach { a ->
-                (a as? JsonObject)?.get("name")?.jsonPrimitive?.contentOrNull?.let { artists.add(unescapeHtml(it)) }
-            }
-            (artistMap?.get("artists") as? JsonArray)?.forEach { a ->
-                (a as? JsonObject)?.get("name")?.jsonPrimitive?.contentOrNull?.let { artists.add(unescapeHtml(it)) }
-            }
-            if (artists.isEmpty() && subtitle.isNotBlank()) {
-                artists.add(subtitle)
-            }
+    suspend fun createEntityStation(songId: String): String? = withContext(Dispatchers.IO) {
+        val cleanId = songId.removePrefix("jiosaavn_").trim()
+        if (cleanId.isBlank()) return@withContext null
+        try {
+            val url = BASE_URL.toHttpUrl().newBuilder()
+                .addQueryParameter("__call", "webradio.createEntityStation")
+                .addQueryParameter("entity_id", "[\"$cleanId\"]")
+                .addQueryParameter("entity_type", "queue")
+                .addQueryParameter("api_version", "4")
+                .addQueryParameter("_format", "json")
+                .addQueryParameter("_marker", "0")
+                .addQueryParameter("ctx", "android")
+                .build()
 
-            if (id.isNotBlank() && title.isNotBlank() && encUrl.isNotBlank()) {
-                JioSaavnCandidate(
-                    id = id,
-                    title = title,
-                    subtitle = subtitle,
-                    album = album,
-                    durationSec = durationSec,
-                    artists = artists.distinct(),
-                    encryptedMediaUrl = encUrl,
-                    imageUrl = image,
-                )
-            } else null
+            val request = Request.Builder()
+                .url(url)
+                .header("User-Agent", USER_AGENT)
+                .header("Accept", "application/json")
+                .build()
+
+            val response = client.newCall(request).execute()
+            if (!response.isSuccessful) return@withContext null
+            val body = response.body?.string().orEmpty()
+            if (body.isBlank() || body == "[]") return@withContext null
+
+            val root = json.parseToJsonElement(body) as? JsonObject ?: return@withContext null
+            root["stationid"]?.jsonPrimitive?.contentOrNull
+        } catch (e: Exception) {
+            logger.w("Failed to create JioSaavn entity station for '$cleanId': ${e.message}")
+            null
+        }
+    }
+
+    suspend fun getStationSongs(stationId: String, count: Int = 10, next: Int = 1): List<JioSaavnCandidate> = withContext(Dispatchers.IO) {
+        if (stationId.isBlank()) return@withContext emptyList()
+        try {
+            val url = BASE_URL.toHttpUrl().newBuilder()
+                .addQueryParameter("__call", "webradio.getSong")
+                .addQueryParameter("stationid", stationId)
+                .addQueryParameter("k", count.toString())
+                .addQueryParameter("next", next.toString())
+                .addQueryParameter("api_version", "4")
+                .addQueryParameter("_format", "json")
+                .addQueryParameter("_marker", "0")
+                .addQueryParameter("ctx", "android")
+                .build()
+
+            val request = Request.Builder()
+                .url(url)
+                .header("User-Agent", USER_AGENT)
+                .header("Accept", "application/json")
+                .build()
+
+            val response = client.newCall(request).execute()
+            if (!response.isSuccessful) return@withContext emptyList()
+            val body = response.body?.string().orEmpty()
+            if (body.isBlank() || body == "[]") return@withContext emptyList()
+
+            val root = json.parseToJsonElement(body) as? JsonObject ?: return@withContext emptyList()
+            val candidateObjects = buildList {
+                for (key in root.keys) {
+                    if (key == "stationid" || key == "error") continue
+                    val entryObj = root[key] as? JsonObject ?: continue
+                    val songObj = entryObj["song"] as? JsonObject ?: entryObj
+                    add(songObj)
+                }
+            }
+            candidateObjects.mapNotNull { parseCandidateFromJsonObject(it) }
+        } catch (e: Exception) {
+            logger.w("Failed to fetch JioSaavn station songs for station '$stationId': ${e.message}")
+            emptyList()
         }
     }
 
@@ -355,5 +436,16 @@ class JioSaavnStreamResolver(
         const val ORIGIN = "jiosaavn"
         const val BASE_URL = "https://www.jiosaavn.com/api.php"
         const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+        val defaultClient: OkHttpClient by lazy {
+            OkHttpClient.Builder()
+                .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+                .build()
+        }
+
+        val shared: JioSaavnStreamResolver by lazy {
+            JioSaavnStreamResolver(defaultClient)
+        }
     }
 }

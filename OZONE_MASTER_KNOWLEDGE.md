@@ -114,3 +114,27 @@
   - **ExoPlayer Loader Resilience:** In `MusicServicePlayback.kt:resolvePlaybackDataSpec`, lookup checks DB formats, then in-memory `JioSaavnQualityCache.getRawUrl(mediaId)`, followed by direct JioSaavn API lookup by song ID (`jioSaavnStreamResolver.resolveById(mediaId)`). If all JioSaavn CDN links fail or are expired, seamlessly resolves the song by title & artist on YouTube Music (with multi-stage `FILTER_SONG` -> `FILTER_VIDEO` -> `null` search) instead of throwing fatal `PlaybackException("JioSaavn audio stream unavailable")`.
   - **Player Error Auto-Recovery:** In `PlayerConnection.kt:onPlayerErrorChanged`, early source errors trigger tier fallback (320 -> 160 -> Original). If all tiers fail, smoothly searches and switches to the matching YouTube Music stream or skips to the next track without popping up error dialogs to the user.
   - **Chart Feed Parsing Fix:** In `TrendingRepository.kt:fetchJioSaavnTrendingFromNetwork`, JioSaavn playlist details parse songs from the root `list` array (falling back to `songs`), ensuring all trending songs contain decrypted CDN links.
+11. **Infinite Radio Queue (Mixed JioSaavn & YouTube Music) (`feat/infinite-radio-queue`):**
+  - **Engine Architecture (`InfiniteRadioQueue.kt`):** Implements `Queue` protocol with infinite pagination (`hasNextPage()`, `nextPage()`), providing an endless radio experience tailored to the seed track.
+  - **Dual Source Mixing & Interleaving:**
+    - JioSaavn: Uses `webradio.createEntityStation` (`ctx=android`, `entity_type=queue`, `entity_id=["<song_id>"]`) and `webradio.getSong` (`ctx=android`, `stationid`, `k`, `next`).
+    - YouTube Music: Reuses existing `moe.rukamori.archivetune.innertube` via `YouTube.next(WatchEndpoint(videoId, playlistId="RDAMVM$videoId"))`.
+    - Batches are interleaved approximately 1:1. If one source fails, exhausts, or is toggled off, playback continues seamlessly using the remaining source.
+  - **Cross-Source Seed Matching & Similarity Gate:**
+    - When seed is JioSaavn, searches YouTube Music by title + artist and scores candidate similarity; when seed is YouTube, searches JioSaavn.
+    - Strict similarity threshold (score >= 35.0 based on normalized title, artist, and duration) prevents cross-source radio drift.
+  - **Deduplication & Variant Suppression:**
+    - Tracks `playedIds` set to prevent replaying tracks.
+    - Computes normalized title + artist signatures and filters duplicates within duration ±3s.
+    - Strips covers, remixes, slowed/reverb, karaoke, instrumental, 8D, and speed-up variants unless the seed itself is a variant.
+  - **Regional Language Locking:**
+    - If seed track is Malayalam, Tamil, or Telugu, locks the radio session to that language.
+    - Enforces Unicode script filtering (rejects cross-script pollution like Hindi/Devanagari, Punjabi/Gurmukhi, etc.) and explicit language tag matching.
+  - **Lazy Stream Resolution & Memory Boundedness:**
+    - Radio items are enqueued with metadata only (`uri = mediaId`); stream URLs are resolved lazily on playback by `MusicServicePlayback.kt` (preventing expired YouTube CDN links).
+    - Auto-prefetches next batch when remaining items <= 5 (or <= 3).
+    - Trims earlier played items from Media3 playlist when `currentMediaItemIndex >= 3` in `PlayerTransitionHandler.kt` to prevent memory bloat during infinite sessions.
+  - **Search Tap Playback & Settings:**
+    - Tapping any search result song plays *only that song* as seed in `InfiniteRadioQueue` (or single `ListQueue` if radio is turned off); search list is never queued as a playlist.
+    - Queue title displays as `"Radio: <seed song>"`.
+    - Preferences & UI switches in Settings > Player > Behavior: "Infinite Radio Queue" (`RadioEnabledKey`), "JioSaavn Radio" (`RadioSourceJioSaavnKey`), "YouTube Music Radio" (`RadioSourceYouTubeKey`).

@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -28,16 +29,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.drop
+import moe.rukamori.archivetune.LocalDatabase
 import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.constants.RadioEnabledKey
+import moe.rukamori.archivetune.extensions.toMediaItem
 import moe.rukamori.archivetune.extensions.togglePlayPause
 import moe.rukamori.archivetune.innertube.models.*
 import moe.rukamori.archivetune.models.toMediaMetadata
+import moe.rukamori.archivetune.playback.queues.InfiniteRadioQueue
+import moe.rukamori.archivetune.playback.queues.ListQueue
 import moe.rukamori.archivetune.playback.queues.YouTubeQueue
 import moe.rukamori.archivetune.ui.component.LocalMenuState
 import moe.rukamori.archivetune.ui.component.YouTubeListItem
 import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.ui.menu.*
+import moe.rukamori.archivetune.utils.dataStore
+import moe.rukamori.archivetune.utils.get
 import moe.rukamori.archivetune.viewmodels.OnlineSearchSuggestionViewModel
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
@@ -54,6 +62,8 @@ fun OnlineSearchScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     val menuState = LocalMenuState.current
     val playerConnection = LocalPlayerConnection.current ?: return
+    val context = LocalContext.current
+    val database = LocalDatabase.current
 
     val haptics = rememberOzoneHaptics()
     val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle()
@@ -86,9 +96,25 @@ fun OnlineSearchScreen(
                         if (item.id == mediaMetadata?.id) {
                             playerConnection.player.togglePlayPause()
                         } else {
-                            playerConnection.playQueue(
-                                YouTubeQueue.radio(item.toMediaMetadata()),
-                            )
+                            val isRadioEnabled = context.dataStore.get(RadioEnabledKey, true)
+                            if (isRadioEnabled) {
+                                playerConnection.playQueue(
+                                    InfiniteRadioQueue(
+                                        seed = item.toMediaMetadata(),
+                                        seedSongItem = item,
+                                        database = database,
+                                        dataStore = context.dataStore,
+                                    ),
+                                )
+                            } else {
+                                playerConnection.playQueue(
+                                    ListQueue(
+                                        title = item.title,
+                                        items = listOf(item.toMediaItem()),
+                                        startIndex = 0,
+                                    ),
+                                )
+                            }
                             onDismiss()
                         }
                     }

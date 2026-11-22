@@ -13,10 +13,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
 import kotlinx.coroutines.CoroutineScope
+import moe.rukamori.archivetune.LocalDatabase
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.constants.RadioEnabledKey
+import moe.rukamori.archivetune.extensions.toMediaItem
 import moe.rukamori.archivetune.extensions.togglePlayPause
 import moe.rukamori.archivetune.innertube.models.AlbumItem
 import moe.rukamori.archivetune.innertube.models.ArtistItem
@@ -26,7 +30,11 @@ import moe.rukamori.archivetune.innertube.models.YTItem
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.models.toMediaMetadata
 import moe.rukamori.archivetune.playback.PlayerConnection
+import moe.rukamori.archivetune.playback.queues.InfiniteRadioQueue
+import moe.rukamori.archivetune.playback.queues.ListQueue
 import moe.rukamori.archivetune.playback.queues.YouTubeQueue
+import moe.rukamori.archivetune.utils.dataStore
+import moe.rukamori.archivetune.utils.get
 import moe.rukamori.archivetune.ui.component.LocalMenuState
 import moe.rukamori.archivetune.ui.component.MenuState
 import moe.rukamori.archivetune.ui.component.YouTubeListItem
@@ -50,6 +58,8 @@ fun LazyItemScope.OnlineSearchItemRow(
     menuState: MenuState = LocalMenuState.current,
     haptics: OzoneHaptics = rememberOzoneHaptics(),
 ) {
+    val context = LocalContext.current
+    val database = LocalDatabase.current
     val longClick = {
         haptics.longPress()
         menuState.show {
@@ -116,7 +126,25 @@ fun LazyItemScope.OnlineSearchItemRow(
                                 if (item.id == mediaMetadata?.id) {
                                     playerConnection.player.togglePlayPause()
                                 } else {
-                                    playerConnection.playQueue(YouTubeQueue.radio(item.toMediaMetadata()))
+                                    val isRadioEnabled = context.dataStore.get(RadioEnabledKey, true)
+                                    if (isRadioEnabled) {
+                                        playerConnection.playQueue(
+                                            InfiniteRadioQueue(
+                                                seed = item.toMediaMetadata(),
+                                                seedSongItem = item,
+                                                database = database,
+                                                dataStore = context.dataStore,
+                                            ),
+                                        )
+                                    } else {
+                                        playerConnection.playQueue(
+                                            ListQueue(
+                                                title = item.title,
+                                                items = listOf(item.toMediaItem()),
+                                                startIndex = 0,
+                                            ),
+                                        )
+                                    }
                                 }
                             }
 

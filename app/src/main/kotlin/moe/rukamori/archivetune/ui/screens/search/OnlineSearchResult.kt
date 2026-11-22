@@ -87,7 +87,11 @@ import moe.rukamori.archivetune.flaccore.streaming.JioSaavnQualityCache
 import moe.rukamori.archivetune.flaccore.streaming.JioSaavnQualityTier
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.playback.formatIdForSource
+import moe.rukamori.archivetune.constants.RadioEnabledKey
+import moe.rukamori.archivetune.playback.queues.InfiniteRadioQueue
 import moe.rukamori.archivetune.playback.queues.JioSaavnQueue
+import moe.rukamori.archivetune.utils.dataStore
+import moe.rukamori.archivetune.utils.get
 import moe.rukamori.archivetune.playback.queues.ListQueue
 import moe.rukamori.archivetune.innertube.YouTube
 import moe.rukamori.archivetune.innertube.SearchFilter.Companion.FILTER_ALBUM
@@ -279,7 +283,7 @@ fun OnlineSearchResult(
         }
     }
 
-    val onJioSaavnTrackClick: (JioSaavnCandidate, List<JioSaavnCandidate>) -> Unit = { candidate, candidateList ->
+    val onJioSaavnTrackClick: (JioSaavnCandidate, List<JioSaavnCandidate>) -> Unit = { candidate, _ ->
         val isActive = mediaMetadata?.id == "jiosaavn_${candidate.id}"
         if (isActive) {
             playerConnection.player.togglePlayPause()
@@ -287,76 +291,59 @@ fun OnlineSearchResult(
             coroutineScope.launch(Dispatchers.IO) {
                 resolvingTrackId = candidate.id
                 try {
-                    val mediaItems = candidateList.mapNotNull { item ->
-                        val rawUrl = JioSaavnDecryptor.decryptMediaUrl(item.encryptedMediaUrl) ?: return@mapNotNull null
-                        val itemMediaId = "jiosaavn_${item.id}"
+                    val itemMediaId = "jiosaavn_${candidate.id}"
+                    val rawUrl = JioSaavnDecryptor.decryptMediaUrl(candidate.encryptedMediaUrl)
+                    if (rawUrl != null) {
                         JioSaavnQualityCache.storeRawUrl(itemMediaId, rawUrl)
-                        val workingTier = JioSaavnQualityCache.getWorkingTier(itemMediaId)
-                        val streamUrl = JioSaavnDecryptor.getUrlForTier(rawUrl, workingTier)
-                        val nominalBitrate = if (workingTier.nominalBitrateKbps > 0) workingTier.nominalBitrateKbps * 1000 else 160000
-
-                        val itemMetadata = MediaMetadata(
-                            id = itemMediaId,
-                            title = item.title,
-                            artists = item.artists.map { MediaMetadata.Artist(id = null, name = it) },
-                            duration = item.durationSec.toInt(),
-                            thumbnailUrl = item.imageUrl?.replace("150x150", "500x500"),
-                            album = item.album?.let { MediaMetadata.Album(id = "jiosaavn_album_${item.id}", title = it) },
-                        )
-
-                        database.insert(itemMetadata)
-                        val formatEntity = FormatEntity(
-                            id = formatIdForSource(itemMediaId, PlaybackSource.FLAC),
-                            itag = 0,
-                            mimeType = "audio/mp4",
-                            codecs = "mp4a.40.2",
-                            bitrate = nominalBitrate,
-                            sampleRate = 44100,
-                            contentLength = (nominalBitrate.toLong() / 8L) * item.durationSec,
-                            loudnessDb = null,
-                            playbackUrl = streamUrl,
-                            bitsPerSample = 16,
-                        )
-                        database.upsert(formatEntity)
-                        database.upsert(formatEntity.copy(id = itemMediaId))
-
-                        MediaItem.Builder()
-                            .setMediaId(itemMediaId)
-                            .setUri(streamUrl.toUri())
-                            .setCustomCacheKey(itemMediaId)
-                            .setTag(itemMetadata)
-                            .setMediaMetadata(
-                                androidx.media3.common.MediaMetadata.Builder()
-                                    .setTitle(item.title)
-                                    .setSubtitle(item.artists.joinToString(", "))
-                                    .setArtist(item.artists.joinToString(", "))
-                                    .setArtworkUri(itemMetadata.thumbnailUrl?.toUri())
-                                    .setAlbumTitle(item.album)
-                                    .setIsPlayable(true)
-                                    .setMediaType(androidx.media3.common.MediaMetadata.MEDIA_TYPE_MUSIC)
-                                    .build(),
-                            )
-                            .build()
                     }
 
-                    if (mediaItems.isEmpty()) {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(context, "Could not resolve JioSaavn audio stream", Toast.LENGTH_SHORT).show()
-                        }
-                        return@launch
-                    }
+                    val seedMetadata = MediaMetadata(
+                        id = itemMediaId,
+                        title = candidate.title,
+                        artists = candidate.artists.map { MediaMetadata.Artist(id = null, name = it) },
+                        duration = candidate.durationSec.toInt(),
+                        thumbnailUrl = candidate.imageUrl?.replace("150x150", "500x500"),
+                        album = candidate.album?.let { MediaMetadata.Album(id = "jiosaavn_album_${candidate.id}", title = it) },
+                    )
+                    database.insert(seedMetadata)
 
-                    val targetMediaId = "jiosaavn_${candidate.id}"
-                    val startIndex = mediaItems.indexOfFirst { it.mediaId == targetMediaId }.coerceAtLeast(0)
-
+                    val isRadioEnabled = context.dataStore.get(RadioEnabledKey, true)
                     withContext(Dispatchers.Main) {
-                        playerConnection.playQueue(
-                            JioSaavnQueue(
-                                title = "JioSaavn: ${viewModel.query}",
-                                items = mediaItems,
-                                startIndex = startIndex,
-                            ),
-                        )
+                        if (isRadioEnabled) {
+                            playerConnection.playQueue(
+                                InfiniteRadioQueue(
+                                    seed = seedMetadata,
+                                    seedCandidate = candidate,
+                                    database = database,
+                                    dataStore = context.dataStore,
+                                ),
+                            )
+                        } else {
+                            val seedMediaItem = MediaItem.Builder()
+                                .setMediaId(itemMediaId)
+                                .setUri(itemMediaId)
+                                .setCustomCacheKey(itemMediaId)
+                                .setTag(seedMetadata)
+                                .setMediaMetadata(
+                                    androidx.media3.common.MediaMetadata.Builder()
+                                        .setTitle(candidate.title)
+                                        .setSubtitle(candidate.artists.joinToString(", "))
+                                        .setArtist(candidate.artists.joinToString(", "))
+                                        .setArtworkUri(seedMetadata.thumbnailUrl?.toUri())
+                                        .setAlbumTitle(candidate.album)
+                                        .setIsPlayable(true)
+                                        .setMediaType(androidx.media3.common.MediaMetadata.MEDIA_TYPE_MUSIC)
+                                        .build(),
+                                )
+                                .build()
+                            playerConnection.playQueue(
+                                ListQueue(
+                                    title = candidate.title,
+                                    items = listOf(seedMediaItem),
+                                    startIndex = 0,
+                                ),
+                            )
+                        }
                     }
                 } catch (e: Exception) {
                     timber.log.Timber.e(e, "Failed to play JioSaavn track")

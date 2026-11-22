@@ -29,18 +29,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import moe.rukamori.archivetune.LocalDatabase
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.constants.RadioEnabledKey
+import moe.rukamori.archivetune.extensions.toMediaItem
 import moe.rukamori.archivetune.extensions.togglePlayPause
 import moe.rukamori.archivetune.innertube.models.AlbumItem
 import moe.rukamori.archivetune.innertube.models.ArtistItem
 import moe.rukamori.archivetune.innertube.models.SongItem
 import moe.rukamori.archivetune.models.toMediaMetadata
+import moe.rukamori.archivetune.playback.queues.InfiniteRadioQueue
+import moe.rukamori.archivetune.playback.queues.ListQueue
 import moe.rukamori.archivetune.playback.queues.YouTubeQueue
 import moe.rukamori.archivetune.ui.component.LocalMenuState
 import moe.rukamori.archivetune.ui.component.NavigationTitle
@@ -48,6 +54,8 @@ import moe.rukamori.archivetune.ui.component.YouTubeGridItem
 import moe.rukamori.archivetune.ui.component.YouTubeListItem
 import moe.rukamori.archivetune.ui.haptics.rememberOzoneHaptics
 import moe.rukamori.archivetune.ui.menu.YouTubeAlbumMenu
+import moe.rukamori.archivetune.utils.dataStore
+import moe.rukamori.archivetune.utils.get
 import moe.rukamori.archivetune.ui.menu.YouTubeArtistMenu
 import moe.rukamori.archivetune.ui.menu.YouTubeSongMenu
 import moe.rukamori.archivetune.ui.screens.home.HomeLayoutConfig
@@ -60,6 +68,8 @@ internal fun SuggestedSongsSection(
     modifier: Modifier = Modifier,
 ) {
     if (songs.isEmpty()) return
+    val context = LocalContext.current
+    val database = LocalDatabase.current
 
     val playerConnection = LocalPlayerConnection.current ?: return
     val menuState = LocalMenuState.current
@@ -100,7 +110,25 @@ internal fun SuggestedSongsSection(
                                     if (song.id == mediaMetadata?.id) {
                                         playerConnection.player.togglePlayPause()
                                     } else {
-                                        playerConnection.playQueue(YouTubeQueue.radio(song.toMediaMetadata()))
+                                        val isRadioEnabled = context.dataStore.get(RadioEnabledKey, true)
+                                        if (isRadioEnabled) {
+                                            playerConnection.playQueue(
+                                                InfiniteRadioQueue(
+                                                    seed = song.toMediaMetadata(),
+                                                    seedSongItem = song,
+                                                    database = database,
+                                                    dataStore = context.dataStore,
+                                                ),
+                                            )
+                                        } else {
+                                            playerConnection.playQueue(
+                                                ListQueue(
+                                                    title = song.title,
+                                                    items = listOf(song.toMediaItem()),
+                                                    startIndex = 0,
+                                                ),
+                                            )
+                                        }
                                     }
                                 },
                                 onLongClick = {
