@@ -28,10 +28,10 @@ fun HomeTopBarAccountMenu(
     hasUpdate: Boolean,
     onNavigateProfile: () -> Unit,
     onNavigateHistory: () -> Unit,
-    onNavigateNews: () -> Unit,
     onNavigateNewRelease: () -> Unit,
     onNavigateSettings: () -> Unit,
     modifier: Modifier = Modifier,
+    onNavigateNews: () -> Unit = {},
     accentColor: Color? = null,
     hazeState: HazeState? = null,
     blurRadius: Float = SettingsDimensions.BlurRadiusDefault,
@@ -43,7 +43,7 @@ fun HomeTopBarAccountMenu(
     Box(modifier = modifier) {
         TopBarAccountAnchor(
             avatarUrl = avatarUrl,
-            hasBadge = hasUnreadNews || hasUpdate,
+            hasBadge = hasUpdate,
             onClick = { expanded = !expanded },
         )
 
@@ -59,7 +59,7 @@ fun HomeTopBarAccountMenu(
                 avatarUrl = avatarUrl,
                 accountName = accountName,
                 accentColor = accentColor,
-                hasUnreadNews = hasUnreadNews,
+                hasUnreadNews = false,
                 hasUpdate = hasUpdate,
                 onNavigateProfile = {
                     expanded = false
@@ -68,10 +68,6 @@ fun HomeTopBarAccountMenu(
                 onNavigateHistory = {
                     expanded = false
                     onNavigateHistory()
-                },
-                onNavigateNews = {
-                    expanded = false
-                    onNavigateNews()
                 },
                 onNavigateNewRelease = {
                     expanded = false
