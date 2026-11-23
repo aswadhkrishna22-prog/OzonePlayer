@@ -4,12 +4,17 @@
  * GPL-3.0 License | Contributors: see git history
  */
 
-@file:OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@file:OptIn(
+    ExperimentalFoundationApi::class,
+    ExperimentalMaterial3Api::class,
+    ExperimentalMaterial3ExpressiveApi::class,
+)
 
 package moe.rukamori.archivetune.ui.screens.settings
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -86,6 +91,8 @@ import coil3.compose.AsyncImage
 import moe.rukamori.archivetune.ui.component.MarqueeText
 import moe.rukamori.archivetune.ui.component.LocalPreferenceItemIndex
 import moe.rukamori.archivetune.ui.component.rememberPreferenceIconShape
+import moe.rukamori.archivetune.ui.component.OzoneIconBadge
+import moe.rukamori.archivetune.ui.component.ozoneBadgeStyleFor
 import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
 import moe.rukamori.archivetune.ui.theme.ozoneClickable
 import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
@@ -486,39 +493,30 @@ fun SettingsSegmentedItem(
                     ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val iconShape = rememberPreferenceIconShape(item.title)
-            Box(
-                modifier =
-                    Modifier
-                        .size(SettingsDimensions.SegmentedIconBoxSize)
-                        .clip(iconShape)
-                        .background(effectiveAccent),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (item.showUpdateIndicator) {
-                    BadgedBox(
-                        badge = {
-                            Badge(
-                                containerColor = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(SettingsDimensions.SegmentedBadgeSize),
-                            )
-                        },
-                    ) {
-                        Icon(
-                            painter = item.icon,
-                            contentDescription = null,
-                            tint = iconContentColor,
-                            modifier = Modifier.size(SettingsDimensions.SegmentedIconSize),
+            val badgeStyle = remember(item.key) { ozoneBadgeStyleFor(item.key) }
+            if (item.showUpdateIndicator) {
+                BadgedBox(
+                    badge = {
+                        Badge(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(SettingsDimensions.SegmentedBadgeSize),
                         )
-                    }
-                } else {
-                    Icon(
+                    },
+                ) {
+                    OzoneIconBadge(
                         painter = item.icon,
-                        contentDescription = null,
-                        tint = iconContentColor,
-                        modifier = Modifier.size(SettingsDimensions.SegmentedIconSize),
+                        style = badgeStyle,
+                        boxSize = SettingsDimensions.SegmentedIconBoxSize,
+                        iconSize = SettingsDimensions.SegmentedIconSize,
                     )
                 }
+            } else {
+                OzoneIconBadge(
+                    painter = item.icon,
+                    style = badgeStyle,
+                    boxSize = SettingsDimensions.SegmentedIconBoxSize,
+                    iconSize = SettingsDimensions.SegmentedIconSize,
+                )
             }
 
             Spacer(modifier = Modifier.width(SettingsDimensions.SegmentedIconSpacing))
