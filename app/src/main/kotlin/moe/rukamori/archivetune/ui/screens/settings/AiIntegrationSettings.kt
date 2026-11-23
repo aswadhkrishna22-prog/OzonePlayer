@@ -170,7 +170,7 @@ fun AiIntegrationSettings(
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             topBar = {
                 TopAppBar(
-                    title = { Text(stringResource(R.string.ai_integration)) },
+                    title = { Text(stringResource(R.string.ai_integration), color = Color.White) },
                     navigationIcon = {
                         IconButton(
                             onClick = navController::navigateUp,
@@ -179,12 +179,15 @@ fun AiIntegrationSettings(
                             Icon(
                                 painterResource(R.drawable.arrow_back),
                                 contentDescription = stringResource(R.string.back_button_desc),
+                                tint = Color.White,
                             )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
                         scrolledContainerColor = Color.Transparent,
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White,
                     ),
                 )
             },

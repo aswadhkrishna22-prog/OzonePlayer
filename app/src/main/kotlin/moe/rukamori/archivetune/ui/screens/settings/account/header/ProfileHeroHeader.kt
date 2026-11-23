@@ -38,6 +38,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.ui.settings.OzoneUi
 import moe.rukamori.archivetune.ui.theme.ozoneClickable
 import moe.rukamori.archivetune.ui.utils.LocalPlayerIsExpanded
 
@@ -117,7 +118,7 @@ fun ProfileHeroHeader(
                 text = displayName.ifBlank { stringResource(R.string.account) },
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = OzoneUi.TextPrimary
                 ),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -128,7 +129,7 @@ fun ProfileHeroHeader(
                 Text(
                     text = if (handle.startsWith("@")) handle else "@$handle",
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = OzoneUi.TextSecondary
                     ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -138,15 +139,15 @@ fun ProfileHeroHeader(
 
             Surface(
                 shape = RoundedCornerShape(50),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                contentColor = MaterialTheme.colorScheme.onSurface,
+                color = OzoneUi.CardTop,
+                contentColor = OzoneUi.TextPrimary,
                 modifier = Modifier
                     .padding(top = 12.dp)
                     .height(36.dp)
                     .ozoneClickable(pressedScale = 0.95f, onClick = onAccountActionClick)
                     .border(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.20f),
+                        color = OzoneUi.Hairline,
                         shape = RoundedCornerShape(50)
                     )
             ) {
@@ -159,10 +160,11 @@ fun ProfileHeroHeader(
                         painter = painterResource(actionIcon),
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = OzoneUi.Lime
                     )
                     Text(
                         text = resolvedActionLabel,
+                        color = OzoneUi.TextPrimary,
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontWeight = FontWeight.SemiBold
                         )

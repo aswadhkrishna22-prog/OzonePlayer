@@ -151,7 +151,7 @@
     - **UI & Reordering:** Full settings switches in Settings > Lyrics (`LyricsProvidersSections.kt`), draggable priority order dialog, and live candidate detection per provider in player 3-dot lyrics menu (`LyricsMenuProviders.kt` & `LyricsCandidatesManager.kt`).
     - **Security & Classification:** All 6 boolean keys strictly classified in `PlainPreferences.kt` to guarantee passing security test checks.
 16. **Ozone Signature Settings UI Redesign (`feat/ozone-ui-settings`, PR #62):**
-    - **Aesthetic:** Exact recreation of Ozone signature visual design from `OzoneUIPack`: neon lime `#A3F52B`, near-black `#0A0B10`, dark gradient cards (`#1B1C23` -> `#14151B`) with 26dp rounded corners and hairline borders.
+    - **Aesthetic:** Exact recreation of Ozone signature visual design from `OzoneUIPack` and `OzoneUIPack_v2`: neon lime `#A3F52B`, near-black `#0A0B10`, dark gradient cards (`#1C1D25` -> `#15161C`) with 28dp rounded corners and hairline borders (`0x14FFFFFF`).
     - **Header Architecture:** `OzoneSettingsHeader` featuring letter-spaced bold `OZONE` brand header, large display `Settings` title, `Make it yours.` tagline + musical note icon, top-right moon button, anisotropic vinyl record arc with sweep sheen & grooves, and pill live search bar.
     - **Live Search Filtering:** Real-time search query filtering across item titles, subtitles, and category keywords.
     - **Signature Trailing Widgets:**
@@ -160,6 +160,14 @@
       - AI Integration: Neon lime `Beta` stadium pill.
       - Updates: Version pill (`1.3.68`) with update indicator dot.
     - **21 Lucide/Feather Vector Icons:** Outline stroke 2 rounded icons (`ozn_*.xml`) with radial lime ambient glow.
-    - **Navigation & Sub-screens:** Added `HomeScreenSettings.kt` and `NavigationSettings.kt` placeholder screens with routes `settings/home_screen` and `settings/navigation`.
+    - **Shared DesignSystem Overhaul (Every Inner Screen):**
+      - `OzoneUi.kt` in `designsystem/.../ui/settings/OzoneUi.kt` housing shared brand tokens.
+      - `PreferenceEntry`: Icon tinted lime with soft radial glow, title Medium 18sp, description 15sp grey, transparent inside group.
+      - `PreferenceGroup`: Unified 28dp card with subtle gradient, hairline border, and hairline dividers.
+      - `PreferenceGroupTitle`: Uppercase letter-spaced label + trailing hairline.
+      - `SwitchPreference`: Lime track with dark thumb checkmark.
+      - `SegmentedPreference`: Lime active segment with dark text.
+      - `GlassDefaults.topAppBarColors`: Pure white title and back arrow with transparent container.
+      - `ProfileHeroHeader`, `ProfileIdentityCard`, & `ExpressiveSegmentedRow`: Custom account headers and YouTube Music / Spotify segmented row fully restyled with OzoneUi lime tokens.
     - **Player-Aware Insets:** Full `playerAwareBottomPadding()` support ensuring all content scrolls seamlessly behind the floating mini player.
 

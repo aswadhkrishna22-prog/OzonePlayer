@@ -6,7 +6,6 @@
 
 package moe.rukamori.archivetune.ui.screens.settings
 
-import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -51,7 +50,7 @@ fun buildSettingsGroups(
                             title = stringResource(R.string.ozone_ai_title),
                             subtitle = stringResource(R.string.ozone_ai_subtitle),
                             accentColor = MaterialTheme.colorScheme.secondary,
-                            keywords = listOf("ai", "gemini", "smart", "chat", "assistant", "recommendation"),
+                            keywords = listOf("ai", "gemini", "smart", "chat", "assistant", "recommendation", "claude", "chatgpt"),
                             onClick = { navController.navigate("settings/ai_integration") },
                         ),
                     ),
@@ -73,24 +72,6 @@ fun buildSettingsGroups(
                             accentColor = MaterialTheme.colorScheme.secondary,
                             keywords = listOf("theme", "appearance", "dark", "light", "color", "accent", "icon", "oled", "pure black"),
                             onClick = { navController.navigate("settings/appearance") },
-                        ),
-                        SettingsItem(
-                            key = "home_screen",
-                            icon = painterResource(R.drawable.ozn_home),
-                            title = stringResource(R.string.ozone_home_screen_title),
-                            subtitle = stringResource(R.string.ozone_home_screen_subtitle),
-                            accentColor = MaterialTheme.colorScheme.primary,
-                            keywords = listOf("home", "screen", "feed", "trending", "sections", "customize"),
-                            onClick = { navController.navigate("settings/home_screen") },
-                        ),
-                        SettingsItem(
-                            key = "navigation",
-                            icon = painterResource(R.drawable.ozn_grid),
-                            title = stringResource(R.string.ozone_navigation_title),
-                            subtitle = stringResource(R.string.ozone_navigation_subtitle),
-                            accentColor = MaterialTheme.colorScheme.secondary,
-                            keywords = listOf("navigation", "tabs", "navbar", "liquid", "lens", "gestures", "dock"),
-                            onClick = { navController.navigate("settings/navigation") },
                         ),
                         SettingsItem(
                             key = "lyrics",
@@ -239,7 +220,7 @@ fun buildSettingsGroups(
                                             stringResource(R.string.ozone_updates_subtitle)
                                         },
                                     showUpdateIndicator = hasUpdate,
-                                    badge = BuildConfig.VERSION_NAME,
+                                    badge = if (hasUpdate) "v${BuildConfig.VERSION_NAME}" else BuildConfig.VERSION_NAME,
                                     accentColor = MaterialTheme.colorScheme.primary,
                                     keywords = listOf("update", "version", "changelog", "github", "release"),
                                     onClick = { navController.navigate("settings/update") },

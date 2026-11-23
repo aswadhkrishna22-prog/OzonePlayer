@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,16 +38,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import moe.rukamori.archivetune.BuildConfig
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.state.UpdateState
 import moe.rukamori.archivetune.ui.theme.TestThemeWrapper
 import moe.rukamori.archivetune.ui.theme.ThemePreviews
+import moe.rukamori.archivetune.ui.settings.OzoneUi
+import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.utils.Updater
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,6 +57,7 @@ fun SettingsScreen(
     updateState: UpdateState,
     onClearUpdateBadge: () -> Unit = {},
 ) {
+
     val hasUpdate = updateState is UpdateState.SoftUpdate || updateState is UpdateState.CriticalUpdate
 
     val latestVersionName = when (updateState) {
@@ -65,6 +65,7 @@ fun SettingsScreen(
         is UpdateState.CriticalUpdate -> updateState.versionName
         else -> BuildConfig.VERSION_NAME
     }
+
 
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
@@ -135,26 +136,28 @@ fun SettingsScreen(
         }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(OzoneUi.Bg),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(OzoneUi.Bg),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(
-                    LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal),
-                )
-                .verticalScroll(scrollState)
-                .playerAwareBottomPadding()
-                .padding(bottom = SettingsDimensions.ScreenBottomPadding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(
+                        LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal),
+                    )
+                    .verticalScroll(scrollState)
+                    .playerAwareBottomPadding()
+                    .padding(bottom = SettingsDimensions.ScreenBottomPadding),
         ) {
             OzoneSettingsHeader(
                 query = query,
                 onQueryChange = { query = it },
                 onThemeClick = { navController.navigate("settings/appearance") },
             )
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(26.dp))
 
             if (hasUpdate && !isUpdateDismissed) {
                 SettingsUpdateBanner(
@@ -174,9 +177,10 @@ fun SettingsScreen(
                         }
                     },
                     onDismiss = { isUpdateDismissed = true },
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 20.dp),
+                    modifier =
+                        Modifier
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 20.dp),
                 )
             }
 
@@ -194,25 +198,22 @@ fun SettingsScreen(
                             permissionLauncher.launch(toRequest.toTypedArray())
                         }
                     },
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 20.dp),
+                    modifier =
+                        Modifier
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 20.dp),
                 )
             }
 
             if (trimmedQuery.isNotEmpty()) {
                 OzoneSectionLabel(
                     text = stringResource(R.string.ozone_search_results),
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp)
-                        .padding(bottom = 12.dp),
+                    modifier = Modifier.padding(horizontal = 20.dp).padding(bottom = 12.dp),
                 )
                 if (searchResults.isEmpty()) {
                     Text(
                         text = stringResource(R.string.ozone_search_empty),
                         color = OzoneUi.TextSecondary,
-                        fontFamily = OzoneFont,
-                        fontSize = 15.sp,
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
                     )
                 } else {
@@ -225,9 +226,10 @@ fun SettingsScreen(
                 settingsGroups.forEachIndexed { groupIndex, group ->
                     OzoneSectionLabel(
                         text = group.title,
-                        modifier = Modifier
-                            .padding(top = if (groupIndex == 0) 0.dp else 26.dp, bottom = 12.dp)
-                            .padding(horizontal = 20.dp),
+                        modifier =
+                            Modifier
+                                .padding(top = if (groupIndex == 0) 0.dp else 28.dp, bottom = 12.dp)
+                                .padding(horizontal = 20.dp),
                     )
                     OzoneSettingsCard(
                         items = group.items,

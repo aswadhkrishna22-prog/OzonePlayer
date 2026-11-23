@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -34,8 +33,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -43,14 +43,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.LocalMarqueeEnabled
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.ui.component.LocalPreferenceGroupPosition
-import moe.rukamori.archivetune.ui.component.PreferenceGroupPosition
-import moe.rukamori.archivetune.ui.component.rememberPreferenceIconShape
+import moe.rukamori.archivetune.ui.component.LocalPreferenceInGroup
+import moe.rukamori.archivetune.ui.settings.OzoneUi
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
-import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
-import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
-
-private val RowIconSize = 42.dp
 
 @Composable
 fun ExpressiveSegmentedRow(
@@ -60,37 +55,23 @@ fun ExpressiveSegmentedRow(
     selectedValue: Boolean,
     onValueSelected: (Boolean) -> Unit,
 ) {
-    val colors = LocalOzoneColors.current
-    val groupPosition = LocalPreferenceGroupPosition.current
-
-    val shape = when (groupPosition) {
-        null,
-        PreferenceGroupPosition.Single -> RoundedCornerShape(SettingsDimensions.SegmentedCornerLarge)
-        PreferenceGroupPosition.First -> RoundedCornerShape(
-            topStart = SettingsDimensions.SegmentedCornerLarge,
-            topEnd = SettingsDimensions.SegmentedCornerLarge,
-            bottomEnd = SettingsDimensions.SegmentedCornerSmall,
-            bottomStart = SettingsDimensions.SegmentedCornerSmall,
-        )
-        PreferenceGroupPosition.Middle -> RoundedCornerShape(SettingsDimensions.SegmentedCornerSmall)
-        PreferenceGroupPosition.Last -> RoundedCornerShape(
-            topStart = SettingsDimensions.SegmentedCornerSmall,
-            topEnd = SettingsDimensions.SegmentedCornerSmall,
-            bottomEnd = SettingsDimensions.SegmentedCornerLarge,
-            bottomStart = SettingsDimensions.SegmentedCornerLarge,
-        )
-    }
+    val isInGroup = LocalPreferenceInGroup.current
+    val cardShape = RoundedCornerShape(28.dp)
 
     Box(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .ozoneGlassCard(
-                    shape = shape,
-                    backgroundColor = colors.glassBackground,
-                    borderColor = colors.glassBorder,
+                .then(
+                    if (isInGroup) {
+                        Modifier
+                    } else {
+                        Modifier
+                            .clip(cardShape)
+                            .background(Brush.verticalGradient(listOf(OzoneUi.CardTop, OzoneUi.CardBottom)))
+                            .border(1.dp, OzoneUi.Hairline, cardShape)
+                    }
                 )
-                .clip(shape)
                 .padding(
                     horizontal = SettingsDimensions.RowHorizontalPadding,
                     vertical = SettingsDimensions.RowVerticalPadding,
@@ -108,7 +89,7 @@ fun ExpressiveSegmentedRow(
                 ExpressiveRowIcon(
                     icon = icon,
                     title = title,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = OzoneUi.Lime,
                 )
 
                 val marqueeEnabled = LocalMarqueeEnabled.current
@@ -119,7 +100,7 @@ fun ExpressiveSegmentedRow(
                     Text(
                         text = title,
                         style = MaterialTheme.typography.bodyLarge.copy(
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = OzoneUi.TextPrimary,
                             fontWeight = FontWeight.SemiBold,
                         ),
                         maxLines = 1,
@@ -130,7 +111,7 @@ fun ExpressiveSegmentedRow(
                         Text(
                             text = it,
                             style = MaterialTheme.typography.bodySmall.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = OzoneUi.TextSecondary,
                             ),
                             maxLines = 1,
                             overflow = if (marqueeEnabled) TextOverflow.Clip else TextOverflow.Ellipsis,
@@ -154,8 +135,8 @@ fun ExpressiveSegmentedRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(barShape)
-                    .background(colors.glassBackground)
-                    .border(1.dp, colors.glassBorder, barShape),
+                    .background(OzoneUi.CardBottom)
+                    .border(1.dp, OzoneUi.Hairline, barShape),
                 contentAlignment = Alignment.CenterStart
             ) {
                 BoxWithConstraints(
@@ -167,7 +148,7 @@ fun ExpressiveSegmentedRow(
 
                     Surface(
                         shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.primary,
+                        color = OzoneUi.Lime,
                         modifier = Modifier
                             .size(width = tabWidth, height = 36.dp)
                             .offset(x = tabWidth * indicatorOffset)
@@ -187,9 +168,9 @@ fun ExpressiveSegmentedRow(
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.SemiBold,
                                 color = if (!selectedValue) {
-                                    MaterialTheme.colorScheme.onPrimary
+                                    OzoneUi.LimeDark
                                 } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                    OzoneUi.TextSecondary
                                 }
                             )
                         }
@@ -207,9 +188,9 @@ fun ExpressiveSegmentedRow(
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.SemiBold,
                                 color = if (selectedValue) {
-                                    MaterialTheme.colorScheme.onPrimary
+                                    OzoneUi.LimeDark
                                 } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                    OzoneUi.TextSecondary
                                 }
                             )
                         }
@@ -224,33 +205,27 @@ fun ExpressiveSegmentedRow(
 fun ExpressiveRowIcon(
     icon: Painter,
     title: String,
-    tint: Color,
+    tint: Color = OzoneUi.Lime,
     emphasized: Boolean = false,
 ) {
-    val iconShape = rememberPreferenceIconShape(title)
-    val bgColor = if (emphasized) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        tint.copy(alpha = 0.18f).compositeOver(MaterialTheme.colorScheme.surfaceContainerHigh)
-    }
-    val iconTint = if (emphasized) {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    } else {
-        tint
-    }
-
-    Surface(
-        modifier = Modifier.size(RowIconSize),
-        shape = iconShape,
-        color = bgColor,
+    Box(
+        modifier = Modifier
+            .size(44.dp)
+            .drawBehind {
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        listOf(tint.copy(alpha = 0.18f), Color.Transparent),
+                    ),
+                    radius = size.minDimension / 1.5f,
+                )
+            },
+        contentAlignment = Alignment.Center,
     ) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-            Icon(
-                painter = icon,
-                contentDescription = null,
-                modifier = Modifier.size(SettingsDimensions.SegmentedIconSize),
-                tint = iconTint,
-            )
-        }
+        Icon(
+            painter = icon,
+            contentDescription = title,
+            modifier = Modifier.size(28.dp),
+            tint = tint,
+        )
     }
 }

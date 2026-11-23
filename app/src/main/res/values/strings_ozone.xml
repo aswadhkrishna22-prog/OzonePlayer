@@ -1,8 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  ~ Ozone Player (2026)
-  ~ GPL-3.0 License | Contributors: see git history
-  -->
 <resources>
     <string name="ozone_brand_name">OZONE</string>
     <string name="ozone_settings_tagline">Make it yours.</string>
@@ -17,10 +13,6 @@
     <string name="ozone_ai_subtitle">Get the most out of Ozone AI</string>
     <string name="ozone_appearance_title">Appearance</string>
     <string name="ozone_appearance_subtitle">Themes, colours, and visual style</string>
-    <string name="ozone_home_screen_title">Home Screen</string>
-    <string name="ozone_home_screen_subtitle">Customize your home</string>
-    <string name="ozone_navigation_title">Navigation</string>
-    <string name="ozone_navigation_subtitle">Tabs and interactions</string>
     <string name="ozone_lyrics_title">Lyrics</string>
     <string name="ozone_lyrics_subtitle">Providers and display</string>
     <string name="ozone_stats_title">Listening Stats</string>
@@ -34,7 +26,7 @@
     <string name="ozone_backup_title">Backup &amp; Restore</string>
     <string name="ozone_backup_subtitle">Keep your library safe</string>
     <string name="ozone_internet_title">Internet</string>
-    <string name="ozone_internet_subtitle">and network playback behavior</string>
+    <string name="ozone_internet_subtitle">Proxy and network playback behavior</string>
     <string name="ozone_behavior_title">Behavior</string>
     <string name="ozone_behavior_subtitle">History, defaults, and privacy behavior</string>
     <string name="ozone_links_title">Open supported links</string>
