@@ -4,8 +4,6 @@
  * GPL-3.0 License | Contributors: see git history
  */
 
-@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
-
 package moe.rukamori.archivetune.ui.screens.settings
 
 import android.Manifest
