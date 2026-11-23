@@ -131,14 +131,24 @@ private val PreferenceEntryVerticalPadding = SettingsDimensions.RowVerticalPaddi
 
 @Composable
 fun rememberPreferenceIconShape(key: Any? = LocalPreferenceItemIndex.current): Shape {
-    val seed = kotlin.math.abs(key?.hashCode() ?: 0)
-    return when (seed % 4) {
-        0 -> MaterialShapes.Ghostish.toShape()
+    val seed = key?.hashCode() ?: 0
+    return when (seed.mod(5)) {
+        0 -> MaterialShapes.Cookie9Sided.toShape()
         1 -> MaterialShapes.Clover4Leaf.toShape()
-        2 -> MaterialShapes.Cookie9Sided.toShape()
-        else -> MaterialShapes.Pill.toShape()
+        2 -> MaterialShapes.Cookie12Sided.toShape()
+        3 -> MaterialShapes.SoftBurst.toShape()
+        else -> MaterialShapes.Flower.toShape()
     }
 }
+
+private val OzonePreferenceCycle =
+    listOf(
+        OzonePalette.Cyan, OzonePalette.Azure, OzonePalette.Violet,
+        OzonePalette.Orchid, OzonePalette.Coral, OzonePalette.Amber, OzonePalette.Mint,
+    )
+
+private fun ozonePreferenceStyle(index: Int): OzoneBadgeStyle =
+    OzonePreferenceCycle[index.mod(OzonePreferenceCycle.size)]
 
 private fun segmentedPreferenceItemShape(
     index: Int,
@@ -261,27 +271,24 @@ fun PreferenceEntry(
                 )
         ) {
             if (icon != null) {
-                val iconShape = rememberPreferenceIconShape()
-                val effectiveAccent = MaterialTheme.colorScheme.primary
-                val iconContentCandidate = contentColorFor(effectiveAccent)
-                val iconContentColor =
-                    if (iconContentCandidate.isSpecified) {
-                        iconContentCandidate
-                    } else {
-                        MaterialTheme.colorScheme.surface
-                    }
-
+                val index = LocalPreferenceItemIndex.current
+                val style = remember(index) { ozonePreferenceStyle(index) }
                 Box(
-                    modifier = Modifier
-                        .size(SettingsDimensions.SegmentedIconBoxSize)
-                        .clip(iconShape)
-                        .background(effectiveAccent),
+                    modifier = Modifier.size(SettingsDimensions.SegmentedIconBoxSize),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CompositionLocalProvider(LocalContentColor provides iconContentColor) {
+                    // Slot-based icon: draw the gradient shape, put the icon on top in white
+                    val shape = rememberPreferenceIconShape(index)
+                    Box(
+                        modifier = Modifier
+                            .size(SettingsDimensions.SegmentedIconBoxSize)
+                            .clip(shape)
+                            .background(Brush.linearGradient(listOf(style.top, style.bottom))),
+                    )
+                    CompositionLocalProvider(LocalContentColor provides Color.White) {
                         Box(
                             modifier = Modifier.size(SettingsDimensions.SegmentedIconSize),
-                            contentAlignment = Alignment.Center
+                            contentAlignment = Alignment.Center,
                         ) {
                             icon()
                         }
