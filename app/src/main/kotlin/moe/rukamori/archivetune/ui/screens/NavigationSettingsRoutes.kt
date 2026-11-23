@@ -25,12 +25,14 @@ import moe.rukamori.archivetune.ui.screens.settings.ContentSettings
 import moe.rukamori.archivetune.ui.screens.settings.DebugSettings
 import moe.rukamori.archivetune.ui.screens.settings.DiscordSettings
 import moe.rukamori.archivetune.ui.screens.settings.HiddenPlaylistsScreen
+import moe.rukamori.archivetune.ui.screens.settings.HomeScreenSettings
 import moe.rukamori.archivetune.ui.screens.settings.IconScreen
 import moe.rukamori.archivetune.ui.screens.settings.IntegrationScreen
 import moe.rukamori.archivetune.ui.screens.settings.InternetSettings
 import moe.rukamori.archivetune.ui.screens.settings.LastFMSettings
 import moe.rukamori.archivetune.ui.screens.settings.LyricsSettings
 import moe.rukamori.archivetune.ui.screens.settings.MusicTogetherScreen
+import moe.rukamori.archivetune.ui.screens.settings.NavigationSettings
 import moe.rukamori.archivetune.ui.screens.settings.PalettePickerScreen
 import moe.rukamori.archivetune.ui.screens.settings.player.PlayerSettings
 import moe.rukamori.archivetune.ui.screens.settings.PoTokenScreen
@@ -52,6 +54,12 @@ internal fun NavGraphBuilder.settingsNavigationRoutes(
     }
     composable("settings/appearance") {
         AppearanceSettings(navController)
+    }
+    composable("settings/home_screen") {
+        HomeScreenSettings(navController)
+    }
+    composable("settings/navigation") {
+        NavigationSettings(navController)
     }
     composable(AppearanceContract.CANVAS_ROUTE) {
         moe.rukamori.archivetune.ui.screens.settings.canvas.CanvasSettings(navController)

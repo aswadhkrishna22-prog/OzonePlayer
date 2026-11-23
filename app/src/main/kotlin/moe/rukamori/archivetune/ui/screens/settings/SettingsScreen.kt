@@ -16,50 +16,39 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeFlexibleTopAppBar
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import moe.rukamori.archivetune.BuildConfig
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.ui.component.IconButton
+import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.state.UpdateState
 import moe.rukamori.archivetune.ui.theme.TestThemeWrapper
 import moe.rukamori.archivetune.ui.theme.ThemePreviews
-import moe.rukamori.archivetune.ui.utils.appBarScrollBehavior
-import moe.rukamori.archivetune.ui.utils.backToMain
-import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.utils.Updater
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,7 +58,6 @@ fun SettingsScreen(
     updateState: UpdateState,
     onClearUpdateBadge: () -> Unit = {},
 ) {
-
     val hasUpdate = updateState is UpdateState.SoftUpdate || updateState is UpdateState.CriticalUpdate
 
     val latestVersionName = when (updateState) {
@@ -77,7 +65,6 @@ fun SettingsScreen(
         is UpdateState.CriticalUpdate -> updateState.versionName
         else -> BuildConfig.VERSION_NAME
     }
-
 
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
@@ -121,7 +108,6 @@ fun SettingsScreen(
             }
         }
 
-    val scrollBehavior = appBarScrollBehavior()
     val shouldShowPermissionHint = !isStorageGranted || !isNotificationGranted
     var isUpdateDismissed by remember { mutableStateOf(false) }
     var showReportIssueSheet by remember { mutableStateOf(false) }
@@ -133,73 +119,43 @@ fun SettingsScreen(
         onOpenReportIssue = { showReportIssueSheet = true },
     )
 
-    SettingsScreenBackground {
-        Scaffold(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .nestedScroll(scrollBehavior.nestedScrollConnection),
-            containerColor = Color.Transparent,
-            contentWindowInsets = WindowInsets(0, 0, 0, 0),
-            topBar = {
-                Box {
-                    val surfaceColor = MaterialTheme.colorScheme.surface
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .drawBehind {
-                                val offset = scrollState.value
-                                val alpha = (offset / 100f).coerceIn(0f, 0.85f)
-                                drawRect(
-                                    brush = Brush.verticalGradient(
-                                        colors = listOf(
-                                            surfaceColor.copy(alpha = alpha),
-                                            Color.Transparent,
-                                        ),
-                                    ),
-                                )
-                            },
-                    )
-                    LargeFlexibleTopAppBar(
-                        title = {
-                            Text(
-                                text = stringResource(R.string.settings),
-                                fontWeight = FontWeight.Bold,
-                            )
-                        },
-                        navigationIcon = {
-                            IconButton(
-                                onClick = navController::navigateUp,
-                                onLongClick = navController::backToMain,
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.arrow_back),
-                                    contentDescription = stringResource(R.string.back_button_desc),
-                                )
-                            }
-                        },
-                        colors =
-                            TopAppBarDefaults.largeTopAppBarColors(
-                                containerColor = Color.Transparent,
-                                scrolledContainerColor = Color.Transparent,
-                            ),
-                        scrollBehavior = scrollBehavior,
-                    )
+    var query by rememberSaveable { mutableStateOf("") }
+    val trimmedQuery = query.trim()
+    val searchResults =
+        if (trimmedQuery.isEmpty()) {
+            emptyList()
+        } else {
+            settingsGroups
+                .flatMap { it.items }
+                .filter { item ->
+                    item.title.contains(trimmedQuery, ignoreCase = true) ||
+                        (item.subtitle?.contains(trimmedQuery, ignoreCase = true) == true) ||
+                        item.keywords.any { it.contains(trimmedQuery, ignoreCase = true) }
                 }
-            },
-        ) { innerPadding ->
+        }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(OzoneUi.Bg),
+    ) {
         Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(top = innerPadding.calculateTopPadding())
-                    .windowInsetsPadding(
-                        LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal),
-                    )
-                    .verticalScroll(scrollState)
-                    .playerAwareBottomPadding()
-                    .padding(bottom = SettingsDimensions.ScreenBottomPadding),
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(
+                    LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal),
+                )
+                .verticalScroll(scrollState)
+                .playerAwareBottomPadding()
+                .padding(bottom = SettingsDimensions.ScreenBottomPadding),
         ) {
+            OzoneSettingsHeader(
+                query = query,
+                onQueryChange = { query = it },
+                onThemeClick = { navController.navigate("settings/appearance") },
+            )
+            Spacer(Modifier.height(24.dp))
+
             if (hasUpdate && !isUpdateDismissed) {
                 SettingsUpdateBanner(
                     latestVersion = latestVersionName,
@@ -218,10 +174,9 @@ fun SettingsScreen(
                         }
                     },
                     onDismiss = { isUpdateDismissed = true },
-                    modifier =
-                        Modifier
-                            .padding(horizontal = SettingsDimensions.ScreenHorizontalPadding)
-                            .padding(bottom = SettingsDimensions.SectionSpacing),
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 20.dp),
                 )
             }
 
@@ -239,40 +194,44 @@ fun SettingsScreen(
                             permissionLauncher.launch(toRequest.toTypedArray())
                         }
                     },
-                    modifier =
-                        Modifier
-                            .padding(horizontal = SettingsDimensions.ScreenHorizontalPadding)
-                            .padding(bottom = SettingsDimensions.SectionSpacing),
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 20.dp),
                 )
             }
 
-            settingsGroups.forEachIndexed { groupIndex, group ->
-                SettingsSectionLabel(
-                    text = group.title,
+            if (trimmedQuery.isNotEmpty()) {
+                OzoneSectionLabel(
+                    text = stringResource(R.string.ozone_search_results),
                     modifier = Modifier
-                        .padding(
-                            top = if (groupIndex == 0) 0.dp else SettingsDimensions.SectionSpacing,
-                            bottom = SettingsDimensions.SectionHeaderBottomPadding
-                        )
-                        .padding(horizontal = SettingsDimensions.ScreenHorizontalPadding),
+                        .padding(horizontal = 20.dp)
+                        .padding(bottom = 12.dp),
                 )
-
-                group.items.forEachIndexed { index, settingsItem ->
-                    SettingsSegmentedItem(
-                        item = settingsItem,
-                        index = index,
-                        count = group.items.size,
-                        modifier =
-                            Modifier
-                                .padding(horizontal = SettingsDimensions.SegmentedGroupHorizontalPadding)
-                                .padding(
-                                    bottom =
-                                        if (index < group.items.lastIndex) {
-                                            SettingsDimensions.SegmentedItemGap
-                                        } else {
-                                            0.dp
-                                        },
-                                ),
+                if (searchResults.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.ozone_search_empty),
+                        color = OzoneUi.TextSecondary,
+                        fontFamily = OzoneFont,
+                        fontSize = 15.sp,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                    )
+                } else {
+                    OzoneSettingsCard(
+                        items = searchResults,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                }
+            } else {
+                settingsGroups.forEachIndexed { groupIndex, group ->
+                    OzoneSectionLabel(
+                        text = group.title,
+                        modifier = Modifier
+                            .padding(top = if (groupIndex == 0) 0.dp else 26.dp, bottom = 12.dp)
+                            .padding(horizontal = 20.dp),
+                    )
+                    OzoneSettingsCard(
+                        items = group.items,
+                        modifier = Modifier.padding(horizontal = 16.dp),
                     )
                 }
             }
@@ -282,7 +241,6 @@ fun SettingsScreen(
     if (showReportIssueSheet) {
         ReportIssueSheet(onDismissRequest = { showReportIssueSheet = false })
     }
-}
 }
 
 @ThemePreviews

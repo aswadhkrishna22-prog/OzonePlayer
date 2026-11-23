@@ -6,6 +6,7 @@
 
 package moe.rukamori.archivetune.ui.screens.settings
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
@@ -35,5 +36,7 @@ data class SettingsItem(
     val showUpdateIndicator: Boolean = false,
     val accentColor: Color = Color.Unspecified,
     val keywords: List<String> = emptyList(),
+    /** Optional custom widget shown before the chevron (progress bar, preview, ...). */
+    val trailing: (@Composable () -> Unit)? = null,
     val onClick: () -> Unit,
 )
