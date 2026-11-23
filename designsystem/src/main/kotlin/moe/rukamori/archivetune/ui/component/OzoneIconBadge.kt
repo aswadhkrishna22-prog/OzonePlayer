@@ -8,25 +8,22 @@
 package moe.rukamori.archivetune.ui.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.material3.Icon
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -88,21 +85,18 @@ fun ozoneBadgeStyleFor(key: String): OzoneBadgeStyle =
 
 @Composable
 private fun badgeShape(id: Int): Shape =
-    remember(id) {
-        when (id % 7) {
-            0 -> MaterialShapes.Cookie9Sided
-            1 -> MaterialShapes.Clover4Leaf
-            2 -> MaterialShapes.Cookie12Sided
-            3 -> MaterialShapes.SoftBurst
-            4 -> MaterialShapes.Flower
-            5 -> MaterialShapes.Sunny
-            else -> MaterialShapes.Puffy
-        }
-    }.toShape()
+    when (id.mod(7)) {
+        0 -> MaterialShapes.Cookie9Sided.toShape()
+        1 -> MaterialShapes.Clover4Leaf.toShape()
+        2 -> MaterialShapes.Cookie12Sided.toShape()
+        3 -> MaterialShapes.SoftBurst.toShape()
+        4 -> MaterialShapes.Flower.toShape()
+        5 -> MaterialShapes.Sunny.toShape()
+        else -> MaterialShapes.Puffy.toShape()
+    }
 
 /**
- * Gradient badge with soft glow, glossy top highlight and hairline rim.
- * Icon is drawn in white for strong contrast on every theme.
+ * Gradient badge with soft ambient glow, glossy top highlight, and crisp white icon.
  */
 @Composable
 fun OzoneIconBadge(
@@ -118,43 +112,48 @@ fun OzoneIconBadge(
         modifier =
             modifier
                 .size(boxSize)
-                .then(
-                    if (glow) {
-                        Modifier.shadow(
-                            elevation = 8.dp,
-                            shape = shape,
-                            ambientColor = style.bottom.copy(alpha = 0.55f),
-                            spotColor = style.bottom.copy(alpha = 0.75f),
-                        )
-                    } else {
-                        Modifier
-                    },
-                )
-                .clip(shape)
-                .background(Brush.linearGradient(listOf(style.top, style.bottom)))
-                // glossy highlight in the upper-left
                 .drawBehind {
-                    drawCircle(
-                        brush =
-                            Brush.radialGradient(
-                                colors = listOf(Color.White.copy(alpha = 0.38f), Color.Transparent),
-                                center = Offset(size.width * 0.28f, size.height * 0.2f),
-                                radius = size.minDimension * 0.7f,
-                            ),
-                        radius = size.minDimension * 0.7f,
-                        center = Offset(size.width * 0.28f, size.height * 0.2f),
-                    )
+                    if (glow) {
+                        // Soft colorful ambient glow matching badge bottom accent
+                        drawCircle(
+                            brush =
+                                Brush.radialGradient(
+                                    colors =
+                                        listOf(
+                                            style.bottom.copy(alpha = 0.45f),
+                                            style.bottom.copy(alpha = 0.15f),
+                                            Color.Transparent,
+                                        ),
+                                    center = center,
+                                    radius = size.minDimension * 0.85f,
+                                ),
+                            radius = size.minDimension * 0.85f,
+                            center = center,
+                        )
+                    }
                 }
-                .border(
-                    width = 0.8.dp,
-                    brush =
-                        Brush.linearGradient(
-                            listOf(Color.White.copy(alpha = 0.55f), Color.White.copy(alpha = 0.05f)),
-                        ),
-                    shape = shape,
-                ),
+                .clip(shape)
+                .background(Brush.linearGradient(listOf(style.top, style.bottom))),
         contentAlignment = Alignment.Center,
     ) {
+        // Glossy highlight in the upper-left
+        Box(
+            modifier =
+                Modifier
+                    .matchParentSize()
+                    .drawBehind {
+                        drawCircle(
+                            brush =
+                                Brush.radialGradient(
+                                    colors = listOf(Color.White.copy(alpha = 0.38f), Color.Transparent),
+                                    center = Offset(size.width * 0.28f, size.height * 0.2f),
+                                    radius = size.minDimension * 0.7f,
+                                ),
+                            radius = size.minDimension * 0.7f,
+                            center = Offset(size.width * 0.28f, size.height * 0.2f),
+                        )
+                    },
+        )
         Icon(
             painter = painter,
             contentDescription = null,

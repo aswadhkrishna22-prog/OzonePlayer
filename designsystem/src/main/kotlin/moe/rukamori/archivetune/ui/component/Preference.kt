@@ -131,8 +131,8 @@ private val PreferenceEntryVerticalPadding = SettingsDimensions.RowVerticalPaddi
 
 @Composable
 fun rememberPreferenceIconShape(key: Any? = LocalPreferenceItemIndex.current): Shape {
-    val seed = kotlin.math.abs(key?.hashCode() ?: 0)
-    return when (seed % 5) {
+    val seed = key?.hashCode() ?: 0
+    return when (seed.mod(5)) {
         0 -> MaterialShapes.Cookie9Sided.toShape()
         1 -> MaterialShapes.Clover4Leaf.toShape()
         2 -> MaterialShapes.Cookie12Sided.toShape()
