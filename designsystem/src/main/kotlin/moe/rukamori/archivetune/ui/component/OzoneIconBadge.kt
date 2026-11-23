@@ -97,8 +97,8 @@ private fun badgeShape(id: Int): Shape =
             4 -> MaterialShapes.Flower
             5 -> MaterialShapes.Sunny
             else -> MaterialShapes.Puffy
-        }.toShape()
-    }
+        }
+    }.toShape()
 
 /**
  * Gradient badge with soft glow, glossy top highlight and hairline rim.
