@@ -1,9 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ozone icon set: one continuous rounded line, same language as the wave logo. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="960"
-    android:viewportHeight="960">
-  <path
-      android:fillColor="@android:color/white"
-      android:pathData="M331,309L211,189L268,132L388,252L331,309ZM480,214L480,44L560,44L560,214L480,214ZM771,749L651,629L708,572L828,692L771,749ZM708,309L651,252L771,132L828,189L708,309ZM746,480L746,400L916,400L916,480L746,480ZM205,868L92,755Q80,743 80,727Q80,711 92,699L455,335Q490,300 540,300Q590,300 625,335Q660,370 660,420Q660,470 625,505L261,868Q249,880 233,880Q217,880 205,868ZM484,533L484,533Q484,533 469.5,519Q455,505 455,505Q455,505 441,491Q427,477 427,477L427,477L455,505L484,533ZM233,784L484,533L427,477L177,727L233,784Z"/>
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M11 4.5C11.6 9 13 10.4 17.5 11C13 11.6 11.6 13 11 17.5C10.4 13 9 11.6 4.5 11C9 10.4 10.4 9 11 4.5Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+    <path
+        android:pathData="M18.5 3.2C18.7 4.9 19.1 5.3 20.8 5.5C19.1 5.7 18.7 6.1 18.5 7.8C18.3 6.1 17.9 5.7 16.2 5.5C17.9 5.3 18.3 4.9 18.5 3.2Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+    <path
+        android:pathData="M6 20.5V20.5"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
 </vector>

@@ -1,11 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ozone icon set: one continuous rounded line, same language as the wave logo. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24.0dip"
-    android:height="24.0dip"
-    android:viewportWidth="960.0"
-    android:viewportHeight="960.0">
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
     <path
-        android:strokeColor="@android:color/white"
-        android:strokeWidth="80"
+        android:pathData="M4 10.5V13.5M8 7V17M12 4V20M16 8V16M20 10.5V13.5"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.2"
         android:strokeLineCap="round"
-        android:pathData="M320,280L320,680 M480,120L480,840 M160,440L160,520 M640,280L640,680 M800,440L800,520" />
+        android:strokeLineJoin="round"/>
 </vector>
