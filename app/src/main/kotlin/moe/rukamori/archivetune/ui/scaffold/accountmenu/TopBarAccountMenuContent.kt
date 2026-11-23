@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.ui.component.liquidBubbleHighlight
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.ozoneClickable
 
@@ -46,11 +47,11 @@ internal fun TopBarAccountMenuContent(
     accountName: String,
     onNavigateProfile: () -> Unit,
     onNavigateHistory: () -> Unit,
-    onNavigateNews: () -> Unit,
     onNavigateNewRelease: () -> Unit,
     onNavigateSettings: () -> Unit,
     modifier: Modifier = Modifier,
     accentColor: Color? = null,
+    onNavigateNews: (() -> Unit)? = null,
     hasUnreadNews: Boolean = false,
     hasUpdate: Boolean = false,
 ) {
@@ -73,13 +74,18 @@ internal fun TopBarAccountMenuContent(
                     Brush.horizontalGradient(
                         colors = listOf(
                             gradientStart,
-                            Color.Transparent,
+                            Color.White.copy(alpha = 0.04f),
                         ),
                     ),
                 )
+                .liquidBubbleHighlight(
+                    cornerRadiusDp = 16.dp,
+                    isDark = true,
+                    hasTopSheen = false,
+                )
                 .border(
                     width = SettingsDimensions.GlassBorderThickness,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.30f),
+                    color = Color.White.copy(alpha = 0.16f),
                     shape = RoundedCornerShape(16.dp),
                 )
                 .padding(horizontal = 12.dp, vertical = 10.dp),
@@ -143,13 +149,6 @@ internal fun TopBarAccountMenuContent(
         icon = painterResource(R.drawable.history),
         title = stringResource(R.string.history),
         onClick = onNavigateHistory,
-    )
-
-    TopBarDropdownMenuItem(
-        icon = painterResource(R.drawable.newspaper),
-        title = stringResource(R.string.news),
-        badge = hasUnreadNews,
-        onClick = onNavigateNews,
     )
 
     TopBarDropdownMenuItem(
