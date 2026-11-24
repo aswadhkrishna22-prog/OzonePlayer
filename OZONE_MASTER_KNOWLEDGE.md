@@ -170,4 +170,18 @@
       - `GlassDefaults.topAppBarColors`: Pure white title and back arrow with transparent container.
       - `ProfileHeroHeader`, `ProfileIdentityCard`, & `ExpressiveSegmentedRow`: Custom account headers and YouTube Music / Spotify segmented row fully restyled with OzoneUi lime tokens.
     - **Player-Aware Insets:** Full `playerAwareBottomPadding()` support ensuring all content scrolls seamlessly behind the floating mini player.
+17. **Ozone Signature Settings UI v3 Full Pack Expansion (`feat/ozone-ui-settings`, PR #62):**
+    - **Visual Paradigm:** Comprehensive adoption of `OzoneUIPack_v3` across all inner utility and sub-settings pages. Zero legacy Material3 purple or periwinkle blue (`#B4C5FF`) leaks. Obsidian `#060606` canvas, Vivid Acid Lime `#B6FF00` accents, `#111214` surface cards, `#17191D` elevated dialogs, and `#0A0B0D` input surfaces.
+    - **Global Theme Override (`OzoneSettingsTheme.kt`):** Canonical `OzoneAcidLimeDarkScheme` with top-right radial ambient lime glow; applied via `settingsComposable` in `NavigationSettingsRoutes.kt`, `NavigationHost.kt`, and `NavigationBuilder.kt` for settings, stats, and update screens.
+    - **Top App Bar Bleed Fix:** `GlassDefaults.topAppBarColors` and all settings scaffolds explicitly configured with solid `OzoneUi.Bg` container and scrolledContainer colors, eliminating content overlap transparency glitches across Discord, Storage, AI, Stats, and sub-pages.
+    - **Preference Components:**
+      - `OzonePreferenceValuePill`: Neon green indicator pills for slider values (Blur radius, Home background blur, etc.).
+      - `PreferenceSelectionBottomSheet`: 28dp top radius, `#111214` surface card, `#1B2905` lime-bordered selected row with trailing checkmark.
+      - Sliders: `OzoneUi.Lime` active track/thumb with `#1E2024` inactive track.
+    - **Dialog Architecture (`Dialog.kt`):** Elevated `#17191D` surface, 28dp corner radius, 1dp `#282B32` hairline, 48dp `#1B2905` circular icon badge, and solid `#B6FF00` pill action buttons.
+    - **Storage Screen:** Dynamic cache usage meter with white percentage on left and grey fraction on right, `LinearWavyProgressIndicator` in Vivid Acid Lime, and leading vector icons (`auto_awesome`, `delete`).
+    - **Discord Integration:** Redesigned RichPresence preview card with outer `#111214` card, inner `#0A0B0D` music box, uppercase Lime activity tag, `SongProgressBar` with lime wavy indicator, and styled action pills ('Go to Ozone', 'Listen on YouTube Music').
+    - **About Screen:** Removed legacy purple mesh; obsidian hero card with vertical lime gradient border, radial icon glow, lime version badge, neutral build hash/variant chips, and styled GitHub/link action chips.
+    - **Report Issue Sheet:** 28dp top radius obsidian sheet with full-width 52dp pill buttons: primary GitHub button in Vivid Acid Lime `#B6FF00`, secondary Instagram & Copy App Info buttons in `#181A1E` with `#2A2E35` border and lime icons.
+    - **Updates Screen:** `UpdateSummaryCard` styled with 22dp obsidian card, Acid Lime status badges, and solid lime APK download action pill when ready.
 
