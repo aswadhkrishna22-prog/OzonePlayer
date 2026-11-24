@@ -179,8 +179,6 @@ internal fun QuickPicksHeroContent(
             onRoll = { rollController.roll(isCarouselActive, animationsDisabled) },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = HomeLayoutConfig.sidePadding)
-                .clip(RoundedCornerShape(28.dp))
                 .height(heroHeight),
         )
     }

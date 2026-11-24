@@ -56,11 +56,17 @@ object HomeLayoutConfig {
         availableWidth: Dp,
         screenHeight: Dp = Dp.Unspecified,
     ): Dp {
-        val heroWidth = (availableWidth - (sidePadding * 2)).coerceAtLeast(240.dp)
+        if (screenHeight != Dp.Unspecified && screenHeight > 0.dp) {
+            return when {
+                availableWidth >= 840.dp -> (screenHeight * 0.55f).coerceIn(400.dp, 560.dp)
+                availableWidth >= 600.dp -> (screenHeight * 0.65f).coerceIn(380.dp, 480.dp)
+                else -> screenHeight * 0.78f
+            }
+        }
         return when {
             availableWidth >= 840.dp -> 480.dp
             availableWidth >= 600.dp -> 420.dp
-            else -> (heroWidth * 1.05f).coerceIn(320.dp, 440.dp)
+            else -> availableWidth * 1.35f
         }
     }
 }

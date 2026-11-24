@@ -203,23 +203,6 @@ internal fun TrendingHeroContent(
     ) {
         val heroHeight = HomeLayoutConfig.heroCarouselHeight(maxWidth, configuration.screenHeightDp.dp)
 
-        // Soft artwork-driven primary tint strictly localized behind the hero card
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = HomeLayoutConfig.sidePadding)
-                .height(heroHeight)
-                .clip(RoundedCornerShape(28.dp))
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
-                            Color.Transparent,
-                        ),
-                    ),
-                ),
-        )
-
         HeroCarousel(
             items = heroItems,
             rollCandidates = heroItems,
@@ -233,8 +216,6 @@ internal fun TrendingHeroContent(
             scrollOffset = scrollOffsetProvider,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = HomeLayoutConfig.sidePadding)
-                .clip(RoundedCornerShape(28.dp))
                 .height(heroHeight),
         )
     }

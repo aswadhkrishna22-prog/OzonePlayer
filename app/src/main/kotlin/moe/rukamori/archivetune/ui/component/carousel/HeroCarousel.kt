@@ -219,17 +219,21 @@ internal fun HeroCarousel(
             }
         }
 
+        // Soft top scrim (black 40% fading to transparent over ~120dp)
+        // so greeting, avatar, and status bar icons stay readable on bright artwork
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(1f - HeroCarouselTokens.BottomShadeStart)
-                .align(Alignment.BottomCenter)
+                .height(120.dp)
+                .align(Alignment.TopCenter)
                 .background(
                     Brush.verticalGradient(
-                        0.0f to Color.Transparent,
-                        1.0f to MaterialTheme.colorScheme.surface,
-                    )
-                )
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.40f),
+                            Color.Transparent,
+                        ),
+                    ),
+                ),
         )
 
         if (!isSingleItem && displayItems.isNotEmpty() && (dotsAlpha > 0f || (animationsDisabled && showDotsIndicator))) {

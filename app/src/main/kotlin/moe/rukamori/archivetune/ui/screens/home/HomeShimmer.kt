@@ -53,17 +53,15 @@ internal fun HomeShimmer(
                     .fillMaxSize()
                     .padding(
                         start = insetsPadding.calculateLeftPadding(layoutDirection),
-                        top = insetsPadding.calculateTopPadding() + 8.dp,
+                        top = 0.dp,
                         end = insetsPadding.calculateRightPadding(layoutDirection),
                         bottom = insetsPadding.calculateBottomPadding(),
                     ),
             ) {
-                // Inset rounded hero placeholder (28dp radius, 16dp side margins)
+                // Full bleed hero placeholder (edge to edge, extending behind status bar)
                 Spacer(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = HomeLayoutConfig.sidePadding)
-                        .clip(RoundedCornerShape(28.dp))
                         .height(heroHeight)
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                 )

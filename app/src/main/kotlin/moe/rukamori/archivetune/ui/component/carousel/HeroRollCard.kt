@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -32,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.TransformOrigin
@@ -182,6 +184,21 @@ internal fun HeroRollCard(
             )
         }
 
+        // Bottom: long gradient from transparent into the screen background colour
+        // (about the lower 35% of the hero), so the hero melts into Continue grid with no hard edge
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.35f)
+                .align(Alignment.BottomCenter)
+                .background(
+                    Brush.verticalGradient(
+                        0.0f to Color.Transparent,
+                        1.0f to MaterialTheme.colorScheme.background,
+                    ),
+                ),
+        )
+
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -197,7 +214,7 @@ internal fun HeroRollCard(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, bottom = 20.dp)
+                    .padding(start = 20.dp, end = 20.dp, bottom = 28.dp)
             ) {
                 Text(
                     text = when {
@@ -246,13 +263,7 @@ internal fun HeroRollCard(
                         modifier = Modifier
                             .heightIn(min = HeroCarouselTokens.MinTouchTarget)
                             .clip(CircleShape)
-                            .background(
-                                if (isPlayAction) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    HeroCarouselTokens.ArtOverlayButtonSurface
-                                }
-                            )
+                            .background(MaterialTheme.colorScheme.primary)
                             .clickable(
                                 enabled = !rolling,
                                 onClick = {
@@ -287,7 +298,7 @@ internal fun HeroRollCard(
                             },
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold,
-                            color = if (isPlayAction) MaterialTheme.colorScheme.onPrimary else HeroCarouselTokens.ArtOverlayButtonContent,
+                            color = MaterialTheme.colorScheme.onPrimary,
                         )
                     }
 

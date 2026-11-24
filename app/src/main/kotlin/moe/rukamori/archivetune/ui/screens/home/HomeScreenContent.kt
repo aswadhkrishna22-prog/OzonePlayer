@@ -125,7 +125,7 @@ internal fun HomeContent(
                         state = lazyListState,
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(
                             start = insetsPadding.calculateLeftPadding(androidx.compose.ui.platform.LocalLayoutDirection.current),
-                            top = insetsPadding.calculateTopPadding() + 8.dp,
+                            top = if (hasHero) 0.dp else insetsPadding.calculateTopPadding(),
                             end = insetsPadding.calculateRightPadding(androidx.compose.ui.platform.LocalLayoutDirection.current),
                             bottom = insetsPadding.calculateBottomPadding(),
                         ),

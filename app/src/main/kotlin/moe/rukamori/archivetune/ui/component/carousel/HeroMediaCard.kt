@@ -173,9 +173,22 @@ internal fun HeroMediaCard(
                     )
                 }
             }
-
-            HeroScrims()
         }
+
+        // Bottom: long gradient from transparent into the screen background colour
+        // (about the lower 35% of the hero), so the hero melts into Continue grid with no hard edge
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.35f)
+                .align(Alignment.BottomCenter)
+                .background(
+                    Brush.verticalGradient(
+                        0.0f to Color.Transparent,
+                        1.0f to MaterialTheme.colorScheme.background,
+                    ),
+                ),
+        )
 
         Box(
             modifier = Modifier
@@ -192,7 +205,7 @@ internal fun HeroMediaCard(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, bottom = 20.dp)
+                    .padding(start = 20.dp, end = 20.dp, bottom = 28.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -305,31 +318,3 @@ private fun BoxScope.HeroBlurBand(
         translate(top = dy) { drawLayer(mediaLayer) }
     }
 }
-
-@Composable
-private fun BoxScope.HeroScrims() {
-    Box(
-        modifier = Modifier
-            .matchParentSize()
-            .drawWithCache {
-                val topEnd = HeroCarouselTokens.ScrimTopEnd
-                val bottomStart = HeroCarouselTokens.ScrimBottomStart
-                val bottomEnd = HeroCarouselTokens.ScrimBottomEnd
-                val scrim = Brush.verticalGradient(
-                    0f to heroScrimBlack(0.86f),
-                    0.475f * topEnd to heroScrimBlack(0.59f),
-                    topEnd to heroScrimBlack(0f),
-                    bottomStart to heroScrimBlack(0f),
-                    bottomStart + 0.457f * (bottomEnd - bottomStart) to heroScrimBlack(0.59f),
-                    bottomEnd to heroScrimBlack(1f),
-                    1f to heroScrimBlack(1f),
-                    startY = 0f,
-                    endY = size.height,
-                )
-                onDrawBehind { drawRect(scrim) }
-            }
-    )
-}
-
-private fun heroScrimBlack(gradient: Float): Color =
-    Color.Black.copy(alpha = 1f - (1f - HeroCarouselTokens.HeroDim) * (1f - gradient))
