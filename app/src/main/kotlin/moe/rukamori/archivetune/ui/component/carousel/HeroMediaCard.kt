@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
@@ -65,6 +66,8 @@ internal fun HeroMediaCard(
     onPrimaryClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
+    scrollOffset: () -> Float = { 0f },
+    animationsDisabled: Boolean = false,
 ) {
     val context = LocalContext.current
     val imageRequest = remember(item.thumbnailUrl, context) {
@@ -87,6 +90,13 @@ internal fun HeroMediaCard(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .graphicsLayer {
+                    if (!animationsDisabled) {
+                        translationY = scrollOffset() * 0.5f
+                        scaleX = 1.15f
+                        scaleY = 1.15f
+                    }
+                }
                 .heroPageMediaDrift(pageOffset)
         ) {
             val isLowResOrVideoThumb = remember(item.thumbnailUrl) {
@@ -170,6 +180,12 @@ internal fun HeroMediaCard(
         Box(
             modifier = Modifier
                 .matchParentSize()
+                .graphicsLayer {
+                    if (!animationsDisabled) {
+                        val scroll = scrollOffset()
+                        alpha = (1f - (scroll / 250f)).coerceIn(0f, 1f)
+                    }
+                }
                 .heroPageTextDrift(pageOffset)
         ) {
             Column(
@@ -226,14 +242,14 @@ internal fun HeroMediaCard(
                     modifier = Modifier
                         .heightIn(min = HeroCarouselTokens.MinTouchTarget)
                         .clip(CircleShape)
-                        .background(HeroCarouselTokens.ArtOverlayButtonSurface)
+                        .background(MaterialTheme.colorScheme.primary)
                         .combinedClickable(onClick = onPrimaryClick, onLongClick = onLongClick)
                         .padding(horizontal = 18.dp, vertical = 10.dp)
                 ) {
                     Icon(
                         painter = painterResource(if (isThisPlaying) R.drawable.pause else R.drawable.play),
                         contentDescription = null,
-                        tint = HeroCarouselTokens.ArtOverlayButtonContent,
+                        tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(20.dp),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -245,7 +261,7 @@ internal fun HeroMediaCard(
                         },
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
-                        color = HeroCarouselTokens.ArtOverlayButtonContent,
+                        color = MaterialTheme.colorScheme.onPrimary,
                     )
                 }
             }

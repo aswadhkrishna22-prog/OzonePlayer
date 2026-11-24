@@ -30,6 +30,7 @@ import moe.rukamori.archivetune.home.HomeAction
 import moe.rukamori.archivetune.home.HomeScreenState
 import moe.rukamori.archivetune.ui.component.LocalMenuState
 import moe.rukamori.archivetune.ui.screens.home.HomeContent
+import moe.rukamori.archivetune.ui.screens.home.HomeShimmer
 import moe.rukamori.archivetune.ui.screens.home.HomeStatePane
 import moe.rukamori.archivetune.viewmodels.HomeViewModel
 
@@ -116,11 +117,7 @@ fun HomeScreen(
     ) {
         when (val state = screenState) {
             HomeScreenState.Loading -> {
-                HomeStatePane(
-                    iconResId = null,
-                    messageResId = null,
-                    showLoadingIndicator = true,
-                )
+                HomeShimmer()
             }
 
             HomeScreenState.Empty -> {

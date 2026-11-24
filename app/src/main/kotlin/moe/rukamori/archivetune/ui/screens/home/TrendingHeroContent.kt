@@ -61,6 +61,7 @@ internal fun TrendingHeroContent(
     menuState: MenuState,
     trendingRepository: TrendingRepository?,
     modifier: Modifier = Modifier,
+    scrollOffsetProvider: () -> Float = { 0f },
 ) {
     val haptics = rememberOzoneHaptics()
     val animationsDisabled = LocalAnimationsDisabled.current
@@ -192,7 +193,7 @@ internal fun TrendingHeroContent(
                 }
             },
     ) {
-        val heroHeight = HomeLayoutConfig.heroCarouselHeight(maxWidth)
+        val heroHeight = HomeLayoutConfig.heroCarouselHeight(maxWidth, configuration.screenHeightDp.dp)
 
         HeroCarousel(
             items = heroItems,
@@ -204,6 +205,7 @@ internal fun TrendingHeroContent(
             onTrackClick = ::playTrack,
             onTrackLongClick = ::showTrackMenu,
             onRoll = { rollController.roll(isCarouselActive, animationsDisabled) },
+            scrollOffset = scrollOffsetProvider,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(heroHeight),

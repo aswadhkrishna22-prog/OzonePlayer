@@ -7,10 +7,17 @@
 package moe.rukamori.archivetune.ui.screens.home
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
@@ -33,6 +40,8 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -66,6 +75,7 @@ import androidx.media3.common.MediaItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import moe.rukamori.archivetune.LocalAnimationsDisabled
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.GridThumbnailCornerRadius
 import moe.rukamori.archivetune.constants.PlaybackSource
@@ -92,6 +102,7 @@ import moe.rukamori.archivetune.playback.queues.YouTubeQueue
 import moe.rukamori.archivetune.ui.component.GridItem
 import moe.rukamori.archivetune.ui.component.ItemExplicitBadge
 import moe.rukamori.archivetune.ui.component.ItemThumbnail
+import moe.rukamori.archivetune.ui.component.MarqueeText
 import moe.rukamori.archivetune.ui.component.shimmer.GridItemPlaceHolder
 import moe.rukamori.archivetune.ui.screens.HomeSectionHeader
 import moe.rukamori.archivetune.ui.screens.search.onlineSearchResultRoute
@@ -103,6 +114,8 @@ internal fun LazyListScope.homeTrendingSection(
     trendingState: TrendingUiState?,
     mediaContext: HomeFeedMediaContext,
     trendingRepository: TrendingRepository?,
+    entranceIndex: Int = 2,
+    shouldAnimateEntrance: Boolean = false,
 ) {
     val state = trendingState?.takeIf { it.isVisible || it.isLoading } ?: return
     val tracks = state.currentTracks
@@ -140,7 +153,7 @@ internal fun LazyListScope.homeTrendingSection(
             onClick = {
                 mediaContext.navController.navigate("charts_screen")
             },
-            modifier = Modifier.animateItem(),
+            modifier = Modifier.homeEntranceAnimation(entranceIndex, shouldAnimateEntrance).animateItem(),
         )
     }
 
@@ -159,7 +172,7 @@ internal fun LazyListScope.homeTrendingSection(
             onSourceSelected = { source ->
                 mediaContext.onAction(HomeAction.SelectTrendingSource(source))
             },
-            modifier = Modifier.animateItem(),
+            modifier = Modifier.homeEntranceAnimation(entranceIndex, shouldAnimateEntrance).animateItem(),
         )
     }
 
@@ -174,7 +187,7 @@ internal fun LazyListScope.homeTrendingSection(
             selectedSource = state.selectedSource,
             mediaContext = mediaContext,
             trendingRepository = trendingRepository,
-            modifier = Modifier.animateItem(),
+            modifier = Modifier.homeEntranceAnimation(entranceIndex, shouldAnimateEntrance).animateItem(),
         )
     }
 }
@@ -194,9 +207,9 @@ private fun TrendingFiltersRow(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp),
+                .padding(horizontal = HomeLayoutConfig.sidePadding, vertical = 2.dp),
     ) {
-        // Category / Language chips
+        // Category / Language chips (Primary row)
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -213,7 +226,7 @@ private fun TrendingFiltersRow(
                                 painter = painterResource(R.drawable.auto_awesome),
                                 contentDescription = null,
                                 modifier = Modifier.size(14.dp),
-                                tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else Color(0xFFFFB300),
+                                tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary,
                             )
                         }
                     } else null,
@@ -222,9 +235,9 @@ private fun TrendingFiltersRow(
             }
         }
 
-        // Source switcher pills
+        // Source switcher text tabs (Visually secondary row)
         Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.horizontalScroll(rememberScrollState()),
         ) {
@@ -271,7 +284,7 @@ private fun TrendingChip(
         if (isSelected) {
             MaterialTheme.colorScheme.onPrimaryContainer
         } else {
-            colors.textPrimary
+            MaterialTheme.colorScheme.onSurface
         }
 
     Surface(
@@ -308,33 +321,36 @@ private fun TrendingSourceChip(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
-    val colors = LocalOzoneColors.current
-    val bgColor =
-        if (isSelected) {
-            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f)
-        } else {
-            colors.glassBackground.copy(alpha = 0.5f)
-        }
-    val textColor =
-        if (isSelected) {
-            MaterialTheme.colorScheme.onSecondaryContainer
-        } else {
-            colors.textSecondary
-        }
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val textColor by animateColorAsState(
+        targetValue = if (isSelected) primaryColor else unselectedColor,
+        animationSpec = tween(200),
+        label = "trendingSourceTextColor",
+    )
 
-    Surface(
-        shape = CircleShape,
-        color = bgColor,
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier =
             Modifier
-                .ozoneClickable(pressedScale = 0.94f, onClick = onClick),
+                .ozoneClickable(pressedScale = 0.94f, onClick = onClick)
+                .padding(horizontal = 8.dp, vertical = 2.dp),
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall,
-            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
             color = textColor,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            maxLines = 1,
+        )
+        Spacer(modifier = Modifier.height(3.dp))
+        Box(
+            modifier =
+                Modifier
+                    .height(2.dp)
+                    .width(if (isSelected) 18.dp else 0.dp)
+                    .clip(CircleShape)
+                    .background(if (isSelected) primaryColor else Color.Transparent),
         )
     }
 }
@@ -361,22 +377,38 @@ private fun TrendingShelfContent(
         val startPadding = horizontalInsets.calculateStartPadding(layoutDirection) + HomeLayoutConfig.shelfHorizontalPadding
         val endPadding = horizontalInsets.calculateEndPadding(layoutDirection) + HomeLayoutConfig.shelfHorizontalPadding
 
+        val animationsDisabled = LocalAnimationsDisabled.current
+
         if (isLoading) {
             LazyRow(
                 contentPadding = PaddingValues(start = startPadding, end = endPadding),
                 horizontalArrangement = Arrangement.spacedBy(HomeLayoutConfig.shelfSpacing),
             ) {
                 items(6) {
-                    GridItemPlaceHolder(fillMaxWidth = false)
+                    GridItemPlaceHolder(
+                        fillMaxWidth = false,
+                        cardWidth = cardWidth,
+                    )
                 }
             }
             return@BoxWithConstraints
         }
 
-        LazyRow(
-            contentPadding = PaddingValues(start = startPadding, end = endPadding),
-            horizontalArrangement = Arrangement.spacedBy(HomeLayoutConfig.shelfSpacing),
-        ) {
+        AnimatedContent(
+            targetState = selectedSource,
+            transitionSpec = {
+                if (animationsDisabled) {
+                    EnterTransition.None togetherWith ExitTransition.None
+                } else {
+                    fadeIn(animationSpec = tween(220)) togetherWith fadeOut(animationSpec = tween(220))
+                }
+            },
+            label = "trendingShelfCrossfade",
+        ) { _ ->
+            LazyRow(
+                contentPadding = PaddingValues(start = startPadding, end = endPadding),
+                horizontalArrangement = Arrangement.spacedBy(HomeLayoutConfig.shelfSpacing),
+            ) {
             itemsIndexed(
                 items = tracks,
                 key = { index, track -> "${track.id}_$index" },
@@ -386,38 +418,45 @@ private fun TrendingShelfContent(
 
                 GridItem(
                     title = {
-                        Text(
+                        MarqueeText(
                             text = track.title,
                             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.fillMaxWidth().basicMarquee(),
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     },
                     subtitle = {
-                        Text(
+                        MarqueeText(
                             text = track.artist,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.secondary,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.fillMaxWidth().basicMarquee(),
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     },
                     badges = {
-                        // Rank Badge #1 .. #15
+                        // Rank Badge #1 .. #15 - small pill style that never shrinks
                         Surface(
-                            shape = RoundedCornerShape(4.dp),
+                            shape = CircleShape,
                             color = MaterialTheme.colorScheme.primaryContainer,
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(end = 4.dp),
+                            modifier = Modifier
+                                .padding(end = 4.dp)
+                                .widthIn(min = 28.dp),
                         ) {
-                            Text(
-                                text = "#${index + 1}",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
-                            )
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            ) {
+                                Text(
+                                    text = "#${index + 1}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                )
+                            }
                         }
 
                         if (track.explicit) {
@@ -621,6 +660,7 @@ private fun TrendingShelfContent(
             }
         }
     }
+}
 }
 
 private fun TrendingTrack.toMediaItem(): MediaItem {

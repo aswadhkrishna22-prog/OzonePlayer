@@ -162,7 +162,7 @@ internal fun QuickPicksHeroContent(
                 }
             }
     ) {
-        val heroHeight = HomeLayoutConfig.heroCarouselHeight(maxWidth)
+        val heroHeight = HomeLayoutConfig.heroCarouselHeight(maxWidth, configuration.screenHeightDp.dp)
 
         HeroCarousel(
             items = heroItems,
