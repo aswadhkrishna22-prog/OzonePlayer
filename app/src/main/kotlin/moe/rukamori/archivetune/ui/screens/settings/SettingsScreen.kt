@@ -26,6 +26,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +34,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -69,6 +71,17 @@ fun SettingsScreen(
     val uriHandler = LocalUriHandler.current
     val isAndroid12OrLater = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val scrollState = rememberScrollState()
+    val density = LocalDensity.current
+    val collapseThresholdPx = remember(density) { with(density) { 96.dp.toPx() } }
+    val collapseFraction by remember {
+        derivedStateOf {
+            if (collapseThresholdPx > 0f) {
+                (scrollState.value / collapseThresholdPx).coerceIn(0f, 1f)
+            } else {
+                0f
+            }
+        }
+    }
 
     val storagePermission =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -146,16 +159,14 @@ fun SettingsScreen(
                     .windowInsetsPadding(
                         LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal),
                     )
-                    .verticalScroll(scrollState)
-                    .playerAwareBottomPadding()
-                    .padding(bottom = SettingsDimensions.ScreenBottomPadding),
+                    .verticalScroll(scrollState),
         ) {
             OzoneSettingsHeader(
                 query = query,
                 onQueryChange = { query = it },
-                onThemeClick = { navController.navigate("settings/appearance") },
+                collapseFraction = collapseFraction,
             )
-            Spacer(Modifier.height(26.dp))
+            Spacer(Modifier.height(16.dp))
 
             if (hasUpdate && !isUpdateDismissed) {
                 SettingsUpdateBanner(
@@ -235,7 +246,17 @@ fun SettingsScreen(
                     )
                 }
             }
+
+            Spacer(Modifier.height(playerAwareBottomInset() + SettingsDimensions.ScreenBottomPadding))
         }
+
+        OzoneSettingsTopBar(
+            collapseFraction = collapseFraction,
+            modifier =
+                Modifier.windowInsetsPadding(
+                    LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal),
+                ),
+        )
     }
 
     if (showReportIssueSheet) {

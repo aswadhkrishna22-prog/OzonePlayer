@@ -65,7 +65,6 @@ fun buildSettingsGroups(
                     listOf(
                         SettingsItem(
                             key = "appearance",
-                            trailing = { OzoneThemePreviewThumb() },
                             icon = painterResource(R.drawable.ozn_palette),
                             title = stringResource(R.string.ozone_appearance_title),
                             subtitle = stringResource(R.string.ozone_appearance_subtitle),

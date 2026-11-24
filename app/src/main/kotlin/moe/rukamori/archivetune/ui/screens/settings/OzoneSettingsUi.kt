@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -58,95 +59,111 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.settings.OzoneUi
 
 // ---------------------------------------------------------------------------------------------
-// Header: OZONE / Settings / tagline / vinyl arc / moon button / search bar
+// Header: Collapsing OZONE Settings Header & Search Bar
 // ---------------------------------------------------------------------------------------------
 
 @Composable
 fun OzoneSettingsHeader(
     query: String,
     onQueryChange: (String) -> Unit,
-    onThemeClick: () -> Unit,
+    collapseFraction: Float = 0f,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier.fillMaxWidth()) {
-        OzoneVinylArc(
-            modifier =
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .offset(x = 70.dp),
-        )
-
-        Column(
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 20.dp)
+                .padding(top = 14.dp),
+    ) {
+        Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(horizontal = 20.dp)
-                    .padding(top = 20.dp),
+                    .graphicsLayer {
+                        alpha = (1f - collapseFraction * 1.5f).coerceIn(0f, 1f)
+                    },
         ) {
-            Row(verticalAlignment = Alignment.Top) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.ozone_brand_name),
-                        color = OzoneUi.Lime,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 7.sp,
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    Text(
-                        text = stringResource(R.string.settings),
-                        color = Color.White,
-                        fontSize = 52.sp,
-                        lineHeight = 58.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = stringResource(R.string.ozone_settings_tagline),
-                            color = OzoneUi.TextSecondary,
-                            fontSize = 19.sp,
-                        )
-                        Spacer(Modifier.width(10.dp))
-                        Icon(
-                            painter = painterResource(R.drawable.ozn_music_note),
-                            contentDescription = null,
-                            tint = OzoneUi.Lime,
-                            modifier = Modifier.size(22.dp),
-                        )
-                    }
-                }
-                Box(
-                    modifier =
-                        Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(Color(0x0FFFFFFF))
-                            .border(1.dp, OzoneUi.Hairline, CircleShape)
-                            .clickable(onClick = onThemeClick),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ozn_moon),
-                        contentDescription = stringResource(R.string.appearance),
-                        tint = OzoneUi.Lime,
-                        modifier = Modifier.size(24.dp),
-                    )
-                }
+            Column(modifier = Modifier.fillMaxWidth().padding(end = 110.dp)) {
+                Text(
+                    text = stringResource(R.string.ozone_brand_name),
+                    color = OzoneUi.Lime,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 4.sp,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.settings),
+                    color = Color.White,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                )
             }
-            Spacer(Modifier.height(26.dp))
-            OzoneSearchBar(query = query, onQueryChange = onQueryChange)
+
+            OzoneVinylArc(
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterEnd)
+                        .offset(x = 8.dp)
+                        .graphicsLayer {
+                            val fade = (1f - collapseFraction * 1.8f).coerceIn(0f, 1f)
+                            alpha = fade
+                            scaleX = 0.85f * (0.8f + 0.2f * fade)
+                            scaleY = 0.85f * (0.8f + 0.2f * fade)
+                        },
+            )
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        OzoneSearchBar(query = query, onQueryChange = onQueryChange)
+    }
+}
+
+/** Compact collapsing toolbar that appears on scroll with just the "Settings" title. */
+@Composable
+fun OzoneSettingsTopBar(
+    collapseFraction: Float,
+    modifier: Modifier = Modifier,
+) {
+    if (collapseFraction <= 0.01f) return
+
+    Box(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(OzoneUi.Bg.copy(alpha = collapseFraction))
+                .statusBarsPadding()
+                .height(56.dp)
+                .padding(horizontal = 20.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Text(
+            text = stringResource(R.string.settings),
+            color = Color.White.copy(alpha = collapseFraction),
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+        )
+
+        if (collapseFraction > 0.85f) {
+            val dividerAlpha = ((collapseFraction - 0.85f) / 0.15f).coerceIn(0f, 1f)
+            HorizontalDivider(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                thickness = 1.dp,
+                color = OzoneUi.Hairline.copy(alpha = dividerAlpha),
+            )
         }
     }
 }
 
-/** Half "vinyl record" peeking out from behind the search bar. */
+/** Half "vinyl record" decorative element scaled down. */
 @Composable
-private fun OzoneVinylArc(modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier.size(width = 252.dp, height = 153.dp).clipToBounds()) {
-        val outer = 126.dp.toPx()
-        val inner = 40.dp.toPx()
+fun OzoneVinylArc(modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(width = 120.dp, height = 72.dp).clipToBounds()) {
+        val outer = 60.dp.toPx()
+        val inner = 20.dp.toPx()
         val center = Offset(size.width / 2f, outer)
 
         drawCircle(
@@ -165,15 +182,15 @@ private fun OzoneVinylArc(modifier: Modifier = Modifier) {
             center = center,
         )
         // vinyl grooves
-        var r = inner + 6.dp.toPx()
+        var r = inner + 3.dp.toPx()
         while (r < outer) {
             drawCircle(
                 color = Color.Black.copy(alpha = 0.28f),
                 radius = r,
                 center = center,
-                style = Stroke(width = 0.7.dp.toPx()),
+                style = Stroke(width = 0.6.dp.toPx()),
             )
-            r += 5.dp.toPx()
+            r += 3.5.dp.toPx()
         }
         // centre hole
         drawCircle(color = OzoneUi.Bg, radius = inner, center = center)
@@ -181,7 +198,7 @@ private fun OzoneVinylArc(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun OzoneSearchBar(
+fun OzoneSearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -191,33 +208,35 @@ private fun OzoneSearchBar(
         modifier =
             modifier
                 .fillMaxWidth()
-                .height(54.dp)
+                .height(48.dp)
                 .clip(shape)
-                .background(Color(0xE61A1B22))
+                .background(OzoneUi.SurfaceElevated)
                 .border(1.dp, OzoneUi.Hairline, shape)
-                .padding(horizontal = 22.dp),
+                .padding(horizontal = 18.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             painter = painterResource(R.drawable.ozn_search),
             contentDescription = null,
             tint = OzoneUi.TextSecondary,
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(20.dp),
         )
-        Spacer(Modifier.width(18.dp))
+        Spacer(Modifier.width(14.dp))
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
             if (query.isEmpty()) {
                 Text(
                     text = stringResource(R.string.ozone_search_settings),
                     color = OzoneUi.TextSecondary,
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
             BasicTextField(
                 value = query,
                 onValueChange = onQueryChange,
                 singleLine = true,
-                textStyle = TextStyle(color = OzoneUi.TextPrimary, fontSize = 18.sp),
+                textStyle = TextStyle(color = OzoneUi.TextPrimary, fontSize = 16.sp),
                 cursorBrush = SolidColor(OzoneUi.Lime),
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -291,31 +310,20 @@ fun OzoneSettingsRow(
             modifier
                 .fillMaxWidth()
                 .clickable(onClick = item.onClick)
-                .heightIn(min = 76.dp)
+                .heightIn(min = 72.dp)
                 .padding(horizontal = 18.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // neon outline icon with a soft glow behind it
+        // Neutral icon container with update indicator
         Box(
-            modifier =
-                Modifier
-                    .size(44.dp)
-                    .drawBehind {
-                        drawCircle(
-                            brush =
-                                Brush.radialGradient(
-                                    listOf(OzoneUi.Lime.copy(alpha = 0.18f), Color.Transparent),
-                                ),
-                            radius = size.minDimension / 1.5f,
-                        )
-                    },
+            modifier = Modifier.size(40.dp),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 painter = item.icon,
                 contentDescription = null,
-                tint = OzoneUi.Lime,
-                modifier = Modifier.size(30.dp),
+                tint = OzoneUi.TextSecondary,
+                modifier = Modifier.size(26.dp),
             )
             if (item.showUpdateIndicator) {
                 Box(
@@ -327,12 +335,12 @@ fun OzoneSettingsRow(
                 )
             }
         }
-        Spacer(Modifier.width(18.dp))
+        Spacer(Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = item.title,
                 color = OzoneUi.TextPrimary,
-                fontSize = 18.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -341,8 +349,8 @@ fun OzoneSettingsRow(
                 Text(
                     text = item.subtitle,
                     color = OzoneUi.TextSecondary,
-                    fontSize = 15.sp,
-                    maxLines = 1,
+                    fontSize = 14.sp,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
@@ -359,7 +367,7 @@ fun OzoneSettingsRow(
             painter = painterResource(R.drawable.ozn_chevron_right),
             contentDescription = null,
             tint = OzoneUi.Chevron,
-            modifier = Modifier.size(22.dp),
+            modifier = Modifier.size(20.dp),
         )
     }
 }

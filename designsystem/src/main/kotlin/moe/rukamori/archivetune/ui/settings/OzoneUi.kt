@@ -31,8 +31,8 @@ object OzoneUi {
 
     // text
     val TextPrimary = Color(0xFFFFFFFF)
-    val TextSecondary = Color(0xFF8E9299)
-    val SectionLabel = Color(0xFF7E828A)
+    val TextSecondary = Color(0xFFA6ABB4)
+    val SectionLabel = Color(0xFFA6ABB4)
     val TextDisabled = Color(0xFF4E525A)
     val Chevron = Color(0xFF6C7078)
 
