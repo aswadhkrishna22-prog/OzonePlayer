@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
@@ -65,6 +66,8 @@ internal fun HeroMediaCard(
     onPrimaryClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
+    scrollOffset: () -> Float = { 0f },
+    animationsDisabled: Boolean = false,
 ) {
     val context = LocalContext.current
     val imageRequest = remember(item.thumbnailUrl, context) {
@@ -87,6 +90,13 @@ internal fun HeroMediaCard(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .graphicsLayer {
+                    if (!animationsDisabled) {
+                        translationY = scrollOffset() * 0.5f
+                        scaleX = 1.15f
+                        scaleY = 1.15f
+                    }
+                }
                 .heroPageMediaDrift(pageOffset)
         ) {
             val isLowResOrVideoThumb = remember(item.thumbnailUrl) {
@@ -163,20 +173,39 @@ internal fun HeroMediaCard(
                     )
                 }
             }
-
-            HeroScrims()
         }
+
+        // Bottom: long gradient from transparent into the screen background colour
+        // (about the lower 35% of the hero), so the hero melts into Continue grid with no hard edge
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.35f)
+                .align(Alignment.BottomCenter)
+                .background(
+                    Brush.verticalGradient(
+                        0.0f to Color.Transparent,
+                        1.0f to MaterialTheme.colorScheme.background,
+                    ),
+                ),
+        )
 
         Box(
             modifier = Modifier
                 .matchParentSize()
+                .graphicsLayer {
+                    if (!animationsDisabled) {
+                        val scroll = scrollOffset()
+                        alpha = (1f - (scroll / 250f)).coerceIn(0f, 1f)
+                    }
+                }
                 .heroPageTextDrift(pageOffset)
         ) {
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, bottom = 20.dp)
+                    .padding(start = 20.dp, end = 20.dp, bottom = 28.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -226,14 +255,14 @@ internal fun HeroMediaCard(
                     modifier = Modifier
                         .heightIn(min = HeroCarouselTokens.MinTouchTarget)
                         .clip(CircleShape)
-                        .background(HeroCarouselTokens.ArtOverlayButtonSurface)
+                        .background(MaterialTheme.colorScheme.primary)
                         .combinedClickable(onClick = onPrimaryClick, onLongClick = onLongClick)
                         .padding(horizontal = 18.dp, vertical = 10.dp)
                 ) {
                     Icon(
                         painter = painterResource(if (isThisPlaying) R.drawable.pause else R.drawable.play),
                         contentDescription = null,
-                        tint = HeroCarouselTokens.ArtOverlayButtonContent,
+                        tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(20.dp),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -245,7 +274,7 @@ internal fun HeroMediaCard(
                         },
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
-                        color = HeroCarouselTokens.ArtOverlayButtonContent,
+                        color = MaterialTheme.colorScheme.onPrimary,
                     )
                 }
             }
@@ -289,31 +318,3 @@ private fun BoxScope.HeroBlurBand(
         translate(top = dy) { drawLayer(mediaLayer) }
     }
 }
-
-@Composable
-private fun BoxScope.HeroScrims() {
-    Box(
-        modifier = Modifier
-            .matchParentSize()
-            .drawWithCache {
-                val topEnd = HeroCarouselTokens.ScrimTopEnd
-                val bottomStart = HeroCarouselTokens.ScrimBottomStart
-                val bottomEnd = HeroCarouselTokens.ScrimBottomEnd
-                val scrim = Brush.verticalGradient(
-                    0f to heroScrimBlack(0.86f),
-                    0.475f * topEnd to heroScrimBlack(0.59f),
-                    topEnd to heroScrimBlack(0f),
-                    bottomStart to heroScrimBlack(0f),
-                    bottomStart + 0.457f * (bottomEnd - bottomStart) to heroScrimBlack(0.59f),
-                    bottomEnd to heroScrimBlack(1f),
-                    1f to heroScrimBlack(1f),
-                    startY = 0f,
-                    endY = size.height,
-                )
-                onDrawBehind { drawRect(scrim) }
-            }
-    )
-}
-
-private fun heroScrimBlack(gradient: Float): Color =
-    Color.Black.copy(alpha = 1f - (1f - HeroCarouselTokens.HeroDim) * (1f - gradient))

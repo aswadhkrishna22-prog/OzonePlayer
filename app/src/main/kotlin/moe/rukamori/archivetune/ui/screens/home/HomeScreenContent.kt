@@ -24,6 +24,9 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +34,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import moe.rukamori.archivetune.LocalAnimationsDisabled
+import moe.rukamori.archivetune.LocalMarqueeEnabled
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.home.HomeAction
@@ -100,170 +106,169 @@ internal fun HomeContent(
                 val insetsPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
                 val hasHero = !isFilterActive && (uiState.trendingState?.heroTracks?.isNotEmpty() == true || uiState.trendingState?.currentTracks?.isNotEmpty() == true)
 
-                LazyColumn(
-                    state = lazyListState,
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                        start = insetsPadding.calculateLeftPadding(androidx.compose.ui.platform.LocalLayoutDirection.current),
-                        top = if (hasHero) 0.dp else insetsPadding.calculateTopPadding(),
-                        end = insetsPadding.calculateRightPadding(androidx.compose.ui.platform.LocalLayoutDirection.current),
-                        bottom = insetsPadding.calculateBottomPadding(),
-                    ),
-                    modifier =
-                        Modifier
-                            .widthIn(max = HomeFeedMaxWidth)
-                            .fillMaxWidth()
-                            .align(Alignment.TopCenter),
-                ) {
-                    if (!isFilterActive) {
-                        item(
-                            key = "home_trending_hero",
-                            contentType = "trending_hero",
-                        ) {
-                            TrendingHeroContent(
-                                trendingState = uiState.trendingState,
-                                mediaMetadata = mediaMetadata,
-                                isPlaying = isPlaying,
-                                navController = navController,
-                                playerConnection = playerConnection,
-                                menuState = menuState,
-                                trendingRepository = trendingRepository,
-                                modifier = Modifier.animateItem(),
-                            )
-                        }
+                val animationsDisabled = LocalAnimationsDisabled.current
+                val shouldAnimateEntrance = remember { !HomeLayoutConfig.isHomeEntrancePlayed() && !animationsDisabled }
+                DisposableEffect(Unit) {
+                    onDispose {
+                        HomeLayoutConfig.markHomeEntrancePlayed()
                     }
-
-                    if (!isFilterActive && uiState.quickPicks.isNotEmpty()) {
-                        item(
-                            key = "home_quick_picks_row",
-                            contentType = "quick_picks_row",
-                        ) {
-                            QuickPicksRowSection(
-                                quickPicks = uiState.quickPicks,
-                                mediaMetadata = mediaMetadata,
-                                isPlaying = isPlaying,
-                                navController = navController,
-                                playerConnection = playerConnection,
-                                menuState = menuState,
-                                modifier = Modifier.animateItem(),
-                            )
-                        }
+                }
+                LaunchedEffect(shouldAnimateEntrance) {
+                    if (shouldAnimateEntrance) {
+                        delay(800)
+                        HomeLayoutConfig.markHomeEntrancePlayed()
                     }
+                }
 
-                    homeTrendingSection(
-                        trendingState = uiState.trendingState,
-                        mediaContext = mediaContext,
-                        trendingRepository = trendingRepository,
-                    )
-
-                    homeCommunitySection(
-                        uiState = uiState,
-                        mediaContext = mediaContext,
-                    )
-
-                    if (!isFilterActive) {
-                        if (uiState.speedDialItems.isNotEmpty()) {
-                            sectionSpacer("speed_dial")
+                CompositionLocalProvider(LocalMarqueeEnabled provides false) {
+                    LazyColumn(
+                        state = lazyListState,
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                            start = insetsPadding.calculateLeftPadding(androidx.compose.ui.platform.LocalLayoutDirection.current),
+                            top = if (hasHero) 0.dp else insetsPadding.calculateTopPadding(),
+                            end = insetsPadding.calculateRightPadding(androidx.compose.ui.platform.LocalLayoutDirection.current),
+                            bottom = insetsPadding.calculateBottomPadding(),
+                        ),
+                        modifier =
+                            Modifier
+                                .widthIn(max = HomeFeedMaxWidth)
+                                .fillMaxWidth()
+                                .align(Alignment.TopCenter),
+                    ) {
+                        if (!isFilterActive) {
                             item(
-                                key = "home_speed_dial_header",
-                                contentType = "section_header",
+                                key = "home_trending_hero",
+                                contentType = "trending_hero",
                             ) {
-                                HomeSectionHeader(
-                                    title = stringResource(R.string.speed_dial),
-                                    modifier = Modifier.animateItem(),
-                                )
-                            }
-                            item(
-                                key = "home_speed_dial",
-                                contentType = "speed_dial",
-                            ) {
-                                SpeedDialSection(
-                                    speedDialItems = uiState.speedDialItems,
+                                TrendingHeroContent(
+                                    trendingState = uiState.trendingState,
                                     mediaMetadata = mediaMetadata,
                                     isPlaying = isPlaying,
                                     navController = navController,
                                     playerConnection = playerConnection,
                                     menuState = menuState,
-                                    scope = scope,
-                                    modifier = Modifier.animateItem(),
+                                    trendingRepository = trendingRepository,
+                                    scrollOffsetProvider = {
+                                        if (lazyListState.firstVisibleItemIndex == 0) {
+                                            lazyListState.firstVisibleItemScrollOffset.toFloat()
+                                        } else {
+                                            1000f
+                                        }
+                                    },
+                                    modifier = Modifier.homeEntranceAnimation(0, shouldAnimateEntrance).animateItem(),
                                 )
                             }
-                        }
 
-                        if (uiState.keepListening.isNotEmpty()) {
-                            sectionSpacer("keep_listening")
-                            item(
-                                key = "home_keep_listening_header",
-                                contentType = "section_header",
-                            ) {
-                                HomeSectionHeader(
-                                    title = stringResource(R.string.keep_listening),
-                                    modifier = Modifier.animateItem(),
-                                )
-                            }
-                            item(
-                                key = "home_keep_listening",
-                                contentType = "media_shelf",
-                            ) {
-                                KeepListeningSection(
-                                    keepListening = uiState.keepListening,
-                                    mediaMetadata = mediaMetadata,
-                                    isPlaying = isPlaying,
-                                    navController = navController,
-                                    playerConnection = playerConnection,
-                                    menuState = menuState,
-                                    scope = scope,
-                                    modifier = Modifier.animateItem(),
-                                )
-                            }
-                        }
-
-                        if (uiState.accountPlaylists.isNotEmpty()) {
-                            sectionSpacer("account_playlists")
-                            item(
-                                key = "home_account_playlists",
-                                contentType = "media_shelf",
-                            ) {
-                                Column(modifier = Modifier.animateItem()) {
-                                    AccountPlaylistsTitle(
-                                        accountName = uiState.accountName,
-                                        accountImageUrl = uiState.accountImageUrl,
-                                        onClick = { navController.navigate("account") },
-                                    )
-                                    AccountPlaylistsSection(
-                                        accountPlaylists = uiState.accountPlaylists,
+                            if (uiState.speedDialItems.isNotEmpty() || uiState.keepListening.isNotEmpty()) {
+                                sectionSpacer("continue_block")
+                                item(
+                                    key = "home_continue_block",
+                                    contentType = "continue_block",
+                                ) {
+                                    HomeContinueBlock(
+                                        speedDialItems = uiState.speedDialItems,
+                                        keepListening = uiState.keepListening,
+                                        quickPicks = uiState.quickPicks,
                                         mediaMetadata = mediaMetadata,
                                         isPlaying = isPlaying,
                                         navController = navController,
                                         playerConnection = playerConnection,
                                         menuState = menuState,
                                         scope = scope,
+                                        modifier = Modifier.homeEntranceAnimation(1, shouldAnimateEntrance).animateItem(),
                                     )
                                 }
                             }
                         }
 
-                        homeForgottenFavoritesSection(
-                            uiState = uiState,
+                        if (!isFilterActive && uiState.quickPicks.isNotEmpty()) {
+                            sectionSpacer("quick_picks")
+                            item(
+                                key = "home_quick_picks_row",
+                                contentType = "quick_picks_row",
+                            ) {
+                                QuickPicksRowSection(
+                                    quickPicks = uiState.quickPicks,
+                                    mediaMetadata = mediaMetadata,
+                                    isPlaying = isPlaying,
+                                    navController = navController,
+                                    playerConnection = playerConnection,
+                                    menuState = menuState,
+                                    modifier = Modifier.homeEntranceAnimation(2, shouldAnimateEntrance).animateItem(),
+                                )
+                            }
+                        }
+
+                        homeTrendingSection(
+                            trendingState = uiState.trendingState,
                             mediaContext = mediaContext,
-                            forgottenItemWidth = forgottenItemWidth,
-                            forgottenFavoritesGridState = forgottenFavoritesGridState,
-                            forgottenSnapLayoutInfoProvider = forgottenSnapLayoutInfoProvider,
+                            trendingRepository = trendingRepository,
+                            entranceIndex = 3,
+                            shouldAnimateEntrance = shouldAnimateEntrance,
                         )
 
-                        homeSimilarRecommendationsSection(
+                        homeCommunitySection(
                             uiState = uiState,
                             mediaContext = mediaContext,
+                            entranceIndex = 4,
+                            shouldAnimateEntrance = shouldAnimateEntrance,
+                        )
+
+                        if (!isFilterActive) {
+                            if (uiState.accountPlaylists.isNotEmpty()) {
+                                sectionSpacer("account_playlists")
+                                item(
+                                    key = "home_account_playlists",
+                                    contentType = "media_shelf",
+                                ) {
+                                    Column(modifier = Modifier.homeEntranceAnimation(5, shouldAnimateEntrance).animateItem()) {
+                                        AccountPlaylistsTitle(
+                                            accountName = uiState.accountName,
+                                            accountImageUrl = uiState.accountImageUrl,
+                                            onClick = { navController.navigate("account") },
+                                        )
+                                        AccountPlaylistsSection(
+                                            accountPlaylists = uiState.accountPlaylists,
+                                            mediaMetadata = mediaMetadata,
+                                            isPlaying = isPlaying,
+                                            navController = navController,
+                                            playerConnection = playerConnection,
+                                            menuState = menuState,
+                                            scope = scope,
+                                        )
+                                    }
+                                }
+                            }
+
+                            homeForgottenFavoritesSection(
+                                uiState = uiState,
+                                mediaContext = mediaContext,
+                                forgottenItemWidth = forgottenItemWidth,
+                                forgottenFavoritesGridState = forgottenFavoritesGridState,
+                                forgottenSnapLayoutInfoProvider = forgottenSnapLayoutInfoProvider,
+                                entranceIndex = 6,
+                                shouldAnimateEntrance = shouldAnimateEntrance,
+                            )
+
+                            homeSimilarRecommendationsSection(
+                                uiState = uiState,
+                                mediaContext = mediaContext,
+                                entranceIndex = 7,
+                                shouldAnimateEntrance = shouldAnimateEntrance,
+                            )
+                        }
+
+                        homeRemoteSections(
+                            uiState = uiState,
+                            mediaContext = mediaContext,
+                            entranceBaseIndex = 8,
+                            shouldAnimateEntrance = shouldAnimateEntrance,
+                        )
+
+                        homeLoadingMoreItem(
+                            isLoadingMore = uiState.isLoadingMore,
                         )
                     }
-
-                    homeRemoteSections(
-                        uiState = uiState,
-                        mediaContext = mediaContext,
-                    )
-
-                    homeLoadingMoreItem(
-                        isLoadingMore = uiState.isLoadingMore,
-                    )
                 }
             }
         }

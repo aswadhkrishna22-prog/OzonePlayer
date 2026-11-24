@@ -6,9 +6,17 @@
 
 package moe.rukamori.archivetune.ui.screens.home
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -61,6 +69,7 @@ internal fun TrendingHeroContent(
     menuState: MenuState,
     trendingRepository: TrendingRepository?,
     modifier: Modifier = Modifier,
+    scrollOffsetProvider: () -> Float = { 0f },
 ) {
     val haptics = rememberOzoneHaptics()
     val animationsDisabled = LocalAnimationsDisabled.current
@@ -192,7 +201,7 @@ internal fun TrendingHeroContent(
                 }
             },
     ) {
-        val heroHeight = HomeLayoutConfig.heroCarouselHeight(maxWidth)
+        val heroHeight = HomeLayoutConfig.heroCarouselHeight(maxWidth, configuration.screenHeightDp.dp)
 
         HeroCarousel(
             items = heroItems,
@@ -204,6 +213,7 @@ internal fun TrendingHeroContent(
             onTrackClick = ::playTrack,
             onTrackLongClick = ::showTrackMenu,
             onRoll = { rollController.roll(isCarouselActive, animationsDisabled) },
+            scrollOffset = scrollOffsetProvider,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(heroHeight),

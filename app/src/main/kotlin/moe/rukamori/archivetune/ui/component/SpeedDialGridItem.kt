@@ -37,6 +37,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -161,7 +162,7 @@ fun SpeedDialGridItem(
             if (isPinned) {
                 Icon(
                     painter = painterResource(R.drawable.bookmark_filled),
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.speed_dial),
                     tint = foregroundColor,
                     modifier =
                         Modifier

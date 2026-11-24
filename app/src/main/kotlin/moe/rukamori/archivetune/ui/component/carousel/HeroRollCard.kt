@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -32,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.TransformOrigin
@@ -63,6 +65,7 @@ internal fun HeroRollCard(
     onRoll: () -> Unit,
     onPlayResult: (String) -> Unit,
     modifier: Modifier = Modifier,
+    scrollOffset: () -> Float = { 0f },
 ) {
     val rolling = state.phase == HeroRollPhase.Rolling
     val result = state.result
@@ -78,6 +81,13 @@ internal fun HeroRollCard(
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
+                .graphicsLayer {
+                    if (!animationsDisabled) {
+                        translationY = scrollOffset() * 0.5f
+                        scaleX = 1.15f
+                        scaleY = 1.15f
+                    }
+                }
                 .heroPageMediaDrift(pageOffset)
         ) {
             val unit = maxHeight.value / HeroCarouselTokens.GachaDesignHeight
@@ -174,16 +184,37 @@ internal fun HeroRollCard(
             )
         }
 
+        // Bottom: long gradient from transparent into the screen background colour
+        // (about the lower 35% of the hero), so the hero melts into Continue grid with no hard edge
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.35f)
+                .align(Alignment.BottomCenter)
+                .background(
+                    Brush.verticalGradient(
+                        0.0f to Color.Transparent,
+                        1.0f to MaterialTheme.colorScheme.background,
+                    ),
+                ),
+        )
+
         Box(
             modifier = Modifier
                 .matchParentSize()
+                .graphicsLayer {
+                    if (!animationsDisabled) {
+                        val scroll = scrollOffset()
+                        alpha = (1f - (scroll / 250f)).coerceIn(0f, 1f)
+                    }
+                }
                 .heroPageTextDrift(pageOffset)
         ) {
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, bottom = 20.dp)
+                    .padding(start = 20.dp, end = 20.dp, bottom = 28.dp)
             ) {
                 Text(
                     text = when {
@@ -226,12 +257,13 @@ internal fun HeroRollCard(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    val isPlayAction = result != null && !isResultPlaying
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .heightIn(min = HeroCarouselTokens.MinTouchTarget)
                             .clip(CircleShape)
-                            .background(HeroCarouselTokens.ArtOverlayButtonSurface)
+                            .background(MaterialTheme.colorScheme.primary)
                             .clickable(
                                 enabled = !rolling,
                                 onClick = {
@@ -251,7 +283,7 @@ internal fun HeroRollCard(
                             Icon(
                                 painter = painterResource(R.drawable.play),
                                 contentDescription = null,
-                                tint = HeroCarouselTokens.ArtOverlayButtonContent,
+                                tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(20.dp),
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -266,7 +298,7 @@ internal fun HeroRollCard(
                             },
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold,
-                            color = HeroCarouselTokens.ArtOverlayButtonContent,
+                            color = MaterialTheme.colorScheme.onPrimary,
                         )
                     }
 

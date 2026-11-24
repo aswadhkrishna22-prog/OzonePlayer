@@ -1,3 +1,9 @@
+/*
+ * Ozone Player (2026)
+ * ArchiveTune (2026) | Original work by © Rukamori
+ * GPL-3.0 License | Contributors: see git history
+ */
+
 package moe.rukamori.archivetune.ui.scaffold
 
 import androidx.compose.animation.Crossfade
@@ -143,37 +149,20 @@ fun ScaffoldTopAppBar(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    OzoneHeaderLogo(
-                        isHomeScreen = currentRoute == Screens.Home.route,
-                        modifier = Modifier
-                            .size(35.dp)
-                            .padding(end = 6.dp),
-                    )
-
                     if (currentRoute == Screens.Home.route) {
-                        var showGreeting by remember { mutableStateOf(false) }
-
-                        LaunchedEffect(Unit) {
-                            while (true) {
-                                delay(6000.milliseconds)
-                                showGreeting = !showGreeting
-                            }
-                        }
-
-                        Crossfade(
-                            targetState = showGreeting,
-                            animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
-                            label = "HomeTitleCrossfade",
-                            modifier = Modifier.weight(1f, fill = false),
-                        ) { isGreeting ->
-                            Text(
-                                text = if (isGreeting) getGreetingText() else stringResource(R.string.ui_app_name),
-                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
+                        Text(
+                            text = getGreetingText(),
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     } else {
+                        OzoneHeaderLogo(
+                            isHomeScreen = false,
+                            modifier = Modifier
+                                .size(35.dp)
+                                .padding(end = 6.dp),
+                        )
                         Text(
                             text = stringResource(R.string.ui_app_name),
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
