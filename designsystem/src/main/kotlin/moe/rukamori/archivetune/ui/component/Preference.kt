@@ -118,7 +118,6 @@ import moe.rukamori.archivetune.ui.theme.ozoneSegmentPosition
 import kotlin.math.roundToInt
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color as OzoneColor
 import moe.rukamori.archivetune.ui.settings.OzoneUi
