@@ -14,6 +14,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -45,6 +46,7 @@ import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
+import coil3.request.crossfade
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.CropThumbnailToSquareKey
 import moe.rukamori.archivetune.constants.ListThumbnailSize
@@ -75,13 +77,24 @@ fun ItemThumbnail(
     val isYouTubeThumb = thumbnailUrl?.contains("ytimg.com", ignoreCase = true) == true
     val shouldApplySquareCrop = cropThumbnailToSquare && isYouTubeThumb && kotlin.math.abs(thumbnailRatio - 1f) < 0.001f
 
+    val activeBorder = if (isActive) {
+        Modifier.border(
+            width = 2.dp,
+            color = MaterialTheme.colorScheme.primary,
+            shape = shape,
+        )
+    } else {
+        Modifier
+    }
+
     Box(
         contentAlignment = Alignment.Center,
         modifier =
             modifier
                 .fillMaxSize()
                 .aspectRatio(thumbnailRatio)
-                .clip(shape),
+                .clip(shape)
+                .then(activeBorder),
     ) {
         if (albumIndex == null) {
             if (placeholderIconRes != null) {
@@ -112,6 +125,7 @@ fun ItemThumbnail(
                             .data(thumbnailUrl.resize(effDim, effDim))
                             .size(effSizePx, effSizePx)
                             .allowHardware(true)
+                            .crossfade(true)
                             .build()
                     }
                 AsyncImage(
@@ -388,6 +402,7 @@ fun PlaylistThumbnail(
                                 .data(url?.resize((halfPx * 1.5).toInt(), (halfPx * 1.5).toInt()))
                                 .size(halfPx, halfPx)
                                 .allowHardware(true)
+                                .crossfade(true)
                                 .build()
                         }
                     AsyncImage(

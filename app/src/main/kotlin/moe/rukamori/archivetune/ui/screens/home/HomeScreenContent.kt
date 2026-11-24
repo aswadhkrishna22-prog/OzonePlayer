@@ -25,6 +25,8 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,6 +34,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import moe.rukamori.archivetune.LocalAnimationsDisabled
 import moe.rukamori.archivetune.LocalMarqueeEnabled
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.R
@@ -102,6 +106,20 @@ internal fun HomeContent(
                 val insetsPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
                 val hasHero = !isFilterActive && (uiState.trendingState?.heroTracks?.isNotEmpty() == true || uiState.trendingState?.currentTracks?.isNotEmpty() == true)
 
+                val animationsDisabled = LocalAnimationsDisabled.current
+                val shouldAnimateEntrance = remember { !HomeLayoutConfig.isHomeEntrancePlayed() && !animationsDisabled }
+                DisposableEffect(Unit) {
+                    onDispose {
+                        HomeLayoutConfig.markHomeEntrancePlayed()
+                    }
+                }
+                LaunchedEffect(shouldAnimateEntrance) {
+                    if (shouldAnimateEntrance) {
+                        delay(800)
+                        HomeLayoutConfig.markHomeEntrancePlayed()
+                    }
+                }
+
                 CompositionLocalProvider(LocalMarqueeEnabled provides false) {
                     LazyColumn(
                         state = lazyListState,
@@ -137,7 +155,7 @@ internal fun HomeContent(
                                             1000f
                                         }
                                     },
-                                    modifier = Modifier.animateItem(),
+                                    modifier = Modifier.homeEntranceAnimation(0, shouldAnimateEntrance).animateItem(),
                                 )
                             }
                         }
@@ -154,7 +172,7 @@ internal fun HomeContent(
                                     navController = navController,
                                     playerConnection = playerConnection,
                                     menuState = menuState,
-                                    modifier = Modifier.animateItem(),
+                                    modifier = Modifier.homeEntranceAnimation(1, shouldAnimateEntrance).animateItem(),
                                 )
                             }
                         }
@@ -163,11 +181,15 @@ internal fun HomeContent(
                             trendingState = uiState.trendingState,
                             mediaContext = mediaContext,
                             trendingRepository = trendingRepository,
+                            entranceIndex = 2,
+                            shouldAnimateEntrance = shouldAnimateEntrance,
                         )
 
                         homeCommunitySection(
                             uiState = uiState,
                             mediaContext = mediaContext,
+                            entranceIndex = 3,
+                            shouldAnimateEntrance = shouldAnimateEntrance,
                         )
 
                         if (!isFilterActive) {
@@ -179,7 +201,7 @@ internal fun HomeContent(
                                 ) {
                                     HomeSectionHeader(
                                         title = stringResource(R.string.speed_dial),
-                                        modifier = Modifier.animateItem(),
+                                        modifier = Modifier.homeEntranceAnimation(4, shouldAnimateEntrance).animateItem(),
                                     )
                                 }
                                 item(
@@ -194,7 +216,7 @@ internal fun HomeContent(
                                         playerConnection = playerConnection,
                                         menuState = menuState,
                                         scope = scope,
-                                        modifier = Modifier.animateItem(),
+                                        modifier = Modifier.homeEntranceAnimation(4, shouldAnimateEntrance).animateItem(),
                                     )
                                 }
                             }
@@ -207,7 +229,7 @@ internal fun HomeContent(
                                 ) {
                                     HomeSectionHeader(
                                         title = stringResource(R.string.keep_listening),
-                                        modifier = Modifier.animateItem(),
+                                        modifier = Modifier.homeEntranceAnimation(5, shouldAnimateEntrance).animateItem(),
                                     )
                                 }
                                 item(
@@ -222,7 +244,7 @@ internal fun HomeContent(
                                         playerConnection = playerConnection,
                                         menuState = menuState,
                                         scope = scope,
-                                        modifier = Modifier.animateItem(),
+                                        modifier = Modifier.homeEntranceAnimation(5, shouldAnimateEntrance).animateItem(),
                                     )
                                 }
                             }
@@ -233,7 +255,7 @@ internal fun HomeContent(
                                     key = "home_account_playlists",
                                     contentType = "media_shelf",
                                 ) {
-                                    Column(modifier = Modifier.animateItem()) {
+                                    Column(modifier = Modifier.homeEntranceAnimation(6, shouldAnimateEntrance).animateItem()) {
                                         AccountPlaylistsTitle(
                                             accountName = uiState.accountName,
                                             accountImageUrl = uiState.accountImageUrl,
@@ -258,17 +280,23 @@ internal fun HomeContent(
                                 forgottenItemWidth = forgottenItemWidth,
                                 forgottenFavoritesGridState = forgottenFavoritesGridState,
                                 forgottenSnapLayoutInfoProvider = forgottenSnapLayoutInfoProvider,
+                                entranceIndex = 7,
+                                shouldAnimateEntrance = shouldAnimateEntrance,
                             )
 
                             homeSimilarRecommendationsSection(
                                 uiState = uiState,
                                 mediaContext = mediaContext,
+                                entranceIndex = 8,
+                                shouldAnimateEntrance = shouldAnimateEntrance,
                             )
                         }
 
                         homeRemoteSections(
                             uiState = uiState,
                             mediaContext = mediaContext,
+                            entranceBaseIndex = 9,
+                            shouldAnimateEntrance = shouldAnimateEntrance,
                         )
 
                         homeLoadingMoreItem(

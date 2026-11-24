@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.constants.GridThumbnailCornerRadius
 import moe.rukamori.archivetune.constants.GridThumbnailHeight
@@ -29,6 +30,7 @@ fun GridItemPlaceHolder(
     modifier: Modifier = Modifier,
     thumbnailShape: Shape = RoundedCornerShape(GridThumbnailCornerRadius),
     fillMaxWidth: Boolean = false,
+    cardWidth: Dp = GridThumbnailHeight,
 ) {
     Column(
         modifier =
@@ -39,7 +41,7 @@ fun GridItemPlaceHolder(
             } else {
                 modifier
                     .padding(12.dp)
-                    .width(GridThumbnailHeight)
+                    .width(cardWidth)
             },
     ) {
         Spacer(
@@ -47,7 +49,7 @@ fun GridItemPlaceHolder(
                 if (fillMaxWidth) {
                     Modifier.fillMaxWidth()
                 } else {
-                    Modifier.height(GridThumbnailHeight)
+                    Modifier.height(cardWidth)
                 }.aspectRatio(1f)
                     .clip(thumbnailShape)
                     .background(MaterialTheme.colorScheme.onSurface),

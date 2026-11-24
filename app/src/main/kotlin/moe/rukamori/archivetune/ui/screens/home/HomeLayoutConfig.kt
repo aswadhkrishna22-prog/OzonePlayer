@@ -6,9 +6,19 @@
 
 package moe.rukamori.archivetune.ui.screens.home
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 
 object HomeLayoutConfig {
     val shelfSpacing: Dp = 10.dp
@@ -16,6 +26,14 @@ object HomeLayoutConfig {
     val sidePadding: Dp = 16.dp
     val sectionSpacing: Dp = 18.dp
     val headerHeight: Dp = 48.dp
+
+    private var homeEntrancePlayedSession = false
+
+    fun markHomeEntrancePlayed() {
+        homeEntrancePlayedSession = true
+    }
+
+    fun isHomeEntrancePlayed(): Boolean = homeEntrancePlayedSession
 
     fun cardWidth(availableWidth: Dp): Dp {
         val usableWidth = availableWidth - (shelfHorizontalPadding * 2)
@@ -40,5 +58,34 @@ object HomeLayoutConfig {
         screenHeight != Dp.Unspecified && screenHeight > 0.dp ->
             (screenHeight * 0.52f).coerceIn(340.dp, 440.dp)
         else -> 400.dp
+    }
+}
+
+@Composable
+fun Modifier.homeEntranceAnimation(
+    index: Int,
+    enabled: Boolean,
+): Modifier {
+    if (!enabled || HomeLayoutConfig.isHomeEntrancePlayed()) return this
+    val density = LocalDensity.current
+    val offsetPx = remember(density) { with(density) { 16.dp.toPx() } }
+    val animState = remember { Animatable(0f) }
+
+    LaunchedEffect(Unit) {
+        val delayMs = (index * 45L).coerceAtMost(450L)
+        delay(delayMs)
+        animState.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(
+                durationMillis = 350,
+                easing = FastOutSlowInEasing,
+            ),
+        )
+    }
+
+    return this.graphicsLayer {
+        val progress = animState.value
+        alpha = progress
+        translationY = (1f - progress) * offsetPx
     }
 }

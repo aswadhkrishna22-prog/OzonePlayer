@@ -7,11 +7,15 @@
 package moe.rukamori.archivetune.ui.screens.home
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.combinedClickable
@@ -69,6 +73,7 @@ import androidx.media3.common.MediaItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import moe.rukamori.archivetune.LocalAnimationsDisabled
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.GridThumbnailCornerRadius
 import moe.rukamori.archivetune.constants.PlaybackSource
@@ -107,6 +112,8 @@ internal fun LazyListScope.homeTrendingSection(
     trendingState: TrendingUiState?,
     mediaContext: HomeFeedMediaContext,
     trendingRepository: TrendingRepository?,
+    entranceIndex: Int = 2,
+    shouldAnimateEntrance: Boolean = false,
 ) {
     val state = trendingState?.takeIf { it.isVisible || it.isLoading } ?: return
     val tracks = state.currentTracks
@@ -144,7 +151,7 @@ internal fun LazyListScope.homeTrendingSection(
             onClick = {
                 mediaContext.navController.navigate("charts_screen")
             },
-            modifier = Modifier.animateItem(),
+            modifier = Modifier.homeEntranceAnimation(entranceIndex, shouldAnimateEntrance).animateItem(),
         )
     }
 
@@ -163,7 +170,7 @@ internal fun LazyListScope.homeTrendingSection(
             onSourceSelected = { source ->
                 mediaContext.onAction(HomeAction.SelectTrendingSource(source))
             },
-            modifier = Modifier.animateItem(),
+            modifier = Modifier.homeEntranceAnimation(entranceIndex, shouldAnimateEntrance).animateItem(),
         )
     }
 
@@ -178,7 +185,7 @@ internal fun LazyListScope.homeTrendingSection(
             selectedSource = state.selectedSource,
             mediaContext = mediaContext,
             trendingRepository = trendingRepository,
-            modifier = Modifier.animateItem(),
+            modifier = Modifier.homeEntranceAnimation(entranceIndex, shouldAnimateEntrance).animateItem(),
         )
     }
 }
@@ -368,22 +375,38 @@ private fun TrendingShelfContent(
         val startPadding = horizontalInsets.calculateStartPadding(layoutDirection) + HomeLayoutConfig.shelfHorizontalPadding
         val endPadding = horizontalInsets.calculateEndPadding(layoutDirection) + HomeLayoutConfig.shelfHorizontalPadding
 
+        val animationsDisabled = LocalAnimationsDisabled.current
+
         if (isLoading) {
             LazyRow(
                 contentPadding = PaddingValues(start = startPadding, end = endPadding),
                 horizontalArrangement = Arrangement.spacedBy(HomeLayoutConfig.shelfSpacing),
             ) {
                 items(6) {
-                    GridItemPlaceHolder(fillMaxWidth = false)
+                    GridItemPlaceHolder(
+                        fillMaxWidth = false,
+                        cardWidth = cardWidth,
+                    )
                 }
             }
             return@BoxWithConstraints
         }
 
-        LazyRow(
-            contentPadding = PaddingValues(start = startPadding, end = endPadding),
-            horizontalArrangement = Arrangement.spacedBy(HomeLayoutConfig.shelfSpacing),
-        ) {
+        AnimatedContent(
+            targetState = selectedSource,
+            transitionSpec = {
+                if (animationsDisabled) {
+                    EnterTransition.None togetherWith ExitTransition.None
+                } else {
+                    fadeIn(animationSpec = tween(220)) togetherWith fadeOut(animationSpec = tween(220))
+                }
+            },
+            label = "trendingShelfCrossfade",
+        ) { _ ->
+            LazyRow(
+                contentPadding = PaddingValues(start = startPadding, end = endPadding),
+                horizontalArrangement = Arrangement.spacedBy(HomeLayoutConfig.shelfSpacing),
+            ) {
             itemsIndexed(
                 items = tracks,
                 key = { index, track -> "${track.id}_$index" },
@@ -635,6 +658,7 @@ private fun TrendingShelfContent(
             }
         }
     }
+}
 }
 
 private fun TrendingTrack.toMediaItem(): MediaItem {

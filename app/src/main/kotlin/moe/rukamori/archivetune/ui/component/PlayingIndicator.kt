@@ -7,6 +7,8 @@
 package moe.rukamori.archivetune.ui.component
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -33,6 +35,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import moe.rukamori.archivetune.LocalAnimationsDisabled
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.ThumbnailCornerRadius
 import kotlin.random.Random
@@ -46,15 +49,16 @@ fun PlayingIndicator(
     cornerRadius: Dp = ThumbnailCornerRadius,
     isActive: Boolean = true,
 ) {
+    val animationsDisabled = LocalAnimationsDisabled.current
     val animatables =
         remember {
             List(bars) {
-                Animatable(0.1f)
+                Animatable(0.4f)
             }
         }
 
-    LaunchedEffect(isActive) {
-        if (!isActive) return@LaunchedEffect
+    LaunchedEffect(isActive, animationsDisabled) {
+        if (!isActive || animationsDisabled) return@LaunchedEffect
         delay(300)
         animatables.forEach { animatable ->
             launch {
@@ -96,20 +100,28 @@ fun PlayingIndicatorBox(
     playWhenReady: Boolean,
     color: Color = LocalContentColor.current,
 ) {
+    val animationsDisabled = LocalAnimationsDisabled.current
     AnimatedVisibility(
         visible = isActive,
-        enter = fadeIn(tween(500)),
-        exit = fadeOut(tween(500)),
+        enter = if (animationsDisabled) EnterTransition.None else fadeIn(tween(500)),
+        exit = if (animationsDisabled) ExitTransition.None else fadeOut(tween(500)),
     ) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = modifier,
         ) {
-            if (playWhenReady) {
+            if (playWhenReady && !animationsDisabled) {
                 PlayingIndicator(
                     color = color,
                     modifier = Modifier.height(24.dp),
                     isActive = isActive,
+                )
+            } else if (playWhenReady) {
+                Icon(
+                    painter = painterResource(R.drawable.equalizer),
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.height(20.dp),
                 )
             } else {
                 Icon(

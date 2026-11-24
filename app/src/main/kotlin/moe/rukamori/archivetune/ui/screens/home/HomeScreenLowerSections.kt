@@ -68,6 +68,8 @@ internal data class HomeFeedMediaContext(
 internal fun LazyListScope.homeCommunitySection(
     uiState: HomeUiState,
     mediaContext: HomeFeedMediaContext,
+    entranceIndex: Int = 3,
+    shouldAnimateEntrance: Boolean = false,
 ) {
     uiState.communitySection?.takeIf { it.featuredCards.isNotEmpty() }?.let { section ->
         sectionSpacer("community")
@@ -78,7 +80,7 @@ internal fun LazyListScope.homeCommunitySection(
             HomePageSectionTitle(
                 section = section,
                 navController = mediaContext.navController,
-                modifier = Modifier.animateItem(),
+                modifier = Modifier.homeEntranceAnimation(entranceIndex, shouldAnimateEntrance).animateItem(),
             )
         }
         item(
@@ -91,7 +93,7 @@ internal fun LazyListScope.homeCommunitySection(
             CommunityPlaylistSection(
                 section = section,
                 mediaContext = mediaContext,
-                modifier = Modifier.animateItem(),
+                modifier = Modifier.homeEntranceAnimation(entranceIndex, shouldAnimateEntrance).animateItem(),
             )
         }
     }
@@ -104,6 +106,8 @@ internal fun LazyListScope.homeCommunitySection(
 internal fun LazyListScope.homeSimilarRecommendationsSection(
     uiState: HomeUiState,
     mediaContext: HomeFeedMediaContext,
+    entranceIndex: Int = 8,
+    shouldAnimateEntrance: Boolean = false,
 ) {
     uiState.similarRecommendations.forEach { recommendation ->
         sectionSpacer("similar_${recommendation.title.id}")
@@ -114,7 +118,7 @@ internal fun LazyListScope.homeSimilarRecommendationsSection(
             SimilarRecommendationsTitle(
                 recommendation = recommendation,
                 navController = mediaContext.navController,
-                modifier = Modifier.animateItem(),
+                modifier = Modifier.homeEntranceAnimation(entranceIndex, shouldAnimateEntrance).animateItem(),
             )
         }
         item(
@@ -129,7 +133,7 @@ internal fun LazyListScope.homeSimilarRecommendationsSection(
                 playerConnection = mediaContext.playerConnection,
                 menuState = mediaContext.menuState,
                 scope = mediaContext.scope,
-                modifier = Modifier.animateItem(),
+                modifier = Modifier.homeEntranceAnimation(entranceIndex, shouldAnimateEntrance).animateItem(),
             )
         }
     }
@@ -142,9 +146,12 @@ internal fun LazyListScope.homeSimilarRecommendationsSection(
 internal fun LazyListScope.homeRemoteSections(
     uiState: HomeUiState,
     mediaContext: HomeFeedMediaContext,
+    entranceBaseIndex: Int = 9,
+    shouldAnimateEntrance: Boolean = false,
 ) {
     uiState.homePage?.sections.orEmpty().forEachIndexed { index, section ->
         val sectionKey = "${section.endpoint?.browseId ?: section.title}_$index"
+        val animIndex = (entranceBaseIndex + index).coerceAtMost(14)
         sectionSpacer("remote_$sectionKey")
         item(
             key = "home_remote_header_$sectionKey",
@@ -153,7 +160,7 @@ internal fun LazyListScope.homeRemoteSections(
             HomePageSectionTitle(
                 section = section,
                 navController = mediaContext.navController,
-                modifier = Modifier.animateItem(),
+                modifier = Modifier.homeEntranceAnimation(animIndex, shouldAnimateEntrance).animateItem(),
             )
         }
         item(
@@ -168,7 +175,7 @@ internal fun LazyListScope.homeRemoteSections(
                 playerConnection = mediaContext.playerConnection,
                 menuState = mediaContext.menuState,
                 scope = mediaContext.scope,
-                modifier = Modifier.animateItem(),
+                modifier = Modifier.homeEntranceAnimation(animIndex, shouldAnimateEntrance).animateItem(),
             )
         }
     }
@@ -224,6 +231,8 @@ internal fun LazyListScope.homeForgottenFavoritesSection(
     forgottenItemWidth: Dp,
     forgottenFavoritesGridState: LazyGridState,
     forgottenSnapLayoutInfoProvider: SnapLayoutInfoProvider,
+    entranceIndex: Int = 7,
+    shouldAnimateEntrance: Boolean = false,
 ) {
     if (uiState.forgottenFavorites.isNotEmpty()) {
         sectionSpacer("forgotten_favorites")
@@ -233,7 +242,7 @@ internal fun LazyListScope.homeForgottenFavoritesSection(
         ) {
             HomeSectionHeader(
                 title = stringResource(R.string.forgotten_favorites),
-                modifier = Modifier.animateItem(),
+                modifier = Modifier.homeEntranceAnimation(entranceIndex, shouldAnimateEntrance).animateItem(),
             )
         }
         item(
@@ -250,7 +259,7 @@ internal fun LazyListScope.homeForgottenFavoritesSection(
                 navController = mediaContext.navController,
                 playerConnection = mediaContext.playerConnection,
                 menuState = mediaContext.menuState,
-                modifier = Modifier.animateItem(),
+                modifier = Modifier.homeEntranceAnimation(entranceIndex, shouldAnimateEntrance).animateItem(),
             )
         }
     }
