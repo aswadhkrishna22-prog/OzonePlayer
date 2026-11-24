@@ -10,6 +10,8 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -26,15 +28,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.ui.settings.OzoneUi
 import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
 import moe.rukamori.archivetune.ui.theme.ozoneClickable
-import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.viewmodels.AboutLinkCollection
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -85,34 +90,32 @@ internal fun InteractiveLinkChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = LocalOzoneColors.current
     val shape = RoundedCornerShape(12.dp)
 
     Box(
         modifier =
             modifier
                 .ozoneClickable(pressedScale = 0.93f, onClick = onClick)
-                .ozoneGlassCard(
-                    shape = shape,
-                    backgroundColor = colors.glassBackground,
-                    borderColor = colors.glassBorder,
-                ),
+                .clip(shape)
+                .background(Color(0xFF181A1E))
+                .border(1.dp, Color(0xFF282B32), shape),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Icon(
                 painter = painterResource(iconResId),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = OzoneUi.Lime,
                 modifier = Modifier.size(18.dp),
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

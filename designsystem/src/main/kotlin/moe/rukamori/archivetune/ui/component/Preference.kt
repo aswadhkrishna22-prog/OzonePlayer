@@ -118,7 +118,9 @@ import moe.rukamori.archivetune.ui.theme.ozoneSegmentPosition
 import kotlin.math.roundToInt
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color as OzoneColor
 import moe.rukamori.archivetune.ui.settings.OzoneUi
 
 val LocalPreferenceInGroup = compositionLocalOf { false }
@@ -225,7 +227,7 @@ fun PreferenceEntry(
 
     val resolvedShape = shape ?: preferenceItemShapeForPosition(if (isInGroup) groupPosition else PreferenceGroupPosition.Single)
 
-    val cardShape = RoundedCornerShape(28.dp)
+    val cardShape = RoundedCornerShape(22.dp)
     val boxModifier = modifier
         .fillMaxWidth()
         .then(
@@ -259,36 +261,33 @@ fun PreferenceEntry(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = SettingsDimensions.SegmentedItemMinHeight)
-                .padding(
-                    horizontal = SettingsDimensions.SegmentedItemPaddingHorizontal,
-                    vertical = SettingsDimensions.SegmentedItemPaddingVertical
-                )
+                .heightIn(min = 64.dp)
+                .padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
             if (icon != null) {
                 Box(
                     modifier = Modifier
-                        .size(44.dp)
+                        .size(40.dp)
                         .drawBehind {
                             drawCircle(
                                 brush = Brush.radialGradient(
-                                    listOf(OzoneUi.Lime.copy(alpha = 0.18f), Color.Transparent),
+                                    listOf(OzoneColor(0x2EB6FF00), OzoneColor.Transparent),
                                 ),
-                                radius = size.minDimension / 1.5f,
+                                radius = 19.dp.toPx(),
                             )
                         },
                     contentAlignment = Alignment.Center,
                 ) {
                     CompositionLocalProvider(LocalContentColor provides OzoneUi.Lime) {
                         Box(
-                            modifier = Modifier.size(28.dp),
+                            modifier = Modifier.size(22.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             icon()
                         }
                     }
                 }
-                Spacer(Modifier.width(18.dp))
+                Spacer(Modifier.width(14.dp))
             }
 
             Column(
@@ -297,7 +296,7 @@ fun PreferenceEntry(
             ) {
                 ProvideTextStyle(
                     MaterialTheme.typography.titleMedium.copy(
-                        fontSize = 18.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
                         color = OzoneUi.TextPrimary
                     )
@@ -306,12 +305,16 @@ fun PreferenceEntry(
                 }
                 if (description != null) {
                     Spacer(Modifier.height(SettingsDimensions.SegmentedRowSpacing))
-                    MarqueeText(
+                    Text(
                         text = description,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp),
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp,
+                            fontWeight = FontWeight.Normal,
+                        ),
                         color = OzoneUi.TextSecondary,
-                        maxLines = 1,
-                        modifier = Modifier,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
                 content?.invoke()
@@ -327,7 +330,7 @@ fun PreferenceEntry(
                 Icon(
                     painter = painterResource(R.drawable.ic_arrow_right),
                     contentDescription = null,
-                    modifier = Modifier.size(SettingsDimensions.ChevronSize),
+                    modifier = Modifier.size(20.dp),
                     tint = OzoneUi.Chevron
                 )
             }
@@ -370,7 +373,7 @@ fun <T> SegmentedPreference(
                                 activeContainerColor = OzoneUi.Lime,
                                 activeContentColor = OzoneUi.LimeDark,
                                 activeBorderColor = OzoneUi.Lime,
-                                inactiveContainerColor = Color.Transparent,
+                                inactiveContainerColor = OzoneColor.Transparent,
                                 inactiveContentColor = OzoneUi.TextSecondary,
                                 inactiveBorderColor = OzoneUi.Hairline,
                             ),
@@ -520,48 +523,52 @@ private fun <T> PreferenceSelectionBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = Color.Transparent,
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        contentColor = OzoneUi.TextPrimary,
         dragHandle = null,
     ) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = SettingsDimensions.BottomSheetHorizontalPadding)
-                .padding(bottom = SettingsDimensions.BottomSheetBottomPadding)
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp)
                 .navigationBarsPadding(),
-            shape = RoundedCornerShape(SettingsDimensions.BottomSheetCornerRadius),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 28.dp, bottomEnd = 28.dp),
+            color = OzoneUi.SurfaceCard,
             border = BorderStroke(
-                width = SettingsDimensions.GlassBorderThickness,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                width = 1.dp,
+                color = OzoneUi.BorderElevated,
             ),
-            tonalElevation = 6.dp,
+            tonalElevation = 0.dp,
             shadowElevation = 10.dp,
         ) {
             Column(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = SettingsDimensions.BottomSheetContentPaddingH)
-                        .padding(top = SettingsDimensions.BottomSheetContentPaddingTop, bottom = SettingsDimensions.BottomSheetContentPaddingBottom),
+                        .padding(horizontal = 20.dp)
+                        .padding(top = 16.dp, bottom = 20.dp),
             ) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
-                        .padding(bottom = SettingsDimensions.BottomSheetDragHandleBottomPadding)
-                        .size(width = SettingsDimensions.BottomSheetDragHandleWidth, height = SettingsDimensions.BottomSheetDragHandleHeight)
+                        .padding(bottom = 16.dp)
+                        .size(width = 36.dp, height = 4.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)),
+                        .background(Color(0xFF3A3E47)),
                 )
 
                 ProvideTextStyle(
-                    MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                    MaterialTheme.typography.headlineSmall.copy(
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = OzoneUi.TextPrimary,
+                    ),
                 ) {
                     Box(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = SettingsDimensions.BottomSheetTitleBottomPadding),
+                                .padding(bottom = 16.dp),
                     ) {
                         title()
                     }
@@ -578,16 +585,14 @@ private fun <T> PreferenceSelectionBottomSheet(
                         key = { index, value -> preferenceOptionKey(index, value) },
                         contentType = { _, _ -> "preference_option" },
                     ) { index, value ->
-                        val shape = segmentedPreferenceItemShape(index, values.size)
-                        val position = ozoneSegmentPosition(index, values.size)
+                        val shape = RoundedCornerShape(14.dp)
                         val isLast = index == values.lastIndex
                         PreferenceSelectionOption(
                             text = valueText(value),
                             description = valueDescription?.invoke(value),
                             selected = value == selectedValue,
                             shape = shape,
-                            position = position,
-                            modifier = Modifier.padding(bottom = if (isLast) 0.dp else SettingsDimensions.SegmentedItemGap),
+                            modifier = Modifier.padding(bottom = if (isLast) 0.dp else 6.dp),
                             onClick = { onValueSelected(value) },
                         )
                     }
@@ -602,34 +607,28 @@ fun PreferenceSelectionOption(
     text: String,
     description: String? = null,
     selected: Boolean,
-    shape: Shape,
+    shape: Shape = RoundedCornerShape(14.dp),
     position: OzoneSegmentPosition = OzoneSegmentPosition.Single,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    val colors = LocalOzoneColors.current
     val contentColor =
-        if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+        if (selected) OzoneUi.Lime else Color(0xFFE5E7EB)
     val descriptionColor =
-        if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
+        if (selected) OzoneUi.Lime.copy(alpha = 0.8f) else OzoneUi.TextSecondary
 
     val backgroundColor =
-        if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f) else colors.glassBackground
+        if (selected) OzoneUi.LimeContainer else Color(0xFF1A1C21)
     val borderColor =
-        if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f) else colors.glassBorder
+        if (selected) OzoneUi.LimeBorder else Color(0xFF23262D)
 
     Box(
         modifier =
             modifier
                 .fillMaxWidth()
                 .ozoneClickable(pressedScale = 0.96f, onClick = onClick)
-                .ozoneGlassCard(
-                    shape = shape,
-                    backgroundColor = backgroundColor,
-                    borderColor = borderColor,
-                    strokeWidth = SettingsDimensions.GlassBorderThickness,
-                    position = position,
-                )
+                .background(backgroundColor, shape)
+                .border(1.dp, borderColor, shape)
                 .clip(shape)
                 .padding(
                     horizontal = 18.dp,
@@ -669,7 +668,7 @@ fun PreferenceSelectionOption(
                 Icon(
                     painter = painterResource(R.drawable.check),
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = OzoneUi.Lime,
                     modifier = Modifier.size(SettingsDimensions.BottomSheetOptionIconSize),
                 )
             }
@@ -678,26 +677,29 @@ fun PreferenceSelectionOption(
 }
 
 @Composable
-private fun PreferenceValueChip(text: String) {
+fun OzonePreferenceValuePill(text: String, modifier: Modifier = Modifier) {
     Box(
         modifier =
-            Modifier
-                .height(38.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(OzoneUi.Lime.copy(alpha = 0.14f))
-                .padding(horizontal = 14.dp, vertical = 8.dp),
+            modifier
+                .clip(CircleShape)
+                .background(OzoneUi.LimeContainer)
+                .border(1.dp, OzoneColor(0x40B6FF00), CircleShape)
+                .padding(horizontal = 12.dp, vertical = 5.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
             color = OzoneUi.Lime,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
     }
 }
+
+@Composable
+fun PreferenceValueChip(text: String, modifier: Modifier = Modifier) = OzonePreferenceValuePill(text, modifier)
 
 private fun preferenceOptionKey(
     index: Int,
@@ -752,13 +754,13 @@ fun SwitchPreference(
                 },
                 colors =
                     SwitchDefaults.colors(
-                        checkedThumbColor = OzoneUi.LimeDark,
+                        checkedThumbColor = OzoneUi.Bg,
                         checkedTrackColor = OzoneUi.Lime,
                         checkedBorderColor = OzoneUi.Lime,
                         checkedIconColor = OzoneUi.Lime,
                         uncheckedThumbColor = OzoneUi.SwitchOffThumb,
                         uncheckedTrackColor = OzoneUi.SwitchOffTrack,
-                        uncheckedBorderColor = OzoneUi.Hairline,
+                        uncheckedBorderColor = OzoneUi.SwitchOffBorder,
                         uncheckedIconColor = OzoneUi.SwitchOffTrack,
                     ),
             )
@@ -961,10 +963,21 @@ fun SliderPreference(
                     Slider(
                         state = sliderState,
                         modifier = Modifier.fillMaxWidth(),
+                        colors = SliderDefaults.colors(
+                            thumbColor = OzoneUi.Lime,
+                            activeTrackColor = OzoneUi.Lime,
+                            inactiveTrackColor = OzoneUi.TrackInactive,
+                            activeTickColor = Color(0x80050505),
+                            inactiveTickColor = Color(0xFF4F545E),
+                        ),
                         track = {
                             SliderDefaults.Track(
                                 sliderState = sliderState,
                                 trackCornerSize = 12.dp,
+                                colors = SliderDefaults.colors(
+                                    activeTrackColor = OzoneUi.Lime,
+                                    inactiveTrackColor = OzoneUi.TrackInactive,
+                                ),
                             )
                         },
                     )
@@ -1074,10 +1087,21 @@ fun CrossfadeSliderPreference(
                     Slider(
                         state = crossfadeSliderState,
                         modifier = Modifier.fillMaxWidth(),
+                        colors = SliderDefaults.colors(
+                            thumbColor = OzoneUi.Lime,
+                            activeTrackColor = OzoneUi.Lime,
+                            inactiveTrackColor = OzoneUi.TrackInactive,
+                            activeTickColor = Color(0x80050505),
+                            inactiveTickColor = Color(0xFF4F545E),
+                        ),
                         track = {
                             SliderDefaults.Track(
                                 sliderState = crossfadeSliderState,
                                 trackCornerSize = 12.dp,
+                                colors = SliderDefaults.colors(
+                                    activeTrackColor = OzoneUi.Lime,
+                                    inactiveTrackColor = OzoneUi.TrackInactive,
+                                ),
                             )
                         },
                     )
@@ -1232,7 +1256,7 @@ fun PreferenceGroup(
             )
         }
 
-        val cardShape = RoundedCornerShape(28.dp)
+        val cardShape = RoundedCornerShape(22.dp)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1250,7 +1274,7 @@ fun PreferenceGroup(
                         else -> PreferenceGroupPosition.Middle
                     }
                 if (index > 0) {
-                    HorizontalDivider(thickness = 1.dp, color = OzoneUi.Hairline)
+                    HorizontalDivider(thickness = 1.dp, color = OzoneUi.Divider)
                 }
                 CompositionLocalProvider(
                     LocalPreferenceInGroup provides true,
@@ -1293,17 +1317,16 @@ fun PreferenceGroupTitle(
         Text(
             text = title.uppercase(),
             color = OzoneUi.SectionLabel,
-            fontSize = 14.sp,
+            fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
-            letterSpacing = 1.8.sp,
+            letterSpacing = 1.4.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(1.dp)
-                .background(Color(0x1FFFFFFF)),
+        HorizontalDivider(
+            modifier = Modifier.weight(1f),
+            thickness = 1.dp,
+            color = OzoneUi.Divider,
         )
     }
 }

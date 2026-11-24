@@ -67,7 +67,29 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import moe.rukamori.archivetune.ui.settings.OzoneUi
 import androidx.compose.ui.window.Dialog
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import moe.rukamori.archivetune.ui.settings.OzoneUi
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.delay
 import moe.rukamori.archivetune.designsystem.R
@@ -100,13 +122,13 @@ fun DefaultDialog(
         ) {
             Surface(
                 modifier = Modifier.heightIn(max = maxHeight),
-                shape = RoundedCornerShape(SettingsDimensions.BottomSheetCornerRadius),
-                color = AlertDialogDefaults.containerColor,
+                shape = RoundedCornerShape(28.dp),
+                color = OzoneUi.SurfaceElevated,
                 border = BorderStroke(
-                    width = SettingsDimensions.GlassBorderThickness,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                    width = 1.dp,
+                    color = OzoneUi.BorderElevated,
                 ),
-                tonalElevation = AlertDialogDefaults.TonalElevation,
+                tonalElevation = 0.dp,
             ) {
                 Column(
                     modifier = modifier.padding(24.dp),
@@ -125,19 +147,33 @@ fun DefaultDialog(
                         modifier = bodyModifier,
                     ) {
                         if (icon != null) {
-                            CompositionLocalProvider(LocalContentColor provides AlertDialogDefaults.iconContentColor) {
-                                Box(
-                                    Modifier.align(Alignment.CenterHorizontally),
-                                ) {
-                                    icon()
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(OzoneUi.LimeContainer)
+                                    .border(1.dp, OzoneUi.LimeBorder, CircleShape),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                CompositionLocalProvider(LocalContentColor provides OzoneUi.Lime) {
+                                    Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+                                        icon()
+                                    }
                                 }
                             }
 
                             Spacer(Modifier.height(16.dp))
                         }
                         if (title != null) {
-                            CompositionLocalProvider(LocalContentColor provides AlertDialogDefaults.titleContentColor) {
-                                ProvideTextStyle(MaterialTheme.typography.headlineSmall) {
+                            CompositionLocalProvider(LocalContentColor provides OzoneUi.TextPrimary) {
+                                ProvideTextStyle(
+                                    MaterialTheme.typography.headlineSmall.copy(
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = OzoneUi.TextPrimary,
+                                    ),
+                                ) {
                                     Box(
                                         Modifier.align(if (icon == null) Alignment.Start else Alignment.CenterHorizontally),
                                     ) {
@@ -200,13 +236,13 @@ fun ActionPromptDialog(
         ) {
             Surface(
                 modifier = Modifier.heightIn(max = maxHeight),
-                shape = RoundedCornerShape(SettingsDimensions.BottomSheetCornerRadius),
-                color = AlertDialogDefaults.containerColor,
+                shape = RoundedCornerShape(28.dp),
+                color = OzoneUi.SurfaceElevated,
                 border = BorderStroke(
-                    width = SettingsDimensions.GlassBorderThickness,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                    width = 1.dp,
+                    color = OzoneUi.BorderElevated,
                 ),
-                tonalElevation = AlertDialogDefaults.TonalElevation,
+                tonalElevation = 0.dp,
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
@@ -222,7 +258,11 @@ fun ActionPromptDialog(
                                 text = title,
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
-                                style = MaterialTheme.typography.headlineSmall,
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = OzoneUi.TextPrimary,
+                                ),
                             )
                             Spacer(Modifier.height(16.dp))
                         }
@@ -232,16 +272,20 @@ fun ActionPromptDialog(
 
                     Row(
                         horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         if (onReset != null) {
                             Row(modifier = Modifier.weight(1f)) {
                                 TextButton(
                                     onClick = { onReset() },
-                                    shapes = ButtonDefaults.shapes(),
+                                    shape = CircleShape,
                                     modifier = Modifier.ozoneClickable(pressedScale = 0.96f, onClick = { onReset() }),
                                 ) {
-                                    Text(stringResource(R.string.reset))
+                                    Text(
+                                        text = stringResource(R.string.reset),
+                                        color = Color(0xFF9CA0A8),
+                                    )
                                 }
                             }
                         }
@@ -249,19 +293,31 @@ fun ActionPromptDialog(
                         if (onCancel != null) {
                             TextButton(
                                 onClick = { onCancel() },
-                                shapes = ButtonDefaults.shapes(),
+                                shape = CircleShape,
                                 modifier = Modifier.ozoneClickable(pressedScale = 0.96f, onClick = { onCancel() }),
                             ) {
-                                Text(stringResource(android.R.string.cancel))
+                                Text(
+                                    text = stringResource(android.R.string.cancel),
+                                    color = Color(0xFF9CA0A8),
+                                    fontWeight = FontWeight.Medium,
+                                )
                             }
+                            Spacer(Modifier.width(8.dp))
                         }
 
-                        TextButton(
+                        Button(
                             onClick = { onConfirm() },
-                            shapes = ButtonDefaults.shapes(),
+                            shape = CircleShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = OzoneUi.Lime,
+                                contentColor = OzoneUi.LimeDark,
+                            ),
                             modifier = Modifier.ozoneClickable(pressedScale = 0.96f, onClick = { onConfirm() }),
                         ) {
-                            Text(stringResource(android.R.string.ok))
+                            Text(
+                                text = stringResource(android.R.string.ok),
+                                fontWeight = FontWeight.Bold,
+                            )
                         }
                     }
                 }
@@ -291,13 +347,13 @@ fun ListDialog(
         ) {
             Surface(
                 modifier = Modifier.heightIn(max = maxHeight),
-                shape = RoundedCornerShape(SettingsDimensions.BottomSheetCornerRadius),
-                color = AlertDialogDefaults.containerColor,
+                shape = RoundedCornerShape(28.dp),
+                color = OzoneUi.SurfaceElevated,
                 border = BorderStroke(
-                    width = SettingsDimensions.GlassBorderThickness,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                    width = 1.dp,
+                    color = OzoneUi.BorderElevated,
                 ),
-                tonalElevation = AlertDialogDefaults.TonalElevation,
+                tonalElevation = 0.dp,
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -370,17 +426,23 @@ fun TextFieldDialog(
         buttons = {
             TextButton(
                 onClick = onDismiss,
-                shapes = ButtonDefaults.shapes(),
+                shape = CircleShape,
                 modifier = Modifier.ozoneClickable(pressedScale = 0.96f, onClick = onDismiss),
             ) {
-                Text(text = stringResource(android.R.string.cancel))
+                Text(
+                    text = stringResource(android.R.string.cancel),
+                    color = Color(0xFF9CA0A8),
+                    fontWeight = FontWeight.Medium,
+                )
             }
+
+            Spacer(Modifier.width(8.dp))
 
             val isValid =
                 textFields?.all { isInputValid(it.second.text) }
                     ?: isInputValid(legacyFieldState.value.text)
 
-            TextButton(
+            Button(
                 enabled = isValid,
                 onClick = {
                     if (textFields != null && onDoneMultiple != null) {
@@ -390,7 +452,13 @@ fun TextFieldDialog(
                     }
                     onDismiss()
                 },
-                shapes = ButtonDefaults.shapes(),
+                shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = OzoneUi.Lime,
+                    contentColor = OzoneUi.LimeDark,
+                    disabledContainerColor = Color(0xFF22252B),
+                    disabledContentColor = Color(0xFF565A63),
+                ),
                 modifier = Modifier.ozoneClickable(
                     enabled = isValid,
                     pressedScale = 0.96f,
@@ -404,7 +472,10 @@ fun TextFieldDialog(
                     },
                 ),
             ) {
-                Text(text = stringResource(android.R.string.ok))
+                Text(
+                    text = stringResource(android.R.string.ok),
+                    fontWeight = FontWeight.Bold,
+                )
             }
         },
     ) {
@@ -418,7 +489,16 @@ fun TextFieldDialog(
                             placeholder = { Text(label) },
                             singleLine = singleLine,
                             maxLines = maxLines,
-                            colors = OutlinedTextFieldDefaults.colors(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = OzoneUi.SurfaceInput,
+                                unfocusedContainerColor = OzoneUi.SurfaceInput,
+                                focusedBorderColor = OzoneUi.Lime,
+                                unfocusedBorderColor = Color(0xFF2A2E36),
+                                cursorColor = OzoneUi.Lime,
+                                focusedLabelColor = OzoneUi.Lime,
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                            ),
                             keyboardOptions = keyboardOptions,
                             visualTransformation = visualTransformation,
                             keyboardActions =
@@ -444,7 +524,16 @@ fun TextFieldDialog(
                         placeholder = placeholder,
                         singleLine = singleLine,
                         maxLines = maxLines,
-                        colors = OutlinedTextFieldDefaults.colors(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = OzoneUi.SurfaceInput,
+                            unfocusedContainerColor = OzoneUi.SurfaceInput,
+                            focusedBorderColor = OzoneUi.Lime,
+                            unfocusedBorderColor = Color(0xFF2A2E36),
+                            cursorColor = OzoneUi.Lime,
+                            focusedLabelColor = OzoneUi.Lime,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                        ),
                         keyboardOptions = keyboardOptions,
                         visualTransformation = visualTransformation,
                         keyboardActions =

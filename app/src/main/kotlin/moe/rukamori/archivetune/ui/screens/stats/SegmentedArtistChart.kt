@@ -82,14 +82,14 @@ internal fun SegmentedArtistChart(
     val segmentColors =
         remember {
             listOf(
-                Color(0xFF6750A4),
-                Color(0xFF4A8FA8),
+                Color(0xFFB6FF00),
+                Color(0xFF3E8FA6),
                 Color(0xFF4CAF50),
                 Color(0xFFFF9800),
                 Color(0xFFE91E63),
             )
         }
-    val remainingColor = MaterialTheme.colorScheme.surfaceVariant
+    val remainingColor = Color(0xFF2A3322)
 
     ElevatedCard(
         modifier = modifier,

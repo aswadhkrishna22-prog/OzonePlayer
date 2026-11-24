@@ -680,7 +680,13 @@ fun OzoneSettingsScaffold(
                         }
                     },
                     actions = actions,
-                    colors = GlassDefaults.topAppBarColors(),
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = OzoneUi.Bg,
+                        scrolledContainerColor = OzoneUi.Bg,
+                        titleContentColor = OzoneUi.TextPrimary,
+                        navigationIconContentColor = OzoneUi.TextPrimary,
+                        actionIconContentColor = OzoneUi.TextPrimary,
+                    ),
                 )
             },
         ) { innerPadding ->

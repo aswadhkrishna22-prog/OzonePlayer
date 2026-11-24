@@ -171,20 +171,24 @@ fun NavigationHost(
                     raw == "1" || raw.equals("true", ignoreCase = true)
                 } ?: false
 
-                UpdateScreen(
-                    navController = navController,
-                    onUpToDate = onClearUpdateBadge,
-                    autostart = autostart,
-                )
+                moe.rukamori.archivetune.ui.theme.OzoneSettingsTheme {
+                    UpdateScreen(
+                        navController = navController,
+                        onUpToDate = onClearUpdateBadge,
+                        autostart = autostart,
+                    )
+                }
             }
         }
 
         composable("settings") {
-            SettingsScreen(
-                navController = navController,
-                updateState = updateState,
-                onClearUpdateBadge = onClearUpdateBadge,
-            )
+            moe.rukamori.archivetune.ui.theme.OzoneSettingsTheme(withBackground = false) {
+                SettingsScreen(
+                    navController = navController,
+                    updateState = updateState,
+                    onClearUpdateBadge = onClearUpdateBadge,
+                )
+            }
         }
 
         navigationBuilder(

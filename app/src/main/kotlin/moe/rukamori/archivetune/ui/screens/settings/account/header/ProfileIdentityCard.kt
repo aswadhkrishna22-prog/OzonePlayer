@@ -108,7 +108,7 @@ fun ProfileIdentityCard(
     }
 
     val isInGroup = LocalPreferenceInGroup.current
-    val cardShape = RoundedCornerShape(28.dp)
+    val cardShape = RoundedCornerShape(22.dp)
 
     Box(
         modifier = modifier

@@ -48,7 +48,13 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.unit.sp
+import moe.rukamori.archivetune.ui.settings.OzoneUi
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -184,8 +190,8 @@ fun AiIntegrationSettings(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                        scrolledContainerColor = Color.Transparent,
+                        containerColor = OzoneUi.Bg,
+                        scrolledContainerColor = OzoneUi.Bg,
                         titleContentColor = Color.White,
                         navigationIconContentColor = Color.White,
                     ),
@@ -391,8 +397,31 @@ private fun ApiKeyDialog(
 
     DefaultDialog(
         onDismiss = onDismiss,
-        icon = { Icon(painterResource(R.drawable.token), contentDescription = null) },
-        title = { Text(stringResource(R.string.ai_api_key)) },
+        icon = {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(OzoneUi.LimeContainer)
+                    .border(1.dp, OzoneUi.LimeBorder, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.token),
+                    contentDescription = null,
+                    tint = OzoneUi.Lime,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
+        },
+        title = {
+            Text(
+                text = stringResource(R.string.ai_api_key),
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 20.sp,
+            )
+        },
         buttons = {
             ApiKeyDialogButtons(
                 canSave = field.text.isNotBlank(),
@@ -411,6 +440,19 @@ private fun ApiKeyDialog(
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             label = { Text(stringResource(R.string.ai_api_key)) },
+            shape = RoundedCornerShape(14.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = OzoneUi.SurfaceInput,
+                unfocusedContainerColor = OzoneUi.SurfaceInput,
+                focusedBorderColor = OzoneUi.Lime,
+                unfocusedBorderColor = Color(0xFF2A2E36),
+                cursorColor = OzoneUi.Lime,
+                focusedLabelColor = OzoneUi.Lime,
+                unfocusedLabelColor = OzoneUi.TextSecondary,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+            ),
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
@@ -421,15 +463,32 @@ private fun RowScope.ApiKeyDialogButtons(
     onDismiss: () -> Unit,
     onSave: () -> Unit,
 ) {
-    TextButton(onClick = onDismiss, shapes = ButtonDefaults.shapes()) {
-        Text(stringResource(android.R.string.cancel))
-    }
     TextButton(
+        onClick = onDismiss,
+        shape = CircleShape,
+    ) {
+        Text(
+            text = stringResource(android.R.string.cancel),
+            color = Color(0xFF9CA0A8),
+            fontWeight = FontWeight.Medium,
+        )
+    }
+    Spacer(Modifier.width(8.dp))
+    Button(
         enabled = canSave,
         onClick = onSave,
-        shapes = ButtonDefaults.shapes(),
+        shape = CircleShape,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = OzoneUi.Lime,
+            contentColor = OzoneUi.LimeDark,
+            disabledContainerColor = Color(0xFF22252B),
+            disabledContentColor = Color(0xFF565A63),
+        ),
     ) {
-        Text(stringResource(R.string.save))
+        Text(
+            text = stringResource(R.string.save),
+            fontWeight = FontWeight.Bold,
+        )
     }
 }
 
@@ -534,13 +593,14 @@ private fun ModelPickerPreference(
         ModalBottomSheet(
             onDismissRequest = { showSheet = false },
             sheetState = sheetState,
-            shape = RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp),
-            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            containerColor = OzoneUi.SurfaceCard,
         ) {
             Text(
                 text = stringResource(R.string.ai_model),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
+                color = OzoneUi.TextPrimary,
                 modifier =
                     Modifier
                         .padding(horizontal = 26.dp)
@@ -554,11 +614,12 @@ private fun ModelPickerPreference(
                         onSearch = {},
                         expanded = false,
                         onExpandedChange = {},
-                        placeholder = { Text(stringResource(R.string.ai_model_search)) },
+                        placeholder = { Text(stringResource(R.string.ai_model_search), color = OzoneUi.TextSecondary) },
                         leadingIcon = {
                             Icon(
                                 painter = painterResource(R.drawable.ic_search),
                                 contentDescription = null,
+                                tint = OzoneUi.TextSecondary,
                             )
                         },
                         trailingIcon =
@@ -570,6 +631,7 @@ private fun ModelPickerPreference(
                                         Icon(
                                             painter = painterResource(R.drawable.close),
                                             contentDescription = stringResource(R.string.clear),
+                                            tint = OzoneUi.TextSecondary,
                                         )
                                     }
                                 }
@@ -578,6 +640,9 @@ private fun ModelPickerPreference(
                             },
                     )
                 },
+                colors = SearchBarDefaults.colors(
+                    containerColor = OzoneUi.SurfaceInput,
+                ),
                 expanded = false,
                 onExpandedChange = {},
                 windowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
@@ -600,7 +665,7 @@ private fun ModelPickerPreference(
                         Text(
                             text = stringResource(R.string.ai_model_no_results),
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = OzoneUi.TextSecondary,
                             textAlign = TextAlign.Center,
                             modifier =
                                 Modifier
@@ -621,14 +686,20 @@ private fun ModelPickerPreference(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .clip(MaterialTheme.shapes.extraLarge)
+                                .clip(RoundedCornerShape(16.dp))
                                 .background(
                                     if (selected) {
-                                        MaterialTheme.colorScheme.primary
+                                        OzoneUi.LimeContainer
                                     } else {
-                                        MaterialTheme.colorScheme.surfaceContainerHigh
+                                        Color(0xFF1A1C21)
                                     },
-                                ).selectable(
+                                )
+                                .border(
+                                    1.dp,
+                                    if (selected) OzoneUi.LimeBorder else Color(0xFF23262D),
+                                    RoundedCornerShape(16.dp),
+                                )
+                                .selectable(
                                     selected = selected,
                                     role = Role.RadioButton,
                                     onClick = {
@@ -640,21 +711,22 @@ private fun ModelPickerPreference(
                                                 showSheet = false
                                             }
                                     },
-                                ).padding(horizontal = 24.dp, vertical = 20.dp),
+                                ).padding(horizontal = 20.dp, vertical = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column(
+                            modifier = Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
                             Text(
                                 text = displayName,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
                                 color =
                                     if (selected) {
-                                        MaterialTheme.colorScheme.onPrimary
+                                        OzoneUi.Lime
                                     } else {
-                                        MaterialTheme.colorScheme.onSurface
+                                        Color(0xFFE5E7EB)
                                     },
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
@@ -662,17 +734,25 @@ private fun ModelPickerPreference(
                             if (displayName != id) {
                                 Text(
                                     text = id,
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    style = MaterialTheme.typography.bodySmall,
                                     color =
                                         if (selected) {
-                                            MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.78f)
+                                            OzoneUi.Lime.copy(alpha = 0.78f)
                                         } else {
-                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                            OzoneUi.TextSecondary
                                         },
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                 )
                             }
+                        }
+                        if (selected) {
+                            Icon(
+                                painter = painterResource(R.drawable.check),
+                                contentDescription = null,
+                                tint = OzoneUi.Lime,
+                                modifier = Modifier.size(20.dp),
+                            )
                         }
                     }
                 }
