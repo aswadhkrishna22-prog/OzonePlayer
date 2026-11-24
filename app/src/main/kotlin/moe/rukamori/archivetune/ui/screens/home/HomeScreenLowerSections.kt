@@ -48,7 +48,7 @@ import moe.rukamori.archivetune.ui.screens.SpeedDialSection
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
 
 internal val HomeFeedMaxWidth = 1_200.dp
-internal val HomeSectionSpacing = 18.dp
+internal val HomeSectionSpacing = HomeLayoutConfig.sectionSpacing
 
 @Immutable
 internal data class HomeFeedMediaContext(

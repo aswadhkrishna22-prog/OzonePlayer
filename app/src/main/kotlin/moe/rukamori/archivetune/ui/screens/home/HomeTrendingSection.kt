@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -92,6 +93,7 @@ import moe.rukamori.archivetune.playback.queues.YouTubeQueue
 import moe.rukamori.archivetune.ui.component.GridItem
 import moe.rukamori.archivetune.ui.component.ItemExplicitBadge
 import moe.rukamori.archivetune.ui.component.ItemThumbnail
+import moe.rukamori.archivetune.ui.component.MarqueeText
 import moe.rukamori.archivetune.ui.component.shimmer.GridItemPlaceHolder
 import moe.rukamori.archivetune.ui.screens.HomeSectionHeader
 import moe.rukamori.archivetune.ui.screens.search.onlineSearchResultRoute
@@ -386,38 +388,45 @@ private fun TrendingShelfContent(
 
                 GridItem(
                     title = {
-                        Text(
+                        MarqueeText(
                             text = track.title,
                             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.fillMaxWidth().basicMarquee(),
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     },
                     subtitle = {
-                        Text(
+                        MarqueeText(
                             text = track.artist,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.secondary,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.fillMaxWidth().basicMarquee(),
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     },
                     badges = {
-                        // Rank Badge #1 .. #15
+                        // Rank Badge #1 .. #15 - small pill style that never shrinks
                         Surface(
-                            shape = RoundedCornerShape(4.dp),
+                            shape = CircleShape,
                             color = MaterialTheme.colorScheme.primaryContainer,
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(end = 4.dp),
+                            modifier = Modifier
+                                .padding(end = 4.dp)
+                                .widthIn(min = 28.dp),
                         ) {
-                            Text(
-                                text = "#${index + 1}",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
-                            )
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            ) {
+                                Text(
+                                    text = "#${index + 1}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                )
+                            }
                         }
 
                         if (track.explicit) {
