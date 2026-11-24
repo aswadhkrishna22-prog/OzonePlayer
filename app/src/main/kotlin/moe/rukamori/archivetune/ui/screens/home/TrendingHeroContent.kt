@@ -9,6 +9,9 @@ package moe.rukamori.archivetune.ui.screens.home
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -208,6 +211,8 @@ internal fun TrendingHeroContent(
             scrollOffset = scrollOffsetProvider,
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(horizontal = HomeLayoutConfig.sidePadding)
+                .clip(RoundedCornerShape(28.dp))
                 .height(heroHeight),
         )
     }

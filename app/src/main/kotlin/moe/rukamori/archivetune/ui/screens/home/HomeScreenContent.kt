@@ -125,7 +125,7 @@ internal fun HomeContent(
                         state = lazyListState,
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(
                             start = insetsPadding.calculateLeftPadding(androidx.compose.ui.platform.LocalLayoutDirection.current),
-                            top = if (hasHero) 0.dp else insetsPadding.calculateTopPadding(),
+                            top = insetsPadding.calculateTopPadding() + 8.dp,
                             end = insetsPadding.calculateRightPadding(androidx.compose.ui.platform.LocalLayoutDirection.current),
                             bottom = insetsPadding.calculateBottomPadding(),
                         ),
@@ -158,9 +158,31 @@ internal fun HomeContent(
                                     modifier = Modifier.homeEntranceAnimation(0, shouldAnimateEntrance).animateItem(),
                                 )
                             }
+
+                            if (uiState.speedDialItems.isNotEmpty() || uiState.keepListening.isNotEmpty()) {
+                                sectionSpacer("continue_block")
+                                item(
+                                    key = "home_continue_block",
+                                    contentType = "continue_block",
+                                ) {
+                                    HomeContinueBlock(
+                                        speedDialItems = uiState.speedDialItems,
+                                        keepListening = uiState.keepListening,
+                                        quickPicks = uiState.quickPicks,
+                                        mediaMetadata = mediaMetadata,
+                                        isPlaying = isPlaying,
+                                        navController = navController,
+                                        playerConnection = playerConnection,
+                                        menuState = menuState,
+                                        scope = scope,
+                                        modifier = Modifier.homeEntranceAnimation(1, shouldAnimateEntrance).animateItem(),
+                                    )
+                                }
+                            }
                         }
 
                         if (!isFilterActive && uiState.quickPicks.isNotEmpty()) {
+                            sectionSpacer("quick_picks")
                             item(
                                 key = "home_quick_picks_row",
                                 contentType = "quick_picks_row",
@@ -172,7 +194,7 @@ internal fun HomeContent(
                                     navController = navController,
                                     playerConnection = playerConnection,
                                     menuState = menuState,
-                                    modifier = Modifier.homeEntranceAnimation(1, shouldAnimateEntrance).animateItem(),
+                                    modifier = Modifier.homeEntranceAnimation(2, shouldAnimateEntrance).animateItem(),
                                 )
                             }
                         }
@@ -181,81 +203,25 @@ internal fun HomeContent(
                             trendingState = uiState.trendingState,
                             mediaContext = mediaContext,
                             trendingRepository = trendingRepository,
-                            entranceIndex = 2,
+                            entranceIndex = 3,
                             shouldAnimateEntrance = shouldAnimateEntrance,
                         )
 
                         homeCommunitySection(
                             uiState = uiState,
                             mediaContext = mediaContext,
-                            entranceIndex = 3,
+                            entranceIndex = 4,
                             shouldAnimateEntrance = shouldAnimateEntrance,
                         )
 
                         if (!isFilterActive) {
-                            if (uiState.speedDialItems.isNotEmpty()) {
-                                sectionSpacer("speed_dial")
-                                item(
-                                    key = "home_speed_dial_header",
-                                    contentType = "section_header",
-                                ) {
-                                    HomeSectionHeader(
-                                        title = stringResource(R.string.speed_dial),
-                                        modifier = Modifier.homeEntranceAnimation(4, shouldAnimateEntrance).animateItem(),
-                                    )
-                                }
-                                item(
-                                    key = "home_speed_dial",
-                                    contentType = "speed_dial",
-                                ) {
-                                    SpeedDialSection(
-                                        speedDialItems = uiState.speedDialItems,
-                                        mediaMetadata = mediaMetadata,
-                                        isPlaying = isPlaying,
-                                        navController = navController,
-                                        playerConnection = playerConnection,
-                                        menuState = menuState,
-                                        scope = scope,
-                                        modifier = Modifier.homeEntranceAnimation(4, shouldAnimateEntrance).animateItem(),
-                                    )
-                                }
-                            }
-
-                            if (uiState.keepListening.isNotEmpty()) {
-                                sectionSpacer("keep_listening")
-                                item(
-                                    key = "home_keep_listening_header",
-                                    contentType = "section_header",
-                                ) {
-                                    HomeSectionHeader(
-                                        title = stringResource(R.string.keep_listening),
-                                        modifier = Modifier.homeEntranceAnimation(5, shouldAnimateEntrance).animateItem(),
-                                    )
-                                }
-                                item(
-                                    key = "home_keep_listening",
-                                    contentType = "media_shelf",
-                                ) {
-                                    KeepListeningSection(
-                                        keepListening = uiState.keepListening,
-                                        mediaMetadata = mediaMetadata,
-                                        isPlaying = isPlaying,
-                                        navController = navController,
-                                        playerConnection = playerConnection,
-                                        menuState = menuState,
-                                        scope = scope,
-                                        modifier = Modifier.homeEntranceAnimation(5, shouldAnimateEntrance).animateItem(),
-                                    )
-                                }
-                            }
-
                             if (uiState.accountPlaylists.isNotEmpty()) {
                                 sectionSpacer("account_playlists")
                                 item(
                                     key = "home_account_playlists",
                                     contentType = "media_shelf",
                                 ) {
-                                    Column(modifier = Modifier.homeEntranceAnimation(6, shouldAnimateEntrance).animateItem()) {
+                                    Column(modifier = Modifier.homeEntranceAnimation(5, shouldAnimateEntrance).animateItem()) {
                                         AccountPlaylistsTitle(
                                             accountName = uiState.accountName,
                                             accountImageUrl = uiState.accountImageUrl,
@@ -280,14 +246,14 @@ internal fun HomeContent(
                                 forgottenItemWidth = forgottenItemWidth,
                                 forgottenFavoritesGridState = forgottenFavoritesGridState,
                                 forgottenSnapLayoutInfoProvider = forgottenSnapLayoutInfoProvider,
-                                entranceIndex = 7,
+                                entranceIndex = 6,
                                 shouldAnimateEntrance = shouldAnimateEntrance,
                             )
 
                             homeSimilarRecommendationsSection(
                                 uiState = uiState,
                                 mediaContext = mediaContext,
-                                entranceIndex = 8,
+                                entranceIndex = 7,
                                 shouldAnimateEntrance = shouldAnimateEntrance,
                             )
                         }
@@ -295,7 +261,7 @@ internal fun HomeContent(
                         homeRemoteSections(
                             uiState = uiState,
                             mediaContext = mediaContext,
-                            entranceBaseIndex = 9,
+                            entranceBaseIndex = 8,
                             shouldAnimateEntrance = shouldAnimateEntrance,
                         )
 

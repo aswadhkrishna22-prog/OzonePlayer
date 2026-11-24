@@ -52,12 +52,13 @@ object HomeLayoutConfig {
     fun heroCarouselHeight(
         availableWidth: Dp,
         screenHeight: Dp = Dp.Unspecified,
-    ): Dp = when {
-        availableWidth >= 840.dp -> 480.dp
-        availableWidth >= 600.dp -> 420.dp
-        screenHeight != Dp.Unspecified && screenHeight > 0.dp ->
-            (screenHeight * 0.52f).coerceIn(340.dp, 440.dp)
-        else -> 400.dp
+    ): Dp {
+        val heroWidth = (availableWidth - (sidePadding * 2)).coerceAtLeast(240.dp)
+        return when {
+            availableWidth >= 840.dp -> 480.dp
+            availableWidth >= 600.dp -> 420.dp
+            else -> (heroWidth * 1.05f).coerceIn(320.dp, 440.dp)
+        }
     }
 }
 
