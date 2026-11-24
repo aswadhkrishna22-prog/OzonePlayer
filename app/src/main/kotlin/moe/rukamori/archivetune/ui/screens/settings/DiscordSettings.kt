@@ -12,6 +12,8 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -32,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
@@ -54,6 +57,7 @@ import moe.rukamori.archivetune.ui.component.PreferenceEntry
 import moe.rukamori.archivetune.ui.component.PreferenceGroup
 import moe.rukamori.archivetune.ui.component.PreferenceGroupScope
 import moe.rukamori.archivetune.ui.component.SwitchPreference
+import moe.rukamori.archivetune.ui.settings.OzoneUi
 import moe.rukamori.archivetune.ui.utils.appBarScrollBehavior
 import moe.rukamori.archivetune.ui.utils.backToMain
 import moe.rukamori.archivetune.utils.ArtworkStorage
@@ -428,8 +432,8 @@ fun DiscordSettings(navController: NavController) {
                 },
                 colors =
                     TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                        scrolledContainerColor = Color.Transparent,
+                        containerColor = OzoneUi.Bg,
+                        scrolledContainerColor = OzoneUi.Bg,
                     ),
                 scrollBehavior = scrollBehavior,
             )
@@ -1071,142 +1075,157 @@ fun RichPresence(
             Text(
                 text = stringResource(R.string.preview),
                 style = MaterialTheme.typography.headlineSmall,
+                color = OzoneUi.TextPrimary,
                 modifier = Modifier.padding(bottom = 16.dp),
             )
         },
         content = {
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceContainer,
-                shape = MaterialTheme.shapes.medium,
-                shadowElevation = 6.dp,
-                modifier = Modifier.fillMaxWidth(),
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(OzoneUi.SurfaceCard)
+                    .border(1.dp, Color(0xFF1E2024), RoundedCornerShape(22.dp))
+                    .padding(16.dp),
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        text = activityTypeLabel,
-                        style = MaterialTheme.typography.labelLarge,
+                        text = activityTypeLabel.uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
                         textAlign = TextAlign.Start,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
+                        color = OzoneUi.Lime,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 1.sp,
                         modifier = Modifier.fillMaxWidth(),
                     )
 
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(14.dp))
 
-                    Row(verticalAlignment = Alignment.Top) {
-                        Box(Modifier.size(108.dp)) {
-                            val largeImageModel =
-                                when (largeImageType.lowercase()) {
-                                    "thumbnail" -> song?.song?.thumbnailUrl
-                                    "artist" -> song?.artists?.firstOrNull()?.thumbnailUrl
-                                    "appicon" -> "https://raw.githubusercontent.com/aswadhkrishna22-prog/OzonePlayer/main/assets/ic_launcher.webp"
-                                    "custom" -> largeImageCustomUrl.ifBlank { song?.song?.thumbnailUrl }
-                                    else -> song?.song?.thumbnailUrl
-                                }
-                            AsyncImage(
-                                model = largeImageModel,
-                                contentDescription = null,
-                                modifier =
-                                    Modifier
-                                        .size(96.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .align(Alignment.TopStart)
-                                        .run {
-                                            if (song == null) {
-                                                border(
-                                                    2.dp,
-                                                    MaterialTheme.colorScheme.onSurface,
-                                                    RoundedCornerShape(12.dp),
-                                                )
-                                            } else {
-                                                this
-                                            }
-                                        },
-                            )
-                            val songThumb = song?.song?.thumbnailUrl
-                            val artistThumb = song?.artists?.firstOrNull()?.thumbnailUrl
-                            val smallModel =
-                                when (smallImageType.lowercase()) {
-                                    "thumbnail" -> songThumb
-                                    "artist" -> artistThumb
-                                    "appicon" -> "https://raw.githubusercontent.com/aswadhkrishna22-prog/OzonePlayer/main/assets/ic_launcher.webp"
-                                    "custom" -> smallImageCustomUrl.takeIf { it.isNotBlank() } ?: songThumb
-                                    "dontshow", "none" -> null
-                                    else -> artistThumb
-                                }
-                            smallModel?.let {
-                                Box(
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color(0xFF0A0B0D))
+                            .border(1.dp, Color(0xFF1F2228), RoundedCornerShape(16.dp))
+                            .padding(14.dp),
+                    ) {
+                        Row(verticalAlignment = Alignment.Top) {
+                            Box(Modifier.size(88.dp)) {
+                                val largeImageModel =
+                                    when (largeImageType.lowercase()) {
+                                        "thumbnail" -> song?.song?.thumbnailUrl
+                                        "artist" -> song?.artists?.firstOrNull()?.thumbnailUrl
+                                        "appicon" -> "https://raw.githubusercontent.com/aswadhkrishna22-prog/OzonePlayer/main/assets/ic_launcher.webp"
+                                        "custom" -> largeImageCustomUrl.ifBlank { song?.song?.thumbnailUrl }
+                                        else -> song?.song?.thumbnailUrl
+                                    }
+                                AsyncImage(
+                                    model = largeImageModel,
+                                    contentDescription = null,
                                     modifier =
                                         Modifier
-                                            .border(2.dp, MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-                                            .padding(2.dp)
-                                            .align(Alignment.BottomEnd),
-                                ) {
-                                    AsyncImage(
-                                        model = it,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(32.dp).clip(CircleShape),
+                                            .size(76.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .align(Alignment.TopStart)
+                                            .run {
+                                                if (song == null) {
+                                                    border(
+                                                        1.dp,
+                                                        Color(0xFF2A2E35),
+                                                        RoundedCornerShape(12.dp),
+                                                    )
+                                                } else {
+                                                    this
+                                                }
+                                            },
+                                )
+                                val songThumb = song?.song?.thumbnailUrl
+                                val artistThumb = song?.artists?.firstOrNull()?.thumbnailUrl
+                                val smallModel =
+                                    when (smallImageType.lowercase()) {
+                                        "thumbnail" -> songThumb
+                                        "artist" -> artistThumb
+                                        "appicon" -> "https://raw.githubusercontent.com/aswadhkrishna22-prog/OzonePlayer/main/assets/ic_launcher.webp"
+                                        "custom" -> smallImageCustomUrl.takeIf { it.isNotBlank() } ?: songThumb
+                                        "dontshow", "none" -> null
+                                        else -> artistThumb
+                                    }
+                                smallModel?.let {
+                                    Box(
+                                        modifier =
+                                            Modifier
+                                                .border(2.dp, Color(0xFF0A0B0D), CircleShape)
+                                                .padding(2.dp)
+                                                .align(Alignment.BottomEnd),
+                                    ) {
+                                        AsyncImage(
+                                            model = it,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(28.dp).clip(CircleShape),
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(Modifier.width(12.dp))
+
+                            Column(
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text(
+                                    text = previewName,
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+
+                                visiblePreviewDetails?.let {
+                                    Text(
+                                        text = it,
+                                        color = OzoneUi.TextSecondary,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+
+                                visiblePreviewState?.let {
+                                    Text(
+                                        text = it,
+                                        color = OzoneUi.TextSecondary,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+
+                                visiblePreviewLargeText?.let {
+                                    Text(
+                                        text = it,
+                                        color = OzoneUi.TextSecondary.copy(alpha = 0.7f),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+
+                                if (song != null) {
+                                    SongProgressBar(
+                                        currentTimeMillis = currentPlaybackTimeMillis,
+                                        durationMillis = song.song.duration * 1000L,
+                                        isPlaying = isPlaying,
                                     )
                                 }
                             }
                         }
-
-                        Column(
-                            modifier = Modifier.weight(1f).padding(horizontal = 6.dp),
-                        ) {
-                            Text(
-                                text = previewName,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-
-                            visiblePreviewDetails?.let {
-                                Text(
-                                    text = it,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-
-                            visiblePreviewState?.let {
-                                Text(
-                                    text = it,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-
-                            visiblePreviewLargeText?.let {
-                                Text(
-                                    text = it,
-                                    color = MaterialTheme.colorScheme.tertiary,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-
-                            if (song != null) {
-                                SongProgressBar(
-                                    currentTimeMillis = currentPlaybackTimeMillis,
-                                    durationMillis = song.song.duration * 1000L,
-                                    isPlaying = isPlaying,
-                                )
-                            }
-                        }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     AnimatedVisibility(visible = button1Enabled && button1Label.isNotBlank()) {
                         Button(
@@ -1216,11 +1235,20 @@ fun RichPresence(
                                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it)))
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth(),
-                            shapes = ButtonDefaults.shapes(),
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                            shape = CircleShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF181A1E),
+                                contentColor = Color(0xFFE2E5EB),
+                            ),
+                            border = BorderStroke(1.dp, Color(0xFF2A2E35)),
                         ) {
-                            Text(button1Label)
+                            Text(button1Label, fontWeight = FontWeight.SemiBold)
                         }
+                    }
+
+                    if (button1Enabled && button1Label.isNotBlank() && button2Enabled && button2Label.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
 
                     AnimatedVisibility(visible = button2Enabled && button2Label.isNotBlank()) {
@@ -1231,10 +1259,14 @@ fun RichPresence(
                                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it)))
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth(),
-                            shapes = ButtonDefaults.shapes(),
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                            shape = CircleShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = OzoneUi.Lime,
+                                contentColor = Color(0xFF050505),
+                            ),
                         ) {
-                            Text(button2Label)
+                            Text(button2Label, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -1275,24 +1307,28 @@ fun SongProgressBar(
         Spacer(modifier = Modifier.height(8.dp))
         LinearWavyProgressIndicator(
             progress = { progress.coerceIn(0f, 1f) },
+            color = OzoneUi.Lime,
+            trackColor = OzoneUi.TrackInactive,
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .height(6.dp)
                     .clip(RoundedCornerShape(3.dp)),
         )
-        Row(modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
             Text(
                 text = makeTimeString(displayedTime),
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Start,
                 style = MaterialTheme.typography.labelSmall,
+                color = OzoneUi.TextSecondary,
             )
             Text(
                 text = makeTimeString(durationMillis),
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.End,
                 style = MaterialTheme.typography.labelSmall,
+                color = OzoneUi.TextSecondary,
             )
         }
     }

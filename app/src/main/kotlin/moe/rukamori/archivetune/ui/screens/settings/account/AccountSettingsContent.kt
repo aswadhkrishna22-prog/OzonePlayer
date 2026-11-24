@@ -176,6 +176,7 @@ internal fun AccountSettingsContent(
                         Icon(
                             painter = painterResource(R.drawable.arrow_back),
                             contentDescription = null,
+                            tint = Color.White,
                         )
                     }
                 },
@@ -196,6 +197,7 @@ internal fun AccountSettingsContent(
                                     painter = painterResource(R.drawable.update),
                                     contentDescription = null,
                                     modifier = Modifier.size(20.dp),
+                                    tint = Color.White,
                                 )
                             }
                         }
@@ -205,6 +207,8 @@ internal fun AccountSettingsContent(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
                     scrolledContainerColor = Color.Transparent,
+                    navigationIconContentColor = Color.White,
+                    titleContentColor = Color.White,
                 ),
                 scrollBehavior = scrollBehavior,
                 modifier = Modifier.align(Alignment.TopCenter)

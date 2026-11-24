@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -48,6 +49,7 @@ import coil3.request.allowHardware
 import coil3.request.crossfade
 import coil3.toBitmap
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.ui.settings.OzoneUi
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.viewmodels.AboutLinkCollection
 import moe.rukamori.archivetune.viewmodels.TeamMember
@@ -111,20 +113,13 @@ internal fun TeamMemberListItem(
                             Brush.radialGradient(
                                 colors =
                                     listOf(
-                                        (extractedColor ?: MaterialTheme.colorScheme.primary).copy(alpha = 0.20f),
-                                        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.10f),
+                                        (extractedColor ?: OzoneUi.Lime).copy(alpha = 0.20f),
+                                        Color.Transparent,
                                     ),
                             ),
                         ).border(
                             width = 1.5.dp,
-                            brush =
-                                Brush.linearGradient(
-                                    colors =
-                                        listOf(
-                                            (extractedColor ?: MaterialTheme.colorScheme.primary).copy(alpha = 0.70f),
-                                            (extractedColor ?: MaterialTheme.colorScheme.primary).copy(alpha = 0.20f),
-                                        ),
-                                ),
+                            color = (extractedColor ?: OzoneUi.Lime).copy(alpha = 0.60f),
                             shape = CircleShape,
                         ),
                 contentAlignment = Alignment.Center,
@@ -213,13 +208,18 @@ internal fun MemberLinkActions(
                     { onOpenUri(link.url) }
                 }
 
-            FilledTonalIconButton(
+            IconButton(
                 onClick = onClick,
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(CircleShape)
+                    .background(OzoneUi.LimeContainer)
+                    .border(1.dp, OzoneUi.LimeBorder, CircleShape),
             ) {
                 Icon(
                     painter = painterResource(link.iconResId),
                     contentDescription = stringResource(link.labelResId),
+                    tint = OzoneUi.Lime,
                     modifier = Modifier.size(18.dp),
                 )
             }

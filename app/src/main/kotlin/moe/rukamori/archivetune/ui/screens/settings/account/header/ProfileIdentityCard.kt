@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -44,8 +45,10 @@ import moe.rukamori.archivetune.LocalMarqueeEnabled
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.home.state.AccountChannelUiModel
 import moe.rukamori.archivetune.home.state.AccountChannelsState
+import moe.rukamori.archivetune.ui.component.LocalPreferenceInGroup
 import moe.rukamori.archivetune.ui.component.LocalPreferenceGroupPosition
 import moe.rukamori.archivetune.ui.component.PreferenceGroupPosition
+import moe.rukamori.archivetune.ui.settings.OzoneUi
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
 import moe.rukamori.archivetune.ui.theme.ozoneClickable
@@ -104,12 +107,22 @@ fun ProfileIdentityCard(
         else -> RoundedCornerShape(SettingsDimensions.SegmentedCornerLarge)
     }
 
+    val isInGroup = LocalPreferenceInGroup.current
+    val cardShape = RoundedCornerShape(22.dp)
+
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(resolvedShape)
-            .background(colors.glassBackground)
-            .border(1.dp, colors.glassBorder, resolvedShape),
+            .then(
+                if (isInGroup) {
+                    Modifier
+                } else {
+                    Modifier
+                        .clip(cardShape)
+                        .background(Brush.verticalGradient(listOf(OzoneUi.CardTop, OzoneUi.CardBottom)))
+                        .border(1.dp, OzoneUi.Hairline, cardShape)
+                }
+            ),
     ) {
         Row(
             modifier = Modifier
@@ -121,7 +134,7 @@ fun ProfileIdentityCard(
             ProfileAvatarBadge(
                 accountImageUrl = accountImageUrl,
                 isLoggedIn = isLoggedIn,
-                primaryColor = MaterialTheme.colorScheme.primary,
+                primaryColor = OzoneUi.Lime,
                 tertiaryColor = MaterialTheme.colorScheme.tertiary,
                 onAvatarPixelsReady = onAvatarPixelsReady,
             )
@@ -134,7 +147,7 @@ fun ProfileIdentityCard(
                 Text(
                     text = accountName,
                     style = MaterialTheme.typography.titleMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = OzoneUi.TextPrimary,
                         fontWeight = FontWeight.Bold,
                     ),
                     maxLines = 1,
@@ -146,7 +159,7 @@ fun ProfileIdentityCard(
                     Text(
                         text = accountHandle,
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = OzoneUi.TextSecondary,
                         ),
                         maxLines = 1,
                         overflow = if (marqueeEnabled) TextOverflow.Clip else TextOverflow.Ellipsis,
@@ -156,7 +169,7 @@ fun ProfileIdentityCard(
                     Text(
                         text = stringResource(R.string.not_logged_in),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.70f),
+                        color = OzoneUi.TextSecondary,
                     )
                 }
 
@@ -167,8 +180,8 @@ fun ProfileIdentityCard(
                     ) {
                         Surface(
                             shape = RoundedCornerShape(20.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            color = OzoneUi.Lime,
+                            contentColor = OzoneUi.LimeDark,
                             modifier = Modifier
                                 .height(38.dp)
                                 .ozoneClickable(pressedScale = 0.95f, onClick = onPrimaryAction),
@@ -194,10 +207,11 @@ fun ProfileIdentityCard(
                         if (isLoggedIn) {
                             Surface(
                                 shape = RoundedCornerShape(20.dp),
-                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = OzoneUi.CardTop,
+                                contentColor = OzoneUi.TextSecondary,
                                 modifier = Modifier
                                     .size(38.dp)
+                                    .border(1.dp, OzoneUi.Hairline, RoundedCornerShape(20.dp))
                                     .ozoneClickable(
                                         pressedScale = 0.95f,
                                         onClick = { accountMenuExpanded = !accountMenuExpanded },
@@ -207,6 +221,7 @@ fun ProfileIdentityCard(
                                     Icon(
                                         painter = painterResource(R.drawable.expand_more),
                                         contentDescription = null,
+                                        tint = OzoneUi.TextSecondary,
                                         modifier = Modifier
                                             .size(18.dp)
                                             .rotate(menuChevronRotation),

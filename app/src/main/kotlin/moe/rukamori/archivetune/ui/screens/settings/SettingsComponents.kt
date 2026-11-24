@@ -91,6 +91,7 @@ import moe.rukamori.archivetune.ui.theme.ozoneClickable
 import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 import moe.rukamori.archivetune.ui.theme.ozoneSegmentPosition
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
+import moe.rukamori.archivetune.ui.settings.OzoneUi
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 
 
@@ -623,7 +624,7 @@ fun SettingsScreenBackground(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Transparent)
+            .background(OzoneUi.Bg)
     ) {
         content()
     }
@@ -679,7 +680,13 @@ fun OzoneSettingsScaffold(
                         }
                     },
                     actions = actions,
-                    colors = GlassDefaults.topAppBarColors(),
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = OzoneUi.Bg,
+                        scrolledContainerColor = OzoneUi.Bg,
+                        titleContentColor = OzoneUi.TextPrimary,
+                        navigationIconContentColor = OzoneUi.TextPrimary,
+                        actionIconContentColor = OzoneUi.TextPrimary,
+                    ),
                 )
             },
         ) { innerPadding ->

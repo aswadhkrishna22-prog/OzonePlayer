@@ -11,6 +11,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import moe.rukamori.archivetune.ui.settings.OzoneUi
 
 @Composable
 fun GlassScaffold(
@@ -38,10 +39,16 @@ fun GlassScaffold(
 object GlassDefaults {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun topAppBarColors(): TopAppBarColors {
+    fun topAppBarColors(
+        containerColor: Color = OzoneUi.Bg,
+        scrolledContainerColor: Color = OzoneUi.Bg,
+    ): TopAppBarColors {
         return TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-            scrolledContainerColor = Color.Transparent,
+            containerColor = containerColor,
+            scrolledContainerColor = scrolledContainerColor,
+            titleContentColor = Color.White,
+            navigationIconContentColor = Color.White,
+            actionIconContentColor = Color.White,
         )
     }
 }

@@ -7,6 +7,9 @@
 package moe.rukamori.archivetune.ui.screens
 
 import android.net.Uri
+import androidx.compose.runtime.Composable
+import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -39,82 +42,93 @@ import moe.rukamori.archivetune.ui.screens.settings.SpatialAudioSettings
 import moe.rukamori.archivetune.ui.screens.settings.StorageSettings
 import moe.rukamori.archivetune.ui.screens.settings.ThemeCreatorScreen
 import moe.rukamori.archivetune.ui.state.UpdateState
+import moe.rukamori.archivetune.ui.theme.OzoneSettingsTheme
+
+private fun NavGraphBuilder.settingsComposable(
+    route: String,
+    arguments: List<NamedNavArgument> = emptyList(),
+    content: @Composable (NavBackStackEntry) -> Unit,
+) {
+    composable(route = route, arguments = arguments) { entry ->
+        OzoneSettingsTheme { content(entry) }
+    }
+}
 
 internal fun NavGraphBuilder.settingsNavigationRoutes(
     navController: NavHostController,
     updateState: UpdateState,
 ) {
-    composable("settings/account") {
+    settingsComposable("settings/account") {
         AccountSettings(navController, updateState)
     }
-    composable("settings/hidden_playlists") {
+    settingsComposable("settings/hidden_playlists") {
         HiddenPlaylistsScreen(navController)
     }
-    composable("settings/appearance") {
+    settingsComposable("settings/appearance") {
         AppearanceSettings(navController)
     }
-    composable(AppearanceContract.CANVAS_ROUTE) {
+    settingsComposable(AppearanceContract.CANVAS_ROUTE) {
         moe.rukamori.archivetune.ui.screens.settings.canvas.CanvasSettings(navController)
     }
-    composable("settings/appearance/icon") {
+    settingsComposable("settings/appearance/icon") {
         IconScreen(navController)
     }
-    composable("settings/appearance/palette_picker") {
+    settingsComposable("settings/appearance/palette_picker") {
         PalettePickerScreen(navController)
     }
-    composable("settings/appearance/theme_creator") {
+    settingsComposable("settings/appearance/theme_creator") {
         ThemeCreatorScreen(navController)
     }
-    composable("settings/content") {
+    settingsComposable("settings/content") {
         ContentSettings(navController)
     }
-    composable("settings/player") {
+    settingsComposable("settings/player") {
         PlayerSettings(navController)
     }
-    composable("settings/lyrics") {
+    settingsComposable("settings/lyrics") {
         LyricsSettings(navController)
     }
-    composable("settings/internet") {
+    settingsComposable("settings/internet") {
         InternetSettings(navController)
     }
-    composable("settings/storage") {
+    settingsComposable("settings/storage") {
         StorageSettings(navController)
     }
-    composable("settings/privacy") {
+    settingsComposable("settings/privacy") {
         PrivacySettings(navController)
     }
-    composable("settings/backup_restore") {
+    settingsComposable("settings/backup_restore") {
         BackupAndRestore(navController)
     }
-    composable("settings/discord") {
+    settingsComposable("settings/discord") {
         DiscordSettings(navController)
     }
-    composable("settings/integration") {
+    settingsComposable("settings/integration") {
         IntegrationScreen(navController)
     }
-    composable("settings/ai_integration") {
+    settingsComposable("settings/ai_integration") {
         AiIntegrationSettings(navController)
     }
-    composable("settings/music_together") {
+    settingsComposable("settings/music_together") {
         MusicTogetherScreen(navController)
     }
-    composable("settings/lastfm") {
+    settingsComposable("settings/lastfm") {
         LastFMSettings(navController)
     }
-    composable("settings/discord/experimental") {
+    settingsComposable("settings/discord/experimental") {
         moe.rukamori.archivetune.ui.screens.settings
             .DiscordExperimental(navController)
     }
-    composable("settings/misc") {
+    settingsComposable("settings/misc") {
         DebugSettings(navController)
     }
-    composable("settings/spatial_audio") {
+    settingsComposable("settings/spatial_audio") {
         SpatialAudioSettings(navController)
     }
-    composable("settings/dual_play_debug") {
+    settingsComposable("settings/dual_play_debug") {
         moe.rukamori.archivetune.ui.screens.settings.DualPlayDebugScreen(navController)
     }
-    composable(
+    settingsComposable(
         route = "settings/changelog?channel={channel}",
         arguments =
             listOf(
@@ -132,13 +146,13 @@ internal fun NavGraphBuilder.settingsNavigationRoutes(
             } ?: defaultUpdateChannel
         ChangelogScreen(navController, channel = channel)
     }
-    composable("settings/about") {
+    settingsComposable("settings/about") {
         AboutScreen(navController)
     }
-    composable("settings/po_token") {
+    settingsComposable("settings/po_token") {
         PoTokenScreen(navController)
     }
-    composable(
+    settingsComposable(
         route = "$LOGIN_ROUTE?$LOGIN_URL_ARGUMENT={$LOGIN_URL_ARGUMENT}",
         arguments =
             listOf(
