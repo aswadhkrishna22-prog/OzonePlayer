@@ -11,19 +11,8 @@
 
 package moe.rukamori.archivetune.ui.screens.settings
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.widget.Toast
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,28 +25,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -67,10 +46,8 @@ import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.appicon.OzoneLogo
 import moe.rukamori.archivetune.appicon.rememberCurrentAppIcon
-import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
+import moe.rukamori.archivetune.ui.settings.OzoneUi
 import moe.rukamori.archivetune.ui.theme.ozoneClickable
-import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
-import moe.rukamori.archivetune.viewmodels.AboutLinkCollection
 import moe.rukamori.archivetune.viewmodels.AboutUiModel
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -81,70 +58,23 @@ internal fun AboutIdentityCard(
     modifier: Modifier = Modifier,
     onOpenGplLicense: () -> Unit = {},
 ) {
-    val colors = LocalOzoneColors.current
-    val cardShape = MaterialTheme.shapes.extraLarge
-    val isDark = isSystemInDarkTheme()
-
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val tertiaryColor = MaterialTheme.colorScheme.tertiary
-
-    val blendMode = if (isDark) BlendMode.Plus else BlendMode.SrcOver
-
-    val spot1Alpha = if (isDark) 0.50f else 0.35f
-    val spot1AlphaMid = if (isDark) 0.20f else 0.12f
-
-    val spot2Alpha = if (isDark) 0.55f else 0.40f
-    val spot2AlphaMid = if (isDark) 0.22f else 0.15f
-
-    val transition = rememberInfiniteTransition(label = "meshGlow")
-    val time by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = (2 * Math.PI).toFloat(),
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 12000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "time"
-    )
+    val cardShape = RoundedCornerShape(24.dp)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .clip(cardShape)
-            .drawWithCache {
-                val spot1X = size.width * (0.5f + 0.35f * kotlin.math.cos(time))
-                val spot1Y = size.height * (0.5f + 0.30f * kotlin.math.sin(time))
-
-                val spot2X = size.width * (0.5f + 0.40f * kotlin.math.sin(time + 1.8f))
-                val spot2Y = size.height * (0.5f + 0.35f * kotlin.math.cos(time + 1.8f))
-
-                val spot1Gradient = Brush.radialGradient(
-                    colors = listOf(
-                        primaryColor.copy(alpha = spot1Alpha),
-                        primaryColor.copy(alpha = spot1AlphaMid),
-                        Color.Transparent
+            .background(OzoneUi.SurfaceCard)
+            .border(
+                1.dp,
+                Brush.verticalGradient(
+                    listOf(
+                        OzoneUi.Lime.copy(alpha = 0.30f),
+                        Color(0xFF1E2024),
                     ),
-                    center = Offset(spot1X, spot1Y),
-                    radius = size.width * 0.85f
-                )
-
-                val spot2Gradient = Brush.radialGradient(
-                    colors = listOf(
-                        tertiaryColor.copy(alpha = spot2Alpha),
-                        tertiaryColor.copy(alpha = spot2AlphaMid),
-                        Color.Transparent
-                    ),
-                    center = Offset(spot2X, spot2Y),
-                    radius = size.width * 0.90f
-                )
-
-                onDrawBehind {
-                    drawRect(color = colors.glassBackground)
-                    drawRect(brush = spot1Gradient, blendMode = blendMode)
-                    drawRect(brush = spot2Gradient, blendMode = blendMode)
-                }
-            }
-            .border(1.dp, colors.glassBorder, cardShape),
+                ),
+                cardShape,
+            ),
     ) {
         Column(
             modifier = Modifier
@@ -163,7 +93,7 @@ internal fun AboutIdentityCard(
                     text = stringResource(model.appNameResId),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = Color.White,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -172,7 +102,7 @@ internal fun AboutIdentityCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    AboutMetadataBadge(text = model.versionName)
+                    AboutMetadataBadge(text = model.versionName, isPrimary = true)
                     model.buildHash?.let { buildHash ->
                         AboutMetadataBadge(text = buildHash)
                     }
@@ -180,7 +110,7 @@ internal fun AboutIdentityCard(
                 }
             }
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            HorizontalDivider(color = Color(0xFF1E2024))
 
             LinkChipRow(
                 links = model.primaryLinks,
@@ -197,7 +127,7 @@ internal fun AboutIdentityCard(
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Medium,
                     ),
-                    color = MaterialTheme.colorScheme.primary,
+                    color = OzoneUi.Lime,
                     textAlign = TextAlign.Center,
                     textDecoration = TextDecoration.Underline,
                     modifier = Modifier
@@ -209,7 +139,7 @@ internal fun AboutIdentityCard(
                 Text(
                     text = "Source code available under GPL-3.0",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = OzoneUi.TextSecondary,
                     textAlign = TextAlign.Center,
                     textDecoration = TextDecoration.Underline,
                     modifier = Modifier
@@ -221,7 +151,7 @@ internal fun AboutIdentityCard(
                 Text(
                     text = AboutContract.DISCLAIMER_NOTICE,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    color = OzoneUi.TextSecondary.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                 )
@@ -233,27 +163,50 @@ internal fun AboutIdentityCard(
 @Composable
 internal fun SurfaceAppIcon(modifier: Modifier = Modifier) {
     val currentVariant = rememberCurrentAppIcon()
-    OzoneLogo(
-        variant = currentVariant,
-        modifier = modifier.size(72.dp),
-    )
+    Box(
+        modifier = modifier
+            .size(88.dp)
+            .background(
+                Brush.radialGradient(
+                    colors = listOf(
+                        OzoneUi.Lime.copy(alpha = 0.14f),
+                        Color.Transparent,
+                    ),
+                ),
+                CircleShape,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        OzoneLogo(
+            variant = currentVariant,
+            modifier = Modifier.size(72.dp),
+        )
+    }
 }
 
 @Composable
 internal fun AboutMetadataBadge(
     text: String,
     modifier: Modifier = Modifier,
+    isPrimary: Boolean = false,
 ) {
-    Badge(
-        modifier = modifier.heightIn(min = 32.dp),
-        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = if (isPrimary) OzoneUi.LimeContainer else Color(0xFF181A1E),
+        modifier = modifier
+            .border(
+                1.dp,
+                if (isPrimary) OzoneUi.LimeBorder else Color(0xFF282B32),
+                RoundedCornerShape(12.dp),
+            ),
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
+            fontWeight = if (isPrimary) FontWeight.Bold else FontWeight.Medium,
+            color = if (isPrimary) OzoneUi.Lime else Color(0xFFD1D5DB),
             maxLines = 1,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
         )
     }
 }

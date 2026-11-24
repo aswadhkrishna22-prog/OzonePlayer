@@ -6,7 +6,11 @@
 
 package moe.rukamori.archivetune.ui.screens.stats
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import moe.rukamori.archivetune.ui.settings.OzoneUi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -27,7 +31,22 @@ internal fun StatsTopAppBar(
     onOpenYearPicker: () -> Unit,
 ) {
     TopAppBar(
-        title = { Text(stringResource(R.string.stats)) },
+        title = {
+            Column {
+                Text(
+                    text = "OZONE",
+                    color = OzoneUi.Lime,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 3.sp,
+                )
+                Text(
+                    text = stringResource(R.string.stats),
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        },
         navigationIcon = {
             IconButton(
                 onClick = navController::navigateUp,
@@ -44,6 +63,7 @@ internal fun StatsTopAppBar(
                 Icon(
                     painterResource(R.drawable.auto_awesome),
                     contentDescription = stringResource(R.string.year_in_music),
+                    tint = OzoneUi.Lime,
                 )
             }
         },

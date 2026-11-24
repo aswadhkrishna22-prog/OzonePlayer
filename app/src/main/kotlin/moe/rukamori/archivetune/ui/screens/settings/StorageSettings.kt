@@ -35,6 +35,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -67,7 +68,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import moe.rukamori.archivetune.ui.settings.OzoneUi
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -343,8 +346,10 @@ fun StorageSettings(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                        scrolledContainerColor = Color.Transparent,
+                        containerColor = OzoneUi.Bg,
+                        scrolledContainerColor = OzoneUi.Bg,
+                        titleContentColor = OzoneUi.TextPrimary,
+                        navigationIconContentColor = OzoneUi.TextPrimary,
                     ),
                 )
             },
@@ -440,11 +445,20 @@ fun StorageSettings(
                     )
                 }
                 item(visible = maxSongCacheSize > 0) {
-                    CacheUsagePreference(progress = playerCacheProgress)
+                    CacheUsagePreference(
+                        progress = playerCacheProgress,
+                        usedFormatted = "${formatFileSize(playerCacheSize)} / ${formatFileSize(maxSongCacheSizeBytes)}",
+                    )
                 }
                 item {
                     PreferenceEntry(
                         title = { Text(stringResource(R.string.clear_song_cache)) },
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.delete),
+                                contentDescription = null,
+                            )
+                        },
                         onClick = { clearCacheDialog = true },
                     )
                 }
@@ -506,11 +520,20 @@ fun StorageSettings(
                     )
                 }
                 item(visible = maxImageCacheSize > 0) {
-                    CacheUsagePreference(progress = imageCacheProgress)
+                    CacheUsagePreference(
+                        progress = imageCacheProgress,
+                        usedFormatted = "${formatFileSize(imageCacheSize)} / ${formatFileSize(maxImageCacheSizeBytes)}",
+                    )
                 }
                 item {
                     PreferenceEntry(
                         title = { Text(stringResource(R.string.clear_image_cache)) },
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.delete),
+                                contentDescription = null,
+                            )
+                        },
                         onClick = { clearImageCacheDialog = true },
                     )
                 }
@@ -572,11 +595,20 @@ fun StorageSettings(
                     )
                 }
                 item(visible = maxCanvasCacheSize > 0) {
-                    CacheUsagePreference(progress = canvasCacheProgress)
+                    CacheUsagePreference(
+                        progress = canvasCacheProgress,
+                        usedFormatted = "${formatFileSize(canvasCacheBytes)} / ${formatFileSize(cacheSizeMegabytesToBytes(maxCanvasCacheSize))}",
+                    )
                 }
                 item {
                     PreferenceEntry(
                         title = { Text(stringResource(R.string.clear_canvas_cache)) },
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.delete),
+                                contentDescription = null,
+                            )
+                        },
                         onClick = { clearCanvasCacheDialog = true },
                     )
                 }
@@ -679,6 +711,12 @@ private fun StorageFolderSection(
             SwitchPreference(
                 title = { Text(stringResource(R.string.smart_trimmer)) },
                 description = stringResource(R.string.smart_trimmer_description),
+                icon = {
+                    Icon(
+                        painter = painterResource(R.drawable.auto_awesome),
+                        contentDescription = null,
+                    )
+                },
                 checked = smartTrimmer && isSmartTrimmerAvailable,
                 onCheckedChange = onSmartTrimmerChange,
                 isEnabled = isSmartTrimmerAvailable,
@@ -824,16 +862,16 @@ private fun StorageLocationPickerSheet(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = SettingsDimensions.BottomSheetHorizontalPadding)
-                .padding(bottom = SettingsDimensions.BottomSheetBottomPadding)
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp)
                 .navigationBarsPadding(),
-            shape = RoundedCornerShape(SettingsDimensions.BottomSheetCornerRadius),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(28.dp),
+            color = OzoneUi.SurfaceCard,
             border = BorderStroke(
-                width = SettingsDimensions.GlassBorderThickness,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                width = 1.dp,
+                color = OzoneUi.BorderElevated,
             ),
-            tonalElevation = 6.dp,
+            tonalElevation = 0.dp,
             shadowElevation = 10.dp,
         ) {
             Column(
@@ -841,30 +879,26 @@ private fun StorageLocationPickerSheet(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = SettingsDimensions.BottomSheetContentPaddingH)
-                        .padding(
-                            top = SettingsDimensions.BottomSheetContentPaddingTop,
-                            bottom = SettingsDimensions.BottomSheetContentPaddingBottom,
-                        ),
+                        .padding(horizontal = 20.dp)
+                        .padding(top = 16.dp, bottom = 20.dp),
             ) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
-                        .size(
-                            width = SettingsDimensions.BottomSheetDragHandleWidth,
-                            height = SettingsDimensions.BottomSheetDragHandleHeight,
-                        )
+                        .size(width = 36.dp, height = 4.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)),
+                        .background(Color(0xFF3A3E47)),
                 )
 
                 Text(
                     text = stringResource(R.string.storage_location_sheet_title),
                     style = MaterialTheme.typography.headlineSmall,
+                    color = OzoneUi.TextPrimary,
+                    fontWeight = FontWeight.Bold,
                 )
 
             Column(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 for (index in 0 until options.size) {
@@ -880,14 +914,23 @@ private fun StorageLocationPickerSheet(
             Button(
                 onClick = onConfirm,
                 enabled = canApplySelection,
-                shapes = ButtonDefaults.shapes(),
+                shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = OzoneUi.Lime,
+                    contentColor = OzoneUi.LimeDark,
+                    disabledContainerColor = Color(0xFF22252B),
+                    disabledContentColor = Color(0xFF565A63),
+                ),
                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 56.dp),
+                        .heightIn(min = 52.dp),
             ) {
-                Text(stringResource(R.string.storage_location_apply))
+                Text(
+                    text = stringResource(R.string.storage_location_apply),
+                    fontWeight = FontWeight.Bold,
+                )
             }
         }
     }
@@ -901,22 +944,17 @@ private fun StorageLocationOptionRow(
     onClick: () -> Unit,
 ) {
     val containerColor =
-        if (selected) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceContainer
-        }
+        if (selected) OzoneUi.LimeContainer else Color(0xFF1A1C21)
     val contentColor =
-        if (selected) {
-            MaterialTheme.colorScheme.onPrimaryContainer
-        } else {
-            MaterialTheme.colorScheme.onSurface
-        }
+        if (selected) OzoneUi.Lime else Color(0xFFE5E7EB)
+    val borderColor =
+        if (selected) OzoneUi.LimeBorder else Color(0xFF23262D)
 
     Surface(
         color = containerColor,
         contentColor = contentColor,
-        shape = MaterialTheme.shapes.large,
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, borderColor),
         modifier =
             Modifier
                 .fillMaxWidth()
@@ -924,17 +962,15 @@ private fun StorageLocationOptionRow(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(
-                horizontal = SettingsDimensions.BottomSheetOptionPaddingH,
-                vertical = SettingsDimensions.BottomSheetOptionPaddingV,
-            ),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
         ) {
             Icon(
                 painter = painterResource(R.drawable.storage),
                 contentDescription = null,
-                modifier = Modifier.size(28.dp),
+                tint = if (selected) OzoneUi.Lime else OzoneUi.TextSecondary,
+                modifier = Modifier.size(24.dp),
             )
-            Spacer(Modifier.width(18.dp))
+            Spacer(Modifier.width(16.dp))
             Column(
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier.weight(1f),
@@ -942,16 +978,13 @@ private fun StorageLocationOptionRow(
                 Text(
                     text = storageLocationTitle(option.kind, option.volumeLabel),
                     style = MaterialTheme.typography.titleMedium,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                    color = contentColor,
                 )
                 Text(
                     text = stringResource(R.string.storage_location_free, formatFileSize(option.availableBytes)),
                     style = MaterialTheme.typography.bodyMedium,
-                    color =
-                        if (selected) {
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
+                    color = if (selected) OzoneUi.Lime.copy(alpha = 0.8f) else OzoneUi.TextSecondary,
                 )
             }
             if (selected) {
@@ -959,7 +992,8 @@ private fun StorageLocationOptionRow(
                 Icon(
                     painter = painterResource(R.drawable.check),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp),
+                    tint = OzoneUi.Lime,
+                    modifier = Modifier.size(22.dp),
                 )
             }
         }
@@ -984,22 +1018,40 @@ private fun storageLocationTitle(
     }
 
 @Composable
-private fun CacheUsagePreference(progress: Float) {
-    val percentage = stringResource(R.string.percentage_format, (progress * 100).toInt())
+private fun CacheUsagePreference(
+    progress: Float,
+    usedFormatted: String? = null,
+) {
+    val percentage = "${(progress * 100).toInt()}% used"
     PreferenceEntry(
         title = {
-            Text(stringResource(R.string.size_used, percentage))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = percentage,
+                    color = OzoneUi.TextPrimary,
+                    fontWeight = FontWeight.Medium,
+                )
+                if (usedFormatted != null) {
+                    Text(
+                        text = usedFormatted,
+                        color = OzoneUi.TextSecondary,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
         },
         content = {
-            Spacer(Modifier.padding(top = 8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                LinearWavyProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                )
-            }
+            Spacer(Modifier.height(8.dp))
+            LinearWavyProgressIndicator(
+                progress = { progress.coerceIn(0f, 1f) },
+                modifier = Modifier.fillMaxWidth(),
+                color = OzoneUi.Lime,
+                trackColor = OzoneUi.TrackInactive,
+            )
         },
     )
 }

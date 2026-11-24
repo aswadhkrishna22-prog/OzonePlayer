@@ -110,8 +110,8 @@ fun StatsScreen(
                         .drawWithCache {
                             val brush =
                                 Brush.verticalGradient(
-                                    0f to tonalStart.copy(alpha = 0.30f),
-                                    0.42f to tonalMiddle.copy(alpha = 0.14f),
+                                    0f to tonalStart.copy(alpha = 0.55f),
+                                    0.42f to tonalMiddle.copy(alpha = 0.20f),
                                     1f to Color.Transparent,
                                 )
                             onDrawBehind { drawRect(brush) }

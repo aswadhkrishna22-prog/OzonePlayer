@@ -24,6 +24,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -54,7 +55,7 @@ internal fun ListeningByDayChart(
     val slotMap = remember(slots) { slots.associateBy { it.slot } }
     val maxTime = remember(slots) { slots.maxOfOrNull { it.timeListened } ?: 1L }
     val primaryColor = MaterialTheme.colorScheme.primary
-    val containerColor = MaterialTheme.colorScheme.secondaryContainer
+    val containerColor = Color(0xFF2A3322)
 
     ElevatedCard(
         modifier = modifier,
@@ -125,7 +126,7 @@ internal fun ListeningByHourChart(
     val maxTime = remember(slots) { slots.maxOfOrNull { it.timeListened } ?: 1L }
     val peakSlot = remember(slots) { slots.maxByOrNull { it.timeListened }?.slot }
     val primaryColor = MaterialTheme.colorScheme.primary
-    val containerColor = MaterialTheme.colorScheme.primaryContainer
+    val containerColor = Color(0xFF3F5A1C)
 
     val peakLabel =
         remember(peakSlot) {

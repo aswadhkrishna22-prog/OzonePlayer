@@ -9,7 +9,10 @@
 package moe.rukamori.archivetune.ui.screens.settings
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -29,11 +32,11 @@ import coil3.compose.AsyncImage
 import coil3.request.crossfade
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.UpdateChannel
+import moe.rukamori.archivetune.ui.settings.OzoneUi
 import moe.rukamori.archivetune.ui.settings.SettingsAnimations
 import moe.rukamori.archivetune.ui.settings.SettingsDimensions
 import moe.rukamori.archivetune.ui.theme.LocalOzoneColors
 import moe.rukamori.archivetune.ui.theme.ozoneClickable
-import moe.rukamori.archivetune.ui.theme.ozoneGlassCard
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -56,23 +59,19 @@ internal fun UpdateSummaryCard(
         isUpdateAvailable -> stringResource(R.string.latest_version_format, latestVersion)
         else -> stringResource(R.string.updates_status_current)
     }
-    val statusContainerColor = if (isUpdateAvailable) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
-    val statusContentColor = if (isUpdateAvailable) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
+    val statusContainerColor = if (isUpdateAvailable) OzoneUi.LimeContainer else Color(0xFF181A1E)
+    val statusContentColor = if (isUpdateAvailable) OzoneUi.Lime else Color(0xFFD1D5DB)
 
-    val colors = LocalOzoneColors.current
-    val cardShape = RoundedCornerShape(28.dp)
+    val cardShape = RoundedCornerShape(22.dp)
     val imageShape = RoundedCornerShape(16.dp)
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .ozoneGlassCard(
-                shape = cardShape,
-                backgroundColor = colors.glassBackground,
-                borderColor = colors.glassBorder,
-                strokeWidth = SettingsDimensions.GlassBorderThickness,
-            )
-            .padding(SettingsDimensions.BannerContentPadding),
+            .clip(cardShape)
+            .background(OzoneUi.SurfaceCard)
+            .border(1.dp, Color(0xFF1E2024), cardShape)
+            .padding(18.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             if (!imageUrl.isNullOrBlank()) {
@@ -94,8 +93,8 @@ internal fun UpdateSummaryCard(
             ) {
                 FeatureIcon(iconRes = R.drawable.update, containerColor = statusContainerColor, contentColor = statusContentColor)
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(text = stringResource(R.string.current_version), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(text = currentVersion, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(text = stringResource(R.string.current_version), style = MaterialTheme.typography.labelMedium, color = OzoneUi.TextSecondary)
+                    Text(text = currentVersion, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
 
@@ -103,12 +102,17 @@ internal fun UpdateSummaryCard(
                 horizontalArrangement = Arrangement.spacedBy(SettingsDimensions.SegmentedItemGap),
                 verticalArrangement = Arrangement.spacedBy(SettingsDimensions.SegmentedItemGap),
             ) {
-                StatusBadgeChip(text = channelLabel, iconRes = R.drawable.tune, containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
+                StatusBadgeChip(
+                    text = channelLabel,
+                    iconRes = R.drawable.tune,
+                    containerColor = Color(0xFF181A1E),
+                    contentColor = Color(0xFFD1D5DB),
+                )
                 StatusBadgeChip(
                     text = supportingText,
                     iconRes = if (isUpdateAvailable) R.drawable.download else R.drawable.check,
-                    containerColor = if (isUpdateAvailable) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = if (isUpdateAvailable) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
+                    containerColor = if (isUpdateAvailable) OzoneUi.LimeContainer else Color(0xFF181A1E),
+                    contentColor = if (isUpdateAvailable) OzoneUi.Lime else Color(0xFFD1D5DB),
                 )
             }
 
@@ -120,12 +124,49 @@ internal fun UpdateSummaryCard(
                 if (isCheckingForUpdate) {
                     Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                            Text(text = stringResource(R.string.check_for_update), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = OzoneUi.Lime)
+                            Text(text = stringResource(R.string.check_for_update), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = OzoneUi.TextSecondary)
                         }
                     }
                 } else {
-                    InteractiveChip(label = stringResource(R.string.update_button), iconResId = R.drawable.update, onClick = onDownloadApk, enabled = isDownloadReady && isUpdateAvailable, modifier = Modifier.fillMaxWidth())
+                    if (isUpdateAvailable && isDownloadReady) {
+                        Button(
+                            onClick = onDownloadApk,
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                            shape = CircleShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = OzoneUi.Lime,
+                                contentColor = Color(0xFF050505),
+                            ),
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.download),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = Color(0xFF050505),
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = stringResource(R.string.update_button),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF050505),
+                                )
+                            }
+                        }
+                    } else {
+                        InteractiveChip(
+                            label = stringResource(R.string.update_button),
+                            iconResId = R.drawable.update,
+                            onClick = onDownloadApk,
+                            enabled = false,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                     InteractiveChip(label = stringResource(R.string.check_again), iconResId = R.drawable.sync, onClick = onCheckForUpdate, modifier = Modifier.fillMaxWidth())
                     InteractiveChip(label = stringResource(R.string.view_changelog), iconResId = R.drawable.update, onClick = onOpenChangelog, modifier = Modifier.fillMaxWidth())
                     InteractiveChip(label = stringResource(R.string.all_releases_github), iconResId = R.drawable.ic_github, onClick = onOpenAllReleases, modifier = Modifier.fillMaxWidth())
@@ -142,7 +183,11 @@ internal fun StatusBadgeChip(
     containerColor: Color,
     contentColor: Color,
 ) {
-    Surface(shape = RoundedCornerShape(12.dp), color = containerColor) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = containerColor,
+        modifier = Modifier.border(1.dp, Color(0xFF282B32), RoundedCornerShape(12.dp)),
+    ) {
         Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -162,18 +207,18 @@ internal fun InteractiveChip(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    val colors = LocalOzoneColors.current
     val shape = RoundedCornerShape(16.dp)
     val contentAlpha = if (enabled) 1f else 0.38f
 
     Box(
         modifier = modifier
             .ozoneClickable(enabled = enabled, pressedScale = SettingsAnimations.PressScale, onClick = onClick)
-            .ozoneGlassCard(
-                shape = shape,
-                backgroundColor = if (enabled) colors.glassBackground else colors.glassBackground.copy(alpha = colors.glassBackground.alpha * 0.4f),
-                borderColor = if (enabled) colors.glassBorder else colors.glassBorder.copy(alpha = colors.glassBorder.alpha * 0.4f),
-                strokeWidth = SettingsDimensions.GlassBorderThickness,
+            .clip(shape)
+            .background(if (enabled) Color(0xFF181A1E) else Color(0xFF141518))
+            .border(
+                1.dp,
+                if (enabled) Color(0xFF282B32) else Color(0xFF1F2126),
+                shape,
             ),
     ) {
         Row(
@@ -181,9 +226,21 @@ internal fun InteractiveChip(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
         ) {
-            Icon(painter = painterResource(iconResId), contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = contentAlpha), modifier = Modifier.size(18.dp))
+            Icon(
+                painter = painterResource(iconResId),
+                contentDescription = null,
+                tint = OzoneUi.Lime.copy(alpha = contentAlpha),
+                modifier = Modifier.size(18.dp),
+            )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(text = label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White.copy(alpha = contentAlpha),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }

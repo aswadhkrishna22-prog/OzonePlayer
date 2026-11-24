@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -24,13 +26,13 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
@@ -39,7 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.BuildConfig
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.ui.settings.SettingsDimensions
+import moe.rukamori.archivetune.ui.settings.OzoneUi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,10 +79,10 @@ fun ReportIssueSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
         shape = RoundedCornerShape(
-            topStart = SettingsDimensions.BottomSheetCornerRadius,
-            topEnd = SettingsDimensions.BottomSheetCornerRadius,
+            topStart = 28.dp,
+            topEnd = 28.dp,
         ),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = OzoneUi.SurfaceCard,
         modifier = modifier,
     ) {
         Column(
@@ -94,7 +96,7 @@ fun ReportIssueSheet(
                 text = "Report an issue",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = OzoneUi.TextPrimary,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -102,7 +104,7 @@ fun ReportIssueSheet(
             Text(
                 text = "Ozone is built by one person using Termux and GitHub, so a few bugs may slip through. Found one? Please tell me, every report helps.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = OzoneUi.TextSecondary,
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -118,11 +120,11 @@ fun ReportIssueSheet(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp),
-                    shape = RoundedCornerShape(14.dp),
+                        .height(52.dp),
+                    shape = CircleShape,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        containerColor = OzoneUi.Lime,
+                        contentColor = Color(0xFF050505),
                     ),
                 ) {
                     Row(
@@ -132,25 +134,32 @@ fun ReportIssueSheet(
                         Icon(
                             painter = painterResource(R.drawable.ic_github),
                             contentDescription = null,
+                            tint = Color(0xFF050505),
                             modifier = Modifier.size(20.dp),
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = "Report on GitHub",
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF050505),
                         )
                     }
                 }
 
                 // Button 2: Message on Instagram
-                OutlinedButton(
+                Button(
                     onClick = {
                         openLinkSafely(context, uriHandler, instagramUrl)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp),
-                    shape = RoundedCornerShape(14.dp),
+                        .height(52.dp),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF181A1E),
+                        contentColor = Color.White,
+                    ),
+                    border = BorderStroke(1.dp, Color(0xFF2A2E35)),
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -159,18 +168,20 @@ fun ReportIssueSheet(
                         Icon(
                             painter = painterResource(R.drawable.ic_instagram),
                             contentDescription = null,
+                            tint = OzoneUi.Lime,
                             modifier = Modifier.size(20.dp),
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = "Message on Instagram",
                             fontWeight = FontWeight.SemiBold,
+                            color = Color.White,
                         )
                     }
                 }
 
                 // Button 3: Copy app info
-                OutlinedButton(
+                Button(
                     onClick = {
                         try {
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -183,8 +194,13 @@ fun ReportIssueSheet(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp),
-                    shape = RoundedCornerShape(14.dp),
+                        .height(52.dp),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF181A1E),
+                        contentColor = Color.White,
+                    ),
+                    border = BorderStroke(1.dp, Color(0xFF2A2E35)),
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -193,12 +209,14 @@ fun ReportIssueSheet(
                         Icon(
                             painter = painterResource(R.drawable.copy),
                             contentDescription = null,
+                            tint = OzoneUi.Lime,
                             modifier = Modifier.size(20.dp),
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = "Copy app info",
                             fontWeight = FontWeight.SemiBold,
+                            color = Color.White,
                         )
                     }
                 }

@@ -76,7 +76,9 @@ fun NavGraphBuilder.navigationBuilder(
         HistoryScreen(navController)
     }
     composable("stats") {
-        StatsScreen(navController)
+        moe.rukamori.archivetune.ui.theme.OzoneSettingsTheme {
+            StatsScreen(navController)
+        }
     }
     composable("news") {
         NewsScreen(navController)

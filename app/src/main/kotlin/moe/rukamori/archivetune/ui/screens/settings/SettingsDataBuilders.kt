@@ -6,7 +6,6 @@
 
 package moe.rukamori.archivetune.ui.screens.settings
 
-import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -29,7 +28,7 @@ fun buildSettingsGroups(
     onOpenReportIssue: () -> Unit = {},
 ): List<SettingsGroup> =
     buildList {
-        // Группа 1: Учётная запись и интеграции (2 элемента)
+        // Group 1: Account & Integrations
         add(
             SettingsGroup(
                 title = stringResource(R.string.settings_section_account),
@@ -37,25 +36,28 @@ fun buildSettingsGroups(
                     listOf(
                         SettingsItem(
                             key = "account",
-                            icon = painterResource(R.drawable.account),
-                            title = stringResource(R.string.account),
-                            subtitle = stringResource(R.string.settings_account_subtitle),
+                            icon = painterResource(R.drawable.ozn_user_circle),
+                            title = stringResource(R.string.ozone_account_title),
+                            subtitle = stringResource(R.string.ozone_account_subtitle),
                             accentColor = MaterialTheme.colorScheme.primary,
+                            keywords = listOf("account", "login", "google", "profile", "sync", "user"),
                             onClick = { navController.navigate("settings/account") },
                         ),
                         SettingsItem(
                             key = "ai_integration",
-                            icon = painterResource(R.drawable.ai),
-                            title = stringResource(R.string.ai_integration),
-                            subtitle = stringResource(R.string.ai_integration_desc),
+                            badge = stringResource(R.string.ozone_beta),
+                            icon = painterResource(R.drawable.ozn_sparkles),
+                            title = stringResource(R.string.ozone_ai_title),
+                            subtitle = stringResource(R.string.ozone_ai_subtitle),
                             accentColor = MaterialTheme.colorScheme.secondary,
+                            keywords = listOf("ai", "gemini", "smart", "chat", "assistant", "recommendation", "claude", "chatgpt"),
                             onClick = { navController.navigate("settings/ai_integration") },
                         ),
                     ),
             ),
         )
 
-        // Группа 2: Интерфейс и внешний вид (3 элемента)
+        // Group 2: Interface & Appearance
         add(
             SettingsGroup(
                 title = stringResource(R.string.settings_section_appearance),
@@ -63,33 +65,36 @@ fun buildSettingsGroups(
                     listOf(
                         SettingsItem(
                             key = "appearance",
-                            icon = painterResource(R.drawable.ic_palette),
-                            title = stringResource(R.string.appearance),
-                            subtitle = stringResource(R.string.settings_appearance_subtitle),
+                            icon = painterResource(R.drawable.ozn_palette),
+                            title = stringResource(R.string.ozone_appearance_title),
+                            subtitle = stringResource(R.string.ozone_appearance_subtitle),
                             accentColor = MaterialTheme.colorScheme.secondary,
+                            keywords = listOf("theme", "appearance", "dark", "light", "color", "accent", "icon", "oled", "pure black"),
                             onClick = { navController.navigate("settings/appearance") },
                         ),
                         SettingsItem(
                             key = "lyrics",
-                            icon = painterResource(R.drawable.lyrics),
-                            title = stringResource(R.string.lyrics),
-                            subtitle = stringResource(R.string.settings_lyrics_subtitle),
+                            icon = painterResource(R.drawable.ozn_message_text),
+                            title = stringResource(R.string.ozone_lyrics_title),
+                            subtitle = stringResource(R.string.ozone_lyrics_subtitle),
                             accentColor = MaterialTheme.colorScheme.primary,
+                            keywords = listOf("lyrics", "lrc", "ttml", "karaoke", "synced", "translation", "provider"),
                             onClick = { navController.navigate("settings/lyrics") },
                         ),
                         SettingsItem(
                             key = "stats",
-                            icon = painterResource(R.drawable.stats),
-                            title = stringResource(R.string.settings_stats_title),
-                            subtitle = stringResource(R.string.settings_stats_subtitle),
+                            icon = painterResource(R.drawable.ozn_bar_chart),
+                            title = stringResource(R.string.ozone_stats_title),
+                            subtitle = stringResource(R.string.ozone_stats_subtitle),
                             accentColor = MaterialTheme.colorScheme.tertiary,
+                            keywords = listOf("stats", "history", "charts", "top", "playtime", "listening"),
                             onClick = { navController.navigate("stats") },
                         ),
                     ),
             ),
         )
 
-        // Группа 3: Воспроизведение и медиатека (4 элемента)
+        // Group 3: Player & Content
         add(
             SettingsGroup(
                 title = stringResource(R.string.settings_section_player_content),
@@ -97,41 +102,46 @@ fun buildSettingsGroups(
                     listOf(
                         SettingsItem(
                             key = "player",
-                            icon = painterResource(R.drawable.play),
-                            title = stringResource(R.string.player_and_audio),
-                            subtitle = stringResource(R.string.settings_player_subtitle),
+                            icon = painterResource(R.drawable.ozn_play),
+                            title = stringResource(R.string.ozone_player_title),
+                            subtitle = stringResource(R.string.ozone_player_subtitle),
                             accentColor = MaterialTheme.colorScheme.primary,
+                            keywords = listOf("player", "audio", "sound", "volume", "equalizer", "eq", "crossfade", "enhance", "spatial", "bitrate"),
                             onClick = { navController.navigate("settings/player") },
                         ),
                         SettingsItem(
                             key = "content",
-                            icon = painterResource(R.drawable.language),
-                            title = stringResource(R.string.content),
-                            subtitle = stringResource(R.string.settings_content_subtitle),
+                            icon = painterResource(R.drawable.ozn_globe),
+                            title = stringResource(R.string.ozone_content_title),
+                            subtitle = stringResource(R.string.ozone_content_subtitle),
                             accentColor = MaterialTheme.colorScheme.secondary,
+                            keywords = listOf("content", "source", "region", "language", "explicit", "blacklist", "whitelist"),
                             onClick = { navController.navigate("settings/content") },
                         ),
                         SettingsItem(
                             key = "storage",
-                            icon = painterResource(R.drawable.storage),
-                            title = stringResource(R.string.storage),
-                            subtitle = stringResource(R.string.settings_storage_subtitle),
+                            trailing = { OzoneStorageMeter() },
+                            icon = painterResource(R.drawable.ozn_database),
+                            title = stringResource(R.string.ozone_storage_title),
+                            subtitle = stringResource(R.string.ozone_storage_subtitle),
                             accentColor = MaterialTheme.colorScheme.tertiary,
+                            keywords = listOf("storage", "cache", "download", "space", "disk", "clear"),
                             onClick = { navController.navigate("settings/storage") },
                         ),
                         SettingsItem(
                             key = "backup_restore",
-                            icon = painterResource(R.drawable.backup),
-                            title = stringResource(R.string.backup_restore),
-                            subtitle = stringResource(R.string.settings_backup_restore_subtitle),
+                            icon = painterResource(R.drawable.ozn_cloud_upload),
+                            title = stringResource(R.string.ozone_backup_title),
+                            subtitle = stringResource(R.string.ozone_backup_subtitle),
                             accentColor = MaterialTheme.colorScheme.primary,
+                            keywords = listOf("backup", "restore", "export", "import", "database", "library"),
                             onClick = { navController.navigate("settings/backup_restore") },
                         ),
                     ),
             ),
         )
 
-        // Группа 4: Сеть и сервисы (2 элемента)
+        // Group 4: Network & Services
         add(
             SettingsGroup(
                 title = stringResource(R.string.settings_section_network),
@@ -139,17 +149,18 @@ fun buildSettingsGroups(
                     listOf(
                         SettingsItem(
                             key = "internet",
-                            icon = painterResource(R.drawable.wifi_proxy),
-                            title = stringResource(R.string.internet),
-                            subtitle = stringResource(R.string.settings_internet_subtitle),
+                            icon = painterResource(R.drawable.ozn_globe_wifi),
+                            title = stringResource(R.string.ozone_internet_title),
+                            subtitle = stringResource(R.string.ozone_internet_subtitle),
                             accentColor = MaterialTheme.colorScheme.tertiary,
+                            keywords = listOf("internet", "network", "wifi", "proxy", "cellular", "data", "offline"),
                             onClick = { navController.navigate("settings/internet") },
                         ),
                     ),
             ),
         )
 
-        // Группа 5: О системе и приложении (2-3 элемента)
+        // Group 5: About & System
         add(
             SettingsGroup(
                 title = stringResource(R.string.settings_section_about),
@@ -158,10 +169,11 @@ fun buildSettingsGroups(
                         add(
                             SettingsItem(
                                 key = "behavior",
-                                icon = painterResource(R.drawable.swipe),
-                                title = stringResource(R.string.settings_behavior_title),
-                                subtitle = stringResource(R.string.settings_behavior_subtitle),
+                                icon = painterResource(R.drawable.ozn_pointer),
+                                title = stringResource(R.string.ozone_behavior_title),
+                                subtitle = stringResource(R.string.ozone_behavior_subtitle),
                                 accentColor = MaterialTheme.colorScheme.primary,
+                                keywords = listOf("behavior", "privacy", "history", "cache", "defaults"),
                                 onClick = { navController.navigate("settings/privacy") },
                             ),
                         )
@@ -169,10 +181,11 @@ fun buildSettingsGroups(
                             add(
                                 SettingsItem(
                                     key = "default_links",
-                                    icon = painterResource(R.drawable.link),
-                                    title = stringResource(R.string.default_links),
-                                    subtitle = stringResource(R.string.open_supported_links),
+                                    icon = painterResource(R.drawable.ozn_link),
+                                    title = stringResource(R.string.ozone_links_title),
+                                    subtitle = stringResource(R.string.ozone_links_subtitle),
                                     accentColor = MaterialTheme.colorScheme.secondary,
+                                    keywords = listOf("links", "url", "open", "default", "browser"),
                                     onClick = {
                                         try {
                                             val intent =
@@ -197,17 +210,18 @@ fun buildSettingsGroups(
                             add(
                                 SettingsItem(
                                     key = "updates",
-                                    icon = painterResource(R.drawable.ic_refresh),
-                                    title = stringResource(R.string.updates),
+                                    icon = painterResource(R.drawable.ozn_refresh),
+                                    title = stringResource(R.string.ozone_updates_title),
                                     subtitle =
                                         if (hasUpdate) {
                                             stringResource(R.string.new_version_available)
                                         } else {
-                                            stringResource(R.string.settings_updates_subtitle)
+                                            stringResource(R.string.ozone_updates_subtitle)
                                         },
                                     showUpdateIndicator = hasUpdate,
                                     badge = if (hasUpdate) "v${BuildConfig.VERSION_NAME}" else BuildConfig.VERSION_NAME,
                                     accentColor = MaterialTheme.colorScheme.primary,
+                                    keywords = listOf("update", "version", "changelog", "github", "release"),
                                     onClick = { navController.navigate("settings/update") },
                                 ),
                             )
@@ -215,21 +229,23 @@ fun buildSettingsGroups(
                         add(
                             SettingsItem(
                                 key = "report_issue",
-                                icon = painterResource(R.drawable.ic_bug_report),
-                                title = stringResource(R.string.report_issue),
-                                subtitle = stringResource(R.string.report_issue_desc),
+                                icon = painterResource(R.drawable.ozn_bug),
+                                title = stringResource(R.string.ozone_report_title),
+                                subtitle = stringResource(R.string.ozone_report_subtitle),
                                 accentColor = MaterialTheme.colorScheme.secondary,
+                                keywords = listOf("report", "issue", "bug", "crash", "feedback", "github", "problem"),
                                 onClick = onOpenReportIssue,
                             ),
                         )
                         add(
                             SettingsItem(
                                 key = "about",
-                                icon = painterResource(R.drawable.ic_about),
-                                title = stringResource(R.string.about),
+                                icon = painterResource(R.drawable.ozn_info_bubble),
+                                title = stringResource(R.string.ozone_about_title),
                                 subtitle = "v${BuildConfig.VERSION_NAME}",
                                 showUpdateIndicator = false,
                                 accentColor = MaterialTheme.colorScheme.primary,
+                                keywords = listOf("about", "version", "license", "author", "ozone"),
                                 onClick = { navController.navigate("settings/about") },
                             ),
                         )

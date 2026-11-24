@@ -36,6 +36,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -48,6 +49,8 @@ import moe.rukamori.archivetune.appicon.rememberCurrentAppIcon
 import moe.rukamori.archivetune.constants.AppFontPreference
 import moe.rukamori.archivetune.constants.HomeBackgroundStyle
 import moe.rukamori.archivetune.constants.LibraryFilter
+import moe.rukamori.archivetune.ui.component.OzonePreferenceValuePill
+import moe.rukamori.archivetune.ui.settings.OzoneUi
 import moe.rukamori.archivetune.constants.QuickPicksDisplayMode
 import moe.rukamori.archivetune.constants.SplashShapePreference
 import moe.rukamori.archivetune.ui.component.EnumListPreference
@@ -645,16 +648,30 @@ private fun BlurRadiusSliderItem(
 
     PreferenceEntry(
         title = { Text(stringResource(R.string.blur_radius)) },
-        description = "${stringResource(R.string.blur_radius_desc)} (${localValue.roundToInt()} dp)",
+        description = stringResource(R.string.blur_radius_desc),
+        trailingContent = {
+            OzonePreferenceValuePill("${localValue.roundToInt()} dp")
+        },
         content = {
             Spacer(Modifier.height(4.dp))
             Slider(
                 state = sliderState,
                 modifier = Modifier.fillMaxWidth(),
+                colors = SliderDefaults.colors(
+                    thumbColor = OzoneUi.Lime,
+                    activeTrackColor = OzoneUi.Lime,
+                    inactiveTrackColor = OzoneUi.TrackInactive,
+                    activeTickColor = Color(0x80050505),
+                    inactiveTickColor = Color(0xFF4F545E),
+                ),
                 track = {
                     SliderDefaults.Track(
                         sliderState = sliderState,
                         trackCornerSize = 12.dp,
+                        colors = SliderDefaults.colors(
+                            activeTrackColor = OzoneUi.Lime,
+                            inactiveTrackColor = OzoneUi.TrackInactive,
+                        ),
                     )
                 },
             )
@@ -685,16 +702,29 @@ private fun HomeBackgroundSliderItem(
 
     PreferenceEntry(
         title = { Text(title) },
-        description = valueText(localValue),
+        trailingContent = {
+            OzonePreferenceValuePill(valueText(localValue))
+        },
         content = {
             Spacer(Modifier.height(4.dp))
             Slider(
                 state = sliderState,
                 modifier = Modifier.fillMaxWidth(),
+                colors = SliderDefaults.colors(
+                    thumbColor = OzoneUi.Lime,
+                    activeTrackColor = OzoneUi.Lime,
+                    inactiveTrackColor = OzoneUi.TrackInactive,
+                    activeTickColor = Color(0x80050505),
+                    inactiveTickColor = Color(0xFF4F545E),
+                ),
                 track = {
                     SliderDefaults.Track(
                         sliderState = sliderState,
                         trackCornerSize = 12.dp,
+                        colors = SliderDefaults.colors(
+                            activeTrackColor = OzoneUi.Lime,
+                            inactiveTrackColor = OzoneUi.TrackInactive,
+                        ),
                     )
                 },
             )
