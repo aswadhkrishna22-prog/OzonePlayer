@@ -184,4 +184,14 @@
     - **About Screen:** Removed legacy purple mesh; obsidian hero card with vertical lime gradient border, radial icon glow, lime version badge, neutral build hash/variant chips, and styled GitHub/link action chips.
     - **Report Issue Sheet:** 28dp top radius obsidian sheet with full-width 52dp pill buttons: primary GitHub button in Vivid Acid Lime `#B6FF00`, secondary Instagram & Copy App Info buttons in `#181A1E` with `#2A2E35` border and lime icons.
     - **Updates Screen:** `UpdateSummaryCard` styled with 22dp obsidian card, Acid Lime status badges, and solid lime APK download action pill when ready.
+18. **Ozone Settings Screen Polish (`feat/polish-ozone-settings`, PR #63):**
+    - **Collapsing Header:** Expanded header height reduced by >50% (Settings title 32sp, brand wordmark 12sp, padding 14dp). Added `OzoneSettingsTopBar` collapsing toolbar that smoothly fades in on scroll with just the "Settings" title pinned under the status bar with subtle hairline divider.
+    - **Tagline & Moon Icon Removal:** Removed tagline ("Make it yours."), accompanying music note icon, and duplicate moon icon button from the Settings header for a clean, focused look.
+    - **Vinyl & Search Bar Overlap Fix:** Scaled down `OzoneVinylArc` (120dp x 72dp) and placed it within the upper title row (fading smoothly on scroll), completely eliminating overlap with the search bar. Made `OzoneSearchBar` 100% solid and opaque (`OzoneUi.SurfaceElevated`), eliminating translucent bleed and dark hole patches across all screen widths.
+    - **Row Subtitle Shortening & Fallback:** Shortened all section subtitles in `strings_ozone.xml` ("Sign in and sync", "AI features", "Themes and colours", etc.) so each fits comfortably on one line; set `maxLines = 2` as a graceful fallback with `TextOverflow.Ellipsis`.
+    - **Appearance Row Consistency:** Removed custom wave preview thumbnail from Appearance row, ensuring uniform height and visual weight across all rows.
+    - **Visual Hierarchy:** Changed row icons to neutral secondary tone (`OzoneUi.TextSecondary`), removed green radial glow behind regular icons, reserving the Vivid Acid Lime accent exclusively for active/selected states, the Beta badge pill (`OzonePill`), and text selection cursor.
+    - **Contrast Enhancement (WCAG AAA):** Raised `TextSecondary` and `SectionLabel` tokens to `#A6ABB4`, delivering >8.1:1 contrast against card `#111214` and >8.6:1 against `#060606` background (comfortably exceeding WCAG AA 4.5:1).
+    - **Mini Player Overlap Fix:** Added bottom spacer (`playerAwareBottomInset() + SettingsDimensions.ScreenBottomPadding`) to the scrollable column to ensure the final card is never obscured by the floating mini player or navigation bar.
+
 
