@@ -8,6 +8,8 @@ package moe.rukamori.archivetune.ui.screens.home
 
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -196,9 +198,9 @@ private fun TrendingFiltersRow(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp),
+                .padding(horizontal = HomeLayoutConfig.sidePadding, vertical = 2.dp),
     ) {
-        // Category / Language chips
+        // Category / Language chips (Primary row)
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -215,7 +217,7 @@ private fun TrendingFiltersRow(
                                 painter = painterResource(R.drawable.auto_awesome),
                                 contentDescription = null,
                                 modifier = Modifier.size(14.dp),
-                                tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else Color(0xFFFFB300),
+                                tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary,
                             )
                         }
                     } else null,
@@ -224,9 +226,9 @@ private fun TrendingFiltersRow(
             }
         }
 
-        // Source switcher pills
+        // Source switcher text tabs (Visually secondary row)
         Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.horizontalScroll(rememberScrollState()),
         ) {
@@ -273,7 +275,7 @@ private fun TrendingChip(
         if (isSelected) {
             MaterialTheme.colorScheme.onPrimaryContainer
         } else {
-            colors.textPrimary
+            MaterialTheme.colorScheme.onSurface
         }
 
     Surface(
@@ -310,33 +312,36 @@ private fun TrendingSourceChip(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
-    val colors = LocalOzoneColors.current
-    val bgColor =
-        if (isSelected) {
-            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f)
-        } else {
-            colors.glassBackground.copy(alpha = 0.5f)
-        }
-    val textColor =
-        if (isSelected) {
-            MaterialTheme.colorScheme.onSecondaryContainer
-        } else {
-            colors.textSecondary
-        }
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val textColor by animateColorAsState(
+        targetValue = if (isSelected) primaryColor else unselectedColor,
+        animationSpec = tween(200),
+        label = "trendingSourceTextColor",
+    )
 
-    Surface(
-        shape = CircleShape,
-        color = bgColor,
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier =
             Modifier
-                .ozoneClickable(pressedScale = 0.94f, onClick = onClick),
+                .ozoneClickable(pressedScale = 0.94f, onClick = onClick)
+                .padding(horizontal = 8.dp, vertical = 2.dp),
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall,
-            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
             color = textColor,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            maxLines = 1,
+        )
+        Spacer(modifier = Modifier.height(3.dp))
+        Box(
+            modifier =
+                Modifier
+                    .height(2.dp)
+                    .width(if (isSelected) 18.dp else 0.dp)
+                    .clip(CircleShape)
+                    .background(if (isSelected) primaryColor else Color.Transparent),
         )
     }
 }

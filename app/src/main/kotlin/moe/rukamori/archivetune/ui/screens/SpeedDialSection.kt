@@ -101,6 +101,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -512,6 +514,7 @@ private fun SpeedDialRandomTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val shuffleLabel = stringResource(R.string.shuffle)
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHighest,
         contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -520,20 +523,34 @@ private fun SpeedDialRandomTile(
         modifier =
             modifier
                 .aspectRatio(1f)
-                .combinedClickable(onClick = onClick),
+                .semantics {
+                    contentDescription = shuffleLabel
+                }
+                .combinedClickable(
+                    onClick = onClick,
+                    onClickLabel = shuffleLabel,
+                ),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Column(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 repeat(3) {
                     Surface(
                         color = MaterialTheme.colorScheme.primary,
                         shape = CircleShape,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(12.dp),
                     ) {}
                 }
+                Text(
+                    text = shuffleLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
     }
