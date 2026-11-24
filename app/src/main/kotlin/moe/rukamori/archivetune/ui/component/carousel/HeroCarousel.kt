@@ -7,15 +7,23 @@
 package moe.rukamori.archivetune.ui.component.carousel
 
 import android.os.Build
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -29,9 +37,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import kotlinx.coroutines.delay
@@ -53,6 +64,7 @@ internal fun HeroCarousel(
     onTrackLongClick: (String) -> Unit,
     onRoll: () -> Unit,
     modifier: Modifier = Modifier,
+    scrollOffset: () -> Float = { 0f },
 ) {
     val displayItems = remember(items, rollCandidates.size) {
         buildList {
@@ -142,6 +154,7 @@ internal fun HeroCarousel(
                         animationsDisabled = animationsDisabled,
                         onRoll = onRoll,
                         onPlayResult = onTrackClick,
+                        scrollOffset = scrollOffset,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -155,6 +168,8 @@ internal fun HeroCarousel(
                         edgeBlur = edgeBlur,
                         onPrimaryClick = { onTrackClick(displayItem.item.id) },
                         onLongClick = { onTrackLongClick(displayItem.item.id) },
+                        scrollOffset = scrollOffset,
+                        animationsDisabled = animationsDisabled,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -186,6 +201,42 @@ internal fun HeroCarousel(
                     )
                 )
         )
+
+        if (!isSingleItem && displayItems.isNotEmpty()) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 20.dp, bottom = 32.dp)
+                    .graphicsLayer {
+                        val scroll = scrollOffset()
+                        alpha = (1f - (scroll / 200f)).coerceIn(0f, 1f)
+                    },
+            ) {
+                val activeIndex = pagerState.currentPage.mod(displayItems.size)
+                repeat(displayItems.size) { index ->
+                    val isSelected = index == activeIndex
+                    val dotWidth by animateDpAsState(
+                        targetValue = if (isSelected) 18.dp else 6.dp,
+                        animationSpec = if (animationsDisabled) snap() else tween(300),
+                        label = "heroDotWidth_$index",
+                    )
+                    val dotColor by animateColorAsState(
+                        targetValue = if (isSelected) Color.White else Color.White.copy(alpha = 0.45f),
+                        animationSpec = if (animationsDisabled) snap() else tween(300),
+                        label = "heroDotColor_$index",
+                    )
+                    Box(
+                        modifier = Modifier
+                            .height(6.dp)
+                            .width(dotWidth)
+                            .clip(CircleShape)
+                            .background(dotColor)
+                    )
+                }
+            }
+        }
     }
 }
 

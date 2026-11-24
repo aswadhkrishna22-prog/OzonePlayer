@@ -127,6 +127,13 @@ internal fun HomeContent(
                                 playerConnection = playerConnection,
                                 menuState = menuState,
                                 trendingRepository = trendingRepository,
+                                scrollOffsetProvider = {
+                                    if (lazyListState.firstVisibleItemIndex == 0) {
+                                        lazyListState.firstVisibleItemScrollOffset.toFloat()
+                                    } else {
+                                        1000f
+                                    }
+                                },
                                 modifier = Modifier.animateItem(),
                             )
                         }
