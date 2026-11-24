@@ -404,7 +404,7 @@ fun YouTubeGridItem(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.secondary,
-                maxLines = 2,
+                maxLines = 1,
             )
         }
     },
@@ -412,7 +412,7 @@ fun YouTubeGridItem(
     thumbnailContent = {
         val database = LocalDatabase.current
         val playerConnection = LocalPlayerConnection.current
-        val shape = if (item is ArtistItem) CircleShape else RoundedCornerShape(GridThumbnailCornerRadius)
+        val shape = if (item is ArtistItem) CircleShape else RoundedCornerShape(16.dp)
 
         ItemThumbnail(
             thumbnailUrl = item.thumbnail,

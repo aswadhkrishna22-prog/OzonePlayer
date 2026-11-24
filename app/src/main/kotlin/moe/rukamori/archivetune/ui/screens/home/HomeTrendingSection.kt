@@ -468,14 +468,14 @@ private fun TrendingShelfContent(
                             thumbnailUrl = track.artworkUrl,
                             isActive = isCurrentMedia,
                             isPlaying = mediaContext.isPlaying,
-                            shape = RoundedCornerShape(GridThumbnailCornerRadius),
+                            shape = RoundedCornerShape(HomeLayoutConfig.cardCornerRadius),
                             thumbnailRatio = 1f,
                         )
 
                         // Loading overlay if resolving Apple song
                         if (isResolvingThis) {
                             Surface(
-                                shape = RoundedCornerShape(GridThumbnailCornerRadius),
+                                shape = RoundedCornerShape(HomeLayoutConfig.cardCornerRadius),
                                 color = Color.Black.copy(alpha = 0.55f),
                                 modifier = Modifier.matchParentSize(),
                             ) {

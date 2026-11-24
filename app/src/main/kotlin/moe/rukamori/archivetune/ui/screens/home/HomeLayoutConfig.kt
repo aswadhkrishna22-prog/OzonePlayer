@@ -21,11 +21,18 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
 object HomeLayoutConfig {
-    val shelfSpacing: Dp = 10.dp
+    val shelfSpacing: Dp = 12.dp
     val shelfHorizontalPadding: Dp = 16.dp
     val sidePadding: Dp = 16.dp
     val sectionSpacing: Dp = 18.dp
     val headerHeight: Dp = 48.dp
+    val headerTopPadding: Dp = 24.dp
+    val headerBottomPadding: Dp = 12.dp
+
+    val cardWidth: Dp = 148.dp
+    val cardCornerRadius: Dp = 16.dp
+    val artistSize: Dp = 148.dp
+    val cardTextReservedHeight: Dp = 44.dp
 
     private var homeEntrancePlayedSession = false
 
@@ -35,13 +42,9 @@ object HomeLayoutConfig {
 
     fun isHomeEntrancePlayed(): Boolean = homeEntrancePlayedSession
 
-    fun cardWidth(availableWidth: Dp): Dp {
-        val usableWidth = availableWidth - (shelfHorizontalPadding * 2)
-        return (usableWidth / 2.35f).coerceIn(132.dp, 160.dp)
-    }
+    fun cardWidth(availableWidth: Dp): Dp = cardWidth
 
-    fun artistSize(availableWidth: Dp): Dp =
-        (cardWidth(availableWidth) * 0.90f).coerceIn(122.dp, 146.dp)
+    fun artistSize(availableWidth: Dp): Dp = artistSize
 
     fun quickPicksHeroHeight(availableWidth: Dp): Dp = when {
         availableWidth >= 840.dp -> 370.dp

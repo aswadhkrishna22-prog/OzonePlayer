@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.screens.home.HomeLayoutConfig
 
@@ -44,9 +45,13 @@ fun HomeSectionHeader(
         modifier =
             modifier
                 .fillMaxWidth()
-                .heightIn(min = HomeLayoutConfig.headerHeight)
                 .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-                .padding(horizontal = HomeLayoutConfig.sidePadding, vertical = 4.dp),
+                .padding(
+                    start = HomeLayoutConfig.sidePadding,
+                    end = HomeLayoutConfig.sidePadding,
+                    top = HomeLayoutConfig.headerTopPadding,
+                    bottom = HomeLayoutConfig.headerBottomPadding,
+                ),
     ) {
         thumbnail?.invoke()
         Column(
@@ -64,7 +69,7 @@ fun HomeSectionHeader(
             }
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleLarge,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
